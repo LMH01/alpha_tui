@@ -18,6 +18,7 @@ fn main() {
         Instruction::Pop(),
         Instruction::AssignMemoryCellValueFromAccumulator("c".to_string(),1),
         Instruction::AssignAccumulatorValueFromMemoryCell(3, "c".to_string()),
+        Instruction::AssignAccumulatorValueFromAccumulator(0, 2),
         Instruction::PrintAccumulators(),
         Instruction::PrintMemoryCells(),
         Instruction::PrintStack(),
@@ -118,7 +119,11 @@ enum Instruction {
     /// pop in alpha_0
     Pop(),
     /// Assigns param1 to accumulator with index param0.
+    ///
+    /// Errors when accumulator does not exist.
     AssignAccumulatorValue(usize, i32),
+    /// Assigns value of accumulator with index param1 to accumulator with index param0.
+    AssignAccumulatorValueFromAccumulator(usize, usize),
     /// Assigns value of memory cell with label param1 to accumulator with index param0.
     /// 
     /// Errors when memory cell or accumulator does not exist.
@@ -154,6 +159,18 @@ impl Instruction {
                     return Err(format!("Accumulator with index {} does not exist!", a).to_string());
                 }
             },
+            Self::AssignAccumulatorValueFromAccumulator(target, src) => {
+                if runtime_args.accumulators.get(*target).is_some() {
+                    if runtime_args.accumulators.get(*src).is_some() {
+                        let replacement = runtime_args.accumulators.get(*src).unwrap();
+                        runtime_args.accumulators[*target].data = replacement.data;
+                    } else {
+                        return Err(format!("Accumulator with index {} does not exist!", src).to_string());
+                    }
+                } else {
+                    return Err(format!("Accumulator with index {} does not exist!", target).to_string());
+                }
+            }
             Self::AssignAccumulatorValueFromMemoryCell(a, cell_label) => {
                 if let Some(ac) = runtime_args.accumulators.get_mut(*a) {
                     if let Some(cell) = runtime_args.memory_cells.get_mut(cell_label) {
