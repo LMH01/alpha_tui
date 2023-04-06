@@ -235,7 +235,7 @@ impl Instruction {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::{RuntimeArgs, Instruction, MemoryCell};
+    use crate::{RuntimeArgs, Instruction, MemoryCell, Accumulator};
 
     
     #[test]
@@ -272,18 +272,35 @@ mod tests {
         assert!(Instruction::AssignAccumulatorValueFromAccumulator(1, 0).run(&mut args).is_err());
     }
 
-    //TODO add when AssingMemoryCellValue is working
-    //#[test]
-    //fn test_assign_accumulator_value_from_memory_cell() {
-    //    let mut args = RuntimeArgs::new();
-    //    Instruction::
-    //}
+    #[test]
+    fn test_assign_accumulator_value_from_memory_cell() {
+        let mut args = RuntimeArgs::new();
+        args.memory_cells = HashMap::new();
+        args.memory_cells.insert("a".to_string(), MemoryCell::new("a".to_string()));
+        Instruction::AssignMemoryCellValue("a".to_string(), 10).run(&mut args).unwrap();
+        Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string()).run(&mut args).unwrap();
+        assert_eq!(args.accumulators[0].data.unwrap(), 10);
+    }
+    
+    #[test]
+    fn test_assign_accumulator_value_from_memory_cell_error() {
+        let mut args = RuntimeArgs::new();
+        args.memory_cells = HashMap::new();
+        args.accumulators = vec![Accumulator::new(0)];
+        let err = Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string()).run(&mut args);
+        assert!(err.is_err());
+        assert!(err.err().unwrap().contains("Memory cell"));
+        args.memory_cells.insert("a".to_string(), MemoryCell::new("a".to_string()));
+        let err = Instruction::AssignAccumulatorValueFromMemoryCell(1, "a".to_string()).run(&mut args);
+        assert!(err.is_err());
+        assert!(err.err().unwrap().contains("Accumulator"));
+    }
     
     #[test]
     fn test_assign_memory_cell_value() {
         let mut args = RuntimeArgs::new();
         args.memory_cells = HashMap::new();
-        args.memory_cells.insert("a".to_string(), MemoryCell::new("a".to_string()));
+        args.memory_cells.insert("a".to_string(), MemoryCell::new("a()(".to_string()));
         args.memory_cells.insert("b".to_string(), MemoryCell::new("b".to_string()));
         Instruction::AssignMemoryCellValue("a".to_string(), 2).run(&mut args).unwrap();
         Instruction::AssignMemoryCellValue("b".to_string(), 20).run(&mut args).unwrap();
