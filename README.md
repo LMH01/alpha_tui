@@ -41,7 +41,7 @@ This section logs what instructions can be parsed from text
 
 This section logs what instructions are implemented in the backend
 
-- [ ] $\alpha_u:=\alpha_v$
+- [X] $\alpha_u:=\alpha_v$
 - [X] $\alpha_u:=\rho(i)$
 - [X] $\rho(i):=\alpha_u$
 - [X] $\alpha_u:=k$
