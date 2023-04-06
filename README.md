@@ -2,6 +2,10 @@
 
 This is my try at writing a compiler for the Alpha-Notation used in my Systemnahe Informatik lecture at university.
 
+## Current status
+
+Development has just begun, almost everything is still missing.
+
 ## TODO
 
 - [ ] Make it possible to customize the available memory cells (preferably by adding an option to the gui)
