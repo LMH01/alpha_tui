@@ -13,8 +13,11 @@ fn main() {
     let instructions = vec![
         Instruction::AssignAccumulatorValue(0, 5),
         Instruction::AssignAccumulatorValue(1, 10),
+        Instruction::AssignAccumulatorValue(2, 7),
         Instruction::Push(),
         Instruction::Pop(),
+        Instruction::AssignMemoryCellValueFromAccumulator("c".to_string(),1),
+        Instruction::AssignAccumulatorValueFromMemoryCell(3, "c".to_string()),
         Instruction::PrintAccumulators(),
         Instruction::PrintMemoryCells(),
         Instruction::PrintStack(),
@@ -108,20 +111,28 @@ impl RuntimeArgs {
     }
 }
 
+
 enum Instruction {
-    // push alpha_0 to stack 
+    /// push alpha_0 to stack 
     Push(),
-    // pop in alpha_0
+    /// pop in alpha_0
     Pop(),
-    // Assigns param1 to accumulator with index param0.
+    /// Assigns param1 to accumulator with index param0.
     AssignAccumulatorValue(usize, i32),
-    // Assigns value of memory cell with label param1 to accumulator with index param0.
+    /// Assigns value of memory cell with label param1 to accumulator with index param0.
+    /// 
+    /// Errors when memory cell or accumulator does not exist.
     AssignAccumulatorValueFromMemoryCell(usize, String),
-    // Prints the current contnets of the accumulators to console
+    // TODO change String to &str
+    /// Assigns value of accumulator with index param1 to memory cell with label param1.
+    ///
+    /// Errors when memory cell or accumulator does not exist.
+    AssignMemoryCellValueFromAccumulator(String, usize),
+    /// Prints the current contnets of the accumulators to console
     PrintAccumulators(),
-    // Prints the current contents of the memory cells
+    /// Prints the current contents of the memory cells
     PrintMemoryCells(),
-    // Prints the stack
+    /// Prints the stack
     PrintStack(),
 }
 
@@ -144,7 +155,26 @@ impl Instruction {
                 }
             },
             Self::AssignAccumulatorValueFromMemoryCell(a, cell_label) => {
-
+                if let Some(ac) = runtime_args.accumulators.get_mut(*a) {
+                    if let Some(cell) = runtime_args.memory_cells.get_mut(cell_label) {
+                        ac.data = cell.data;
+                    } else {
+                        return Err(format!("Memory cell labeled {} does not exist!", cell_label).to_string());
+                    }
+                } else {
+                    return Err(format!("Accumulator with index {} does not exist!", a).to_string());
+                }
+            },
+            Self::AssignMemoryCellValueFromAccumulator(cell_label, a) => {
+                if let Some(cell) = runtime_args.memory_cells.get_mut(cell_label) {
+                    if let Some(ac) = runtime_args.accumulators.get_mut(*a) {
+                        cell.data = ac.data;
+                    } else {
+                        return Err(format!("Accumulator with index {} does not exist!", a).to_string());
+                    }
+                } else {
+                    return Err(format!("Memory cell labeled {} does not exist!", cell_label).to_string());
+                }
             },
             Self::PrintAccumulators() => {
                 println!("--- Accumulators ---");
@@ -154,6 +184,7 @@ impl Instruction {
                 println!("--------------------");
             },
             Self::PrintMemoryCells() => {
+                // TODO Make print sorted (Alpabetically by label name)
                 println!("--- Memory Cells ---");
                 for (k, v) in &runtime_args.memory_cells {
                     println!("{} - {:?}", k, v.data);
