@@ -128,6 +128,10 @@ enum Instruction {
     /// 
     /// Errors when memory cell or accumulator does not exist.
     AssignAccumulatorValueFromMemoryCell(usize, String),
+    /// Assings param1 to memory cell with label param0.
+    ///
+    /// Errors when memory cell does not exist.
+    AssignMemoryCellValue(String, i32),
     // TODO change String to &str
     /// Assigns value of accumulator with index param1 to memory cell with label param1.
     ///
@@ -182,6 +186,13 @@ impl Instruction {
                     return Err(format!("Accumulator with index {} does not exist!", a));
                 }
             },
+            Self::AssignMemoryCellValue(cell_label, value) => {
+                if let Some(cell) = runtime_args.memory_cells.get_mut(cell_label) {
+                    cell.data = Some(*value);
+                } else {
+                    return Err(format!("Memory cell labeled {} does not exist!", cell_label));
+                }
+            }
             Self::AssignMemoryCellValueFromAccumulator(cell_label, a) => {
                 if let Some(cell) = runtime_args.memory_cells.get_mut(cell_label) {
                     if let Some(ac) = runtime_args.accumulators.get_mut(*a) {
@@ -222,7 +233,9 @@ impl Instruction {
 
 #[cfg(test)]
 mod tests {
-    use crate::{RuntimeArgs, Instruction};
+    use std::collections::HashMap;
+
+    use crate::{RuntimeArgs, Instruction, MemoryCell};
 
     
     #[test]
@@ -257,5 +270,31 @@ mod tests {
         let mut args = RuntimeArgs::new();
         assert!(Instruction::AssignAccumulatorValueFromAccumulator(0, 1).run(&mut args).is_err());
         assert!(Instruction::AssignAccumulatorValueFromAccumulator(1, 0).run(&mut args).is_err());
+    }
+
+    //TODO add when AssingMemoryCellValue is working
+    //#[test]
+    //fn test_assign_accumulator_value_from_memory_cell() {
+    //    let mut args = RuntimeArgs::new();
+    //    Instruction::
+    //}
+    
+    #[test]
+    fn test_assign_memory_cell_value() {
+        let mut args = RuntimeArgs::new();
+        args.memory_cells = HashMap::new();
+        args.memory_cells.insert("a".to_string(), MemoryCell::new("a".to_string()));
+        args.memory_cells.insert("b".to_string(), MemoryCell::new("b".to_string()));
+        Instruction::AssignMemoryCellValue("a".to_string(), 2).run(&mut args).unwrap();
+        Instruction::AssignMemoryCellValue("b".to_string(), 20).run(&mut args).unwrap();
+        assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 2);
+        assert_eq!(args.memory_cells.get("b").unwrap().data.unwrap(), 20);
+    }
+
+    #[test]
+    fn test_assign_memory_cell_value_error() {
+        let mut args = RuntimeArgs::new();
+        args.memory_cells = HashMap::new();
+        assert!(Instruction::AssignMemoryCellValue("c".to_string(), 10).run(&mut args).is_err());
     }
 }

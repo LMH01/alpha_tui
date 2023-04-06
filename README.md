@@ -27,6 +27,7 @@ This section logs what instructions can be parsed from text
 - [ ] $\alpha_u:=\alpha_v$
 - [ ] $\alpha_u:=\rho(i)$
 - [ ] $\rho(i):=\alpha_u$
+- [ ] $\rho(i):=k$
 - [ ] $\alpha_u:=k$
 - [ ] $\alpha_u:=\alpha_u\space\textbf{op}\space \rho(i)$
 - [ ] $\alpha_u:=\rho(i)\space\textbf{op}\space \rho(j)$
@@ -44,6 +45,7 @@ This section logs what instructions are implemented in the backend
 - [X] $\alpha_u:=\alpha_v$
 - [X] $\alpha_u:=\rho(i)$
 - [X] $\rho(i):=\alpha_u$
+- [X] $\rho(i):=k$
 - [X] $\alpha_u:=k$
 - [ ] $\alpha_u:=\alpha_u\space\textbf{op}\space \rho(i)$
 - [ ] $\alpha_u:=\rho(i)\space\textbf{op}\space \rho(j)$
