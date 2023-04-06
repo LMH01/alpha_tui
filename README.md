@@ -9,3 +9,4 @@ This is my try at writing a compiler for the Alpha-Notation used in my Systemnah
 	- [ ] (Customization of available accumulators)
 	- [ ] (Customization of available memory cells)
 		- if no memory cells are set all commands that require memory cells should be disabled ("compiling" with those commands included should fail)	
+- [ ] Debug mode -> Step through each instruction

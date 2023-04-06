@@ -1,7 +1,11 @@
+use std::collections::HashMap;
+
 /// Used to set the maximum number of accumulators.
 ///
 /// Should be at least 1.
 const ACCUMULATORS: i32 = 4;
+/// Used to set the available memory cells.
+const MEMORY_CELL_LABELS: &'static [&'static str] = &["a", "b", "c", "d", "e", "f"];
 
 fn main() {
     println!("Hello, world!");
@@ -11,7 +15,10 @@ fn main() {
         Instruction::AssignAccumulatorValue(1, 10),
         Instruction::Push(),
         Instruction::Pop(),
-        Instruction::PrintAccumulators()];
+        Instruction::PrintAccumulators(),
+        Instruction::PrintMemoryCells(),
+        Instruction::PrintStack(),
+    ];
     let mut runner = Runner::new(instructions);
     runner.run();
 }
@@ -34,26 +41,16 @@ impl Accumulator {
     }
 }
 
-/// List of memory cell labels to distinguish multiple memory cells.
-enum MemoryCellLabel {
-    A,
-    B,
-    C,
-    D,
-    E,
-    F,
-}
-
 /// Representation of a single memory cell.
 /// The term memory cell is equal to "Speicherzelle" in the SysInf lecture.
 struct MemoryCell {
-    label: MemoryCellLabel,
+    label: String,
     data: Option<i32>,
 }
 
 impl MemoryCell {
     /// Creates a new register
-    fn new(label: MemoryCellLabel) -> Self {
+    fn new(label: String) -> Self {
         Self {
             label,
             data: None,
@@ -85,7 +82,7 @@ struct RuntimeArgs {
     /// Current values stored in accumulators
     accumulators: Vec<Accumulator>,
     /// All registers that are used to store data
-    memory_cells: Vec<MemoryCell>,
+    memory_cells: HashMap<String, MemoryCell>,
     /// The stack of the runner
     stack: Vec<i32>,
 }
@@ -99,14 +96,10 @@ impl RuntimeArgs {
         if ACCUMULATORS <= 0 {
             accumulators.push(Accumulator::new(0));
         }
-        let memory_cells = vec![
-            MemoryCell::new(MemoryCellLabel::A),
-            MemoryCell::new(MemoryCellLabel::B),
-            MemoryCell::new(MemoryCellLabel::C),
-            MemoryCell::new(MemoryCellLabel::D),
-            MemoryCell::new(MemoryCellLabel::E),
-            MemoryCell::new(MemoryCellLabel::F),
-        ];
+        let mut memory_cells: HashMap<String, MemoryCell> = HashMap::new();
+        for i in MEMORY_CELL_LABELS {
+            memory_cells.insert(i.to_string(), MemoryCell::new(i.to_string()));
+        }
         Self {
             accumulators,
             memory_cells,
@@ -122,8 +115,14 @@ enum Instruction {
     Pop(),
     // Assigns param1 to accumulator with index param0.
     AssignAccumulatorValue(usize, i32),
+    // Assigns value of memory cell with label param1 to accumulator with index param0.
+    AssignAccumulatorValueFromMemoryCell(usize, String),
     // Prints the current contnets of the accumulators to console
     PrintAccumulators(),
+    // Prints the current contents of the memory cells
+    PrintMemoryCells(),
+    // Prints the stack
+    PrintStack(),
 }
 
 impl Instruction {
@@ -143,7 +142,10 @@ impl Instruction {
                 } else {
                     return Err(format!("Accumulator with index {} does not exist!", a).to_string());
                 }
-            }
+            },
+            Self::AssignAccumulatorValueFromMemoryCell(a, cell_label) => {
+
+            },
             Self::PrintAccumulators() => {
                 println!("--- Accumulators ---");
                 for (index, i) in runtime_args.accumulators.iter().enumerate() {
@@ -151,6 +153,20 @@ impl Instruction {
                 }
                 println!("--------------------");
             },
+            Self::PrintMemoryCells() => {
+                println!("--- Memory Cells ---");
+                for (k, v) in &runtime_args.memory_cells {
+                    println!("{} - {:?}", k, v.data);
+                }
+                println!("--------------------");
+            },
+            Self::PrintStack() => {
+                println!("------ Stack -------");
+                for (index, i) in runtime_args.stack.iter().enumerate() {
+                    println!("{} - {:?}", index, i);
+                }
+                println!("--------------------");
+            }
         }
         Ok(())
     }
