@@ -300,7 +300,7 @@ mod tests {
     fn test_assign_memory_cell_value() {
         let mut args = RuntimeArgs::new();
         args.memory_cells = HashMap::new();
-        args.memory_cells.insert("a".to_string(), MemoryCell::new("a()(".to_string()));
+        args.memory_cells.insert("a".to_string(), MemoryCell::new("a".to_string()));
         args.memory_cells.insert("b".to_string(), MemoryCell::new("b".to_string()));
         Instruction::AssignMemoryCellValue("a".to_string(), 2).run(&mut args).unwrap();
         Instruction::AssignMemoryCellValue("b".to_string(), 20).run(&mut args).unwrap();
@@ -313,5 +313,29 @@ mod tests {
         let mut args = RuntimeArgs::new();
         args.memory_cells = HashMap::new();
         assert!(Instruction::AssignMemoryCellValue("c".to_string(), 10).run(&mut args).is_err());
+    }
+
+    #[test]
+    fn test_assign_memory_cell_value_from_accumulator() {
+        let mut args = RuntimeArgs::new();
+        args.memory_cells = HashMap::new();
+        args.memory_cells.insert("a".to_string(), MemoryCell::new("a".to_string()));
+        Instruction::AssignAccumulatorValue(0, 20).run(&mut args).unwrap();
+        Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0).run(&mut args).unwrap();
+        assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 20);
+    }
+
+    #[test]
+    fn test_assign_memory_cell_value_from_accumulator_error() {
+        let mut args = RuntimeArgs::new();
+        args.memory_cells = HashMap::new();
+        args.accumulators = vec![Accumulator::new(0)];
+        let err = Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0).run(&mut args);
+        assert!(err.is_err());
+        assert!(err.err().unwrap().contains("Memory cell"));
+        args.memory_cells.insert("a".to_string(), MemoryCell::new("a".to_string()));
+        let err = Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 1).run(&mut args);
+        assert!(err.is_err());
+        assert!(err.err().unwrap().contains("Accumulator"));
     }
 }
