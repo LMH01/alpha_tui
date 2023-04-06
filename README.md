@@ -18,7 +18,7 @@ Development has just begun, almost everything is still missing.
 
 ### Instructions
 
-Be $k,u,v\in\mathbb{Z};n\in\mathbb{N}|n\geq0:i,j\in\{h_0,\ldots,h_n\};op\in\{+,-,*,/\};cmp\in\{<,\leq,=,\geq,>\}$
+Be $k,u,v\in\mathbb{Z};n\in\mathbb{N}|n\geq0:i,j\in\lbrace h_0,\ldots,h_n\rbrace;op\in\lbrace +,-,*,/\rbrace;cmp\in\lbrace <,\leq,=,\geq,>\rbrace$
 
 #### Text parsing to instruction
 
