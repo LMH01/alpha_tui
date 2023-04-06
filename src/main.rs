@@ -156,19 +156,19 @@ impl Instruction {
                 if let Some(y) = runtime_args.accumulators.get_mut(*a) {
                     y.data = Some(*x);
                 } else {
-                    return Err(format!("Accumulator with index {} does not exist!", a).to_string());
+                    return Err(format!("Accumulator with index {} does not exist!", a));
                 }
             },
             Self::AssignAccumulatorValueFromAccumulator(target, src) => {
-                if runtime_args.accumulators.get(*target).is_some() {
-                    if runtime_args.accumulators.get(*src).is_some() {
+                if runtime_args.accumulators.get(*target).is_some() && runtime_args.accumulators.get(*target).unwrap().data.is_some() {
+                    if runtime_args.accumulators.get(*src).is_some() && runtime_args.accumulators.get(*src).unwrap().data.is_some() {
                         let replacement = runtime_args.accumulators.get(*src).unwrap();
                         runtime_args.accumulators[*target].data = replacement.data;
                     } else {
-                        return Err(format!("Accumulator with index {} does not exist!", src).to_string());
+                        return Err(format!("Accumulator with index {} does not exist!", src));
                     }
                 } else {
-                    return Err(format!("Accumulator with index {} does not exist!", target).to_string());
+                    return Err(format!("Accumulator with index {} does not exist!", target));
                 }
             }
             Self::AssignAccumulatorValueFromMemoryCell(a, cell_label) => {
@@ -176,10 +176,10 @@ impl Instruction {
                     if let Some(cell) = runtime_args.memory_cells.get_mut(cell_label) {
                         ac.data = cell.data;
                     } else {
-                        return Err(format!("Memory cell labeled {} does not exist!", cell_label).to_string());
+                        return Err(format!("Memory cell labeled {} does not exist!", cell_label));
                     }
                 } else {
-                    return Err(format!("Accumulator with index {} does not exist!", a).to_string());
+                    return Err(format!("Accumulator with index {} does not exist!", a));
                 }
             },
             Self::AssignMemoryCellValueFromAccumulator(cell_label, a) => {
@@ -187,10 +187,10 @@ impl Instruction {
                     if let Some(ac) = runtime_args.accumulators.get_mut(*a) {
                         cell.data = ac.data;
                     } else {
-                        return Err(format!("Accumulator with index {} does not exist!", a).to_string());
+                        return Err(format!("Accumulator with index {} does not exist!", a));
                     }
                 } else {
-                    return Err(format!("Memory cell labeled {} does not exist!", cell_label).to_string());
+                    return Err(format!("Memory cell labeled {} does not exist!", cell_label));
                 }
             },
             Self::PrintAccumulators() => {
@@ -220,3 +220,42 @@ impl Instruction {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use crate::{RuntimeArgs, Instruction};
+
+    
+    #[test]
+    fn test_stack() {
+        let mut args = RuntimeArgs::new();
+        Instruction::AssignAccumulatorValue(0, 5).run(&mut args).unwrap();
+        Instruction::Push().run(&mut args).unwrap();
+        Instruction::AssignAccumulatorValue(0, 10).run(&mut args).unwrap();
+        Instruction::Push().run(&mut args).unwrap();
+        assert_eq!(args.stack, vec![5, 10]);
+        Instruction::Pop().run(&mut args).unwrap();
+        assert_eq!(args.accumulators[0].data.unwrap(), 10);
+        Instruction::Pop().run(&mut args).unwrap();
+        assert_eq!(args.accumulators[0].data.unwrap(), 5);
+        assert_eq!(args.stack.len(), 0);
+    }
+
+    #[test]
+    fn test_assign_accumulator_value_from_accumulator() {
+        let mut args = RuntimeArgs::new();
+        Instruction::AssignAccumulatorValue(0, 5).run(&mut args).unwrap();
+        Instruction::AssignAccumulatorValue(1, 20).run(&mut args).unwrap();
+        Instruction::AssignAccumulatorValue(2, 12).run(&mut args).unwrap();
+        Instruction::AssignAccumulatorValueFromAccumulator(1, 2).run(&mut args).unwrap();
+        Instruction::AssignAccumulatorValueFromAccumulator(0, 1).run(&mut args).unwrap();
+        assert_eq!(args.accumulators[1].data.unwrap(), 12);
+        assert_eq!(args.accumulators[2].data.unwrap(), 12);
+    }
+
+    #[test]
+    fn test_assign_accumulator_value_from_accumulator_error() {
+        let mut args = RuntimeArgs::new();
+        assert!(Instruction::AssignAccumulatorValueFromAccumulator(0, 1).run(&mut args).is_err());
+        assert!(Instruction::AssignAccumulatorValueFromAccumulator(1, 0).run(&mut args).is_err());
+    }
+}
