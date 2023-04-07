@@ -19,6 +19,7 @@ fn main() {
         Instruction::AssignMemoryCellValueFromAccumulator("c".to_string(),1),
         Instruction::AssignAccumulatorValueFromMemoryCell(3, "c".to_string()),
         Instruction::AssignAccumulatorValueFromAccumulator(0, 2),
+        Instruction::AssignMemoryCellValue("f".to_string(), 17),
         Instruction::PrintAccumulators(),
         Instruction::PrintMemoryCells(),
         Instruction::PrintStack(),
@@ -54,9 +55,9 @@ struct MemoryCell {
 
 impl MemoryCell {
     /// Creates a new register
-    fn new(label: String) -> Self {
+    fn new(label: &str) -> Self {
         Self {
-            label,
+            label: label.to_string(),
             data: None,
         }
     }
@@ -102,7 +103,7 @@ impl RuntimeArgs {
         }
         let mut memory_cells: HashMap<String, MemoryCell> = HashMap::new();
         for i in MEMORY_CELL_LABELS {
-            memory_cells.insert(i.to_string(), MemoryCell::new(i.to_string()));
+            memory_cells.insert(i.to_string(), MemoryCell::new(i));
         }
         Self {
             accumulators,
@@ -276,7 +277,7 @@ mod tests {
     fn test_assign_accumulator_value_from_memory_cell() {
         let mut args = RuntimeArgs::new();
         args.memory_cells = HashMap::new();
-        args.memory_cells.insert("a".to_string(), MemoryCell::new("a".to_string()));
+        args.memory_cells.insert("a".to_string(), MemoryCell::new("a"));
         Instruction::AssignMemoryCellValue("a".to_string(), 10).run(&mut args).unwrap();
         Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string()).run(&mut args).unwrap();
         assert_eq!(args.accumulators[0].data.unwrap(), 10);
@@ -290,7 +291,7 @@ mod tests {
         let err = Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string()).run(&mut args);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Memory cell"));
-        args.memory_cells.insert("a".to_string(), MemoryCell::new("a".to_string()));
+        args.memory_cells.insert("a".to_string(), MemoryCell::new("a"));
         let err = Instruction::AssignAccumulatorValueFromMemoryCell(1, "a".to_string()).run(&mut args);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Accumulator"));
@@ -300,8 +301,8 @@ mod tests {
     fn test_assign_memory_cell_value() {
         let mut args = RuntimeArgs::new();
         args.memory_cells = HashMap::new();
-        args.memory_cells.insert("a".to_string(), MemoryCell::new("a".to_string()));
-        args.memory_cells.insert("b".to_string(), MemoryCell::new("b".to_string()));
+        args.memory_cells.insert("a".to_string(), MemoryCell::new("a"));
+        args.memory_cells.insert("b".to_string(), MemoryCell::new("b"));
         Instruction::AssignMemoryCellValue("a".to_string(), 2).run(&mut args).unwrap();
         Instruction::AssignMemoryCellValue("b".to_string(), 20).run(&mut args).unwrap();
         assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 2);
@@ -319,7 +320,7 @@ mod tests {
     fn test_assign_memory_cell_value_from_accumulator() {
         let mut args = RuntimeArgs::new();
         args.memory_cells = HashMap::new();
-        args.memory_cells.insert("a".to_string(), MemoryCell::new("a".to_string()));
+        args.memory_cells.insert("a".to_string(), MemoryCell::new("a"));
         Instruction::AssignAccumulatorValue(0, 20).run(&mut args).unwrap();
         Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0).run(&mut args).unwrap();
         assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 20);
@@ -333,7 +334,7 @@ mod tests {
         let err = Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0).run(&mut args);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Memory cell"));
-        args.memory_cells.insert("a".to_string(), MemoryCell::new("a".to_string()));
+        args.memory_cells.insert("a".to_string(), MemoryCell::new("a"));
         let err = Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 1).run(&mut args);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Accumulator"));
