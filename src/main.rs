@@ -25,7 +25,7 @@ fn main() {
         Instruction::PrintStack(),
     ];
     let mut runner = Runner::new(instructions);
-    runner.run();
+    runner.run().unwrap();
 }
 
 /// A single accumulator, represents "Akkumulator/Alpha" from SysInf lecture.
@@ -63,9 +63,11 @@ impl MemoryCell {
     }
 }
 
+//TODO make fields private and add access functions, move into separate module
 struct Runner<'a> {
     runtime_args: RuntimeArgs<'a>,
     instructions: Vec<Instruction<'a>>,
+    control_flow: ControlFlow<'a>,
 }
 
 impl<'a> Runner<'a> {
@@ -73,12 +75,47 @@ impl<'a> Runner<'a> {
         Self {
             runtime_args: RuntimeArgs::new(),
             instructions,
+            control_flow: ControlFlow::new(),
         }
     }
 
-    fn run(&mut self) {
-        for instruction in &self.instructions {
-            instruction.run(&mut self.runtime_args);
+    fn run(&mut self) -> Result<(), String> {
+        while self.control_flow.next_instruction_index < self.instructions.len() {
+            if let Err(e) = self.instructions[self.control_flow.next_instruction_index].run(&mut self.runtime_args, &mut self.control_flow) {
+                println!("Unable to continue execution, an irrecoverable error occured: {}", e);
+                return Err(format!("Execution terminated: {}", e));
+            } else {
+                self.control_flow.next_instruction_index += 1;
+            }
+        }
+        Ok(())
+    }
+
+    /// Adds an instruction to the end of the instruction vector with a label mapping.
+    fn add_instruction_with_label(&mut self, instruction: Instruction<'a>, label: &'a str) {
+        self.instructions.push(instruction);
+        self.control_flow.instruction_labels.insert(label, self.instructions.len()-1);
+    }
+
+}
+
+/// Used to control what instruction should be executed next.
+struct ControlFlow<'a> {
+    /// The index of the instruction that should be executed next in the **instructions** vector.
+    next_instruction_index: usize,
+    /// Stores label to instruction mappings.
+    /// 
+    /// Key = label of the instruction
+    /// Value = index of the instruction in the instructions vector
+    instruction_labels: HashMap<&'a str, usize>,
+}
+
+impl<'a> ControlFlow<'a> {
+
+    fn new() -> Self {
+        Self {
+            next_instruction_index: 0,
+            instruction_labels: HashMap::new(),
         }
     }
 }
@@ -151,7 +188,7 @@ enum Instruction<'a> {
 impl<'a> Instruction<'a> {
     /// Runs the instruction, retuns Err(String) when instruction could not be ran.
     /// Err contains the reason why running the instruction failed.
-    fn run(&self, runtime_args: &mut RuntimeArgs<'a>) -> Result<(), String> {
+    fn run(&self, runtime_args: &mut RuntimeArgs<'a>, control_flow: &mut ControlFlow<'a>) -> Result<(), String> {
         match self {
             Self::Push() => {
                 runtime_args.stack.push(runtime_args.accumulators[0].data.unwrap_or(0));
@@ -250,20 +287,21 @@ impl<'a> Instruction<'a> {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::{RuntimeArgs, Instruction, MemoryCell, Accumulator};
+    use crate::{RuntimeArgs, Instruction, MemoryCell, Accumulator, ControlFlow};
 
     
     #[test]
     fn test_stack() {
         let mut args = setup_runtime_args();
-        Instruction::AssignAccumulatorValue(0, 5).run(&mut args).unwrap();
-        Instruction::Push().run(&mut args).unwrap();
-        Instruction::AssignAccumulatorValue(0, 10).run(&mut args).unwrap();
-        Instruction::Push().run(&mut args).unwrap();
+        let mut control_flow = ControlFlow::new();
+        Instruction::AssignAccumulatorValue(0, 5).run(&mut args, &mut control_flow).unwrap();
+        Instruction::Push().run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssignAccumulatorValue(0, 10).run(&mut args, &mut control_flow).unwrap();
+        Instruction::Push().run(&mut args, &mut control_flow).unwrap();
         assert_eq!(args.stack, vec![5, 10]);
-        Instruction::Pop().run(&mut args).unwrap();
+        Instruction::Pop().run(&mut args, &mut control_flow).unwrap();
         assert_eq!(args.accumulators[0].data.unwrap(), 10);
-        Instruction::Pop().run(&mut args).unwrap();
+        Instruction::Pop().run(&mut args, &mut control_flow).unwrap();
         assert_eq!(args.accumulators[0].data.unwrap(), 5);
         assert_eq!(args.stack.len(), 0);
     }
@@ -271,11 +309,12 @@ mod tests {
     #[test]
     fn test_assign_accumulator_value_from_accumulator() {
         let mut args = setup_runtime_args();
-        Instruction::AssignAccumulatorValue(0, 5).run(&mut args).unwrap();
-        Instruction::AssignAccumulatorValue(1, 20).run(&mut args).unwrap();
-        Instruction::AssignAccumulatorValue(2, 12).run(&mut args).unwrap();
-        Instruction::AssignAccumulatorValueFromAccumulator(1, 2).run(&mut args).unwrap();
-        Instruction::AssignAccumulatorValueFromAccumulator(0, 1).run(&mut args).unwrap();
+        let mut control_flow = ControlFlow::new();
+        Instruction::AssignAccumulatorValue(0, 5).run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssignAccumulatorValue(1, 20).run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssignAccumulatorValue(2, 12).run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssignAccumulatorValueFromAccumulator(1, 2).run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssignAccumulatorValueFromAccumulator(0, 1).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(args.accumulators[1].data.unwrap(), 12);
         assert_eq!(args.accumulators[2].data.unwrap(), 12);
     }
@@ -283,27 +322,30 @@ mod tests {
     #[test]
     fn test_assign_accumulator_value_from_accumulator_error() {
         let mut args = setup_empty_runtime_args();
-        assert!(Instruction::AssignAccumulatorValueFromAccumulator(0, 1).run(&mut args).is_err());
-        assert!(Instruction::AssignAccumulatorValueFromAccumulator(1, 0).run(&mut args).is_err());
+        let mut control_flow = ControlFlow::new();
+        assert!(Instruction::AssignAccumulatorValueFromAccumulator(0, 1).run(&mut args, &mut control_flow).is_err());
+        assert!(Instruction::AssignAccumulatorValueFromAccumulator(1, 0).run(&mut args, &mut control_flow).is_err());
     }
 
     #[test]
     fn test_assign_accumulator_value_from_memory_cell() {
         let mut args = setup_runtime_args();
-        Instruction::AssignMemoryCellValue("a", 10).run(&mut args).unwrap();
-        Instruction::AssignAccumulatorValueFromMemoryCell(0, "a").run(&mut args).unwrap();
+        let mut control_flow = ControlFlow::new();
+        Instruction::AssignMemoryCellValue("a", 10).run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssignAccumulatorValueFromMemoryCell(0, "a").run(&mut args, &mut control_flow).unwrap();
         assert_eq!(args.accumulators[0].data.unwrap(), 10);
     }
     
     #[test]
     fn test_assign_accumulator_value_from_memory_cell_error() {
         let mut args = setup_empty_runtime_args();
+        let mut control_flow = ControlFlow::new();
         args.accumulators = vec![Accumulator::new(0)];
-        let err = Instruction::AssignAccumulatorValueFromMemoryCell(0, "a").run(&mut args);
+        let err = Instruction::AssignAccumulatorValueFromMemoryCell(0, "a").run(&mut args, &mut control_flow);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Memory cell"));
         args.memory_cells.insert("a", MemoryCell::new("a"));
-        let err = Instruction::AssignAccumulatorValueFromMemoryCell(1, "a").run(&mut args);
+        let err = Instruction::AssignAccumulatorValueFromMemoryCell(1, "a").run(&mut args, &mut control_flow);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Accumulator"));
     }
@@ -311,8 +353,9 @@ mod tests {
     #[test]
     fn test_assign_memory_cell_value() {
         let mut args = setup_runtime_args();
-        Instruction::AssignMemoryCellValue("a", 2).run(&mut args).unwrap();
-        Instruction::AssignMemoryCellValue("b", 20).run(&mut args).unwrap();
+        let mut control_flow = ControlFlow::new();
+        Instruction::AssignMemoryCellValue("a", 2).run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssignMemoryCellValue("b", 20).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 2);
         assert_eq!(args.memory_cells.get("b").unwrap().data.unwrap(), 20);
     }
@@ -320,26 +363,29 @@ mod tests {
     #[test]
     fn test_assign_memory_cell_value_error() {
         let mut args = setup_empty_runtime_args();
-        assert!(Instruction::AssignMemoryCellValue("c", 10).run(&mut args).is_err());
+        let mut control_flow = ControlFlow::new();
+        assert!(Instruction::AssignMemoryCellValue("c", 10).run(&mut args, &mut control_flow).is_err());
     }
 
     #[test]
     fn test_assign_memory_cell_value_from_accumulator() {
         let mut args = setup_runtime_args();
-        Instruction::AssignAccumulatorValue(0, 20).run(&mut args).unwrap();
-        Instruction::AssignMemoryCellValueFromAccumulator("a", 0).run(&mut args).unwrap();
+        let mut control_flow = ControlFlow::new();
+        Instruction::AssignAccumulatorValue(0, 20).run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssignMemoryCellValueFromAccumulator("a", 0).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 20);
     }
 
     #[test]
     fn test_assign_memory_cell_value_from_accumulator_error() {
         let mut args = setup_empty_runtime_args();
+        let mut control_flow = ControlFlow::new();
         args.accumulators = vec![Accumulator::new(0)];
-        let err = Instruction::AssignMemoryCellValueFromAccumulator("a", 0).run(&mut args);
+        let err = Instruction::AssignMemoryCellValueFromAccumulator("a", 0).run(&mut args, &mut control_flow);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Memory cell"));
         args.memory_cells.insert("a", MemoryCell::new("a"));
-        let err = Instruction::AssignMemoryCellValueFromAccumulator("a", 1).run(&mut args);
+        let err = Instruction::AssignMemoryCellValueFromAccumulator("a", 1).run(&mut args, &mut control_flow);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Accumulator"));
     }
@@ -347,21 +393,23 @@ mod tests {
     #[test]
     fn test_assign_memory_cell_value_from_memory_cell() {
         let mut args = setup_runtime_args();
-        Instruction::AssignMemoryCellValue("a", 20).run(&mut args).unwrap();
-        Instruction::AssingMemoryCellValueFromMemoryCell("b", "a").run(&mut args).unwrap();
+        let mut control_flow = ControlFlow::new();
+        Instruction::AssignMemoryCellValue("a", 20).run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssingMemoryCellValueFromMemoryCell("b", "a").run(&mut args, &mut control_flow).unwrap();
         assert_eq!(args.memory_cells.get("b").unwrap().data.unwrap(), 20);
     }
 
     #[test]
     fn test_assign_memory_cell_value_from_memory_cell_error() {
         let mut args = setup_empty_runtime_args();
-        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("a", "b").run(&mut args).is_err());
-        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("b", "a").run(&mut args).is_err());
+        let mut control_flow = ControlFlow::new();
+        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("a", "b").run(&mut args, &mut control_flow).is_err());
+        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("b", "a").run(&mut args, &mut control_flow).is_err());
         args.memory_cells.insert("a", MemoryCell::new("a"));
         args.memory_cells.insert("b", MemoryCell::new("b"));
         args.memory_cells.get_mut("b").unwrap().data = Some(10);
-        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("b", "a").run(&mut args).is_err());
-        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("a", "b").run(&mut args).is_ok());
+        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("b", "a").run(&mut args, &mut control_flow).is_err());
+        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("a", "b").run(&mut args, &mut control_flow).is_ok());
     }
 
     /// Sets up runtime args in a conistent way because the default implementation for memory cells and accumulators is configgurable.
