@@ -115,29 +115,31 @@ impl<'a> RuntimeArgs<'a> {
 
 
 enum Instruction<'a> {
-    /// push alpha_0 to stack 
+    /// push **alpha_0** to stack 
     Push(),
-    /// pop in alpha_0
+    /// pop in **alpha_0**
     Pop(),
-    /// Assigns param1 to accumulator with index param0.
+    /// Assigns **param1** to accumulator with index **param0**.
     ///
     /// Errors when accumulator does not exist.
     AssignAccumulatorValue(usize, i32),
-    /// Assigns value of accumulator with index param1 to accumulator with index param0.
+    /// Assigns value of accumulator with index **param1** to accumulator with index **param0**.
     AssignAccumulatorValueFromAccumulator(usize, usize),
-    /// Assigns value of memory cell with label param1 to accumulator with index param0.
+    /// Assigns value of memory cell with label **param1** to accumulator with index **param0**.
     /// 
     /// Errors when memory cell or accumulator does not exist.
     AssignAccumulatorValueFromMemoryCell(usize, &'a str),
-    /// Assings param1 to memory cell with label param0.
+    /// Assings **param1** to memory cell with label **param0**.
     ///
     /// Errors when memory cell does not exist.
     AssignMemoryCellValue(&'a str, i32),
     // TODO change String to &str
-    /// Assigns value of accumulator with index param1 to memory cell with label param1.
+    /// Assigns value of accumulator with index **param1** to memory cell with label **param0**.
     ///
     /// Errors when memory cell or accumulator does not exist.
     AssignMemoryCellValueFromAccumulator(&'a str, usize),
+    /// Assings value of memory cell with label **param1** to memory cell with label **param0**.
+    AssingMemoryCellValueFromMemoryCell(&'a str, &'a str),
     /// Prints the current contnets of the accumulators to console
     PrintAccumulators(),
     /// Prints the current contents of the memory cells
