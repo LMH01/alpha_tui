@@ -604,12 +604,80 @@ mod tests {
         assert!(Instruction::GotoIfMemoryCell(Comparison::Equal, "none", 0, "a").run(&mut args, &mut control_flow).is_ok());
     }
 
+    #[test]
+    fn test_example_program_1() {
+        let mut runtime_args = RuntimeArgs::new_empty();
+        for _i in 1..=4 {
+            runtime_args.add_accumulator();
+        }
+        runtime_args.add_storage_cell("a");
+        runtime_args.add_storage_cell("b");
+        runtime_args.add_storage_cell("c");
+        runtime_args.add_storage_cell("d");
+        runtime_args.add_storage_cell("w");
+        runtime_args.add_storage_cell("x");
+        runtime_args.add_storage_cell("y");
+        runtime_args.add_storage_cell("z");
+        runtime_args.add_storage_cell("h1");
+        runtime_args.add_storage_cell("h2");
+        runtime_args.add_storage_cell("h3");
+        runtime_args.add_storage_cell("h4");
+        let instructions = vec![
+            Instruction::AssignMemoryCellValue("a", 5),
+            Instruction::AssignMemoryCellValue("b", 2),
+            Instruction::AssignMemoryCellValue("c", 3),
+            Instruction::AssignMemoryCellValue("d", 9),
+            Instruction::AssignMemoryCellValue("w", 4),
+            Instruction::AssignMemoryCellValue("x", 8),
+            Instruction::AssignMemoryCellValue("y", 3),
+            Instruction::AssignMemoryCellValue("z", 2),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h1", "a", "w"),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h2", "b", "y"),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h3", "a", "x"),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h4", "b", "z"),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "a", "h1", "h2"),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "b", "h3", "h4"),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h1", "c", "w"),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h2", "d", "y"),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h3", "c", "x"),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h4", "d", "z"),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "c", "h1", "h2"),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "d", "h3", "h4"),
+            Instruction::PrintMemoryCells(),
+        ];
+        let mut runner = Runner::new_custom(instructions, runtime_args);
+        runner.run().unwrap();
+        assert_eq!(runner.runtime_args().memory_cells.get("a").unwrap().data.unwrap(), 26);
+        assert_eq!(runner.runtime_args().memory_cells.get("b").unwrap().data.unwrap(), 44);
+        assert_eq!(runner.runtime_args().memory_cells.get("c").unwrap().data.unwrap(), 39);
+        assert_eq!(runner.runtime_args().memory_cells.get("d").unwrap().data.unwrap(), 42);
+    }
+
+    #[test]
+    fn test_example_program_2() {
+        let instructions = vec![
+            Instruction::AssignAccumulatorValue(0, 1),
+            Instruction::AssignMemoryCellValue("a", 8),
+            Instruction::CalcAccumulatorWithConstant(Operation::Multiplication, 0, 2),
+            Instruction::CalcMemoryCellWithMemoryCellConstant(Operation::Minus, "a", "a", 1),
+            Instruction::AssignAccumulatorValueFromMemoryCell(1, "a"),
+            Instruction::GotoIfConstant(Comparison::More, "loop", 1, 0),
+            Instruction::PrintMemoryCells(),
+            Instruction::PrintAccumulators(),
+        ];
+        let mut runner = Runner::new(instructions);
+        runner.add_label("loop", 2).unwrap();
+        runner.run().unwrap();
+        assert_eq!(runner.runtime_args().accumulators[0].data.unwrap(), 256);
+    }
+
     /// Sets up runtime args in a conistent way because the default implementation for memory cells and accumulators is configgurable.
     fn setup_runtime_args() -> RuntimeArgs<'static> {
         let mut args = RuntimeArgs::new();
         args.memory_cells = HashMap::new();
         args.memory_cells.insert("a", MemoryCell::new("a"));
         args.memory_cells.insert("b", MemoryCell::new("b"));
+        args.memory_cells.insert("c", MemoryCell::new("c"));
         args.accumulators = vec![Accumulator::new(0), Accumulator::new(1), Accumulator::new(2)];
         args
     }

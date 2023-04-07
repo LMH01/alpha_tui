@@ -18,13 +18,22 @@ impl<'a> Runner<'a> {
         }
     }
 
+    /// Creates a new runner that can be initialized with different runtime args.
+    pub fn new_custom(instructions: Vec<Instruction<'a>>, runtime_args: RuntimeArgs<'a>) -> Self {
+        Self {
+            runtime_args,
+            instructions,
+            control_flow: ControlFlow::new(),
+        }
+    }
+
     pub fn run(&mut self) -> Result<(), String> {
         while self.control_flow.next_instruction_index < self.instructions.len() {
-            if let Err(e) = self.instructions[self.control_flow.next_instruction_index].run(&mut self.runtime_args, &mut self.control_flow) {
+            let current_instruction = self.control_flow.next_instruction_index;
+            self.control_flow.next_instruction_index += 1;
+            if let Err(e) = self.instructions[current_instruction].run(&mut self.runtime_args, &mut self.control_flow) {
                 println!("Unable to continue execution, an irrecoverable error occured: {}", e);
                 return Err(format!("Execution terminated: {}", e));
-            } else {
-                self.control_flow.next_instruction_index += 1;
             }
         }
         Ok(())
@@ -34,6 +43,25 @@ impl<'a> Runner<'a> {
     pub fn add_instruction_with_label(&mut self, instruction: Instruction<'a>, label: &'a str) {
         self.instructions.push(instruction);
         self.control_flow.instruction_labels.insert(label, self.instructions.len()-1);
+    }
+
+    /// Adds label to instruction labels.
+    /// 
+    /// Errors when **instruction_index** is out of bounds.
+    /// 
+    /// Note: Make sure that you start counting at 0 and not 1!
+    pub fn add_label(&mut self, label: &'a str, instruction_index: usize) -> Result<(), String> {
+        if self.instructions.len() <= instruction_index {
+            Err(format!("Unable to add label {}, index {} is out of bounds!", label, instruction_index))
+        } else {
+            self.control_flow.instruction_labels.insert(label, instruction_index);
+            Ok(())
+        }
+    }
+
+    /// Returns reference to **runtime_args**.
+    pub fn runtime_args(&self) -> &RuntimeArgs {
+        &self.runtime_args
     }
 
 }
@@ -98,5 +126,28 @@ impl<'a> RuntimeArgs<'a> {
             memory_cells,
             stack: Vec::new(),
         }
+    }
+
+    /// Creates a new runtimes args struct with empty lists.
+    pub fn new_empty() -> Self {
+        Self {
+            accumulators: Vec::new(),
+            memory_cells: HashMap::new(),
+            stack: Vec::new(),
+        }
+    }
+
+    /// Creates a new storage cell with label **label** if it does not already exist
+    /// and adds it to the **memory_cells* hashmap.
+    pub fn add_storage_cell(&mut self, label: &'a str) {
+        if !self.memory_cells.contains_key(label) {
+            self.memory_cells.insert(label, MemoryCell::new(label));
+        }
+    }
+
+    /// Adds a new accumulator to the accumulators vector.
+    pub fn add_accumulator(&mut self) {
+        let id = self.accumulators.len();
+        self.accumulators.push(Accumulator::new(id as i32));
     }
 }

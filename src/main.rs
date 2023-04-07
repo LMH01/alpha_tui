@@ -1,4 +1,4 @@
-use crate::{instructions::Instruction, runtime::Runner};
+use crate::{instructions::Instruction, runtime::{Runner, RuntimeArgs}, base::{Operation, Comparison}};
 
 /// Contains all required data types used to run programs
 mod base;
@@ -33,4 +33,5 @@ fn main() {
     ];
     let mut runner = Runner::new(instructions);
     runner.run().unwrap();
+    
 }
