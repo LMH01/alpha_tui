@@ -33,7 +33,9 @@ This section logs what instructions can be parsed from text
 - [ ] $\alpha_u:=\rho(i)\space\textbf{op}\space \rho(j)$
 - [ ] $\rho(i):=\rho(j)\space\textbf{op}\space\alpha_u$
 - [ ] $\rho(i):=\rho(j)$
-- [ ] if $\alpha_u\space\textbf{cmp}\space0$ then goto label
+- [ ] if $\alpha_u\space\textbf{cmp}\space\alpha_v$ then goto label
+- [ ] if $\alpha_u\space\textbf{cmp}\space k$ then goto label
+- [ ] if $\alpha_u\space\textbf{cmp}\space\rho(i)$ then goto label
 - [ ] goto label 
 - [ ] push 
 - [ ] pop
@@ -51,7 +53,9 @@ This section logs what instructions are implemented in the backend
 - [ ] $\alpha_u:=\rho(i)\space\textbf{op}\space \rho(j)$
 - [ ] $\rho(i):=\rho(j)\space\textbf{op}\space\alpha_u$
 - [X] $\rho(i):=\rho(j)$
-- [ ] if $\alpha_u\space\textbf{cmp}\space0$ then goto label
+- [X] if $\alpha_u\space\textbf{cmp}\space\alpha_v$ then goto label
+- [X] if $\alpha_u\space\textbf{cmp}\space k$ then goto label
+- [X] if $\alpha_u\space\textbf{cmp}\space\rho(i)$ then goto label
 - [X] goto label 
 - [X] push 
 - [X] pop

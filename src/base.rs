@@ -32,3 +32,52 @@ impl MemoryCell {
         }
     }
 }
+
+/// Different ways of paring two values
+pub enum Comparison {
+    Less,
+    LessOrEqual,
+    Equal,
+    MoreOrEqual,
+    More,    
+}
+
+impl Comparison {
+    /// Compares two values with the selected method of comparison.
+    pub fn cmp(&self, x: i32, y: i32) -> bool {
+        match self {
+            Self::Less => {
+                x < y
+            },
+            Self::LessOrEqual => {
+                x <= y
+            },
+            Self::Equal => {
+                x == y
+            },
+            Self::MoreOrEqual => {
+                x >= y
+            },
+            Self::More => {
+                x > y
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::base::Comparison;
+
+    #[test]
+    fn test_comparison() {
+        assert!(Comparison::Less.cmp(5, 10));
+        assert!(Comparison::LessOrEqual.cmp(5, 10));
+        assert!(Comparison::LessOrEqual.cmp(5, 5));
+        assert!(Comparison::Equal.cmp(5, 5));
+        assert!(Comparison::MoreOrEqual.cmp(5, 5));
+        assert!(Comparison::MoreOrEqual.cmp(10, 5));
+        assert!(Comparison::More.cmp(10, 5));
+    }
+
+}

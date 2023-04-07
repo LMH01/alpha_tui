@@ -1,4 +1,4 @@
-use crate::runtime::{RuntimeArgs, ControlFlow};
+use crate::{runtime::{RuntimeArgs, ControlFlow}, base::Comparison};
 
 pub enum Instruction<'a> {
     /// push **alpha_0** to stack 
@@ -30,6 +30,12 @@ pub enum Instruction<'a> {
     /// 
     /// See [ControlFlow](../runtime/struct.ControlFlow.html) for further information.
     Goto(&'a str),
+    /// See [goto_if_accumulator](fn.goto_if_accumulator.html)
+    GotoIfAccumulator(Comparison, &'a str, usize, usize),
+    /// See [goto_if_constant](fn.goto_if_constant.html)
+    GotoIfConstant(Comparison, &'a str, usize, i32),
+    /// See [goto_if_memory_cell](fn.goto_if_memory_cell.html)
+    GotoIfMemoryCell(Comparison, &'a str, usize, &'a str),
     /// Prints the current contnets of the accumulators to console
     PrintAccumulators(),
     /// Prints the current contents of the memory cells
@@ -116,6 +122,15 @@ impl<'a> Instruction<'a> {
                     return Err(format!("Unable to go to label {}: No instruction found for that label!", label));
                 }
             }
+            Self::GotoIfAccumulator(comparison, label, a_idx_a, a_idx_b) => {
+                goto_if_accumulator(runtime_args, control_flow, comparison, label, a_idx_a, a_idx_b)?
+            }
+            Self::GotoIfConstant(comparison, label, a_idx, c) => {
+                goto_if_constant(runtime_args, control_flow, comparison, label, a_idx, c)?;
+            }
+            Self::GotoIfMemoryCell(comparison, label, a_idx, mcl) => {
+                goto_if_memory_cell(runtime_args, control_flow, comparison, label, a_idx, mcl)?;
+            }
             Self::PrintAccumulators() => {
                 println!("--- Accumulators ---");
                 for (index, i) in runtime_args.accumulators.iter().enumerate() {
@@ -143,11 +158,89 @@ impl<'a> Instruction<'a> {
     }
 }
 
+/// Sets next instruction to instruction behind **label** when comparison between accumulator **a_idx_a** and accumulator **a_idx_b** succeeds.
+/// ## Arguments
+/// - 'comparison' - The way the two values should be compared
+/// - 'label' - The label behind which the instruction is found that should be executed when comparison succeeds
+/// - 'a_idx_a' - The index of accumulator a whichs value should be compared
+/// - 'a_idx_b' - The index of accumulator b whichs value should be compared
+fn goto_if_accumulator<'a>(runtime_args: &mut RuntimeArgs, control_flow: &mut ControlFlow, comparison: &Comparison, label: &'a str, a_idx_a: &usize, a_idx_b: &usize) -> Result<(), String> {
+    let a = assert_accumulator_contains_value(runtime_args, a_idx_a)?;
+    let b = assert_accumulator_contains_value(runtime_args, a_idx_b)?;
+    if comparison.cmp(a, b) {
+        control_flow.next_instruction_index(label)?
+    }
+    Ok(())
+}
+
+/// Sets next instruction to instruction behind **label** when comparison between accumulator **a_idx** and constant **c** succeeds.
+/// ## Arguments
+/// - 'comparison' - The way the two values should be compared
+/// - 'label' - The label behind which the instruction is found that should be executed when comparison succeeds
+/// - 'a_idx' - The index of accumulator a whichs value should be compared
+/// - 'c' - Constant that should be compared with **a_idx_a**
+fn goto_if_constant<'a>(runtime_args: &mut RuntimeArgs, control_flow: &mut ControlFlow, comparison: &Comparison, label: &'a str, a_idx: &usize, c: &i32) -> Result<(), String> {
+    let a = assert_accumulator_contains_value(runtime_args, a_idx)?;
+    if comparison.cmp(a, *c) {
+        control_flow.next_instruction_index(label)?
+    }
+    Ok(())
+}
+
+/// Sets next instruction to instruction behind **label** when comparison between accumulator **a_idx** and memory cell with label **mcl** succeeds.
+/// ## Arguments
+/// - 'comparison' - The way the two values should be compared
+/// - 'label' - The label behind which the instruction is found that should be executed when comparison succeeds
+/// - 'a_idx' - The index of accumulator a whichs value should be compared
+/// - 'mcl' - The label of the memory cell behind wich the value can be found that should be compared
+fn goto_if_memory_cell<'a>(runtime_args: &mut RuntimeArgs, control_flow: &mut ControlFlow, comparison: &Comparison, label: &'a str, a_idx: &usize, mcl: &'a str) -> Result<(), String> {
+    let a = assert_accumulator_contains_value(runtime_args, a_idx)?;
+    let b = assert_memory_cell_contains_value(runtime_args, mcl)?;
+    if comparison.cmp(a, b) {
+        control_flow.next_instruction_index(label)?
+    }
+    Ok(())
+}
+
+/// Tests if the accumulator with **index** exists and contains a value.
+/// 
+/// Ok(i32) contains the accumulator value.
+/// 
+/// Err(String) contains error message.
+fn assert_accumulator_contains_value(runtime_args: &mut RuntimeArgs, index: &usize) -> Result<i32, String> {
+    if let Some(value) = runtime_args.accumulators.get(*index) {
+        if value.data.is_some() {
+            Ok(runtime_args.accumulators.get(*index).unwrap().data.unwrap())
+        } else {
+            Err(format!("Accumulator with index {} does not contain data!", index))
+        }
+    } else {
+        Err(format!("Accumulator with index {} does not exist!", index))
+    }
+}
+
+/// Tests if the memory cell with **label** exists and contains a value.
+/// 
+/// Ok(i32) contains the memory cell value.
+/// 
+/// Err(String) contains error message.
+fn assert_memory_cell_contains_value(runtime_args: &mut RuntimeArgs, label: &str) -> Result<i32, String> {
+    if let Some(value) = runtime_args.memory_cells.get(label) {
+        if value.data.is_some() {
+            Ok(runtime_args.memory_cells.get(label).unwrap().data.unwrap())
+        } else {
+            Err(format!("Memory cell with label {} does not contain data!", label))
+        }
+    } else {
+        Err(format!("Memory cell with label {} does not exist!", label))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
 
-    use crate::{runtime::{ControlFlow, RuntimeArgs}, instructions::Instruction, base::{Accumulator, MemoryCell}};
+    use crate::{runtime::{ControlFlow, RuntimeArgs}, instructions::Instruction, base::{Accumulator, MemoryCell, Comparison}};
 
     
     #[test]
@@ -286,6 +379,53 @@ mod tests {
         let mut args = setup_empty_runtime_args();
         let mut control_flow = ControlFlow::new();
         assert!(Instruction::Goto("loop").run(&mut args, &mut control_flow).is_err());
+    }
+
+    #[test]
+    fn test_goto_if_accumulator() {
+        let mut args = setup_runtime_args();
+        let mut control_flow = ControlFlow::new();
+        control_flow.instruction_labels.insert("loop", 20);
+        Instruction::AssignAccumulatorValue(0, 20).run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssignAccumulatorValue(1, 30).run(&mut args, &mut control_flow).unwrap();
+        Instruction::GotoIfAccumulator(Comparison::Less, "loop", 0, 1).run(&mut args, &mut control_flow).unwrap();
+        assert_eq!(control_flow.next_instruction_index, 20);
+        control_flow.next_instruction_index = 0;
+        Instruction::GotoIfAccumulator(Comparison::Equal, "loop", 0, 1).run(&mut args, &mut control_flow).unwrap();
+        assert_eq!(control_flow.next_instruction_index, 0);
+        assert!(Instruction::GotoIfAccumulator(Comparison::Less, "none", 0, 1).run(&mut args, &mut control_flow).is_err());
+        assert!(Instruction::GotoIfAccumulator(Comparison::Equal, "none", 0, 1).run(&mut args, &mut control_flow).is_ok());
+    }
+
+    #[test]
+    fn test_goto_if_constant() {
+        let mut args = setup_runtime_args();
+        let mut control_flow = ControlFlow::new();
+        control_flow.instruction_labels.insert("loop", 20);
+        Instruction::AssignAccumulatorValue(0, 20).run(&mut args, &mut control_flow).unwrap();
+        Instruction::GotoIfConstant(Comparison::Less, "loop", 0, 40).run(&mut args, &mut control_flow).unwrap();
+        assert_eq!(control_flow.next_instruction_index, 20);
+        control_flow.next_instruction_index = 0;
+        Instruction::GotoIfConstant(Comparison::Equal, "loop", 0, 40).run(&mut args, &mut control_flow).unwrap();
+        assert_eq!(control_flow.next_instruction_index, 0);
+        assert!(Instruction::GotoIfConstant(Comparison::Less, "none", 0, 40).run(&mut args, &mut control_flow).is_err());
+        assert!(Instruction::GotoIfConstant(Comparison::Equal, "none", 0, 40).run(&mut args, &mut control_flow).is_ok());
+    }
+
+    #[test]
+    fn test_goto_if_memory_cell() {
+        let mut args = setup_runtime_args();
+        let mut control_flow = ControlFlow::new();
+        control_flow.instruction_labels.insert("loop", 20);
+        Instruction::AssignAccumulatorValue(0, 20).run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssignMemoryCellValue("a", 50).run(&mut args, &mut control_flow).unwrap();
+        Instruction::GotoIfMemoryCell(Comparison::Less, "loop", 0, "a").run(&mut args, &mut control_flow).unwrap();
+        assert_eq!(control_flow.next_instruction_index, 20);
+        control_flow.next_instruction_index = 0;
+        Instruction::GotoIfMemoryCell(Comparison::Equal, "loop", 0, "a").run(&mut args, &mut control_flow).unwrap();
+        assert_eq!(control_flow.next_instruction_index, 0);
+        assert!(Instruction::GotoIfMemoryCell(Comparison::Less, "none", 0, "a").run(&mut args, &mut control_flow).is_err());
+        assert!(Instruction::GotoIfMemoryCell(Comparison::Equal, "none", 0, "a").run(&mut args, &mut control_flow).is_ok());
     }
 
     /// Sets up runtime args in a conistent way because the default implementation for memory cells and accumulators is configgurable.

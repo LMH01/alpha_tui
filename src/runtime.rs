@@ -58,6 +58,17 @@ impl<'a> ControlFlow<'a> {
             instruction_labels: HashMap::new(),
         }
     }
+
+    /// Updates **next_instruction_index** if **label** is contained in **instruction_labels**,
+    /// otherwise returns an error.
+    pub fn next_instruction_index(&mut self, label: &str) -> Result<(), String> {
+        if let Some(index) = self.instruction_labels.get(label) {
+            self.next_instruction_index = *index;
+            Ok(())
+        } else {
+            Err(format!("Unable to update instruction index: no index found for label {}", label))
+        }
+    }
 }
 
 pub struct RuntimeArgs<'a> {
