@@ -106,6 +106,7 @@ struct ControlFlow<'a> {
     /// Stores label to instruction mappings.
     /// 
     /// Key = label of the instruction
+    /// 
     /// Value = index of the instruction in the instructions vector
     instruction_labels: HashMap<&'a str, usize>,
 }
@@ -177,6 +178,10 @@ enum Instruction<'a> {
     AssignMemoryCellValueFromAccumulator(&'a str, usize),
     /// Assings value of memory cell with label **param1** to memory cell with label **param0**.
     AssingMemoryCellValueFromMemoryCell(&'a str, &'a str),
+    /// Sets next instruction to instruction with label **param1**.
+    /// 
+    /// See [ControlFlow](struct.ControlFlow.html) for further information.
+    Goto(&'a str),
     /// Prints the current contnets of the accumulators to console
     PrintAccumulators(),
     /// Prints the current contents of the memory cells
@@ -256,6 +261,13 @@ impl<'a> Instruction<'a> {
                     return Err(format!("Memory cell labeled {} does not exist!", target));
                 }
             },
+            Self::Goto(label) => {
+                if let Some(index) = control_flow.instruction_labels.get(label) {
+                    control_flow.next_instruction_index = *index;
+                } else {
+                    return Err(format!("Unable to go to label {}: No instruction found for that label!", label));
+                }
+            }
             Self::PrintAccumulators() => {
                 println!("--- Accumulators ---");
                 for (index, i) in runtime_args.accumulators.iter().enumerate() {
@@ -410,6 +422,22 @@ mod tests {
         args.memory_cells.get_mut("b").unwrap().data = Some(10);
         assert!(Instruction::AssingMemoryCellValueFromMemoryCell("b", "a").run(&mut args, &mut control_flow).is_err());
         assert!(Instruction::AssingMemoryCellValueFromMemoryCell("a", "b").run(&mut args, &mut control_flow).is_ok());
+    }
+
+    #[test]
+    fn test_goto() {
+        let mut args = setup_empty_runtime_args();
+        let mut control_flow = ControlFlow::new();
+        control_flow.instruction_labels.insert("loop", 5);
+        Instruction::Goto("loop").run(&mut args, &mut control_flow).unwrap();
+        assert_eq!(control_flow.next_instruction_index, 5);
+    }
+
+    #[test]
+    fn test_goto_error() {
+        let mut args = setup_empty_runtime_args();
+        let mut control_flow = ControlFlow::new();
+        assert!(Instruction::Goto("loop").run(&mut args, &mut control_flow).is_err());
     }
 
     /// Sets up runtime args in a conistent way because the default implementation for memory cells and accumulators is configgurable.
