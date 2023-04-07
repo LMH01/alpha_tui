@@ -1,34 +1,23 @@
 use crate::{runtime::{RuntimeArgs, ControlFlow}, base::Comparison};
 
 pub enum Instruction<'a> {
-    /// push **alpha_0** to stack 
+    /// See [push](fn.push.html)
     Push(),
-    /// pop in **alpha_0**
+    /// See [pop](fn.pop.html)
     Pop(),
-    /// Assigns **param1** to accumulator with index **param0**.
-    ///
-    /// Errors when accumulator does not exist.
+    /// See [assign_accumulator_value](fn.assign_accumulator_value.html)
     AssignAccumulatorValue(usize, i32),
-    /// Assigns value of accumulator with index **param1** to accumulator with index **param0**.
+    /// See [assign_accumulator_value_from_accumulator](fn.assign_accumulator_value_from_accumulator.html)
     AssignAccumulatorValueFromAccumulator(usize, usize),
-    /// Assigns value of memory cell with label **param1** to accumulator with index **param0**.
-    /// 
-    /// Errors when memory cell or accumulator does not exist.
+    /// See [assign_accumulator_value_from_memory_cell](fn.assign_accumulator_value_from_memory_cell.html)
     AssignAccumulatorValueFromMemoryCell(usize, &'a str),
-    /// Assings **param1** to memory cell with label **param0**.
-    ///
-    /// Errors when memory cell does not exist.
+    /// See [assign_memory_cell_value](fn.assign_memory_cell_value.html)
     AssignMemoryCellValue(&'a str, i32),
-    // TODO change String to &str
-    /// Assigns value of accumulator with index **param1** to memory cell with label **param0**.
-    ///
-    /// Errors when memory cell or accumulator does not exist.
+    /// See [assign_memory_cell_value_from_accumulator](fn.assign_memory_cell_value_from_accumulator.html)
     AssignMemoryCellValueFromAccumulator(&'a str, usize),
-    /// Assings value of memory cell with label **param1** to memory cell with label **param0**.
+    /// See [assign_memory_cell_value_from_memory_cell](fn.assign_memory_cell_value_from_memory_cell.html)
     AssingMemoryCellValueFromMemoryCell(&'a str, &'a str),
-    /// Sets next instruction to instruction with label **param1**.
-    /// 
-    /// See [ControlFlow](../runtime/struct.ControlFlow.html) for further information.
+    /// See [ControlFlow](../runtime/struct.ControlFlow.html) and [goto](fn.goto.html) for further information.
     Goto(&'a str),
     /// See [goto_if_accumulator](fn.goto_if_accumulator.html)
     GotoIfAccumulator(Comparison, &'a str, usize, usize),
@@ -36,11 +25,11 @@ pub enum Instruction<'a> {
     GotoIfConstant(Comparison, &'a str, usize, i32),
     /// See [goto_if_memory_cell](fn.goto_if_memory_cell.html)
     GotoIfMemoryCell(Comparison, &'a str, usize, &'a str),
-    /// Prints the current contnets of the accumulators to console
+    /// See [print_accumulators](fn.print_accumulators.html)
     PrintAccumulators(),
-    /// Prints the current contents of the memory cells
+    /// See [print_memory_cells](fn.print_memory_cells.html)
     PrintMemoryCells(),
-    /// Prints the stack
+    /// See [print_stack](fn.print_stack.html)
     PrintStack(),
 }
 
@@ -49,113 +38,101 @@ impl<'a> Instruction<'a> {
     /// Err contains the reason why running the instruction failed.
     pub fn run(&self, runtime_args: &mut RuntimeArgs<'a>, control_flow: &mut ControlFlow<'a>) -> Result<(), String> {
         match self {
-            Self::Push() => {
-                runtime_args.stack.push(runtime_args.accumulators[0].data.unwrap_or(0));
-            },
-            Self::Pop() => {
-                runtime_args.accumulators[0].data = Some(runtime_args.stack.pop().unwrap_or(0));
-            },
-            Self::AssignAccumulatorValue(a,x) => {
-                if let Some(y) = runtime_args.accumulators.get_mut(*a) {
-                    y.data = Some(*x);
-                } else {
-                    return Err(format!("Accumulator with index {} does not exist!", a));
-                }
-            },
-            Self::AssignAccumulatorValueFromAccumulator(target, src) => {
-                if runtime_args.accumulators.get(*target).is_some() {
-                    if runtime_args.accumulators.get(*src).is_some() && runtime_args.accumulators.get(*src).unwrap().data.is_some() {
-                        let replacement = runtime_args.accumulators.get(*src).unwrap();
-                        runtime_args.accumulators[*target].data = replacement.data;
-                    } else {
-                        return Err(format!("Accumulator with index {} does not exist or does not contain data!", src));
-                    }
-                } else {
-                    return Err(format!("Accumulator with index {} does not exist!", target));
-                }
-            }
-            Self::AssignAccumulatorValueFromMemoryCell(a, cell_label) => {
-                if let Some(ac) = runtime_args.accumulators.get_mut(*a) {
-                    if let Some(cell) = runtime_args.memory_cells.get_mut(cell_label) {
-                        ac.data = cell.data;
-                    } else {
-                        return Err(format!("Memory cell labeled {} does not exist!", cell_label));
-                    }
-                } else {
-                    return Err(format!("Accumulator with index {} does not exist!", a));
-                }
-            },
-            Self::AssignMemoryCellValue(cell_label, value) => {
-                if let Some(cell) = runtime_args.memory_cells.get_mut(cell_label) {
-                    cell.data = Some(*value);
-                } else {
-                    return Err(format!("Memory cell labeled {} does not exist!", cell_label));
-                }
-            }
-            Self::AssignMemoryCellValueFromAccumulator(cell_label, a) => {
-                if let Some(cell) = runtime_args.memory_cells.get_mut(cell_label) {
-                    if let Some(ac) = runtime_args.accumulators.get_mut(*a) {
-                        cell.data = ac.data;
-                    } else {
-                        return Err(format!("Accumulator with index {} does not exist!", a));
-                    }
-                } else {
-                    return Err(format!("Memory cell labeled {} does not exist!", cell_label));
-                }
-            },
-            Self::AssingMemoryCellValueFromMemoryCell(target, src) => {
-                if runtime_args.memory_cells.get(*target).is_some() {
-                    if runtime_args.memory_cells.get(*src).is_some() && runtime_args.memory_cells.get(*src).unwrap().data.is_some() {
-                        let replacement = runtime_args.memory_cells.get(*src).unwrap();
-                        runtime_args.memory_cells.get_mut(*target).unwrap().data = replacement.data;
-                    } else {
-                        return Err(format!("Memory cell labeled {} does not exist or does not contain data!", src));
-                    }
-                } else {
-                    return Err(format!("Memory cell labeled {} does not exist!", target));
-                }
-            },
-            Self::Goto(label) => {
-                if let Some(index) = control_flow.instruction_labels.get(label) {
-                    control_flow.next_instruction_index = *index;
-                } else {
-                    return Err(format!("Unable to go to label {}: No instruction found for that label!", label));
-                }
-            }
-            Self::GotoIfAccumulator(comparison, label, a_idx_a, a_idx_b) => {
-                goto_if_accumulator(runtime_args, control_flow, comparison, label, a_idx_a, a_idx_b)?
-            }
-            Self::GotoIfConstant(comparison, label, a_idx, c) => {
-                goto_if_constant(runtime_args, control_flow, comparison, label, a_idx, c)?;
-            }
-            Self::GotoIfMemoryCell(comparison, label, a_idx, mcl) => {
-                goto_if_memory_cell(runtime_args, control_flow, comparison, label, a_idx, mcl)?;
-            }
-            Self::PrintAccumulators() => {
-                println!("--- Accumulators ---");
-                for (index, i) in runtime_args.accumulators.iter().enumerate() {
-                    println!("{} - {:?}", index, i.data);
-                }
-                println!("--------------------");
-            },
-            Self::PrintMemoryCells() => {
-                // TODO Make print sorted (Alpabetically by label name)
-                println!("--- Memory Cells ---");
-                for (k, v) in &runtime_args.memory_cells {
-                    println!("{} - {:?}", k, v.data);
-                }
-                println!("--------------------");
-            },
-            Self::PrintStack() => {
-                println!("------ Stack -------");
-                for (index, i) in runtime_args.stack.iter().enumerate() {
-                    println!("{} - {:?}", index, i);
-                }
-                println!("--------------------");
-            }
+            Self::Push() => push(runtime_args)?,
+            Self::Pop() => pop(runtime_args)?,
+            Self::AssignAccumulatorValue(a_idx, value) => assign_accumulator_value(runtime_args, a_idx, value)?,
+            Self::AssignAccumulatorValueFromAccumulator(a_idx_a, a_idx_b) => assign_accumulator_value_from_accumulator(runtime_args, a_idx_a, a_idx_b)?,
+            Self::AssignAccumulatorValueFromMemoryCell(a_idx, label) => assign_accumulator_value_from_memory_cell(runtime_args, a_idx, label)?,
+            Self::AssignMemoryCellValue(label, value) => assign_memory_cell_value(runtime_args, label, value)?,
+            Self::AssignMemoryCellValueFromAccumulator(label, a_idx) => assign_memory_cell_value_from_accumulator(runtime_args, label, a_idx)?,
+            Self::AssingMemoryCellValueFromMemoryCell(label_a, label_b) => assign_memory_cell_value_from_memory_cell(runtime_args, label_a, label_b)?,
+            Self::Goto(label) => goto(runtime_args, control_flow, label)?,
+            Self::GotoIfAccumulator(comparison, label, a_idx_a, a_idx_b) => goto_if_accumulator(runtime_args, control_flow, comparison, label, a_idx_a, a_idx_b)?,
+            Self::GotoIfConstant(comparison, label, a_idx, c) => goto_if_constant(runtime_args, control_flow, comparison, label, a_idx, c)?,
+            Self::GotoIfMemoryCell(comparison, label, a_idx, mcl) => goto_if_memory_cell(runtime_args, control_flow, comparison, label, a_idx, mcl)?,
+            Self::PrintAccumulators() => print_accumulators(runtime_args),
+            Self::PrintMemoryCells() => print_memory_cells(runtime_args),
+            Self::PrintStack() => print_stack(runtime_args),
         }
         Ok(())
     }
+}
+
+/// Pushes the value of alpha_0 onto the stack.
+fn push(runtime_args: &mut RuntimeArgs) -> Result<(), String> {
+    assert_accumulator_exists(runtime_args, &0)?;
+    runtime_args.stack.push(runtime_args.accumulators[0].data.unwrap_or(0));
+    Ok(())
+}
+
+/// Pops top value of the stack into alpha_0.
+fn pop(runtime_args: &mut RuntimeArgs) -> Result<(), String> {
+    assert_accumulator_contains_value(runtime_args, &0)?;
+    runtime_args.accumulators[0].data = Some(runtime_args.stack.pop().unwrap_or(0));
+    Ok(())
+}
+
+/// Assings **value** to accumulator with index **a_idx**.
+/// 
+/// Errors when accumulator does not exist.
+fn assign_accumulator_value(runtime_args: &mut RuntimeArgs, a_idx: &usize, value: &i32) -> Result<(), String> {
+    assert_accumulator_exists(runtime_args, a_idx)?;
+    runtime_args.accumulators.get_mut(*a_idx).unwrap().data = Some(*value);
+    Ok(())
+}
+
+/// Assigns value of accumulator with index **a_idx_b** to accumulator with index **a_idx_a**.
+///
+/// Errors when either accumulator does not exist or when **a_idx_b** does not contain a value.
+fn assign_accumulator_value_from_accumulator(runtime_args: &mut RuntimeArgs, a_idx_a: &usize, a_idx_b: &usize) -> Result<(), String> {
+    let src = assert_accumulator_contains_value(runtime_args, a_idx_b)?;
+    assert_accumulator_exists(runtime_args, a_idx_a)?;
+    runtime_args.accumulators.get_mut(*a_idx_a).unwrap().data = Some(src);
+    Ok(())
+}
+
+/// Assigns value of memory cell with label **label** to accumulator with index **a_idx**.
+///
+/// Errors when accumulator does not exist or when memory cell does not contain a value.
+fn assign_accumulator_value_from_memory_cell(runtime_args: &mut RuntimeArgs, a_idx: &usize, label: &str) -> Result<(), String> {
+    assert_accumulator_exists(runtime_args, a_idx)?;
+    let value = assert_memory_cell_contains_value(runtime_args, label)?;
+    runtime_args.accumulators.get_mut(*a_idx).unwrap().data = Some(value);
+    Ok(())
+}
+
+/// Assings **value** to memory cell with label **label**.
+/// 
+/// Errors when accumulator does not exist.
+fn assign_memory_cell_value(runtime_args: &mut RuntimeArgs, label: &str, value: &i32) -> Result<(), String> {
+    assert_memory_cell_exists(runtime_args, label)?;
+    runtime_args.memory_cells.get_mut(label).unwrap().data = Some(*value);
+    Ok(())
+}
+
+/// Assings value of accumulator with index **a_idx** to memory cell with label **label**.
+/// 
+/// Errors when memory cell does not exist or when the accumulator does not contain a value.
+fn assign_memory_cell_value_from_accumulator(runtime_args: &mut RuntimeArgs, label: &str, a_idx: &usize) -> Result<(), String> {
+    assert_memory_cell_exists(runtime_args, label)?;
+    let value = assert_accumulator_contains_value(runtime_args, a_idx)?;
+    runtime_args.memory_cells.get_mut(label).unwrap().data = Some(value);
+    Ok(())
+}
+/// Assings value of accumulator with index **a_idx** to memory cell with label **label**.
+/// 
+/// Errors when memory cell does not exist or when the accumulator does not contain a value.
+fn assign_memory_cell_value_from_memory_cell(runtime_args: &mut RuntimeArgs, label_a: &str, label_b: &str) -> Result<(), String> {
+    assert_memory_cell_exists(runtime_args, label_a)?;
+    let value = assert_memory_cell_contains_value(runtime_args, label_b)?;
+    runtime_args.memory_cells.get_mut(label_a).unwrap().data = Some(value);
+    Ok(())
+}
+
+/// Sets the next instruction index to index contained behind **label** in [instruction_labels](../runtime/struct.ControlFlow.html#structfield.instruction_labels) map.
+fn goto(runtime_args: &mut RuntimeArgs, control_flow: &mut ControlFlow, label: &str) -> Result<(), String> {
+    control_flow.next_instruction_index(label)?;
+    Ok(())
 }
 
 /// Sets next instruction to instruction behind **label** when comparison between accumulator **a_idx_a** and accumulator **a_idx_b** succeeds.
@@ -164,7 +141,7 @@ impl<'a> Instruction<'a> {
 /// - 'label' - The label behind which the instruction is found that should be executed when comparison succeeds
 /// - 'a_idx_a' - The index of accumulator a whichs value should be compared
 /// - 'a_idx_b' - The index of accumulator b whichs value should be compared
-fn goto_if_accumulator<'a>(runtime_args: &mut RuntimeArgs, control_flow: &mut ControlFlow, comparison: &Comparison, label: &'a str, a_idx_a: &usize, a_idx_b: &usize) -> Result<(), String> {
+fn goto_if_accumulator(runtime_args: &mut RuntimeArgs, control_flow: &mut ControlFlow, comparison: &Comparison, label: &str, a_idx_a: &usize, a_idx_b: &usize) -> Result<(), String> {
     let a = assert_accumulator_contains_value(runtime_args, a_idx_a)?;
     let b = assert_accumulator_contains_value(runtime_args, a_idx_b)?;
     if comparison.cmp(a, b) {
@@ -179,7 +156,7 @@ fn goto_if_accumulator<'a>(runtime_args: &mut RuntimeArgs, control_flow: &mut Co
 /// - 'label' - The label behind which the instruction is found that should be executed when comparison succeeds
 /// - 'a_idx' - The index of accumulator a whichs value should be compared
 /// - 'c' - Constant that should be compared with **a_idx_a**
-fn goto_if_constant<'a>(runtime_args: &mut RuntimeArgs, control_flow: &mut ControlFlow, comparison: &Comparison, label: &'a str, a_idx: &usize, c: &i32) -> Result<(), String> {
+fn goto_if_constant(runtime_args: &mut RuntimeArgs, control_flow: &mut ControlFlow, comparison: &Comparison, label: &str, a_idx: &usize, c: &i32) -> Result<(), String> {
     let a = assert_accumulator_contains_value(runtime_args, a_idx)?;
     if comparison.cmp(a, *c) {
         control_flow.next_instruction_index(label)?
@@ -193,13 +170,22 @@ fn goto_if_constant<'a>(runtime_args: &mut RuntimeArgs, control_flow: &mut Contr
 /// - 'label' - The label behind which the instruction is found that should be executed when comparison succeeds
 /// - 'a_idx' - The index of accumulator a whichs value should be compared
 /// - 'mcl' - The label of the memory cell behind wich the value can be found that should be compared
-fn goto_if_memory_cell<'a>(runtime_args: &mut RuntimeArgs, control_flow: &mut ControlFlow, comparison: &Comparison, label: &'a str, a_idx: &usize, mcl: &'a str) -> Result<(), String> {
+fn goto_if_memory_cell(runtime_args: &mut RuntimeArgs, control_flow: &mut ControlFlow, comparison: &Comparison, label: &str, a_idx: &usize, mcl: &str) -> Result<(), String> {
     let a = assert_accumulator_contains_value(runtime_args, a_idx)?;
     let b = assert_memory_cell_contains_value(runtime_args, mcl)?;
     if comparison.cmp(a, b) {
         control_flow.next_instruction_index(label)?
     }
     Ok(())
+}
+
+/// Tests if the accumulator with **index** exists.
+fn assert_accumulator_exists(runtime_args: &mut RuntimeArgs, index: &usize) -> Result<(), String> {
+    if let Some(_value) = runtime_args.accumulators.get(*index) {
+        Ok(())
+    } else {
+        Err(format!("Accumulator with index {} does not exist!", index))
+    }
 }
 
 /// Tests if the accumulator with **index** exists and contains a value.
@@ -219,6 +205,15 @@ fn assert_accumulator_contains_value(runtime_args: &mut RuntimeArgs, index: &usi
     }
 }
 
+/// Tests if the memory cell with **label** exists.
+fn assert_memory_cell_exists(runtime_args: &mut RuntimeArgs, label: &str) -> Result<(), String> {
+    if let Some(_value) = runtime_args.memory_cells.get(label) {
+        Ok(())
+    } else {
+        Err(format!("Memory cell with label {} does not exist!", label))
+    }
+}
+
 /// Tests if the memory cell with **label** exists and contains a value.
 /// 
 /// Ok(i32) contains the memory cell value.
@@ -234,6 +229,34 @@ fn assert_memory_cell_contains_value(runtime_args: &mut RuntimeArgs, label: &str
     } else {
         Err(format!("Memory cell with label {} does not exist!", label))
     }
+}
+
+/// Prints the current contents of the accumulators into the console
+fn print_accumulators(runtime_args: &RuntimeArgs) {
+    println!("--- Accumulators ---");
+    for (index, i) in runtime_args.accumulators.iter().enumerate() {
+        println!("{} - {:?}", index, i.data);
+    }
+    println!("--------------------");
+}
+
+/// Prints the current contents of the memory cells into the console
+fn print_memory_cells(runtime_args: &RuntimeArgs) {
+    // TODO Make print sorted (Alpabetically by label name)
+    println!("--- Memory Cells ---");
+    for (k, v) in &runtime_args.memory_cells {
+        println!("{} - {:?}", k, v.data);
+    }
+    println!("--------------------");
+}
+
+/// Prints the current layout of the stack into the console
+fn print_stack(runtime_args: &RuntimeArgs) {
+    println!("------ Stack -------");
+    for (index, i) in runtime_args.stack.iter().enumerate() {
+        println!("{} - {:?}", index, i);
+    }
+    println!("--------------------");
 }
 
 #[cfg(test)]
