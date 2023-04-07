@@ -65,9 +65,29 @@ impl Comparison {
     }
 }
 
+pub enum Operation {
+    Plus,
+    Minus,
+    Multiplication,
+    Division,
+}
+
+impl Operation {
+    
+    pub fn calc(&self, x: i32, y: i32) -> i32 {
+        match self {
+            Self::Plus => x+y,
+            Self::Minus => x-y,
+            Self::Multiplication => x*y,
+            Self::Division => x/y,
+        }
+    }
+
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::base::Comparison;
+    use crate::base::{Comparison, Operation};
 
     #[test]
     fn test_comparison() {
@@ -78,6 +98,14 @@ mod tests {
         assert!(Comparison::MoreOrEqual.cmp(5, 5));
         assert!(Comparison::MoreOrEqual.cmp(10, 5));
         assert!(Comparison::More.cmp(10, 5));
+    }
+
+    #[test]
+    fn test_operation() {
+        assert_eq!(Operation::Plus.calc(20, 5), 25);
+        assert_eq!(Operation::Minus.calc(20, 5), 15);
+        assert_eq!(Operation::Multiplication.calc(20, 5), 100);
+        assert_eq!(Operation::Division.calc(20, 5), 4);
     }
 
 }

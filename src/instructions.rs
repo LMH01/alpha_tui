@@ -1,4 +1,4 @@
-use crate::{runtime::{RuntimeArgs, ControlFlow}, base::Comparison};
+use crate::{runtime::{RuntimeArgs, ControlFlow}, base::{Comparison, Operation}};
 
 pub enum Instruction<'a> {
     /// See [push](fn.push.html)
@@ -17,6 +17,13 @@ pub enum Instruction<'a> {
     AssignMemoryCellValueFromAccumulator(&'a str, usize),
     /// See [assign_memory_cell_value_from_memory_cell](fn.assign_memory_cell_value_from_memory_cell.html)
     AssingMemoryCellValueFromMemoryCell(&'a str, &'a str),
+    CalcAccumulatorWithConstant(Operation, usize, i32),
+    CalcAccumulatorWithAccumulator(Operation, usize, usize),
+    CalcAccumulatorWithAccumulators(Operation, usize, usize, usize),
+    CalcAccumulatorWithMemoryCell(Operation, usize, &'a str),
+    CalcAccumulatorWithMemoryCells(Operation, usize, &'a str, &'a str),
+    CalcMemoryCellWithMemoryCellConstant(Operation, &'a str, &'a str, i32),
+    CalcMemoryCellWithMemoryCellAccumulator(Operation, &'a str, &'a str, usize),
     /// See [ControlFlow](../runtime/struct.ControlFlow.html) and [goto](fn.goto.html) for further information.
     Goto(&'a str),
     /// See [goto_if_accumulator](fn.goto_if_accumulator.html)
@@ -46,6 +53,13 @@ impl<'a> Instruction<'a> {
             Self::AssignMemoryCellValue(label, value) => assign_memory_cell_value(runtime_args, label, value)?,
             Self::AssignMemoryCellValueFromAccumulator(label, a_idx) => assign_memory_cell_value_from_accumulator(runtime_args, label, a_idx)?,
             Self::AssingMemoryCellValueFromMemoryCell(label_a, label_b) => assign_memory_cell_value_from_memory_cell(runtime_args, label_a, label_b)?,
+            Self::CalcAccumulatorWithConstant(operation, a_idx, value) => calc_accumulator_with_constant(runtime_args, operation, a_idx, value)?,
+            Self::CalcAccumulatorWithAccumulator(operation, a_idx_a, a_idx_b) => calc_accumulator_with_accumulator(runtime_args, operation, a_idx_a, a_idx_b)?,
+            Self::CalcAccumulatorWithAccumulators(operation, a_idx_a, a_idx_b, a_idx_c) => calc_accumulator_with_accumulators(runtime_args, operation, a_idx_a, a_idx_b, a_idx_c)?,
+            Self::CalcAccumulatorWithMemoryCell(operation, a_idx, label) => calc_accumulator_with_memory_cell(runtime_args, operation, a_idx, label)?,
+            Self::CalcAccumulatorWithMemoryCells(operation, a_idx, label_a, label_b) => calc_accumulator_with_memory_cells(runtime_args, operation, a_idx, label_a, label_b)?,
+            Self::CalcMemoryCellWithMemoryCellAccumulator(operation, label_a, label_b, a_idx) => calc_memory_cell_with_memory_cell_accumulator(runtime_args, operation, label_a, label_b, a_idx)?,
+            Self::CalcMemoryCellWithMemoryCellConstant(operation, label_a, label_b, value) => calc_memory_cell_with_memory_cell_constant(runtime_args, operation, label_a, label_b, value)?,
             Self::Goto(label) => goto(runtime_args, control_flow, label)?,
             Self::GotoIfAccumulator(comparison, label, a_idx_a, a_idx_b) => goto_if_accumulator(runtime_args, control_flow, comparison, label, a_idx_a, a_idx_b)?,
             Self::GotoIfConstant(comparison, label, a_idx, c) => goto_if_constant(runtime_args, control_flow, comparison, label, a_idx, c)?,
@@ -126,6 +140,57 @@ fn assign_memory_cell_value_from_memory_cell(runtime_args: &mut RuntimeArgs, lab
     assert_memory_cell_exists(runtime_args, label_a)?;
     let value = assert_memory_cell_contains_value(runtime_args, label_b)?;
     runtime_args.memory_cells.get_mut(label_a).unwrap().data = Some(value);
+    Ok(())
+}
+
+fn calc_accumulator_with_constant(runtime_args: &mut RuntimeArgs, operation: &Operation, a_idx: &usize, value: &i32) -> Result<(), String> {
+    let v = assert_accumulator_contains_value(runtime_args, a_idx)?;
+    runtime_args.accumulators.get_mut(*a_idx).unwrap().data = Some(operation.calc(v, *value));
+    Ok(())
+}
+
+fn calc_accumulator_with_accumulator(runtime_args: &mut RuntimeArgs, operation: &Operation, a_idx_a: &usize, a_idx_b: &usize) -> Result<(), String> {
+    let a = assert_accumulator_contains_value(runtime_args, a_idx_a)?;
+    let b = assert_accumulator_contains_value(runtime_args, a_idx_b)?;
+    runtime_args.accumulators.get_mut(*a_idx_a).unwrap().data = Some(operation.calc(a, b));
+    Ok(())
+}
+
+fn calc_accumulator_with_accumulators(runtime_args: &mut RuntimeArgs, operation: &Operation, a_idx_a: &usize, a_idx_b: &usize, a_idx_c: &usize) -> Result<(), String> {
+    assert_accumulator_exists(runtime_args, a_idx_a)?;
+    let a = assert_accumulator_contains_value(runtime_args, a_idx_b)?;
+    let b = assert_accumulator_contains_value(runtime_args, a_idx_c)?;
+    runtime_args.accumulators.get_mut(*a_idx_a).unwrap().data = Some(operation.calc(a, b));
+    Ok(())
+}
+
+fn calc_accumulator_with_memory_cell(runtime_args: &mut RuntimeArgs, operation: &Operation, a_idx: &usize, label: &str) -> Result<(), String> {
+    let a = assert_accumulator_contains_value(runtime_args, a_idx)?;
+    let b = assert_memory_cell_contains_value(runtime_args, label)?;
+    runtime_args.accumulators.get_mut(*a_idx).unwrap().data = Some(operation.calc(a, b));
+    Ok(())
+}
+
+fn calc_accumulator_with_memory_cells(runtime_args: &mut RuntimeArgs, operation: &Operation, a_idx: &usize, label_a: &str, label_b: &str) -> Result<(), String> {
+    assert_accumulator_exists(runtime_args, a_idx)?;
+    let a = assert_memory_cell_contains_value(runtime_args, label_a)?;
+    let b = assert_memory_cell_contains_value(runtime_args, label_b)?;
+    runtime_args.accumulators.get_mut(*a_idx).unwrap().data = Some(operation.calc(a, b));
+    Ok(())
+}
+
+fn calc_memory_cell_with_memory_cell_constant(runtime_args: &mut RuntimeArgs, operation: &Operation, label_a: &str, label_b: &str, value: &i32) -> Result<(), String> {
+    assert_memory_cell_exists(runtime_args, label_a)?;
+    let a = assert_memory_cell_contains_value(runtime_args, label_b)?;
+    runtime_args.memory_cells.get_mut(label_a).unwrap().data = Some(operation.calc(a, *value));
+    Ok(())
+}
+
+fn calc_memory_cell_with_memory_cell_accumulator(runtime_args: &mut RuntimeArgs, operation: &Operation, label_a: &str, label_b: &str, a_idx: &usize) -> Result<(), String> {
+    assert_memory_cell_exists(runtime_args, label_a)?;
+    let a = assert_memory_cell_contains_value(runtime_args, label_b)?;
+    let b = assert_accumulator_contains_value(runtime_args, a_idx)?;
+    runtime_args.memory_cells.get_mut(label_a).unwrap().data = Some(operation.calc(a, b));
     Ok(())
 }
 
@@ -263,7 +328,7 @@ fn print_stack(runtime_args: &RuntimeArgs) {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::{runtime::{ControlFlow, RuntimeArgs}, instructions::Instruction, base::{Accumulator, MemoryCell, Comparison}};
+    use crate::{runtime::{ControlFlow, RuntimeArgs}, instructions::Instruction, base::{Accumulator, MemoryCell, Comparison, Operation}};
 
     
     #[test]
@@ -386,6 +451,74 @@ mod tests {
         args.memory_cells.get_mut("b").unwrap().data = Some(10);
         assert!(Instruction::AssingMemoryCellValueFromMemoryCell("b", "a").run(&mut args, &mut control_flow).is_err());
         assert!(Instruction::AssingMemoryCellValueFromMemoryCell("a", "b").run(&mut args, &mut control_flow).is_ok());
+    }
+
+    #[test]
+    fn test_calc_accumulator_with_constant() {
+        let mut args = setup_runtime_args();
+        let control_flow = &mut ControlFlow::new();
+        Instruction::AssignAccumulatorValue(0, 20).run(&mut args, control_flow).unwrap();
+        Instruction::CalcAccumulatorWithConstant(Operation::Plus, 0, 20).run(&mut args, control_flow).unwrap();
+        assert_eq!(args.accumulators[0].data.unwrap(), 40);
+    }
+
+    #[test]
+    fn test_calc_accumulator_with_accumulator() {
+        let mut args = setup_runtime_args();
+        let control_flow = &mut ControlFlow::new();
+        Instruction::AssignAccumulatorValue(0, 20).run(&mut args, control_flow).unwrap();
+        Instruction::AssignAccumulatorValue(1, 20).run(&mut args, control_flow).unwrap();
+        Instruction::CalcAccumulatorWithAccumulator(Operation::Plus, 0, 1).run(&mut args, control_flow).unwrap();
+        assert_eq!(args.accumulators[0].data.unwrap(), 40);
+    }
+
+    #[test]
+    fn test_calc_accumulator_with_accumulators() {
+        let mut args = setup_runtime_args();
+        let control_flow = &mut ControlFlow::new();
+        Instruction::AssignAccumulatorValue(1, 20).run(&mut args, control_flow).unwrap();
+        Instruction::AssignAccumulatorValue(2, 20).run(&mut args, control_flow).unwrap();
+        Instruction::CalcAccumulatorWithAccumulators(Operation::Plus, 0, 1, 2).run(&mut args, control_flow).unwrap();
+        assert_eq!(args.accumulators[0].data.unwrap(), 40);
+    }
+
+    #[test]
+    fn test_calc_accumulator_with_memory_cell() {
+        let mut args = setup_runtime_args();
+        let control_flow = &mut ControlFlow::new();
+        Instruction::AssignAccumulatorValue(0, 20).run(&mut args, control_flow).unwrap();
+        Instruction::AssignMemoryCellValue("a", 20).run(&mut args, control_flow).unwrap();
+        Instruction::CalcAccumulatorWithMemoryCell(Operation::Plus, 0, "a").run(&mut args, control_flow).unwrap();
+        assert_eq!(args.accumulators[0].data.unwrap(), 40);
+    }
+
+    #[test]
+    fn test_calc_accumulator_with_memory_cells() {
+        let mut args = setup_runtime_args();
+        let control_flow = &mut ControlFlow::new();
+        Instruction::AssignMemoryCellValue("a", 10).run(&mut args, control_flow).unwrap();
+        Instruction::AssignMemoryCellValue("b", 10).run(&mut args, control_flow).unwrap();
+        Instruction::CalcAccumulatorWithMemoryCells(Operation::Plus, 0, "a", "b").run(&mut args, control_flow).unwrap();
+        assert_eq!(args.accumulators[0].data.unwrap(), 20);
+    }
+
+    #[test]
+    fn test_calc_memory_cell_with_memory_cell_constant() {
+        let mut args = setup_runtime_args();
+        let control_flow = &mut ControlFlow::new();
+        Instruction::AssignMemoryCellValue("b", 10).run(&mut args, control_flow).unwrap();
+        Instruction::CalcMemoryCellWithMemoryCellConstant(Operation::Plus, "a", "b", 10).run(&mut args, control_flow).unwrap();
+        assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 20);
+    }
+
+    #[test]
+    fn test_calc_memory_cell_with_memory_cell_accumulator() {
+        let mut args = setup_runtime_args();
+        let control_flow = &mut ControlFlow::new();
+        Instruction::AssignAccumulatorValue(0, 20).run(&mut args, control_flow).unwrap();
+        Instruction::AssignMemoryCellValue("b", 10).run(&mut args, control_flow).unwrap();
+        Instruction::CalcMemoryCellWithMemoryCellAccumulator(Operation::Plus, "a", "b", 0).run(&mut args, control_flow).unwrap();
+        assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 30);
     }
 
     #[test]

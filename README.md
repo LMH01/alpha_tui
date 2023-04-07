@@ -1,10 +1,10 @@
 # rust_alpha
 
-This is my try at writing a compiler for the Alpha-Notation used in my Systemnahe Informatik lecture at university.
+This is my attempt at writing a compiler for the Alpha-Notation used in my Systemnahe Informatik lecture at university.
 
 ## Current status
 
-Development has just begun, almost everything is still missing.
+Internal handling of instructions is finished, now the "compiler" needs be be written.
 
 ## TODO
 
@@ -31,6 +31,7 @@ This section logs what instructions can be parsed from text
 - [ ] $\alpha_u:=k$
 - [ ] $\alpha_u:=\alpha_u\space\textbf{op}\space k$
 - [ ] $\alpha_u:=\alpha_u\space\textbf{op}\space\alpha_v$
+- [ ] $\alpha_u:=\alpha_v\space\textbf{op}\space\alpha_w$
 - [ ] $\alpha_u:=\alpha_u\space\textbf{op}\space \rho(i)$
 - [ ] $\alpha_u:=\rho(i)\space\textbf{op}\space \rho(j)$
 - [ ] $\rho(i):=\rho(j)\space\textbf{op}\space k$
@@ -52,12 +53,13 @@ This section logs what instructions are implemented in the backend
 - [X] $\rho(i):=\alpha_u$
 - [X] $\rho(i):=k$
 - [X] $\alpha_u:=k$
-- [ ] $\alpha_u:=\alpha_u\space\textbf{op}\space k$
-- [ ] $\alpha_u:=\alpha_u\space\textbf{op}\space\alpha_v$
-- [ ] $\alpha_u:=\alpha_u\space\textbf{op}\space \rho(i)$
-- [ ] $\alpha_u:=\rho(i)\space\textbf{op}\space \rho(j)$
-- [ ] $\rho(i):=\rho(j)\space\textbf{op}\space k$
-- [ ] $\rho(i):=\rho(j)\space\textbf{op}\space\alpha_u$
+- [X] $\alpha_u:=\alpha_u\space\textbf{op}\space k$
+- [X] $\alpha_u:=\alpha_u\space\textbf{op}\space\alpha_v$
+- [X] $\alpha_u:=\alpha_v\space\textbf{op}\space\alpha_w$
+- [X] $\alpha_u:=\alpha_u\space\textbf{op}\space \rho(i)$
+- [X] $\alpha_u:=\rho(i)\space\textbf{op}\space \rho(j)$
+- [X] $\rho(i):=\rho(j)\space\textbf{op}\space k$
+- [X] $\rho(i):=\rho(j)\space\textbf{op}\space\alpha_u$
 - [X] $\rho(i):=\rho(j)$
 - [X] if $\alpha_u\space\textbf{cmp}\space\alpha_v$ then goto label
 - [X] if $\alpha_u\space\textbf{cmp}\space k$ then goto label
