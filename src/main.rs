@@ -16,10 +16,10 @@ fn main() {
         Instruction::AssignAccumulatorValue(2, 7),
         Instruction::Push(),
         Instruction::Pop(),
-        Instruction::AssignMemoryCellValueFromAccumulator("c".to_string(),1),
-        Instruction::AssignAccumulatorValueFromMemoryCell(3, "c".to_string()),
+        Instruction::AssignMemoryCellValueFromAccumulator("c",1),
+        Instruction::AssignAccumulatorValueFromMemoryCell(3, "c"),
         Instruction::AssignAccumulatorValueFromAccumulator(0, 2),
-        Instruction::AssignMemoryCellValue("f".to_string(), 17),
+        Instruction::AssignMemoryCellValue("f", 17),
         Instruction::PrintAccumulators(),
         Instruction::PrintMemoryCells(),
         Instruction::PrintStack(),
@@ -63,13 +63,13 @@ impl MemoryCell {
     }
 }
 
-struct Runner {
-    runtime_args: RuntimeArgs,
-    instructions: Vec<Instruction>,
+struct Runner<'a> {
+    runtime_args: RuntimeArgs<'a>,
+    instructions: Vec<Instruction<'a>>,
 }
 
-impl Runner {
-    fn new(instructions: Vec<Instruction>) -> Self {
+impl<'a> Runner<'a> {
+    fn new(instructions: Vec<Instruction<'a>>) -> Self {
         Self {
             runtime_args: RuntimeArgs::new(),
             instructions,
@@ -83,16 +83,16 @@ impl Runner {
     }
 }
 
-struct RuntimeArgs {
+struct RuntimeArgs<'a> {
     /// Current values stored in accumulators
     accumulators: Vec<Accumulator>,
     /// All registers that are used to store data
-    memory_cells: HashMap<String, MemoryCell>,
+    memory_cells: HashMap<&'a str, MemoryCell>,
     /// The stack of the runner
     stack: Vec<i32>,
 }
 
-impl RuntimeArgs {
+impl<'a> RuntimeArgs<'a> {
     fn new() -> Self {
         let mut accumulators = Vec::new();
         for i in 0..ACCUMULATORS {
@@ -101,9 +101,9 @@ impl RuntimeArgs {
         if ACCUMULATORS <= 0 {
             accumulators.push(Accumulator::new(0));
         }
-        let mut memory_cells: HashMap<String, MemoryCell> = HashMap::new();
+        let mut memory_cells: HashMap<&str, MemoryCell> = HashMap::new();
         for i in MEMORY_CELL_LABELS {
-            memory_cells.insert(i.to_string(), MemoryCell::new(i));
+            memory_cells.insert(i, MemoryCell::new(i));
         }
         Self {
             accumulators,
@@ -114,7 +114,7 @@ impl RuntimeArgs {
 }
 
 
-enum Instruction {
+enum Instruction<'a> {
     /// push alpha_0 to stack 
     Push(),
     /// pop in alpha_0
@@ -128,16 +128,16 @@ enum Instruction {
     /// Assigns value of memory cell with label param1 to accumulator with index param0.
     /// 
     /// Errors when memory cell or accumulator does not exist.
-    AssignAccumulatorValueFromMemoryCell(usize, String),
+    AssignAccumulatorValueFromMemoryCell(usize, &'a str),
     /// Assings param1 to memory cell with label param0.
     ///
     /// Errors when memory cell does not exist.
-    AssignMemoryCellValue(String, i32),
+    AssignMemoryCellValue(&'a str, i32),
     // TODO change String to &str
     /// Assigns value of accumulator with index param1 to memory cell with label param1.
     ///
     /// Errors when memory cell or accumulator does not exist.
-    AssignMemoryCellValueFromAccumulator(String, usize),
+    AssignMemoryCellValueFromAccumulator(&'a str, usize),
     /// Prints the current contnets of the accumulators to console
     PrintAccumulators(),
     /// Prints the current contents of the memory cells
@@ -146,10 +146,10 @@ enum Instruction {
     PrintStack(),
 }
 
-impl Instruction {
+impl<'a> Instruction<'a> {
     /// Runs the instruction, retuns Err(String) when instruction could not be ran.
     /// Err contains the reason why running the instruction failed.
-    fn run(&self, runtime_args: &mut RuntimeArgs) -> Result<(), String> {
+    fn run(&self, runtime_args: &mut RuntimeArgs<'a>) -> Result<(), String> {
         match self {
             Self::Push() => {
                 runtime_args.stack.push(runtime_args.accumulators[0].data.unwrap_or(0));
@@ -277,9 +277,9 @@ mod tests {
     fn test_assign_accumulator_value_from_memory_cell() {
         let mut args = RuntimeArgs::new();
         args.memory_cells = HashMap::new();
-        args.memory_cells.insert("a".to_string(), MemoryCell::new("a"));
-        Instruction::AssignMemoryCellValue("a".to_string(), 10).run(&mut args).unwrap();
-        Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string()).run(&mut args).unwrap();
+        args.memory_cells.insert("a", MemoryCell::new("a"));
+        Instruction::AssignMemoryCellValue("a", 10).run(&mut args).unwrap();
+        Instruction::AssignAccumulatorValueFromMemoryCell(0, "a").run(&mut args).unwrap();
         assert_eq!(args.accumulators[0].data.unwrap(), 10);
     }
     
@@ -288,11 +288,11 @@ mod tests {
         let mut args = RuntimeArgs::new();
         args.memory_cells = HashMap::new();
         args.accumulators = vec![Accumulator::new(0)];
-        let err = Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string()).run(&mut args);
+        let err = Instruction::AssignAccumulatorValueFromMemoryCell(0, "a").run(&mut args);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Memory cell"));
-        args.memory_cells.insert("a".to_string(), MemoryCell::new("a"));
-        let err = Instruction::AssignAccumulatorValueFromMemoryCell(1, "a".to_string()).run(&mut args);
+        args.memory_cells.insert("a", MemoryCell::new("a"));
+        let err = Instruction::AssignAccumulatorValueFromMemoryCell(1, "a").run(&mut args);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Accumulator"));
     }
@@ -301,10 +301,10 @@ mod tests {
     fn test_assign_memory_cell_value() {
         let mut args = RuntimeArgs::new();
         args.memory_cells = HashMap::new();
-        args.memory_cells.insert("a".to_string(), MemoryCell::new("a"));
-        args.memory_cells.insert("b".to_string(), MemoryCell::new("b"));
-        Instruction::AssignMemoryCellValue("a".to_string(), 2).run(&mut args).unwrap();
-        Instruction::AssignMemoryCellValue("b".to_string(), 20).run(&mut args).unwrap();
+        args.memory_cells.insert("a", MemoryCell::new("a"));
+        args.memory_cells.insert("b", MemoryCell::new("b"));
+        Instruction::AssignMemoryCellValue("a", 2).run(&mut args).unwrap();
+        Instruction::AssignMemoryCellValue("b", 20).run(&mut args).unwrap();
         assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 2);
         assert_eq!(args.memory_cells.get("b").unwrap().data.unwrap(), 20);
     }
@@ -313,16 +313,16 @@ mod tests {
     fn test_assign_memory_cell_value_error() {
         let mut args = RuntimeArgs::new();
         args.memory_cells = HashMap::new();
-        assert!(Instruction::AssignMemoryCellValue("c".to_string(), 10).run(&mut args).is_err());
+        assert!(Instruction::AssignMemoryCellValue("c", 10).run(&mut args).is_err());
     }
 
     #[test]
     fn test_assign_memory_cell_value_from_accumulator() {
         let mut args = RuntimeArgs::new();
         args.memory_cells = HashMap::new();
-        args.memory_cells.insert("a".to_string(), MemoryCell::new("a"));
+        args.memory_cells.insert("a", MemoryCell::new("a"));
         Instruction::AssignAccumulatorValue(0, 20).run(&mut args).unwrap();
-        Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0).run(&mut args).unwrap();
+        Instruction::AssignMemoryCellValueFromAccumulator("a", 0).run(&mut args).unwrap();
         assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 20);
     }
 
@@ -331,11 +331,11 @@ mod tests {
         let mut args = RuntimeArgs::new();
         args.memory_cells = HashMap::new();
         args.accumulators = vec![Accumulator::new(0)];
-        let err = Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0).run(&mut args);
+        let err = Instruction::AssignMemoryCellValueFromAccumulator("a", 0).run(&mut args);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Memory cell"));
-        args.memory_cells.insert("a".to_string(), MemoryCell::new("a"));
-        let err = Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 1).run(&mut args);
+        args.memory_cells.insert("a", MemoryCell::new("a"));
+        let err = Instruction::AssignMemoryCellValueFromAccumulator("a", 1).run(&mut args);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Accumulator"));
     }
