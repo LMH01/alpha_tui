@@ -167,12 +167,12 @@ impl<'a> Instruction<'a> {
                 }
             },
             Self::AssignAccumulatorValueFromAccumulator(target, src) => {
-                if runtime_args.accumulators.get(*target).is_some() && runtime_args.accumulators.get(*target).unwrap().data.is_some() {
+                if runtime_args.accumulators.get(*target).is_some() {
                     if runtime_args.accumulators.get(*src).is_some() && runtime_args.accumulators.get(*src).unwrap().data.is_some() {
                         let replacement = runtime_args.accumulators.get(*src).unwrap();
                         runtime_args.accumulators[*target].data = replacement.data;
                     } else {
-                        return Err(format!("Accumulator with index {} does not exist!", src));
+                        return Err(format!("Accumulator with index {} does not exist or does not contain data!", src));
                     }
                 } else {
                     return Err(format!("Accumulator with index {} does not exist!", target));
@@ -205,6 +205,18 @@ impl<'a> Instruction<'a> {
                     }
                 } else {
                     return Err(format!("Memory cell labeled {} does not exist!", cell_label));
+                }
+            },
+            Self::AssingMemoryCellValueFromMemoryCell(target, src) => {
+                if runtime_args.memory_cells.get(*target).is_some() {
+                    if runtime_args.memory_cells.get(*src).is_some() && runtime_args.memory_cells.get(*src).unwrap().data.is_some() {
+                        let replacement = runtime_args.memory_cells.get(*src).unwrap();
+                        runtime_args.memory_cells.get_mut(*target).unwrap().data = replacement.data;
+                    } else {
+                        return Err(format!("Memory cell labeled {} does not exist or does not contain data!", src));
+                    }
+                } else {
+                    return Err(format!("Memory cell labeled {} does not exist!", target));
                 }
             },
             Self::PrintAccumulators() => {
@@ -243,7 +255,7 @@ mod tests {
     
     #[test]
     fn test_stack() {
-        let mut args = RuntimeArgs::new();
+        let mut args = setup_runtime_args();
         Instruction::AssignAccumulatorValue(0, 5).run(&mut args).unwrap();
         Instruction::Push().run(&mut args).unwrap();
         Instruction::AssignAccumulatorValue(0, 10).run(&mut args).unwrap();
@@ -258,7 +270,7 @@ mod tests {
 
     #[test]
     fn test_assign_accumulator_value_from_accumulator() {
-        let mut args = RuntimeArgs::new();
+        let mut args = setup_runtime_args();
         Instruction::AssignAccumulatorValue(0, 5).run(&mut args).unwrap();
         Instruction::AssignAccumulatorValue(1, 20).run(&mut args).unwrap();
         Instruction::AssignAccumulatorValue(2, 12).run(&mut args).unwrap();
@@ -270,16 +282,14 @@ mod tests {
 
     #[test]
     fn test_assign_accumulator_value_from_accumulator_error() {
-        let mut args = RuntimeArgs::new();
+        let mut args = setup_empty_runtime_args();
         assert!(Instruction::AssignAccumulatorValueFromAccumulator(0, 1).run(&mut args).is_err());
         assert!(Instruction::AssignAccumulatorValueFromAccumulator(1, 0).run(&mut args).is_err());
     }
 
     #[test]
     fn test_assign_accumulator_value_from_memory_cell() {
-        let mut args = RuntimeArgs::new();
-        args.memory_cells = HashMap::new();
-        args.memory_cells.insert("a", MemoryCell::new("a"));
+        let mut args = setup_runtime_args();
         Instruction::AssignMemoryCellValue("a", 10).run(&mut args).unwrap();
         Instruction::AssignAccumulatorValueFromMemoryCell(0, "a").run(&mut args).unwrap();
         assert_eq!(args.accumulators[0].data.unwrap(), 10);
@@ -287,8 +297,7 @@ mod tests {
     
     #[test]
     fn test_assign_accumulator_value_from_memory_cell_error() {
-        let mut args = RuntimeArgs::new();
-        args.memory_cells = HashMap::new();
+        let mut args = setup_empty_runtime_args();
         args.accumulators = vec![Accumulator::new(0)];
         let err = Instruction::AssignAccumulatorValueFromMemoryCell(0, "a").run(&mut args);
         assert!(err.is_err());
@@ -301,10 +310,7 @@ mod tests {
     
     #[test]
     fn test_assign_memory_cell_value() {
-        let mut args = RuntimeArgs::new();
-        args.memory_cells = HashMap::new();
-        args.memory_cells.insert("a", MemoryCell::new("a"));
-        args.memory_cells.insert("b", MemoryCell::new("b"));
+        let mut args = setup_runtime_args();
         Instruction::AssignMemoryCellValue("a", 2).run(&mut args).unwrap();
         Instruction::AssignMemoryCellValue("b", 20).run(&mut args).unwrap();
         assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 2);
@@ -313,16 +319,13 @@ mod tests {
 
     #[test]
     fn test_assign_memory_cell_value_error() {
-        let mut args = RuntimeArgs::new();
-        args.memory_cells = HashMap::new();
+        let mut args = setup_empty_runtime_args();
         assert!(Instruction::AssignMemoryCellValue("c", 10).run(&mut args).is_err());
     }
 
     #[test]
     fn test_assign_memory_cell_value_from_accumulator() {
-        let mut args = RuntimeArgs::new();
-        args.memory_cells = HashMap::new();
-        args.memory_cells.insert("a", MemoryCell::new("a"));
+        let mut args = setup_runtime_args();
         Instruction::AssignAccumulatorValue(0, 20).run(&mut args).unwrap();
         Instruction::AssignMemoryCellValueFromAccumulator("a", 0).run(&mut args).unwrap();
         assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 20);
@@ -330,8 +333,7 @@ mod tests {
 
     #[test]
     fn test_assign_memory_cell_value_from_accumulator_error() {
-        let mut args = RuntimeArgs::new();
-        args.memory_cells = HashMap::new();
+        let mut args = setup_empty_runtime_args();
         args.accumulators = vec![Accumulator::new(0)];
         let err = Instruction::AssignMemoryCellValueFromAccumulator("a", 0).run(&mut args);
         assert!(err.is_err());
@@ -340,5 +342,43 @@ mod tests {
         let err = Instruction::AssignMemoryCellValueFromAccumulator("a", 1).run(&mut args);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Accumulator"));
+    }
+
+    #[test]
+    fn test_assign_memory_cell_value_from_memory_cell() {
+        let mut args = setup_runtime_args();
+        Instruction::AssignMemoryCellValue("a", 20).run(&mut args).unwrap();
+        Instruction::AssingMemoryCellValueFromMemoryCell("b", "a").run(&mut args).unwrap();
+        assert_eq!(args.memory_cells.get("b").unwrap().data.unwrap(), 20);
+    }
+
+    #[test]
+    fn test_assign_memory_cell_value_from_memory_cell_error() {
+        let mut args = setup_empty_runtime_args();
+        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("a", "b").run(&mut args).is_err());
+        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("b", "a").run(&mut args).is_err());
+        args.memory_cells.insert("a", MemoryCell::new("a"));
+        args.memory_cells.insert("b", MemoryCell::new("b"));
+        args.memory_cells.get_mut("b").unwrap().data = Some(10);
+        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("b", "a").run(&mut args).is_err());
+        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("a", "b").run(&mut args).is_ok());
+    }
+
+    /// Sets up runtime args in a conistent way because the default implementation for memory cells and accumulators is configgurable.
+    fn setup_runtime_args() -> RuntimeArgs<'static> {
+        let mut args = RuntimeArgs::new();
+        args.memory_cells = HashMap::new();
+        args.memory_cells.insert("a", MemoryCell::new("a"));
+        args.memory_cells.insert("b", MemoryCell::new("b"));
+        args.accumulators = vec![Accumulator::new(0), Accumulator::new(1), Accumulator::new(2)];
+        args
+    }
+
+    /// Sets up runtime args where no memory cells or accumulators are set.
+    fn setup_empty_runtime_args() -> RuntimeArgs<'static> {
+        let mut args = RuntimeArgs::new();
+        args.accumulators = Vec::new();
+        args.memory_cells = HashMap::new();
+        args
     }
 }

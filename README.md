@@ -50,7 +50,7 @@ This section logs what instructions are implemented in the backend
 - [ ] $\alpha_u:=\alpha_u\space\textbf{op}\space \rho(i)$
 - [ ] $\alpha_u:=\rho(i)\space\textbf{op}\space \rho(j)$
 - [ ] $\rho(i):=\rho(j)\space\textbf{op}\space\alpha_u$
-- [ ] $\rho(i):=\rho(j)$
+- [X] $\rho(i):=\rho(j)$
 - [ ] if $\alpha_u\space\textbf{cmp}\space0$ then goto label
 - [ ] goto label 
 - [X] push 
