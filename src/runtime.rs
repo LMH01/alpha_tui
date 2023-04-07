@@ -137,7 +137,7 @@ impl<'a> RuntimeArgs<'a> {
         }
     }
 
-    /// Creates a new storage cell with label **label** if it does not already exist
+    /// Creates a new memory cell with label **label** if it does not already exist
     /// and adds it to the **memory_cells* hashmap.
     pub fn add_storage_cell(&mut self, label: &'a str) {
         if !self.memory_cells.contains_key(label) {

@@ -1,36 +1,84 @@
 use crate::{runtime::{RuntimeArgs, ControlFlow}, base::{Comparison, Operation}};
 
 pub enum Instruction<'a> {
+    /// push
+    /// 
     /// See [push](fn.push.html)
     Push(),
+    /// pop
+    /// 
     /// See [pop](fn.pop.html)
     Pop(),
+    /// a := x
+    /// 
     /// See [assign_accumulator_value](fn.assign_accumulator_value.html)
     AssignAccumulatorValue(usize, i32),
+    /// a := b
+    /// 
     /// See [assign_accumulator_value_from_accumulator](fn.assign_accumulator_value_from_accumulator.html)
     AssignAccumulatorValueFromAccumulator(usize, usize),
+    /// a := p(i)
+    /// 
     /// See [assign_accumulator_value_from_memory_cell](fn.assign_accumulator_value_from_memory_cell.html)
     AssignAccumulatorValueFromMemoryCell(usize, &'a str),
+    /// p(i) := x
+    /// 
     /// See [assign_memory_cell_value](fn.assign_memory_cell_value.html)
     AssignMemoryCellValue(&'a str, i32),
+    /// p(i) := a
+    /// 
     /// See [assign_memory_cell_value_from_accumulator](fn.assign_memory_cell_value_from_accumulator.html)
     AssignMemoryCellValueFromAccumulator(&'a str, usize),
+    /// p(i) := p(j)
+    /// 
     /// See [assign_memory_cell_value_from_memory_cell](fn.assign_memory_cell_value_from_memory_cell.html)
     AssingMemoryCellValueFromMemoryCell(&'a str, &'a str),
+    /// a := a op x
+    /// 
+    /// See [calc_accumulator_with_constant](fn.calc_accumulator_with_constant.html)
     CalcAccumulatorWithConstant(Operation, usize, i32),
+    /// a := a op b
+    /// 
+    /// See [calc_accumulator_with_constant](fn.calc_accumulator_with_constant.html)
     CalcAccumulatorWithAccumulator(Operation, usize, usize),
+    /// a := b op c
+    /// 
+    /// See [calc_accumulator_with_accumulators](fn.calc_accumulator_with_accumulators.html)
     CalcAccumulatorWithAccumulators(Operation, usize, usize, usize),
+    /// a := a op p(i)
+    /// 
+    /// See [calc_accumulator_with_memory_cell](fn.calc_accumulator_with_memory_cell.html)
     CalcAccumulatorWithMemoryCell(Operation, usize, &'a str),
+    /// a := p(i) op p(j)
+    /// 
+    /// See [calc_accumulator_with_memory_cells](fn.calc_accumulator_with_memory_cells.html)
     CalcAccumulatorWithMemoryCells(Operation, usize, &'a str, &'a str),
+    /// p(i) := p(j) op x
+    /// 
+    /// See [calc_memory_cell_with_memory_cell_constant](fn.calc_memory_cell_with_memory_cell_constant.html)
     CalcMemoryCellWithMemoryCellConstant(Operation, &'a str, &'a str, i32),
+    /// p(i) := p(j) op a
+    /// 
+    /// See [calc_memory_cell_with_memory_cell_accumulator](fn.calc_memory_cell_with_memory_cell_accumulator.html)
     CalcMemoryCellWithMemoryCellAccumulator(Operation, &'a str, &'a str, usize),
+    /// p(i) := p(j) op p(k)
+    /// 
+    /// See [calc_memory_cell_with_memory_cells](fn.calc_memory_cell_with_memory_cells.html)
     CalcMemoryCellWithMemoryCells(Operation, &'a str, &'a str, &'a str),
+    /// goto label
+    /// 
     /// See [ControlFlow](../runtime/struct.ControlFlow.html) and [goto](fn.goto.html) for further information.
     Goto(&'a str),
+    /// if a cmp b then goto label
+    /// 
     /// See [goto_if_accumulator](fn.goto_if_accumulator.html)
     GotoIfAccumulator(Comparison, &'a str, usize, usize),
+    /// if a cmp x then goto label
+    /// 
     /// See [goto_if_constant](fn.goto_if_constant.html)
     GotoIfConstant(Comparison, &'a str, usize, i32),
+    /// if a cmp p(i) then goto label
+    /// 
     /// See [goto_if_memory_cell](fn.goto_if_memory_cell.html)
     GotoIfMemoryCell(Comparison, &'a str, usize, &'a str),
     /// See [print_accumulators](fn.print_accumulators.html)
@@ -74,32 +122,34 @@ impl<'a> Instruction<'a> {
     }
 }
 
-/// Pushes the value of alpha_0 onto the stack.
+/// Runs code equal to **push**
 fn push(runtime_args: &mut RuntimeArgs) -> Result<(), String> {
     assert_accumulator_exists(runtime_args, &0)?;
     runtime_args.stack.push(runtime_args.accumulators[0].data.unwrap_or(0));
     Ok(())
 }
 
-/// Pops top value of the stack into alpha_0.
+/// Runs code equal to **pop**
 fn pop(runtime_args: &mut RuntimeArgs) -> Result<(), String> {
     assert_accumulator_contains_value(runtime_args, &0)?;
     runtime_args.accumulators[0].data = Some(runtime_args.stack.pop().unwrap_or(0));
     Ok(())
 }
 
-/// Assings **value** to accumulator with index **a_idx**.
+/// Runs code equal to **a := x**
 /// 
-/// Errors when accumulator does not exist.
+/// - a = value of accumulator with index **a_idx**
+/// - x = constant with value **value**
 fn assign_accumulator_value(runtime_args: &mut RuntimeArgs, a_idx: &usize, value: &i32) -> Result<(), String> {
     assert_accumulator_exists(runtime_args, a_idx)?;
     runtime_args.accumulators.get_mut(*a_idx).unwrap().data = Some(*value);
     Ok(())
 }
 
-/// Assigns value of accumulator with index **a_idx_b** to accumulator with index **a_idx_a**.
-///
-/// Errors when either accumulator does not exist or when **a_idx_b** does not contain a value.
+/// Runs code equal to **a := b**
+/// 
+/// - a = value of accumulator with index **a_idx_a**
+/// - b = value of accumulator with index **a_idx_b**
 fn assign_accumulator_value_from_accumulator(runtime_args: &mut RuntimeArgs, a_idx_a: &usize, a_idx_b: &usize) -> Result<(), String> {
     let src = assert_accumulator_contains_value(runtime_args, a_idx_b)?;
     assert_accumulator_exists(runtime_args, a_idx_a)?;
@@ -107,9 +157,10 @@ fn assign_accumulator_value_from_accumulator(runtime_args: &mut RuntimeArgs, a_i
     Ok(())
 }
 
-/// Assigns value of memory cell with label **label** to accumulator with index **a_idx**.
-///
-/// Errors when accumulator does not exist or when memory cell does not contain a value.
+/// Runs code equal to **a := p(i)**
+/// 
+/// - a = value of accumulator with index **a_idx**
+/// - p(i) = value of memory cell with label **label**
 fn assign_accumulator_value_from_memory_cell(runtime_args: &mut RuntimeArgs, a_idx: &usize, label: &str) -> Result<(), String> {
     assert_accumulator_exists(runtime_args, a_idx)?;
     let value = assert_memory_cell_contains_value(runtime_args, label)?;
@@ -117,27 +168,31 @@ fn assign_accumulator_value_from_memory_cell(runtime_args: &mut RuntimeArgs, a_i
     Ok(())
 }
 
-/// Assings **value** to memory cell with label **label**.
+/// Runs code equal to **p(i) := x**
 /// 
-/// Errors when accumulator does not exist.
+/// - p(i) = value of memory cell with label **label**
+/// - x = constant with value **value**
 fn assign_memory_cell_value(runtime_args: &mut RuntimeArgs, label: &str, value: &i32) -> Result<(), String> {
     assert_memory_cell_exists(runtime_args, label)?;
     runtime_args.memory_cells.get_mut(label).unwrap().data = Some(*value);
     Ok(())
 }
 
-/// Assings value of accumulator with index **a_idx** to memory cell with label **label**.
+/// Runs code equal to **p(i) := a**
 /// 
-/// Errors when memory cell does not exist or when the accumulator does not contain a value.
+/// - p(i) = value of memory cell with label **label**
+/// - a = value of accumulator with index **a_idx**
 fn assign_memory_cell_value_from_accumulator(runtime_args: &mut RuntimeArgs, label: &str, a_idx: &usize) -> Result<(), String> {
     assert_memory_cell_exists(runtime_args, label)?;
     let value = assert_accumulator_contains_value(runtime_args, a_idx)?;
     runtime_args.memory_cells.get_mut(label).unwrap().data = Some(value);
     Ok(())
 }
-/// Assings value of accumulator with index **a_idx** to memory cell with label **label**.
+
+/// Runs code equal to **p(i) := p(j)**
 /// 
-/// Errors when memory cell does not exist or when the accumulator does not contain a value.
+/// - p(i) = value of memory cell with label **label_a**
+/// - p(j) = value of memory cell with label **label_b**
 fn assign_memory_cell_value_from_memory_cell(runtime_args: &mut RuntimeArgs, label_a: &str, label_b: &str) -> Result<(), String> {
     assert_memory_cell_exists(runtime_args, label_a)?;
     let value = assert_memory_cell_contains_value(runtime_args, label_b)?;
@@ -145,12 +200,22 @@ fn assign_memory_cell_value_from_memory_cell(runtime_args: &mut RuntimeArgs, lab
     Ok(())
 }
 
+/// Runs code equal to **a := a op x**
+/// 
+/// - a = value of accumulator with index **a_idx**
+/// - x = constant with value **value**
+/// - op = the operation to perform
 fn calc_accumulator_with_constant(runtime_args: &mut RuntimeArgs, operation: &Operation, a_idx: &usize, value: &i32) -> Result<(), String> {
     let v = assert_accumulator_contains_value(runtime_args, a_idx)?;
     runtime_args.accumulators.get_mut(*a_idx).unwrap().data = Some(operation.calc(v, *value));
     Ok(())
 }
 
+/// Runs code equal to **a := a op b**
+/// 
+/// - a = accumulator with index **a_idx_a**
+/// - b = accumulator with index **a_idx_b**
+/// - op = the operation to perform
 fn calc_accumulator_with_accumulator(runtime_args: &mut RuntimeArgs, operation: &Operation, a_idx_a: &usize, a_idx_b: &usize) -> Result<(), String> {
     let a = assert_accumulator_contains_value(runtime_args, a_idx_a)?;
     let b = assert_accumulator_contains_value(runtime_args, a_idx_b)?;
@@ -158,6 +223,12 @@ fn calc_accumulator_with_accumulator(runtime_args: &mut RuntimeArgs, operation: 
     Ok(())
 }
 
+/// Runs code equal to **a := b op c**
+/// 
+/// - a = value of accumulator with index **a_idx_a**
+/// - b = value of accumulator with index **a_idx_b**
+/// - c = value of accumulator with index **a_idx_c**
+/// - op = the operation to perform
 fn calc_accumulator_with_accumulators(runtime_args: &mut RuntimeArgs, operation: &Operation, a_idx_a: &usize, a_idx_b: &usize, a_idx_c: &usize) -> Result<(), String> {
     assert_accumulator_exists(runtime_args, a_idx_a)?;
     let a = assert_accumulator_contains_value(runtime_args, a_idx_b)?;
@@ -166,6 +237,11 @@ fn calc_accumulator_with_accumulators(runtime_args: &mut RuntimeArgs, operation:
     Ok(())
 }
 
+/// Runs code equal to **a := a op p(i)**
+/// 
+/// - a = value of accumulator with index **a_idx**
+/// - p(i) = value of memory cell with label **label**
+/// - op = the operation to perform
 fn calc_accumulator_with_memory_cell(runtime_args: &mut RuntimeArgs, operation: &Operation, a_idx: &usize, label: &str) -> Result<(), String> {
     let a = assert_accumulator_contains_value(runtime_args, a_idx)?;
     let b = assert_memory_cell_contains_value(runtime_args, label)?;
@@ -173,6 +249,12 @@ fn calc_accumulator_with_memory_cell(runtime_args: &mut RuntimeArgs, operation: 
     Ok(())
 }
 
+/// Runs code equal to **a := p(i) op p(j)**
+/// 
+/// - a = value of accumulator with index **a_idx**
+/// - p(i) = value of memory cell with label **label_a**
+/// - p(j) = value of memory cell with label **label_b**
+/// - op = the operation to perform
 fn calc_accumulator_with_memory_cells(runtime_args: &mut RuntimeArgs, operation: &Operation, a_idx: &usize, label_a: &str, label_b: &str) -> Result<(), String> {
     assert_accumulator_exists(runtime_args, a_idx)?;
     let a = assert_memory_cell_contains_value(runtime_args, label_a)?;
@@ -181,6 +263,12 @@ fn calc_accumulator_with_memory_cells(runtime_args: &mut RuntimeArgs, operation:
     Ok(())
 }
 
+/// Runs code equal to **p(i) := p(j) op x**
+/// 
+/// - p(i) = value of memory cell with label **label_a**
+/// - p(j) = value of memory cell with label **label_b**
+/// - x = constant with value **value**
+/// - op = the operation to perform
 fn calc_memory_cell_with_memory_cell_constant(runtime_args: &mut RuntimeArgs, operation: &Operation, label_a: &str, label_b: &str, value: &i32) -> Result<(), String> {
     assert_memory_cell_exists(runtime_args, label_a)?;
     let a = assert_memory_cell_contains_value(runtime_args, label_b)?;
@@ -188,6 +276,12 @@ fn calc_memory_cell_with_memory_cell_constant(runtime_args: &mut RuntimeArgs, op
     Ok(())
 }
 
+/// Runs code equal to **p(i) := p(j) op a**
+/// 
+/// - p(i) = value of memory cell with label **label_a**
+/// - p(j) = value of memory cell with label **label_b**
+/// - a = value of accumulator with index **a_idx**
+/// - op = the operation to perform
 fn calc_memory_cell_with_memory_cell_accumulator(runtime_args: &mut RuntimeArgs, operation: &Operation, label_a: &str, label_b: &str, a_idx: &usize) -> Result<(), String> {
     assert_memory_cell_exists(runtime_args, label_a)?;
     let a = assert_memory_cell_contains_value(runtime_args, label_b)?;
@@ -196,6 +290,12 @@ fn calc_memory_cell_with_memory_cell_accumulator(runtime_args: &mut RuntimeArgs,
     Ok(())
 }
 
+/// Runs code equal to **p(i) := p(j) op p(k)**
+/// 
+/// - p(i) = value of memory cell with label **label_a**
+/// - p(j) = value of memory cell with label **label_b**
+/// - p(k) = value of memory cell with label **label_c**
+/// - op = the operation to perform
 fn calc_memory_cell_with_memory_cells(runtime_args: &mut RuntimeArgs, operation: &Operation, label_a: &str, label_b: &str, label_c: &str) -> Result<(), String> {
     assert_memory_cell_exists(runtime_args, label_a)?;
     let a = assert_memory_cell_contains_value(runtime_args, label_b)?;
@@ -204,18 +304,21 @@ fn calc_memory_cell_with_memory_cells(runtime_args: &mut RuntimeArgs, operation:
     Ok(())
 }
 
+/// Runs code equal to **goto label**
+/// 
+/// - label = label to which to jump
+/// 
 /// Sets the next instruction index to index contained behind **label** in [instruction_labels](../runtime/struct.ControlFlow.html#structfield.instruction_labels) map.
 fn goto(runtime_args: &mut RuntimeArgs, control_flow: &mut ControlFlow, label: &str) -> Result<(), String> {
     control_flow.next_instruction_index(label)?;
     Ok(())
 }
 
-/// Sets next instruction to instruction behind **label** when comparison between accumulator **a_idx_a** and accumulator **a_idx_b** succeeds.
-/// ## Arguments
-/// - 'comparison' - The way the two values should be compared
-/// - 'label' - The label behind which the instruction is found that should be executed when comparison succeeds
-/// - 'a_idx_a' - The index of accumulator a whichs value should be compared
-/// - 'a_idx_b' - The index of accumulator b whichs value should be compared
+/// Runs code equal to **if a cmp b then goto label**
+/// - a = value of accumulator with index **a_idx_a**
+/// - b = value of accumulator with index **a_idx_b**
+/// - label = label to which to jump
+/// - cmp = the way how **a** and **b** should be compared
 fn goto_if_accumulator(runtime_args: &mut RuntimeArgs, control_flow: &mut ControlFlow, comparison: &Comparison, label: &str, a_idx_a: &usize, a_idx_b: &usize) -> Result<(), String> {
     let a = assert_accumulator_contains_value(runtime_args, a_idx_a)?;
     let b = assert_accumulator_contains_value(runtime_args, a_idx_b)?;
@@ -225,12 +328,11 @@ fn goto_if_accumulator(runtime_args: &mut RuntimeArgs, control_flow: &mut Contro
     Ok(())
 }
 
-/// Sets next instruction to instruction behind **label** when comparison between accumulator **a_idx** and constant **c** succeeds.
-/// ## Arguments
-/// - 'comparison' - The way the two values should be compared
-/// - 'label' - The label behind which the instruction is found that should be executed when comparison succeeds
-/// - 'a_idx' - The index of accumulator a whichs value should be compared
-/// - 'c' - Constant that should be compared with **a_idx_a**
+/// Runs code equal to **if a cmp x then goto label**
+/// - a = value of accumulator with index **a_idx**
+/// - x = constant with value **value**
+/// - label = label to which to jump
+/// - cmp = the way how **a** and **x** should be compared
 fn goto_if_constant(runtime_args: &mut RuntimeArgs, control_flow: &mut ControlFlow, comparison: &Comparison, label: &str, a_idx: &usize, c: &i32) -> Result<(), String> {
     let a = assert_accumulator_contains_value(runtime_args, a_idx)?;
     if comparison.cmp(a, *c) {
@@ -239,12 +341,11 @@ fn goto_if_constant(runtime_args: &mut RuntimeArgs, control_flow: &mut ControlFl
     Ok(())
 }
 
-/// Sets next instruction to instruction behind **label** when comparison between accumulator **a_idx** and memory cell with label **mcl** succeeds.
-/// ## Arguments
-/// - 'comparison' - The way the two values should be compared
-/// - 'label' - The label behind which the instruction is found that should be executed when comparison succeeds
-/// - 'a_idx' - The index of accumulator a whichs value should be compared
-/// - 'mcl' - The label of the memory cell behind wich the value can be found that should be compared
+/// Runs code equal to **if a cmp p(i) then goto label**
+/// - a = value of accumulator with index **a_idx**
+/// - p(i) = value of memory cell with label **mcl**
+/// - label = label to which to jump
+/// - cmp = the way how **a** and **x** should be compared
 fn goto_if_memory_cell(runtime_args: &mut RuntimeArgs, control_flow: &mut ControlFlow, comparison: &Comparison, label: &str, a_idx: &usize, mcl: &str) -> Result<(), String> {
     let a = assert_accumulator_contains_value(runtime_args, a_idx)?;
     let b = assert_memory_cell_contains_value(runtime_args, mcl)?;
