@@ -24,6 +24,7 @@ pub enum Instruction<'a> {
     CalcAccumulatorWithMemoryCells(Operation, usize, &'a str, &'a str),
     CalcMemoryCellWithMemoryCellConstant(Operation, &'a str, &'a str, i32),
     CalcMemoryCellWithMemoryCellAccumulator(Operation, &'a str, &'a str, usize),
+    CalcMemoryCellWithMemoryCells(Operation, &'a str, &'a str, &'a str),
     /// See [ControlFlow](../runtime/struct.ControlFlow.html) and [goto](fn.goto.html) for further information.
     Goto(&'a str),
     /// See [goto_if_accumulator](fn.goto_if_accumulator.html)
@@ -60,6 +61,7 @@ impl<'a> Instruction<'a> {
             Self::CalcAccumulatorWithMemoryCells(operation, a_idx, label_a, label_b) => calc_accumulator_with_memory_cells(runtime_args, operation, a_idx, label_a, label_b)?,
             Self::CalcMemoryCellWithMemoryCellAccumulator(operation, label_a, label_b, a_idx) => calc_memory_cell_with_memory_cell_accumulator(runtime_args, operation, label_a, label_b, a_idx)?,
             Self::CalcMemoryCellWithMemoryCellConstant(operation, label_a, label_b, value) => calc_memory_cell_with_memory_cell_constant(runtime_args, operation, label_a, label_b, value)?,
+            Self::CalcMemoryCellWithMemoryCells(operation, label_a, label_b, label_c) => calc_memory_cell_with_memory_cells(runtime_args, operation, label_a, label_b, label_c)?,
             Self::Goto(label) => goto(runtime_args, control_flow, label)?,
             Self::GotoIfAccumulator(comparison, label, a_idx_a, a_idx_b) => goto_if_accumulator(runtime_args, control_flow, comparison, label, a_idx_a, a_idx_b)?,
             Self::GotoIfConstant(comparison, label, a_idx, c) => goto_if_constant(runtime_args, control_flow, comparison, label, a_idx, c)?,
@@ -190,6 +192,14 @@ fn calc_memory_cell_with_memory_cell_accumulator(runtime_args: &mut RuntimeArgs,
     assert_memory_cell_exists(runtime_args, label_a)?;
     let a = assert_memory_cell_contains_value(runtime_args, label_b)?;
     let b = assert_accumulator_contains_value(runtime_args, a_idx)?;
+    runtime_args.memory_cells.get_mut(label_a).unwrap().data = Some(operation.calc(a, b));
+    Ok(())
+}
+
+fn calc_memory_cell_with_memory_cells(runtime_args: &mut RuntimeArgs, operation: &Operation, label_a: &str, label_b: &str, label_c: &str) -> Result<(), String> {
+    assert_memory_cell_exists(runtime_args, label_a)?;
+    let a = assert_memory_cell_contains_value(runtime_args, label_b)?;
+    let b = assert_memory_cell_contains_value(runtime_args, label_c)?;
     runtime_args.memory_cells.get_mut(label_a).unwrap().data = Some(operation.calc(a, b));
     Ok(())
 }
@@ -328,7 +338,7 @@ fn print_stack(runtime_args: &RuntimeArgs) {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::{runtime::{ControlFlow, RuntimeArgs}, instructions::Instruction, base::{Accumulator, MemoryCell, Comparison, Operation}};
+    use crate::{runtime::{ControlFlow, RuntimeArgs, Runner}, instructions::Instruction, base::{Accumulator, MemoryCell, Comparison, Operation}};
 
     
     #[test]
@@ -519,6 +529,16 @@ mod tests {
         Instruction::AssignMemoryCellValue("b", 10).run(&mut args, control_flow).unwrap();
         Instruction::CalcMemoryCellWithMemoryCellAccumulator(Operation::Plus, "a", "b", 0).run(&mut args, control_flow).unwrap();
         assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 30);
+    }
+    
+    #[test]
+    fn test_calc_memory_cell_with_memory_cells() {
+        let mut args = setup_runtime_args();
+        let control_flow = &mut ControlFlow::new();
+        Instruction::AssignMemoryCellValue("b", 10).run(&mut args, control_flow).unwrap();
+        Instruction::AssignMemoryCellValue("c", 10).run(&mut args, control_flow).unwrap();
+        Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "a", "b", "c").run(&mut args, control_flow).unwrap();
+        assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 20);
     }
 
     #[test]
