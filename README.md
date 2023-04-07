@@ -29,8 +29,11 @@ This section logs what instructions can be parsed from text
 - [ ] $\rho(i):=\alpha_u$
 - [ ] $\rho(i):=k$
 - [ ] $\alpha_u:=k$
+- [ ] $\alpha_u:=\alpha_u\space\textbf{op}\space k$
+- [ ] $\alpha_u:=\alpha_u\space\textbf{op}\space\alpha_v$
 - [ ] $\alpha_u:=\alpha_u\space\textbf{op}\space \rho(i)$
 - [ ] $\alpha_u:=\rho(i)\space\textbf{op}\space \rho(j)$
+- [ ] $\rho(i):=\rho(j)\space\textbf{op}\space k$
 - [ ] $\rho(i):=\rho(j)\space\textbf{op}\space\alpha_u$
 - [ ] $\rho(i):=\rho(j)$
 - [ ] if $\alpha_u\space\textbf{cmp}\space\alpha_v$ then goto label
@@ -49,8 +52,11 @@ This section logs what instructions are implemented in the backend
 - [X] $\rho(i):=\alpha_u$
 - [X] $\rho(i):=k$
 - [X] $\alpha_u:=k$
+- [ ] $\alpha_u:=\alpha_u\space\textbf{op}\space k$
+- [ ] $\alpha_u:=\alpha_u\space\textbf{op}\space\alpha_v$
 - [ ] $\alpha_u:=\alpha_u\space\textbf{op}\space \rho(i)$
 - [ ] $\alpha_u:=\rho(i)\space\textbf{op}\space \rho(j)$
+- [ ] $\rho(i):=\rho(j)\space\textbf{op}\space k$
 - [ ] $\rho(i):=\rho(j)\space\textbf{op}\space\alpha_u$
 - [X] $\rho(i):=\rho(j)$
 - [X] if $\alpha_u\space\textbf{cmp}\space\alpha_v$ then goto label
