@@ -4,7 +4,7 @@ This is my attempt at writing a compiler for the Alpha-Notation used in my Syste
 
 ## Current status
 
-Internal handling of instructions is finished (programs can be run, when assembled by creating a list of instructions in code), now the "compiler" needs be be written.
+Internal handling of instructions is finished, programs can be run, when assembled by creating a list of instructions in code. Now the "compiler" needs be be written.
 
 ## TODO
 
