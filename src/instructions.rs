@@ -194,7 +194,7 @@ impl TryFrom<&str> for Instruction {
                 // Longer, instruction is calc_accumulator_with_memory_cells
                 let op = parse_operation(parts[3], err_idx(&parts, 4, 0))?;
                 let m_cell_b = parse_memory_cell(parts[4], err_idx(&parts, 5, 0))?;
-                return Ok(Instruction::CalcAccumulatorWithMemoryCells(op, a_idx, m_cell_a.unwrap(), m_cell_b));
+                return Ok(Instruction::CalcAccumulatorWithMemoryCells(op, a_idx, m_cell_a.unwrap(), m_cell_b));//TODO write test
             }
 
             // Instruction is assign_accumulator__value
@@ -683,6 +683,12 @@ mod tests {
         Instruction::Pop().run(&mut args, &mut control_flow).unwrap();
         assert_eq!(args.accumulators[0].data.unwrap(), 5);
         assert_eq!(args.stack.len(), 0);
+    }
+
+    #[test]
+    fn test_parse_assign_accumulator_value() {
+        assert_eq!(Instruction::try_from("a0 := 20"), Ok(Instruction::AssignAccumulatorValue(0, 20)));
+        assert_eq!(Instruction::try_from("a0 := x"), Err(InstructionParseError::UnexpectedCharacter(6, "x".to_string())));
     }
 
     #[test]
