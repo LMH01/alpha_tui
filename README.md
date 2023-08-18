@@ -33,7 +33,7 @@ This section logs what instructions can be parsed from text
 - [X] $\alpha_u:=\alpha_u\space\textbf{op}\space\alpha_v$
 - [X] $\alpha_u:=\alpha_v\space\textbf{op}\space\alpha_w$
 - [X] $\alpha_u:=\alpha_u\space\textbf{op}\space \rho(i)$
-- [ ] $\alpha_u:=\rho(i)\space\textbf{op}\space \rho(j)$
+- [X] $\alpha_u:=\rho(i)\space\textbf{op}\space \rho(j)$
 - [ ] $\rho(i):=\rho(j)\space\textbf{op}\space c$
 - [ ] $\rho(i):=\rho(j)\space\textbf{op}\space\alpha_u$
 - [ ] $\rho(i):=\rho(j)\space\textbf{op}\space\rho(k)$

@@ -192,8 +192,8 @@ impl TryFrom<&str> for Instruction {
                     return Ok(Instruction::AssignAccumulatorValueFromMemoryCell(a_idx, m_cell_a.unwrap()));
                 }
                 // Longer, instruction is calc_accumulator_with_memory_cells
-                let op = parse_operation(parts[3], err_idx(&parts, 4, 0))?;
-                let m_cell_b = parse_memory_cell(parts[4], err_idx(&parts, 5, 0))?;
+                let op = parse_operation(parts[3], err_idx(&parts, 3, 0))?;
+                let m_cell_b = parse_memory_cell(parts[4], err_idx(&parts, 4, 0))?;
                 return Ok(Instruction::CalcAccumulatorWithMemoryCells(op, a_idx, m_cell_a.unwrap(), m_cell_b));//TODO write test
             }
 
@@ -885,6 +885,13 @@ mod tests {
         Instruction::AssignMemoryCellValue("b".to_string(), 10).run(&mut args, control_flow).unwrap();
         Instruction::CalcAccumulatorWithMemoryCells(Operation::Plus, 0, "a".to_string(), "b".to_string()).run(&mut args, control_flow).unwrap();
         assert_eq!(args.accumulators[0].data.unwrap(), 20);
+    }
+
+    #[test]
+    fn test_parse_calc_accumulator_with_memory_cells() {
+        assert_eq!(Instruction::try_from("a0 := p(h1) / p(h2)"), Ok(Instruction::CalcAccumulatorWithMemoryCells(Operation::Division, 0, "h1".to_string(), "h2".to_string())));
+        assert_eq!(Instruction::try_from("a0 := p(h1) x p(h2)"), Err(InstructionParseError::UnknownOperation(12, "x".to_string())));
+        assert_eq!(Instruction::try_from("a0 := p(h1) / p()"), Err(InstructionParseError::UnexpectedCharacter(14, "p()".to_string())));
     }
 
     #[test]
