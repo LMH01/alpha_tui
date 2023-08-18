@@ -166,6 +166,11 @@ impl TryFrom<&str> for Instruction {
             }
         }
 
+        // Check if instruction is goto
+        if parts[0] == "goto" {
+            return Ok(Instruction::Goto(parts[1].to_string()));
+        }
+
         // Instructions where the first part is an accumulator
         if parts[0].starts_with('a') && parts[1] == ":=" {//TODO Add more verbal syntax check for := when it is required
             let a_idx = parse_alpha(parts[0], 0)?;
@@ -970,6 +975,11 @@ mod tests {
         control_flow.instruction_labels.insert("loop", 5);
         Instruction::Goto("loop".to_string()).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(control_flow.next_instruction_index, 5);
+    }
+
+    #[test]
+    fn test_parse_goto() {
+        assert_eq!(Instruction::try_from("goto loop"), Ok(Instruction::Goto("loop".to_string())));
     }
 
     #[test]
