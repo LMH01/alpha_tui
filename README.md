@@ -25,7 +25,7 @@ Be $c,u,v\in\mathbb{Z};n\in\mathbb{N}|n\geq0:i,j\in\lbrace h_0,\ldots,h_n\rbrace
 This section logs what instructions can be parsed from text
 
 - [X] $\alpha_u:=\alpha_v$
-- [ ] $\alpha_u:=\rho(i)$
+- [X] $\alpha_u:=\rho(i)$
 - [ ] $\rho(i):=\alpha_u$
 - [ ] $\rho(i):=c$
 - [ ] $\alpha_u:=c$

@@ -138,8 +138,8 @@ impl TryFrom<&str> for Instruction {
         //    label = Some(parts[0].replace(":", ""));
         //}
 
-        // Instructions that assign value to alpha
-        if parts[0].starts_with('a') && parts[1] == ":=" {
+        // Instructions where the third part is an accumulator
+        if parts[0].starts_with('a') && parts[1] == ":=" {//TODO Add more verbal syntax check for := when it is required
             let a_idx = parse_alpha(parts[0], 1)?;
             // Instructions that use a second accumulator to assign the value
             if parts[2].starts_with('a') {
@@ -181,6 +181,28 @@ impl TryFrom<&str> for Instruction {
                 return Err(InstructionParseError::NoMatchSuggestion(suggestion!(parts[0], ":=", parts[0], parts[3], parts[4])));
                 
             }
+
+            let m_cell_a = parse_memory_cell(parts[2], err_idx(&parts, 3, 0));
+            let no = parse_number(parts[2], err_idx(&parts, 2, 0));
+            
+            // Instructions where the third part is a memory cell
+            if m_cell_a.is_ok() {
+                // Check if instruction is assign_accumulator_value_from_memory_cell
+                if parts.len() == 3 {
+                    return Ok(Instruction::AssignAccumulatorValueFromMemoryCell(a_idx, m_cell_a.unwrap()));
+                }
+                // Longer, instruction is calc_accumulator_with_memory_cells
+                let op = parse_operation(parts[3], err_idx(&parts, 4, 0))?;
+                let m_cell_b = parse_memory_cell(parts[4], err_idx(&parts, 5, 0))?;
+                return Ok(Instruction::CalcAccumulatorWithMemoryCells(op, a_idx, m_cell_a.unwrap(), m_cell_b));
+            }
+
+            // Instruction is assign_accumulator__value
+            if no.is_ok() {
+                return Ok(Instruction::AssignAccumulatorValue(a_idx, no.unwrap()));//TODO write test for this
+            }
+            return Err(InstructionParseError::UnexpectedCharacter(err_idx(&parts, 2, 0), parts[2].to_string()))
+
         }
         Err(InstructionParseError::NoMatch)
     }
@@ -702,6 +724,13 @@ mod tests {
     }
     
     #[test]
+    fn test_parse_assign_accumulator_value_from_memory_cell() {
+        assert_eq!(Instruction::try_from("a0 := p(h1)"), Ok(Instruction::AssignAccumulatorValueFromMemoryCell(0, "h1".to_string())));
+        assert_eq!(Instruction::try_from("a4 := p(x2)"), Ok(Instruction::AssignAccumulatorValueFromMemoryCell(4, "x2".to_string())));
+        assert_eq!(Instruction::try_from("a4 := p()"), Err(InstructionParseError::UnexpectedCharacter(6, "p()".to_string())));
+    }
+
+    #[test]
     fn test_assign_accumulator_value_from_memory_cell_error() {
         let mut args = setup_empty_runtime_args();
         let mut control_flow = ControlFlow::new();
@@ -788,8 +817,8 @@ mod tests {
 
     #[test]
     fn test_parse_calc_accumulator_with_constant() {
-        //assert_eq!(Instruction::try_from("a1 := a1 + 20"), Ok(Instruction::CalcAccumulatorWithConstant(Operation::Plus, 1, 20)));
-        //assert_eq!(Instruction::try_from("a1 := ab2 + a29"), Err(InstructionParseError::NotANumber(7, "b2".to_string())));
+        assert_eq!(Instruction::try_from("a1 := a1 + 20"), Ok(Instruction::CalcAccumulatorWithConstant(Operation::Plus, 1, 20)));
+        assert_eq!(Instruction::try_from("a1 := ab2 + a29"), Err(InstructionParseError::NotANumber(7, "b2".to_string())));
         assert_eq!(Instruction::try_from("a1 := a2 + 20"), Err(InstructionParseError::NoMatchSuggestion("a1 := a1 + 20".to_string())));
     }
 
