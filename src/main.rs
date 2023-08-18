@@ -1,3 +1,7 @@
+use std::{io, thread, time::Duration};
+
+use tui::{backend::CrosstermBackend, Terminal, widgets::{Block, Borders}};
+
 use crate::{instructions::Instruction, runtime::{Runner, RuntimeArgs}, base::{Operation, Comparison}};
 
 /// Contains all required data types used to run programs
@@ -17,6 +21,20 @@ const MEMORY_CELL_LABELS: &'static [&'static str] = &["a", "b", "c", "d", "e", "
 fn main() {
     println!("Hello, world!");
     
+    //let stdout = io::stdout();
+    //let backend = CrosstermBackend::new(stdout);
+    //let mut terminal = Terminal::new(backend).unwrap();
+
+    //terminal.draw(|f| {
+    //    let size = f.size();
+    //    let block = Block::default()
+    //        .title("Block")
+    //        .borders(Borders::ALL);
+    //    f.render_widget(block, size);
+    //}).unwrap();
+
+    //thread::sleep(Duration::from_millis(5000));
+
     let instructions = vec![
         Instruction::AssignAccumulatorValue(0, 5),
         Instruction::AssignAccumulatorValue(1, 10),
