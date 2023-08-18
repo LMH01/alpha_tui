@@ -66,6 +66,24 @@ impl Comparison {
     }
 }
 
+impl TryFrom<&str> for Comparison {
+    type Error = ();
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "<" => Ok(Self::Less),
+            "<=" => Ok(Self::LessOrEqual),
+            "=<" => Ok(Self::LessOrEqual),
+            "=" => Ok(Self::Equal),
+            "==" => Ok(Self::Equal),
+            ">=" => Ok(Self::MoreOrEqual),
+            "=>" => Ok(Self::MoreOrEqual),
+            ">" => Ok(Self::More),
+            _ => Err(()),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum Operation {
     Plus,
@@ -114,6 +132,18 @@ mod tests {
         assert!(Comparison::MoreOrEqual.cmp(5, 5));
         assert!(Comparison::MoreOrEqual.cmp(10, 5));
         assert!(Comparison::More.cmp(10, 5));
+    }
+
+    #[test]
+    fn test_comparison_try_from_str() {
+        assert_eq!(Comparison::try_from("<"), Ok(Comparison::Less));
+        assert_eq!(Comparison::try_from("<="), Ok(Comparison::LessOrEqual));
+        assert_eq!(Comparison::try_from("=<"), Ok(Comparison::LessOrEqual));
+        assert_eq!(Comparison::try_from("="), Ok(Comparison::Equal));
+        assert_eq!(Comparison::try_from("=="), Ok(Comparison::Equal));
+        assert_eq!(Comparison::try_from(">="), Ok(Comparison::MoreOrEqual));
+        assert_eq!(Comparison::try_from("=>"), Ok(Comparison::MoreOrEqual));
+        assert_eq!(Comparison::try_from(">"), Ok(Comparison::More));
     }
 
     #[test]

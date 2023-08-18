@@ -138,22 +138,50 @@ impl TryFrom<&str> for Instruction {
         //    label = Some(parts[0].replace(":", ""));
         //}
 
-        // Instructions where the third part is an accumulator
+        // Instructions that compare values
+        if parts[0] == "if" {
+            if !parts[1].starts_with('a') {
+                return Err(InstructionParseError::UnexpectedCharacter(err_idx(&parts, 1), parts[1].to_string()));
+            }
+            if parts[4] != "then" {
+                return Err(InstructionParseError::UnexpectedCharacter(err_idx(&parts, 4), parts[4].to_string()));
+            }
+            if parts[5] != "goto" {
+                return Err(InstructionParseError::UnexpectedCharacter(err_idx(&parts, 5), parts[5].to_string()));
+            }
+            let a_idx = parse_alpha(parts[1], err_idx(&parts, 1))?;
+            let cmp = parse_comparison(parts[2], err_idx(&parts, 2))?;
+            let a_idx_b = parse_alpha(parts[3], err_idx(&parts, 3));
+            let no = parse_number(parts[3], err_idx(&parts, 3));
+            let m_cell = parse_memory_cell(parts[3], err_idx(&parts, 3));
+            // Check if instruction is goto_if_accumulator
+            if a_idx_b.is_ok() {
+                return Ok(Instruction::GotoIfAccumulator(cmp, parts[6].to_string(), a_idx, a_idx_b.unwrap()));
+            } else if no.is_ok() { // Check if instruction is goto_if_constant
+                return Ok(Instruction::GotoIfConstant(cmp, parts[6].to_string(), a_idx, no.unwrap()));
+            } else if m_cell.is_ok() { // Check if instruction is goto_if_memory_cell
+                return Ok(Instruction::GotoIfMemoryCell(cmp, parts[6].to_string(), a_idx, m_cell.unwrap()));
+            } else {
+                return Err(InstructionParseError::UnexpectedCharacter(err_idx(&parts, 3), parts[3].to_string()));
+            }
+        }
+
+        // Instructions where the first part is an accumulator
         if parts[0].starts_with('a') && parts[1] == ":=" {//TODO Add more verbal syntax check for := when it is required
-            let a_idx = parse_alpha(parts[0], 1)?;
+            let a_idx = parse_alpha(parts[0], 0)?;
             // Instructions that use a second accumulator to assign the value
             if parts[2].starts_with('a') {
-                let a_idx_b = parse_alpha(parts[2], err_idx(&parts, 2, 1))?;
+                let a_idx_b = parse_alpha(parts[2], err_idx(&parts, 2))?;
                 // Check if instruction is assign_accumulator_value_from_accumulator
                 if parts.len() == 3 {
                     return Ok(Instruction::AssignAccumulatorValueFromAccumulator(a_idx, a_idx_b));
                 }
                 // Parse operation
-                let op = parse_operation(parts[3], err_idx(&parts, 3, 0))?;
+                let op = parse_operation(parts[3], err_idx(&parts, 3))?;
 
                 // Instructions that use a third accumulator
                 if parts[4].starts_with('a') {
-                    let a_idx_c = parse_alpha(parts[4], err_idx(&parts, 4, 1))?;
+                    let a_idx_c = parse_alpha(parts[4], err_idx(&parts, 4))?;
                     // Check if instruction is calc_accumulator_value_with_accumulator or calc_accumulator_value_with_accumulators
                     if a_idx == a_idx_b {
                         return Ok(Instruction::CalcAccumulatorWithAccumulator(op, a_idx, a_idx_c));
@@ -164,16 +192,16 @@ impl TryFrom<&str> for Instruction {
                 
                 // Check if booth accumulators are the same
                 if a_idx == a_idx_b {
-                    let no = parse_number(parts[4], err_idx(&parts, 4, 0));
-                    let memory_cell = parse_memory_cell(parts[4], err_idx(&parts, 4, 0));
+                    let no = parse_number(parts[4], err_idx(&parts, 4));
+                    let m_cell = parse_memory_cell(parts[4], err_idx(&parts, 4));
 
                     // Check if instruction is calc_accumulator_value_with_constant
                     if no.is_ok() {
                         return Ok(Instruction::CalcAccumulatorWithConstant(op, a_idx, no.unwrap()));
-                    } else if memory_cell.is_ok() { // Check if instruction is calc_accumulator_value_with_memory_cell
-                        return Ok(Instruction::CalcAccumulatorWithMemoryCell(op, a_idx, memory_cell.unwrap()));
+                    } else if m_cell.is_ok() { // Check if instruction is calc_accumulator_value_with_memory_cell
+                        return Ok(Instruction::CalcAccumulatorWithMemoryCell(op, a_idx, m_cell.unwrap()));
                     } else {
-                        return Err(memory_cell.unwrap_err());
+                        return Err(m_cell.unwrap_err());
                     }
 
                 }
@@ -182,8 +210,8 @@ impl TryFrom<&str> for Instruction {
                 
             }
 
-            let m_cell_a = parse_memory_cell(parts[2], err_idx(&parts, 3, 0));
-            let no = parse_number(parts[2], err_idx(&parts, 2, 0));
+            let m_cell_a = parse_memory_cell(parts[2], err_idx(&parts, 3));
+            let no = parse_number(parts[2], err_idx(&parts, 2));
             
             // Instructions where the third part is a memory cell
             if m_cell_a.is_ok() {
@@ -192,8 +220,8 @@ impl TryFrom<&str> for Instruction {
                     return Ok(Instruction::AssignAccumulatorValueFromMemoryCell(a_idx, m_cell_a.unwrap()));
                 }
                 // Longer, instruction is calc_accumulator_with_memory_cells
-                let op = parse_operation(parts[3], err_idx(&parts, 3, 0))?;
-                let m_cell_b = parse_memory_cell(parts[4], err_idx(&parts, 4, 0))?;
+                let op = parse_operation(parts[3], err_idx(&parts, 3))?;
+                let m_cell_b = parse_memory_cell(parts[4], err_idx(&parts, 4))?;
                 return Ok(Instruction::CalcAccumulatorWithMemoryCells(op, a_idx, m_cell_a.unwrap(), m_cell_b));//TODO write test
             }
 
@@ -201,7 +229,7 @@ impl TryFrom<&str> for Instruction {
             if no.is_ok() {
                 return Ok(Instruction::AssignAccumulatorValue(a_idx, no.unwrap()));//TODO write test for this
             }
-            return Err(InstructionParseError::UnexpectedCharacter(err_idx(&parts, 2, 0), parts[2].to_string()))
+            return Err(InstructionParseError::UnexpectedCharacter(err_idx(&parts, 2), parts[2].to_string()))
 
         }
         Err(InstructionParseError::NoMatch)
@@ -259,10 +287,13 @@ macro_rules! suggestion {
 /// assert_eq!(parse_alpha("ab3", 1), Err(1));
 /// ```
 fn parse_alpha(s: &str, err_idx: usize) -> Result<usize, InstructionParseError> {
+    if !s.starts_with("a") && !s.is_empty() {
+        return Err(InstructionParseError::UnexpectedCharacter(err_idx, String::from(s.chars().nth(0).unwrap())));
+    }
     let input = s.replace("a", "");
     match input.parse::<usize>() {
         Ok(x) => Ok(x),
-        Err(_) => Err(InstructionParseError::NotANumber(err_idx, input))
+        Err(_) => Err(InstructionParseError::NotANumber(err_idx+1, input))
     }
 }
 
@@ -274,6 +305,16 @@ fn parse_operation(s: &str, err_idx: usize) -> Result<Operation, InstructionPars
         Ok(s) => Ok(s),
         Err(_) => Err(InstructionParseError::UnknownOperation(err_idx, s.to_string())),
     }
+}
+
+/// Tries to parse the comparison.
+/// 
+/// `err_idx` indicates at what index the parse error originates.
+fn parse_comparison(s: &str, err_idx: usize) -> Result<Comparison, InstructionParseError> {
+   match Comparison::try_from(s) {
+        Ok(s) =>Ok(s),
+        Err(_) => Err(InstructionParseError::UnknownComparison(err_idx, s.to_string())),
+   } 
 }
 
 /// Tries to parse a number.
@@ -307,13 +348,12 @@ fn parse_memory_cell(s: &str, err_base_idx: usize) -> Result<String, Instruction
 /// Calculates the error index depending on the part in which the error occurs.
 /// 
 /// `part_idx` specifies in what part the error occurs.
-/// `offset` is added to the result.
-fn err_idx(parts: &Vec<&str>, part_idx: usize, offset: usize) -> usize {
+fn err_idx(parts: &Vec<&str>, part_idx: usize) -> usize {
     let mut idx = 0;
     for i in 0..=part_idx-1 {
         idx += parts[i].len() + 1;
     }
-    idx + offset
+    idx
 }
 
 /// Runs code equal to **push**
@@ -639,9 +679,9 @@ mod tests {
     fn test_parse_alpha() {
         assert_eq!(parse_alpha("a3", 1), Ok(3));
         assert_eq!(parse_alpha("a10", 1), Ok(10));
-        assert_eq!(parse_alpha("a10x", 1), Err(InstructionParseError::NotANumber(1, String::from("10x"))));
-        assert_eq!(parse_alpha("ab3", 1), Err(InstructionParseError::NotANumber(1, String::from("b3"))));
-        assert_eq!(parse_alpha("ab3i", 1), Err(InstructionParseError::NotANumber(1, String::from("b3i"))));
+        assert_eq!(parse_alpha("a10x", 0), Err(InstructionParseError::NotANumber(1, String::from("10x"))));
+        assert_eq!(parse_alpha("ab3", 0), Err(InstructionParseError::NotANumber(1, String::from("b3"))));
+        assert_eq!(parse_alpha("ab3i", 0), Err(InstructionParseError::NotANumber(1, String::from("b3i"))));
     }
 
     #[test]
@@ -666,7 +706,7 @@ mod tests {
     fn test_err_idx() {
         let s = String::from("a1 := a2 + a4");
         let parts: Vec<&str> = s.split_whitespace().collect();
-        assert_eq!(err_idx(&parts, 2, 1), 7);
+        assert_eq!(err_idx(&parts, 2), 6);
     }
 
     #[test]
@@ -956,6 +996,12 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_goto_if_accumulator() {
+        assert_eq!(Instruction::try_from("if a0 <= a1 then goto loop"), Ok(Instruction::GotoIfAccumulator(Comparison::LessOrEqual, "loop".to_string(), 0, 1)));
+        assert_eq!(Instruction::try_from("if x <= a1 then goto loop"), Err(InstructionParseError::UnexpectedCharacter(3, "x".to_string())));
+    }
+
+    #[test]
     fn test_goto_if_constant() {
         let mut args = setup_runtime_args();
         let mut control_flow = ControlFlow::new();
@@ -968,6 +1014,11 @@ mod tests {
         assert_eq!(control_flow.next_instruction_index, 0);
         assert!(Instruction::GotoIfConstant(Comparison::Less, "none".to_string(), 0, 40).run(&mut args, &mut control_flow).is_err());
         assert!(Instruction::GotoIfConstant(Comparison::Equal, "none".to_string(), 0, 40).run(&mut args, &mut control_flow).is_ok());
+    }
+
+    #[test]
+    fn test_parse_goto_if_constant() {
+        assert_eq!(Instruction::try_from("if a0 == 20 then goto loop"), Ok(Instruction::GotoIfConstant(Comparison::Equal, "loop".to_string(), 0, 20)));
     }
 
     #[test]
@@ -984,6 +1035,12 @@ mod tests {
         assert_eq!(control_flow.next_instruction_index, 0);
         assert!(Instruction::GotoIfMemoryCell(Comparison::Less, "none".to_string(), 0, "a".to_string()).run(&mut args, &mut control_flow).is_err());
         assert!(Instruction::GotoIfMemoryCell(Comparison::Equal, "none".to_string(), 0, "a".to_string()).run(&mut args, &mut control_flow).is_ok());
+    }
+
+    #[test]
+    fn test_parse_goto_if_memory_cell() {
+        assert_eq!(Instruction::try_from("if a0 == p(h1) then goto loop"), Ok(Instruction::GotoIfMemoryCell(Comparison::Equal, "loop".to_string(), 0, "h1".to_string())));
+        assert_eq!(Instruction::try_from("if a0 == p then goto loop"), Err(InstructionParseError::UnexpectedCharacter(9, "p".to_string())));
     }
 
     #[test]
