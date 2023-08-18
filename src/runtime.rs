@@ -5,12 +5,12 @@ use crate::{instructions::Instruction, base::{Accumulator, MemoryCell}, ACCUMULA
 //TODO make fields private and add access functions, move into separate module
 pub struct Runner<'a> {
     runtime_args: RuntimeArgs<'a>,
-    instructions: Vec<Instruction<'a>>,
+    instructions: Vec<Instruction>,
     control_flow: ControlFlow<'a>,
 }
 
 impl<'a> Runner<'a> {
-    pub fn new(instructions: Vec<Instruction<'a>>) -> Self {
+    pub fn new(instructions: Vec<Instruction>) -> Self {
         Self {
             runtime_args: RuntimeArgs::new(),
             instructions,
@@ -19,7 +19,7 @@ impl<'a> Runner<'a> {
     }
 
     /// Creates a new runner that can be initialized with different runtime args.
-    pub fn new_custom(instructions: Vec<Instruction<'a>>, runtime_args: RuntimeArgs<'a>) -> Self {
+    pub fn new_custom(instructions: Vec<Instruction>, runtime_args: RuntimeArgs<'a>) -> Self {
         Self {
             runtime_args,
             instructions,
@@ -40,7 +40,7 @@ impl<'a> Runner<'a> {
     }
 
     /// Adds an instruction to the end of the instruction vector with a label mapping.
-    pub fn add_instruction_with_label(&mut self, instruction: Instruction<'a>, label: &'a str) {
+    pub fn add_instruction_with_label(&mut self, instruction: Instruction, label: &'a str) {
         self.instructions.push(instruction);
         self.control_flow.instruction_labels.insert(label, self.instructions.len()-1);
     }

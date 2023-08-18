@@ -1,7 +1,7 @@
 use crate::{runtime::{RuntimeArgs, ControlFlow}, base::{Comparison, Operation}, suggestion};
 
 #[derive(Debug, PartialEq)]
-pub enum Instruction<'a> {
+pub enum Instruction {
     /// push
     /// 
     /// See [push](fn.push.html)
@@ -21,19 +21,19 @@ pub enum Instruction<'a> {
     /// a := p(i)
     /// 
     /// See [assign_accumulator_value_from_memory_cell](fn.assign_accumulator_value_from_memory_cell.html)
-    AssignAccumulatorValueFromMemoryCell(usize, &'a str),
+    AssignAccumulatorValueFromMemoryCell(usize, String),
     /// p(i) := x
     /// 
     /// See [assign_memory_cell_value](fn.assign_memory_cell_value.html)
-    AssignMemoryCellValue(&'a str, i32),
+    AssignMemoryCellValue(String, i32),
     /// p(i) := a
     /// 
     /// See [assign_memory_cell_value_from_accumulator](fn.assign_memory_cell_value_from_accumulator.html)
-    AssignMemoryCellValueFromAccumulator(&'a str, usize),
+    AssignMemoryCellValueFromAccumulator(String, usize),
     /// p(i) := p(j)
     /// 
     /// See [assign_memory_cell_value_from_memory_cell](fn.assign_memory_cell_value_from_memory_cell.html)
-    AssingMemoryCellValueFromMemoryCell(&'a str, &'a str),
+    AssingMemoryCellValueFromMemoryCell(String, String),
     /// a := a op x
     /// 
     /// See [calc_accumulator_with_constant](fn.calc_accumulator_with_constant.html)
@@ -49,39 +49,39 @@ pub enum Instruction<'a> {
     /// a := a op p(i)
     /// 
     /// See [calc_accumulator_with_memory_cell](fn.calc_accumulator_with_memory_cell.html)
-    CalcAccumulatorWithMemoryCell(Operation, usize, &'a str),
+    CalcAccumulatorWithMemoryCell(Operation, usize, String),
     /// a := p(i) op p(j)
     /// 
     /// See [calc_accumulator_with_memory_cells](fn.calc_accumulator_with_memory_cells.html)
-    CalcAccumulatorWithMemoryCells(Operation, usize, &'a str, &'a str),
+    CalcAccumulatorWithMemoryCells(Operation, usize, String, String),
     /// p(i) := p(j) op x
     /// 
     /// See [calc_memory_cell_with_memory_cell_constant](fn.calc_memory_cell_with_memory_cell_constant.html)
-    CalcMemoryCellWithMemoryCellConstant(Operation, &'a str, &'a str, i32),
+    CalcMemoryCellWithMemoryCellConstant(Operation, String, String, i32),
     /// p(i) := p(j) op a
     /// 
     /// See [calc_memory_cell_with_memory_cell_accumulator](fn.calc_memory_cell_with_memory_cell_accumulator.html)
-    CalcMemoryCellWithMemoryCellAccumulator(Operation, &'a str, &'a str, usize),
+    CalcMemoryCellWithMemoryCellAccumulator(Operation, String, String, usize),
     /// p(i) := p(j) op p(k)
     /// 
     /// See [calc_memory_cell_with_memory_cells](fn.calc_memory_cell_with_memory_cells.html)
-    CalcMemoryCellWithMemoryCells(Operation, &'a str, &'a str, &'a str),
+    CalcMemoryCellWithMemoryCells(Operation, String, String, String),
     /// goto label
     /// 
     /// See [ControlFlow](../runtime/struct.ControlFlow.html) and [goto](fn.goto.html) for further information.
-    Goto(&'a str),
+    Goto(String),
     /// if a cmp b then goto label
     /// 
     /// See [goto_if_accumulator](fn.goto_if_accumulator.html)
-    GotoIfAccumulator(Comparison, &'a str, usize, usize),
+    GotoIfAccumulator(Comparison, String, usize, usize),
     /// if a cmp x then goto label
     /// 
     /// See [goto_if_constant](fn.goto_if_constant.html)
-    GotoIfConstant(Comparison, &'a str, usize, i32),
+    GotoIfConstant(Comparison, String, usize, i32),
     /// if a cmp p(i) then goto label
     /// 
     /// See [goto_if_memory_cell](fn.goto_if_memory_cell.html)
-    GotoIfMemoryCell(Comparison, &'a str, usize, &'a str),
+    GotoIfMemoryCell(Comparison, String, usize, String),
     /// See [print_accumulators](fn.print_accumulators.html)
     PrintAccumulators(),
     /// See [print_memory_cells](fn.print_memory_cells.html)
@@ -90,10 +90,10 @@ pub enum Instruction<'a> {
     PrintStack(),
 }
 
-impl<'a> Instruction<'a> {
+impl Instruction {
     /// Runs the instruction, retuns Err(String) when instruction could not be ran.
     /// Err contains the reason why running the instruction failed.
-    pub fn run(&self, runtime_args: &mut RuntimeArgs<'a>, control_flow: &mut ControlFlow<'a>) -> Result<(), String> {
+    pub fn run(&self, runtime_args: &mut RuntimeArgs, control_flow: &mut ControlFlow) -> Result<(), String> {
         match self {
             Self::Push() => push(runtime_args)?,
             Self::Pop() => pop(runtime_args)?,
@@ -123,7 +123,7 @@ impl<'a> Instruction<'a> {
     }
 }
 
-impl<'a> TryFrom<&str> for Instruction<'a> {
+impl TryFrom<&str> for Instruction {
     type Error = InstructionParseError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
@@ -150,6 +150,7 @@ impl<'a> TryFrom<&str> for Instruction<'a> {
                 }
                 // Parse operation
                 let op = parse_operation(parts[3], err_idx(&parts, 3, 0))?;
+
                 // Instructions that use a third accumulator
                 if parts[4].starts_with('a') {
                     let a_idx_c = parse_alpha(parts[4], err_idx(&parts, 4, 1))?;
@@ -170,7 +171,7 @@ impl<'a> TryFrom<&str> for Instruction<'a> {
                     if a_idx == a_idx_b && no.is_ok() {
                         return Ok(Instruction::CalcAccumulatorWithConstant(op, a_idx, no.unwrap()));
                     } else if memory_cell.is_ok() { // Check if instruction is calc_accumulator_value_with_memory_cell
-                        //return Ok(Instruction::CalcAccumulatorWithMemoryCell(op, a_idx, memory_cell.unwrap()));
+                        return Ok(Instruction::CalcAccumulatorWithMemoryCell(op, a_idx, memory_cell.unwrap()));
                     }
                     return Err(InstructionParseError::NoMatchSuggestion(suggestion!(parts[0], ":=", parts[0], parts[3], parts[4])));
 
@@ -692,8 +693,8 @@ mod tests {
     fn test_assign_accumulator_value_from_memory_cell() {
         let mut args = setup_runtime_args();
         let mut control_flow = ControlFlow::new();
-        Instruction::AssignMemoryCellValue("a", 10).run(&mut args, &mut control_flow).unwrap();
-        Instruction::AssignAccumulatorValueFromMemoryCell(0, "a").run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssignMemoryCellValue("a".to_string(), 10).run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string()).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(args.accumulators[0].data.unwrap(), 10);
     }
     
@@ -702,11 +703,11 @@ mod tests {
         let mut args = setup_empty_runtime_args();
         let mut control_flow = ControlFlow::new();
         args.accumulators = vec![Accumulator::new(0)];
-        let err = Instruction::AssignAccumulatorValueFromMemoryCell(0, "a").run(&mut args, &mut control_flow);
+        let err = Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string()).run(&mut args, &mut control_flow);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Memory cell"));
         args.memory_cells.insert("a", MemoryCell::new("a"));
-        let err = Instruction::AssignAccumulatorValueFromMemoryCell(1, "a").run(&mut args, &mut control_flow);
+        let err = Instruction::AssignAccumulatorValueFromMemoryCell(1, "a".to_string()).run(&mut args, &mut control_flow);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Accumulator"));
     }
@@ -715,8 +716,8 @@ mod tests {
     fn test_assign_memory_cell_value() {
         let mut args = setup_runtime_args();
         let mut control_flow = ControlFlow::new();
-        Instruction::AssignMemoryCellValue("a", 2).run(&mut args, &mut control_flow).unwrap();
-        Instruction::AssignMemoryCellValue("b", 20).run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssignMemoryCellValue("a".to_string(), 2).run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssignMemoryCellValue("b".to_string(), 20).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 2);
         assert_eq!(args.memory_cells.get("b").unwrap().data.unwrap(), 20);
     }
@@ -725,7 +726,7 @@ mod tests {
     fn test_assign_memory_cell_value_error() {
         let mut args = setup_empty_runtime_args();
         let mut control_flow = ControlFlow::new();
-        assert!(Instruction::AssignMemoryCellValue("c", 10).run(&mut args, &mut control_flow).is_err());
+        assert!(Instruction::AssignMemoryCellValue("c".to_string(), 10).run(&mut args, &mut control_flow).is_err());
     }
 
     #[test]
@@ -733,7 +734,7 @@ mod tests {
         let mut args = setup_runtime_args();
         let mut control_flow = ControlFlow::new();
         Instruction::AssignAccumulatorValue(0, 20).run(&mut args, &mut control_flow).unwrap();
-        Instruction::AssignMemoryCellValueFromAccumulator("a", 0).run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 20);
     }
 
@@ -742,11 +743,11 @@ mod tests {
         let mut args = setup_empty_runtime_args();
         let mut control_flow = ControlFlow::new();
         args.accumulators = vec![Accumulator::new(0)];
-        let err = Instruction::AssignMemoryCellValueFromAccumulator("a", 0).run(&mut args, &mut control_flow);
+        let err = Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0).run(&mut args, &mut control_flow);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Memory cell"));
         args.memory_cells.insert("a", MemoryCell::new("a"));
-        let err = Instruction::AssignMemoryCellValueFromAccumulator("a", 1).run(&mut args, &mut control_flow);
+        let err = Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 1).run(&mut args, &mut control_flow);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Accumulator"));
     }
@@ -755,8 +756,8 @@ mod tests {
     fn test_assign_memory_cell_value_from_memory_cell() {
         let mut args = setup_runtime_args();
         let mut control_flow = ControlFlow::new();
-        Instruction::AssignMemoryCellValue("a", 20).run(&mut args, &mut control_flow).unwrap();
-        Instruction::AssingMemoryCellValueFromMemoryCell("b", "a").run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssignMemoryCellValue("a".to_string(), 20).run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssingMemoryCellValueFromMemoryCell("b".to_string(), "a".to_string()).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(args.memory_cells.get("b").unwrap().data.unwrap(), 20);
     }
 
@@ -764,13 +765,13 @@ mod tests {
     fn test_assign_memory_cell_value_from_memory_cell_error() {
         let mut args = setup_empty_runtime_args();
         let mut control_flow = ControlFlow::new();
-        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("a", "b").run(&mut args, &mut control_flow).is_err());
-        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("b", "a").run(&mut args, &mut control_flow).is_err());
+        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("a".to_string(), "b".to_string()).run(&mut args, &mut control_flow).is_err());
+        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("b".to_string(), "a".to_string()).run(&mut args, &mut control_flow).is_err());
         args.memory_cells.insert("a", MemoryCell::new("a"));
         args.memory_cells.insert("b", MemoryCell::new("b"));
         args.memory_cells.get_mut("b").unwrap().data = Some(10);
-        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("b", "a").run(&mut args, &mut control_flow).is_err());
-        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("a", "b").run(&mut args, &mut control_flow).is_ok());
+        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("b".to_string(), "a".to_string()).run(&mut args, &mut control_flow).is_err());
+        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("a".to_string(), "b".to_string()).run(&mut args, &mut control_flow).is_ok());
     }
 
     #[test]
@@ -827,8 +828,8 @@ mod tests {
         let mut args = setup_runtime_args();
         let control_flow = &mut ControlFlow::new();
         Instruction::AssignAccumulatorValue(0, 20).run(&mut args, control_flow).unwrap();
-        Instruction::AssignMemoryCellValue("a", 20).run(&mut args, control_flow).unwrap();
-        Instruction::CalcAccumulatorWithMemoryCell(Operation::Plus, 0, "a").run(&mut args, control_flow).unwrap();
+        Instruction::AssignMemoryCellValue("a".to_string(), 20).run(&mut args, control_flow).unwrap();
+        Instruction::CalcAccumulatorWithMemoryCell(Operation::Plus, 0, "a".to_string()).run(&mut args, control_flow).unwrap();
         assert_eq!(args.accumulators[0].data.unwrap(), 40);
     }
 
@@ -836,9 +837,9 @@ mod tests {
     fn test_calc_accumulator_with_memory_cells() {
         let mut args = setup_runtime_args();
         let control_flow = &mut ControlFlow::new();
-        Instruction::AssignMemoryCellValue("a", 10).run(&mut args, control_flow).unwrap();
-        Instruction::AssignMemoryCellValue("b", 10).run(&mut args, control_flow).unwrap();
-        Instruction::CalcAccumulatorWithMemoryCells(Operation::Plus, 0, "a", "b").run(&mut args, control_flow).unwrap();
+        Instruction::AssignMemoryCellValue("a".to_string(), 10).run(&mut args, control_flow).unwrap();
+        Instruction::AssignMemoryCellValue("b".to_string(), 10).run(&mut args, control_flow).unwrap();
+        Instruction::CalcAccumulatorWithMemoryCells(Operation::Plus, 0, "a".to_string(), "b".to_string()).run(&mut args, control_flow).unwrap();
         assert_eq!(args.accumulators[0].data.unwrap(), 20);
     }
 
@@ -846,8 +847,8 @@ mod tests {
     fn test_calc_memory_cell_with_memory_cell_constant() {
         let mut args = setup_runtime_args();
         let control_flow = &mut ControlFlow::new();
-        Instruction::AssignMemoryCellValue("b", 10).run(&mut args, control_flow).unwrap();
-        Instruction::CalcMemoryCellWithMemoryCellConstant(Operation::Plus, "a", "b", 10).run(&mut args, control_flow).unwrap();
+        Instruction::AssignMemoryCellValue("b".to_string(), 10).run(&mut args, control_flow).unwrap();
+        Instruction::CalcMemoryCellWithMemoryCellConstant(Operation::Plus, "a".to_string(), "b".to_string(), 10).run(&mut args, control_flow).unwrap();
         assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 20);
     }
 
@@ -856,8 +857,8 @@ mod tests {
         let mut args = setup_runtime_args();
         let control_flow = &mut ControlFlow::new();
         Instruction::AssignAccumulatorValue(0, 20).run(&mut args, control_flow).unwrap();
-        Instruction::AssignMemoryCellValue("b", 10).run(&mut args, control_flow).unwrap();
-        Instruction::CalcMemoryCellWithMemoryCellAccumulator(Operation::Plus, "a", "b", 0).run(&mut args, control_flow).unwrap();
+        Instruction::AssignMemoryCellValue("b".to_string(), 10).run(&mut args, control_flow).unwrap();
+        Instruction::CalcMemoryCellWithMemoryCellAccumulator(Operation::Plus, "a".to_string(), "b".to_string(), 0).run(&mut args, control_flow).unwrap();
         assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 30);
     }
     
@@ -865,9 +866,9 @@ mod tests {
     fn test_calc_memory_cell_with_memory_cells() {
         let mut args = setup_runtime_args();
         let control_flow = &mut ControlFlow::new();
-        Instruction::AssignMemoryCellValue("b", 10).run(&mut args, control_flow).unwrap();
-        Instruction::AssignMemoryCellValue("c", 10).run(&mut args, control_flow).unwrap();
-        Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "a", "b", "c").run(&mut args, control_flow).unwrap();
+        Instruction::AssignMemoryCellValue("b".to_string(), 10).run(&mut args, control_flow).unwrap();
+        Instruction::AssignMemoryCellValue("c".to_string(), 10).run(&mut args, control_flow).unwrap();
+        Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "a".to_string(), "b".to_string(), "c".to_string()).run(&mut args, control_flow).unwrap();
         assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 20);
     }
 
@@ -876,7 +877,7 @@ mod tests {
         let mut args = setup_empty_runtime_args();
         let mut control_flow = ControlFlow::new();
         control_flow.instruction_labels.insert("loop", 5);
-        Instruction::Goto("loop").run(&mut args, &mut control_flow).unwrap();
+        Instruction::Goto("loop".to_string()).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(control_flow.next_instruction_index, 5);
     }
 
@@ -884,7 +885,7 @@ mod tests {
     fn test_goto_error() {
         let mut args = setup_empty_runtime_args();
         let mut control_flow = ControlFlow::new();
-        assert!(Instruction::Goto("loop").run(&mut args, &mut control_flow).is_err());
+        assert!(Instruction::Goto("loop".to_string()).run(&mut args, &mut control_flow).is_err());
     }
 
     #[test]
@@ -894,13 +895,13 @@ mod tests {
         control_flow.instruction_labels.insert("loop", 20);
         Instruction::AssignAccumulatorValue(0, 20).run(&mut args, &mut control_flow).unwrap();
         Instruction::AssignAccumulatorValue(1, 30).run(&mut args, &mut control_flow).unwrap();
-        Instruction::GotoIfAccumulator(Comparison::Less, "loop", 0, 1).run(&mut args, &mut control_flow).unwrap();
+        Instruction::GotoIfAccumulator(Comparison::Less, "loop".to_string(), 0, 1).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(control_flow.next_instruction_index, 20);
         control_flow.next_instruction_index = 0;
-        Instruction::GotoIfAccumulator(Comparison::Equal, "loop", 0, 1).run(&mut args, &mut control_flow).unwrap();
+        Instruction::GotoIfAccumulator(Comparison::Equal, "loop".to_string(), 0, 1).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(control_flow.next_instruction_index, 0);
-        assert!(Instruction::GotoIfAccumulator(Comparison::Less, "none", 0, 1).run(&mut args, &mut control_flow).is_err());
-        assert!(Instruction::GotoIfAccumulator(Comparison::Equal, "none", 0, 1).run(&mut args, &mut control_flow).is_ok());
+        assert!(Instruction::GotoIfAccumulator(Comparison::Less, "none".to_string(), 0, 1).run(&mut args, &mut control_flow).is_err());
+        assert!(Instruction::GotoIfAccumulator(Comparison::Equal, "none".to_string(), 0, 1).run(&mut args, &mut control_flow).is_ok());
     }
 
     #[test]
@@ -909,13 +910,13 @@ mod tests {
         let mut control_flow = ControlFlow::new();
         control_flow.instruction_labels.insert("loop", 20);
         Instruction::AssignAccumulatorValue(0, 20).run(&mut args, &mut control_flow).unwrap();
-        Instruction::GotoIfConstant(Comparison::Less, "loop", 0, 40).run(&mut args, &mut control_flow).unwrap();
+        Instruction::GotoIfConstant(Comparison::Less, "loop".to_string(), 0, 40).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(control_flow.next_instruction_index, 20);
         control_flow.next_instruction_index = 0;
-        Instruction::GotoIfConstant(Comparison::Equal, "loop", 0, 40).run(&mut args, &mut control_flow).unwrap();
+        Instruction::GotoIfConstant(Comparison::Equal, "loop".to_string(), 0, 40).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(control_flow.next_instruction_index, 0);
-        assert!(Instruction::GotoIfConstant(Comparison::Less, "none", 0, 40).run(&mut args, &mut control_flow).is_err());
-        assert!(Instruction::GotoIfConstant(Comparison::Equal, "none", 0, 40).run(&mut args, &mut control_flow).is_ok());
+        assert!(Instruction::GotoIfConstant(Comparison::Less, "none".to_string(), 0, 40).run(&mut args, &mut control_flow).is_err());
+        assert!(Instruction::GotoIfConstant(Comparison::Equal, "none".to_string(), 0, 40).run(&mut args, &mut control_flow).is_ok());
     }
 
     #[test]
@@ -924,14 +925,14 @@ mod tests {
         let mut control_flow = ControlFlow::new();
         control_flow.instruction_labels.insert("loop", 20);
         Instruction::AssignAccumulatorValue(0, 20).run(&mut args, &mut control_flow).unwrap();
-        Instruction::AssignMemoryCellValue("a", 50).run(&mut args, &mut control_flow).unwrap();
-        Instruction::GotoIfMemoryCell(Comparison::Less, "loop", 0, "a").run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssignMemoryCellValue("a".to_string(), 50).run(&mut args, &mut control_flow).unwrap();
+        Instruction::GotoIfMemoryCell(Comparison::Less, "loop".to_string(), 0, "a".to_string()).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(control_flow.next_instruction_index, 20);
         control_flow.next_instruction_index = 0;
-        Instruction::GotoIfMemoryCell(Comparison::Equal, "loop", 0, "a").run(&mut args, &mut control_flow).unwrap();
+        Instruction::GotoIfMemoryCell(Comparison::Equal, "loop".to_string(), 0, "a".to_string()).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(control_flow.next_instruction_index, 0);
-        assert!(Instruction::GotoIfMemoryCell(Comparison::Less, "none", 0, "a").run(&mut args, &mut control_flow).is_err());
-        assert!(Instruction::GotoIfMemoryCell(Comparison::Equal, "none", 0, "a").run(&mut args, &mut control_flow).is_ok());
+        assert!(Instruction::GotoIfMemoryCell(Comparison::Less, "none".to_string(), 0, "a".to_string()).run(&mut args, &mut control_flow).is_err());
+        assert!(Instruction::GotoIfMemoryCell(Comparison::Equal, "none".to_string(), 0, "a".to_string()).run(&mut args, &mut control_flow).is_ok());
     }
 
     #[test]
@@ -953,26 +954,26 @@ mod tests {
         runtime_args.add_storage_cell("h3");
         runtime_args.add_storage_cell("h4");
         let instructions = vec![
-            Instruction::AssignMemoryCellValue("a", 5),
-            Instruction::AssignMemoryCellValue("b", 2),
-            Instruction::AssignMemoryCellValue("c", 3),
-            Instruction::AssignMemoryCellValue("d", 9),
-            Instruction::AssignMemoryCellValue("w", 4),
-            Instruction::AssignMemoryCellValue("x", 8),
-            Instruction::AssignMemoryCellValue("y", 3),
-            Instruction::AssignMemoryCellValue("z", 2),
-            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h1", "a", "w"),
-            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h2", "b", "y"),
-            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h3", "a", "x"),
-            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h4", "b", "z"),
-            Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "a", "h1", "h2"),
-            Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "b", "h3", "h4"),
-            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h1", "c", "w"),
-            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h2", "d", "y"),
-            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h3", "c", "x"),
-            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h4", "d", "z"),
-            Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "c", "h1", "h2"),
-            Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "d", "h3", "h4"),
+            Instruction::AssignMemoryCellValue("a".to_string(), 5),
+            Instruction::AssignMemoryCellValue("b".to_string(), 2),
+            Instruction::AssignMemoryCellValue("c".to_string(), 3),
+            Instruction::AssignMemoryCellValue("d".to_string(), 9),
+            Instruction::AssignMemoryCellValue("w".to_string(), 4),
+            Instruction::AssignMemoryCellValue("x".to_string(), 8),
+            Instruction::AssignMemoryCellValue("y".to_string(), 3),
+            Instruction::AssignMemoryCellValue("z".to_string(), 2),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h1".to_string(), "a".to_string(), "w".to_string()),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h2".to_string(), "b".to_string(), "y".to_string()),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h3".to_string(), "a".to_string(), "x".to_string()),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h4".to_string(), "b".to_string(), "z".to_string()),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "a".to_string(), "h1".to_string(), "h2".to_string()),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "b".to_string(), "h3".to_string(), "h4".to_string()),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h1".to_string(), "c".to_string(), "w".to_string()),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h2".to_string(), "d".to_string(), "y".to_string()),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h3".to_string(), "c".to_string(), "x".to_string()),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h4".to_string(), "d".to_string(), "z".to_string()),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "c".to_string(), "h1".to_string(), "h2".to_string()),
+            Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "d".to_string(), "h3".to_string(), "h4".to_string()),
             Instruction::PrintMemoryCells(),
         ];
         let mut runner = Runner::new_custom(instructions, runtime_args);
@@ -987,11 +988,11 @@ mod tests {
     fn test_example_program_2() {
         let instructions = vec![
             Instruction::AssignAccumulatorValue(0, 1),
-            Instruction::AssignMemoryCellValue("a", 8),
+            Instruction::AssignMemoryCellValue("a".to_string(), 8),
             Instruction::CalcAccumulatorWithConstant(Operation::Multiplication, 0, 2),
-            Instruction::CalcMemoryCellWithMemoryCellConstant(Operation::Minus, "a", "a", 1),
-            Instruction::AssignAccumulatorValueFromMemoryCell(1, "a"),
-            Instruction::GotoIfConstant(Comparison::More, "loop", 1, 0),
+            Instruction::CalcMemoryCellWithMemoryCellConstant(Operation::Minus, "a".to_string(), "a".to_string(), 1),
+            Instruction::AssignAccumulatorValueFromMemoryCell(1, "a".to_string()),
+            Instruction::GotoIfConstant(Comparison::More, "loop".to_string(), 1, 0),
             Instruction::PrintMemoryCells(),
             Instruction::PrintAccumulators(),
         ];
