@@ -34,6 +34,7 @@ impl MemoryCell {
 }
 
 /// Different ways of paring two values
+#[derive(Debug, PartialEq)]
 pub enum Comparison {
     Less,
     LessOrEqual,
@@ -65,6 +66,7 @@ impl Comparison {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub enum Operation {
     Plus,
     Minus,
@@ -83,6 +85,20 @@ impl Operation {
         }
     }
 
+}
+
+impl TryFrom<&str> for Operation {
+    type Error = ();
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "+" => Ok(Operation::Plus),
+            "-" => Ok(Operation::Minus),
+            "*" => Ok(Operation::Multiplication),
+            "/" => Ok(Operation::Division),
+            _ => Err(()),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -106,6 +122,15 @@ mod tests {
         assert_eq!(Operation::Minus.calc(20, 5), 15);
         assert_eq!(Operation::Multiplication.calc(20, 5), 100);
         assert_eq!(Operation::Division.calc(20, 5), 4);
+    }
+
+    #[test]
+    fn test_operation_try_from_str() {
+        assert_eq!(Operation::try_from("+"), Ok(Operation::Plus));
+        assert_eq!(Operation::try_from("-"), Ok(Operation::Minus));
+        assert_eq!(Operation::try_from("*"), Ok(Operation::Multiplication));
+        assert_eq!(Operation::try_from("/"), Ok(Operation::Division));
+        assert_eq!(Operation::try_from("P"), Err(()));
     }
 
 }

@@ -1,5 +1,6 @@
 use crate::{runtime::{RuntimeArgs, ControlFlow}, base::{Comparison, Operation}};
 
+#[derive(Debug, PartialEq)]
 pub enum Instruction<'a> {
     /// push
     /// 
@@ -119,6 +120,73 @@ impl<'a> Instruction<'a> {
             Self::PrintStack() => print_stack(runtime_args),
         }
         Ok(())
+    }
+}
+
+impl<'a> TryFrom<&str> for Instruction<'a> {
+    type Error = InstructionParseError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let mut parts: Vec<&str> = value.split_whitespace().collect();
+        
+        // TODO This label detection has to be implemented in the function that calls this try_from.
+        // This function takes only the instruction without the label information.
+        //// check for label
+        //let mut label = None;
+        //if parts[0].ends_with(':') {
+        //    // label detected
+        //    label = Some(parts[0].replace(":", ""));
+        //}
+
+        // Instructions that assign value to alpha
+        if parts[0].starts_with('a') && parts[1] == ":=" {
+            let a_idx = parse_alpha(parts[0], 1)?;
+            // Instructions that use a second accumulator to assign the value
+            if parts[2].starts_with('a') {
+                let a_idx_b = parse_alpha(parts[2], parts[0].len() + 3)?;
+                // Check if instruction is assign_accumulator_value_from_accumulator
+                if parts.len() == 3 {
+                    return Ok(Instruction::AssignAccumulatorValueFromAccumulator(a_idx, a_idx_b));
+                }
+            }
+        }
+        Err(InstructionParseError::NoMatch)
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum InstructionParseError {
+    /// Indicates that the specified operation does not exist.
+    /// Argument specifies the character index at which the error occurred
+    /// and the string that caused it.
+    UnknownOperation(usize, String),
+    /// Indicates that the specified comparison does not exist.
+    /// Argument specifies the character index at which the error occurred.
+    /// and the string that caused it.
+    UnknownComparison(usize, String),
+    /// Indicates that a value that was expected to be a number is not a number.
+    /// Argument specifies the character index at which the error occurred.
+    /// and the string that caused it.
+    NotANumber(usize, String),
+    UnexpectedCharacter(usize, String),
+    /// Indicates that no instruction was found that matches the input.
+    NoMatch,
+}
+
+/// Tries to parse the index of the accumulator.
+/// 
+/// `err_idx` indicates at what index the parse error originates in case it occurred.
+/// 
+/// # Example
+/// ```
+/// assert_eq!(parse_alpha("a10", 1), Ok(10));
+/// assert_eq!(parse_alpha("ab3", 1), Err(1));
+/// ```
+fn parse_alpha(s: &str, err_idx: usize) -> Result<usize, InstructionParseError> {
+    let input = s.replace("a", "");
+    match input.parse::<usize>() {
+        Ok(x) => Ok(x),
+        Err(_) => Err(InstructionParseError::NotANumber(err_idx, input))
     }
 }
 
@@ -439,9 +507,17 @@ fn print_stack(runtime_args: &RuntimeArgs) {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::{runtime::{ControlFlow, RuntimeArgs, Runner}, instructions::Instruction, base::{Accumulator, MemoryCell, Comparison, Operation}};
+    use crate::{runtime::{ControlFlow, RuntimeArgs, Runner}, instructions::{Instruction, parse_alpha,  InstructionParseError}, base::{Accumulator, MemoryCell, Comparison, Operation}};
 
-    
+    #[test]
+    fn test_parse_alpha() {
+        assert_eq!(parse_alpha("a3", 1), Ok(3));
+        assert_eq!(parse_alpha("a10", 1), Ok(10));
+        assert_eq!(parse_alpha("a10x", 1), Err(InstructionParseError::NotANumber(1, String::from("10x"))));
+        assert_eq!(parse_alpha("ab3", 1), Err(InstructionParseError::NotANumber(1, String::from("b3"))));
+        assert_eq!(parse_alpha("ab3i", 1), Err(InstructionParseError::NotANumber(1, String::from("b3i"))));
+    }
+
     #[test]
     fn test_stack() {
         let mut args = setup_runtime_args();
@@ -469,6 +545,12 @@ mod tests {
         Instruction::AssignAccumulatorValueFromAccumulator(0, 1).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(args.accumulators[1].data.unwrap(), 12);
         assert_eq!(args.accumulators[2].data.unwrap(), 12);
+    }
+
+    #[test]
+    fn test_parse_accumulator_value_from_accumulator() {
+        assert_eq!(Instruction::try_from("a0 := a1"), Ok(Instruction::AssignAccumulatorValueFromAccumulator(0, 1)));
+        assert_eq!(Instruction::try_from("a3 := a15"), Ok(Instruction::AssignAccumulatorValueFromAccumulator(3, 15)));
     }
 
     #[test]
