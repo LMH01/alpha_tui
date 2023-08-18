@@ -171,6 +171,16 @@ impl TryFrom<&str> for Instruction {
             return Ok(Instruction::Goto(parts[1].to_string()));
         }
 
+        // Check if instruction is push
+        if parts[0] == "push" {
+            return Ok(Instruction::Push());
+        }
+
+        // Check if instruction is pop
+        if parts[0] == "pop" {
+            return Ok(Instruction::Pop());
+        }
+
         // Instructions where the first part is an accumulator
         if parts[0].starts_with('a') && parts[1] == ":=" {//TODO Add more verbal syntax check for := when it is required
             let a_idx = parse_alpha(parts[0], 0)?;
@@ -728,6 +738,16 @@ mod tests {
         Instruction::Pop().run(&mut args, &mut control_flow).unwrap();
         assert_eq!(args.accumulators[0].data.unwrap(), 5);
         assert_eq!(args.stack.len(), 0);
+    }
+
+    #[test]
+    fn test_parse_push() {
+        assert_eq!(Instruction::try_from("push"), Ok(Instruction::Push()));
+    }
+
+    #[test]
+    fn test_parse_pop() {
+        assert_eq!(Instruction::try_from("pop"), Ok(Instruction::Pop()));
     }
 
     #[test]

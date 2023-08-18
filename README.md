@@ -42,8 +42,8 @@ This section logs what instructions can be parsed from text
 - [X] if $\alpha_u\space\textbf{cmp}\space c$ then goto label
 - [X] if $\alpha_u\space\textbf{cmp}\space\rho(i)$ then goto label
 - [X] goto label 
-- [ ] push 
-- [ ] pop
+- [X] push 
+- [X] pop
 
 #### Internal handling of instructions 
 
