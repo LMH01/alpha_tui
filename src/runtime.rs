@@ -55,32 +55,33 @@ impl<'a> RuntimeBuilder<'a> {
             match Instruction::try_from(*instruction) {
                 Ok(i) => instructions.push(i),
                 Err(e) => {
-                    let mut message = String::from(*instruction);
+                    let mut message = String::from("Error while building instruction:\n");
+                    message.push_str(*instruction);
                     message.push('\n');
                     match e {
                         InstructionParseError::UnknownOperation(idx, str) => {
                             append_char_indicator(&mut message, idx);
-                            message.push_str(&format!("Error: Unknown operation: {}", str));
+                            message.push_str(&format!("Unknown operation: {}", str));
                         },
                         InstructionParseError::UnknownComparison(idx, str) => {
                             append_char_indicator(&mut message, idx);
-                            message.push_str(&format!("Error: Unknown comparison: {}", str));
+                            message.push_str(&format!("Unknown comparison: {}", str));
                         },
                         InstructionParseError::NotANumber(idx, str) => {
                             append_char_indicator(&mut message, idx);
-                            message.push_str(&format!("Error: Not a number: {}", str));
+                            message.push_str(&format!("Not a number: {}", str));
                         },
                         InstructionParseError::InvalidExpression(idx, str) => {
                             append_char_indicator(&mut message, idx);
-                            message.push_str(&format!("Error: Invalid expression: {}", str));
+                            message.push_str(&format!("Invalid expression: {}", str));
                         },
                         InstructionParseError::NoMatch => {
                             message.push_str("^\n");
-                            message.push_str("Error: No matching instruction found!");
+                            message.push_str("No matching instruction found!");
                         },
                         InstructionParseError::NoMatchSuggestion(str) => {
                             append_char_indicator(&mut message, 0);
-                            message.push_str(&format!("Error: No matching instruction found, did you mean: {} ?", str));
+                            message.push_str(&format!("No matching instruction found, did you mean: {} ?", str));
 
                         }
                     }
