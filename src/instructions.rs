@@ -262,6 +262,20 @@ impl TryFrom<&str> for Instruction {
                 if parts.len() == 3 {
                     return Ok(Instruction::AssignMemoryCellValueFromMemoryCell(m_cell, m_cell_b));
                 }
+                let op =  parse_operation(parts[3], err_idx(&parts, 3))?;
+                let a_idx = parse_alpha(parts[4], err_idx(&parts, 4));
+                let no = parse_number(parts[4], err_idx(&parts, 4));
+                let m_cell_c = parse_memory_cell(parts[4], err_idx(&parts, 4));
+                // Check if instruction is calc_memory_cell_with_memory_cell_accumulator
+                if a_idx.is_ok() {
+                    return Ok(Instruction::CalcMemoryCellWithMemoryCellAccumulator(op, m_cell, m_cell_b, a_idx.unwrap()));
+                } else if no.is_ok() { // Check if instruction is calc_memory_cell_with_memory_cell_constant
+                    return Ok(Instruction::CalcMemoryCellWithMemoryCellConstant(op, m_cell, m_cell_b, no.unwrap()));
+                } else if m_cell_c.is_ok() { // Check if instruction is calc_memory_cell_with_memory_cells
+                    return Ok(Instruction::CalcMemoryCellWithMemoryCells(op, m_cell, m_cell_b, m_cell_c.unwrap()));
+                } else {
+                    return Err(InstructionParseError::UnexpectedCharacter(err_idx(&parts, 4), parts[4].to_string()));
+                }
             }
 
             let a_idx = parse_alpha(parts[2], err_idx(&parts, 2));
@@ -1016,6 +1030,12 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_calc_memory_cell_with_memory_cell_constant() {
+        assert_eq!(Instruction::try_from("p(h1) := p(h2) * 10"), Ok(Instruction::CalcMemoryCellWithMemoryCellConstant(Operation::Multiplication, "h1".to_string(), "h2".to_string(), 10)));
+        assert_eq!(Instruction::try_from("p(h1) := p(h2) o 10"), Err(InstructionParseError::UnknownOperation(15, "o".to_string())));
+    }
+
+    #[test]
     fn test_calc_memory_cell_with_memory_cell_accumulator() {
         let mut args = setup_runtime_args();
         let control_flow = &mut ControlFlow::new();
@@ -1026,6 +1046,11 @@ mod tests {
     }
     
     #[test]
+    fn test_parse_calc_memory_cell_with_memory_cell_accumulator() {
+        assert_eq!(Instruction::try_from("p(h1) := p(h2) * a0"), Ok(Instruction::CalcMemoryCellWithMemoryCellAccumulator(Operation::Multiplication, "h1".to_string(), "h2".to_string(), 0)));
+    }
+
+    #[test]
     fn test_calc_memory_cell_with_memory_cells() {
         let mut args = setup_runtime_args();
         let control_flow = &mut ControlFlow::new();
@@ -1033,6 +1058,11 @@ mod tests {
         Instruction::AssignMemoryCellValue("c".to_string(), 10).run(&mut args, control_flow).unwrap();
         Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "a".to_string(), "b".to_string(), "c".to_string()).run(&mut args, control_flow).unwrap();
         assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 20);
+    }
+
+    #[test]
+    fn test_parse_calc_memory_cell_with_memory_cells() {
+        assert_eq!(Instruction::try_from("p(h1) := p(h2) * p(h3)"), Ok(Instruction::CalcMemoryCellWithMemoryCells(Operation::Multiplication, "h1".to_string(), "h2".to_string(), "h3".to_string())));
     }
 
     #[test]
