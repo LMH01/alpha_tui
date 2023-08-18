@@ -141,13 +141,13 @@ impl TryFrom<&str> for Instruction {
         // Instructions that compare values
         if parts[0] == "if" {
             if !parts[1].starts_with('a') {
-                return Err(InstructionParseError::UnexpectedCharacter(err_idx(&parts, 1), parts[1].to_string()));
+                return Err(InstructionParseError::InvalidExpression(err_idx(&parts, 1), parts[1].to_string()));
             }
             if parts[4] != "then" {
-                return Err(InstructionParseError::UnexpectedCharacter(err_idx(&parts, 4), parts[4].to_string()));
+                return Err(InstructionParseError::InvalidExpression(err_idx(&parts, 4), parts[4].to_string()));
             }
             if parts[5] != "goto" {
-                return Err(InstructionParseError::UnexpectedCharacter(err_idx(&parts, 5), parts[5].to_string()));
+                return Err(InstructionParseError::InvalidExpression(err_idx(&parts, 5), parts[5].to_string()));
             }
             let a_idx = parse_alpha(parts[1], err_idx(&parts, 1))?;
             let cmp = parse_comparison(parts[2], err_idx(&parts, 2))?;
@@ -162,7 +162,7 @@ impl TryFrom<&str> for Instruction {
             } else if m_cell.is_ok() { // Check if instruction is goto_if_memory_cell
                 return Ok(Instruction::GotoIfMemoryCell(cmp, parts[6].to_string(), a_idx, m_cell.unwrap()));
             } else {
-                return Err(InstructionParseError::UnexpectedCharacter(err_idx(&parts, 3), parts[3].to_string()));
+                return Err(InstructionParseError::InvalidExpression(err_idx(&parts, 3), parts[3].to_string()));
             }
         }
 
@@ -250,7 +250,7 @@ impl TryFrom<&str> for Instruction {
             if no.is_ok() {
                 return Ok(Instruction::AssignAccumulatorValue(a_idx, no.unwrap()));//TODO write test for this
             }
-            return Err(InstructionParseError::UnexpectedCharacter(err_idx(&parts, 2), parts[2].to_string()))
+            return Err(InstructionParseError::InvalidExpression(err_idx(&parts, 2), parts[2].to_string()))
 
         }
 
@@ -274,7 +274,7 @@ impl TryFrom<&str> for Instruction {
                 } else if m_cell_c.is_ok() { // Check if instruction is calc_memory_cell_with_memory_cells
                     return Ok(Instruction::CalcMemoryCellWithMemoryCells(op, m_cell, m_cell_b, m_cell_c.unwrap()));
                 } else {
-                    return Err(InstructionParseError::UnexpectedCharacter(err_idx(&parts, 4), parts[4].to_string()));
+                    return Err(InstructionParseError::InvalidExpression(err_idx(&parts, 4), parts[4].to_string()));
                 }
             }
 
@@ -286,7 +286,7 @@ impl TryFrom<&str> for Instruction {
             } else if no.is_ok() { // Check if instruction is assign_memory_cell_value
                 return Ok(Instruction::AssignMemoryCellValue(m_cell, no.unwrap()));
             } else {
-                return Err(InstructionParseError::UnexpectedCharacter(err_idx(&parts, 2), parts[2].to_string()));
+                return Err(InstructionParseError::InvalidExpression(err_idx(&parts, 2), parts[2].to_string()));
             }
         }
 
@@ -308,7 +308,9 @@ pub enum InstructionParseError {
     /// Argument specifies the character index at which the error occurred.
     /// and the string that caused it.
     NotANumber(usize, String),
-    UnexpectedCharacter(usize, String),
+    /// Indicates that the market expression is not valid.
+    /// The reason might be a syntax error.
+    InvalidExpression(usize, String),
     /// Indicates that no instruction was found that matches the input.
     NoMatch,
     /// Indicates that no instruction was found but gives a suggestion on what instruction might be meant.
@@ -346,7 +348,7 @@ macro_rules! suggestion {
 /// ```
 fn parse_alpha(s: &str, err_idx: usize) -> Result<usize, InstructionParseError> {
     if !s.starts_with("a") && !s.is_empty() {
-        return Err(InstructionParseError::UnexpectedCharacter(err_idx, String::from(s.chars().nth(0).unwrap())));
+        return Err(InstructionParseError::InvalidExpression(err_idx, String::from(s.chars().nth(0).unwrap())));
     }
     let input = s.replace("a", "");
     match input.parse::<usize>() {
@@ -391,14 +393,14 @@ fn parse_number(s: &str, err_idx: usize) -> Result<i32, InstructionParseError> {
 /// `err_base_idx` indicates at what index the input string starts.
 fn parse_memory_cell(s: &str, err_base_idx: usize) -> Result<String, InstructionParseError> {
     if !s.starts_with("p(") {
-        return Err(InstructionParseError::UnexpectedCharacter(err_base_idx, String::from(s.chars().nth(0).unwrap())));
+        return Err(InstructionParseError::InvalidExpression(err_base_idx, String::from(s.chars().nth(0).unwrap())));
     }
     if !s.ends_with(")") {
-        return Err(InstructionParseError::UnexpectedCharacter(err_base_idx + s.len() - 1, String::from(s.chars().nth_back(0).unwrap())));
+        return Err(InstructionParseError::InvalidExpression(err_base_idx + s.len() - 1, String::from(s.chars().nth_back(0).unwrap())));
     }
     let name = s.replace("p(", "").replace(")", "");
     if name.is_empty() {
-        return Err(InstructionParseError::UnexpectedCharacter(err_base_idx, s.to_string()));
+        return Err(InstructionParseError::InvalidExpression(err_base_idx, s.to_string()));
     }
     return Ok(name)
 }
@@ -755,9 +757,9 @@ mod tests {
     fn test_parse_memory_cell() {
         assert_eq!(parse_memory_cell("p(a)", 0), Ok("a".to_string()));
         assert_eq!(parse_memory_cell("p(xyz)", 0), Ok("xyz".to_string()));
-        assert_eq!(parse_memory_cell("p(xyzX", 0), Err(InstructionParseError::UnexpectedCharacter(5, "X".to_string())));
-        assert_eq!(parse_memory_cell("pxyz)", 0), Err(InstructionParseError::UnexpectedCharacter(0, "p".to_string())));
-        assert_eq!(parse_memory_cell("p(p()", 0), Err(InstructionParseError::UnexpectedCharacter(0, "p(p()".to_string())));
+        assert_eq!(parse_memory_cell("p(xyzX", 0), Err(InstructionParseError::InvalidExpression(5, "X".to_string())));
+        assert_eq!(parse_memory_cell("pxyz)", 0), Err(InstructionParseError::InvalidExpression(0, "p".to_string())));
+        assert_eq!(parse_memory_cell("p(p()", 0), Err(InstructionParseError::InvalidExpression(0, "p(p()".to_string())));
     }
 
     #[test]
@@ -796,7 +798,7 @@ mod tests {
     #[test]
     fn test_parse_assign_accumulator_value() {
         assert_eq!(Instruction::try_from("a0 := 20"), Ok(Instruction::AssignAccumulatorValue(0, 20)));
-        assert_eq!(Instruction::try_from("a0 := x"), Err(InstructionParseError::UnexpectedCharacter(6, "x".to_string())));
+        assert_eq!(Instruction::try_from("a0 := x"), Err(InstructionParseError::InvalidExpression(6, "x".to_string())));
     }
 
     #[test]
@@ -841,7 +843,7 @@ mod tests {
     fn test_parse_assign_accumulator_value_from_memory_cell() {
         assert_eq!(Instruction::try_from("a0 := p(h1)"), Ok(Instruction::AssignAccumulatorValueFromMemoryCell(0, "h1".to_string())));
         assert_eq!(Instruction::try_from("a4 := p(x2)"), Ok(Instruction::AssignAccumulatorValueFromMemoryCell(4, "x2".to_string())));
-        assert_eq!(Instruction::try_from("a4 := p()"), Err(InstructionParseError::UnexpectedCharacter(6, "p()".to_string())));
+        assert_eq!(Instruction::try_from("a4 := p()"), Err(InstructionParseError::InvalidExpression(6, "p()".to_string())));
     }
 
     #[test]
@@ -871,7 +873,7 @@ mod tests {
     #[test]
     fn test_parse_assign_memory_cell_value() {
         assert_eq!(Instruction::try_from("p(h1) := 10"), Ok(Instruction::AssignMemoryCellValue("h1".to_string(), 10)));
-        assert_eq!(Instruction::try_from("p(h1) := x"), Err(InstructionParseError::UnexpectedCharacter(9, "x".to_string())));
+        assert_eq!(Instruction::try_from("p(h1) := x"), Err(InstructionParseError::InvalidExpression(9, "x".to_string())));
     }
 
     #[test]
@@ -893,7 +895,7 @@ mod tests {
     #[test]
     fn test_parse_assign_memory_cell_value_from_accumulator() {
         assert_eq!(Instruction::try_from("p(h1) := a0"), Ok(Instruction::AssignMemoryCellValueFromAccumulator("h1".to_string(), 0)));
-        assert_eq!(Instruction::try_from("p(h1) := a0x"), Err(InstructionParseError::UnexpectedCharacter(9, "a0x".to_string())));
+        assert_eq!(Instruction::try_from("p(h1) := a0x"), Err(InstructionParseError::InvalidExpression(9, "a0x".to_string())));
     }
 
     #[test]
@@ -922,7 +924,7 @@ mod tests {
     #[test]
     fn test_parse_assign_memory_cell_value_from_memory_cell() {
         assert_eq!(Instruction::try_from("p(h1) := p(h2)"), Ok(Instruction::AssignMemoryCellValueFromMemoryCell("h1".to_string(), "h2".to_string())));
-        assert_eq!(Instruction::try_from("p(h1) := p()"), Err(InstructionParseError::UnexpectedCharacter(9, "p()".to_string())));
+        assert_eq!(Instruction::try_from("p(h1) := p()"), Err(InstructionParseError::InvalidExpression(9, "p()".to_string())));
     }
 
     #[test]
@@ -1000,7 +1002,7 @@ mod tests {
     fn test_parse_calc_accumulator_with_memory_cell() {
         assert_eq!(Instruction::try_from("a1 := a1 * p(h1)"), Ok(Instruction::CalcAccumulatorWithMemoryCell(Operation::Multiplication, 1, "h1".to_string())));
         assert_eq!(Instruction::try_from("a1 := a2 * p(h1)"), Err(InstructionParseError::NoMatchSuggestion("a1 := a1 * p(h1)".to_string())));
-        assert_eq!(Instruction::try_from("a1 := a1 * p()"), Err(InstructionParseError::UnexpectedCharacter(11, "p()".to_string())));
+        assert_eq!(Instruction::try_from("a1 := a1 * p()"), Err(InstructionParseError::InvalidExpression(11, "p()".to_string())));
     }
 
     #[test]
@@ -1017,7 +1019,7 @@ mod tests {
     fn test_parse_calc_accumulator_with_memory_cells() {
         assert_eq!(Instruction::try_from("a0 := p(h1) / p(h2)"), Ok(Instruction::CalcAccumulatorWithMemoryCells(Operation::Division, 0, "h1".to_string(), "h2".to_string())));
         assert_eq!(Instruction::try_from("a0 := p(h1) x p(h2)"), Err(InstructionParseError::UnknownOperation(12, "x".to_string())));
-        assert_eq!(Instruction::try_from("a0 := p(h1) / p()"), Err(InstructionParseError::UnexpectedCharacter(14, "p()".to_string())));
+        assert_eq!(Instruction::try_from("a0 := p(h1) / p()"), Err(InstructionParseError::InvalidExpression(14, "p()".to_string())));
     }
 
     #[test]
@@ -1105,7 +1107,7 @@ mod tests {
     #[test]
     fn test_parse_goto_if_accumulator() {
         assert_eq!(Instruction::try_from("if a0 <= a1 then goto loop"), Ok(Instruction::GotoIfAccumulator(Comparison::LessOrEqual, "loop".to_string(), 0, 1)));
-        assert_eq!(Instruction::try_from("if x <= a1 then goto loop"), Err(InstructionParseError::UnexpectedCharacter(3, "x".to_string())));
+        assert_eq!(Instruction::try_from("if x <= a1 then goto loop"), Err(InstructionParseError::InvalidExpression(3, "x".to_string())));
     }
 
     #[test]
@@ -1147,7 +1149,7 @@ mod tests {
     #[test]
     fn test_parse_goto_if_memory_cell() {
         assert_eq!(Instruction::try_from("if a0 == p(h1) then goto loop"), Ok(Instruction::GotoIfMemoryCell(Comparison::Equal, "loop".to_string(), 0, "h1".to_string())));
-        assert_eq!(Instruction::try_from("if a0 == p then goto loop"), Err(InstructionParseError::UnexpectedCharacter(9, "p".to_string())));
+        assert_eq!(Instruction::try_from("if a0 == p then goto loop"), Err(InstructionParseError::InvalidExpression(9, "p".to_string())));
     }
 
     #[test]
