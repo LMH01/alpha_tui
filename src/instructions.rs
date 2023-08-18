@@ -264,7 +264,7 @@ impl TryFrom<&str> for Instruction {
                 }
                 let op =  parse_operation(parts[3], err_idx(&parts, 3))?;
                 let a_idx = parse_alpha(parts[4], err_idx(&parts, 4));
-                let no = parse_number(parts[4], err_idx(&parts, 4));
+                let no = parse_number(parts[4], err_idx(&parts, 4));//TODO Fix index out of bounds when parts is of length 4 or of length 1
                 let m_cell_c = parse_memory_cell(parts[4], err_idx(&parts, 4));
                 // Check if instruction is calc_memory_cell_with_memory_cell_accumulator
                 if a_idx.is_ok() {

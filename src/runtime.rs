@@ -1,6 +1,105 @@
 use std::collections::HashMap;
 
-use crate::{instructions::Instruction, base::{Accumulator, MemoryCell}, ACCUMULATORS, MEMORY_CELL_LABELS};
+use crate::{instructions::{Instruction, InstructionParseError}, base::{Accumulator, MemoryCell}, ACCUMULATORS, MEMORY_CELL_LABELS};
+
+/// Type that is used to build a new runtime environment.
+/// 
+/// This runtime can be configured to only allow a selected amount of accumulators and memory cells.
+/// When a runtime is build from this builder compatibility checks are performed.
+pub struct RuntimeBuilder<'a> {
+    runtime_args: Option<RuntimeArgs<'a>>,
+    instructions: Option<Vec<Instruction>>,
+    control_flow: ControlFlow<'a>,
+}
+
+impl<'a> RuntimeBuilder<'a> {
+    /// Creates a new runtime builder with no values set.
+    pub fn new() -> Self {
+        Self {
+            runtime_args: None,
+            instructions: None,
+            control_flow: ControlFlow::new(),
+        }
+    }
+
+    /// Creates a new runtime builder with default values.
+    pub fn new_default() -> Self {
+        Self {
+            runtime_args: Some(RuntimeArgs::new()),
+            instructions: None,
+            control_flow: ControlFlow::new(),
+        }
+    }
+
+    /// Resets the current values to none.
+    pub fn reset(&mut self) {
+        self.runtime_args = None;
+        self.instructions = None;
+        self.control_flow = ControlFlow::new();
+    }
+
+    pub fn set_runtime_args(&mut self, runtime_args: RuntimeArgs<'a>) {
+        self.runtime_args = Some(runtime_args);
+    }
+
+    /// Builds instructions from the string and sets them as current instructions.
+    /// 
+    /// Each line has to contain a single instruction.
+    /// 
+    /// Control flow is updated accordingly.
+    /// 
+    /// If an instruction could not be parsed, an error is returned containing the reason.
+    pub fn build_instructions(&mut self, instructions_input: &Vec<&str>) -> Result<(), String> {
+        let mut instructions = Vec::new();
+        for instruction in instructions_input {
+            match Instruction::try_from(*instruction) {
+                Ok(i) => instructions.push(i),
+                Err(e) => {
+                    let mut message = String::from(*instruction);
+                    message.push('\n');
+                    match e {
+                        InstructionParseError::UnknownOperation(idx, str) => {
+                            append_char_indicator(&mut message, idx);
+                            message.push_str(&format!("Error: Unknown operation: {}", str));
+                        },
+                        InstructionParseError::UnknownComparison(idx, str) => {
+                            append_char_indicator(&mut message, idx);
+                            message.push_str(&format!("Error: Unknown comparison: {}", str));
+                        },
+                        InstructionParseError::NotANumber(idx, str) => {
+                            append_char_indicator(&mut message, idx);
+                            message.push_str(&format!("Error: Not a number: {}", str));
+                        },
+                        InstructionParseError::InvalidExpression(idx, str) => {
+                            append_char_indicator(&mut message, idx);
+                            message.push_str(&format!("Error: Invalid expression: {}", str));
+                        },
+                        InstructionParseError::NoMatch => {
+                            message.push_str("^\n");
+                            message.push_str("Error: No matching instruction found!");
+                        },
+                        InstructionParseError::NoMatchSuggestion(str) => {
+                            append_char_indicator(&mut message, 0);
+                            message.push_str(&format!("Error: No matching instruction found, did you mean: {} ?", str));
+
+                        }
+                    }
+                    return Err(message);
+                },
+            }
+        }
+        Ok(())
+    }
+
+}
+
+/// Prints a pointer at index.
+fn append_char_indicator(str: &mut String, idx: usize) {
+    for i in 0..idx {
+        str.push(' ');
+    }
+    str.push_str("^\n");
+}
 
 //TODO make fields private and add access functions, move into separate module
 pub struct Runner<'a> {

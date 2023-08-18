@@ -2,7 +2,7 @@ use std::{io, thread, time::Duration};
 
 use tui::{backend::CrosstermBackend, Terminal, widgets::{Block, Borders}};
 
-use crate::{instructions::Instruction, runtime::{Runner, RuntimeArgs}, base::{Operation, Comparison}};
+use crate::{instructions::Instruction, runtime::{Runner, RuntimeArgs, RuntimeBuilder}, base::{Operation, Comparison}};
 
 /// Contains all required data types used to run programs
 mod base;
@@ -51,5 +51,13 @@ fn main() {
     ];
     let mut runner = Runner::new(instructions);
     runner.run().unwrap();
+
+    let mut builder = RuntimeBuilder::new_default();
+    let mut instructions = Vec::new();
+    instructions.push("a0 := df");
+    let res = builder.build_instructions(&instructions);
+    if res.is_err() {
+        println!("{}", res.unwrap_err());
+    }
     
 }
