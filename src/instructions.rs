@@ -258,7 +258,10 @@ impl TryFrom<&str> for Instruction {
         if let Ok(m_cell) = parse_memory_cell(parts[0], 0) {
             // Instructions that use use second memory cell in part 2
             if let Ok(m_cell_b) = parse_memory_cell(parts[2], err_idx(&parts, 2)) {
-
+                // Check if instruction is assign_memory_cell_value_from_memory_cell
+                if parts.len() == 3 {
+                    return Ok(Instruction::AssignMemoryCellValueFromMemoryCell(m_cell, m_cell_b));
+                }
             }
 
             let a_idx = parse_alpha(parts[2], err_idx(&parts, 2));
@@ -900,6 +903,12 @@ mod tests {
         Instruction::AssignMemoryCellValue("a".to_string(), 20).run(&mut args, &mut control_flow).unwrap();
         Instruction::AssignMemoryCellValueFromMemoryCell("b".to_string(), "a".to_string()).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(args.memory_cells.get("b").unwrap().data.unwrap(), 20);
+    }
+
+    #[test]
+    fn test_parse_assign_memory_cell_value_from_memory_cell() {
+        assert_eq!(Instruction::try_from("p(h1) := p(h2)"), Ok(Instruction::AssignMemoryCellValueFromMemoryCell("h1".to_string(), "h2".to_string())));
+        assert_eq!(Instruction::try_from("p(h1) := p()"), Err(InstructionParseError::UnexpectedCharacter(9, "p()".to_string())));
     }
 
     #[test]

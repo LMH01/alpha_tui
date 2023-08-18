@@ -37,7 +37,7 @@ This section logs what instructions can be parsed from text
 - [ ] $\rho(i):=\rho(j)\space\textbf{op}\space c$
 - [ ] $\rho(i):=\rho(j)\space\textbf{op}\space\alpha_u$
 - [ ] $\rho(i):=\rho(j)\space\textbf{op}\space\rho(k)$
-- [ ] $\rho(i):=\rho(j)$
+- [X] $\rho(i):=\rho(j)$
 - [X] if $\alpha_u\space\textbf{cmp}\space\alpha_v$ then goto label
 - [X] if $\alpha_u\space\textbf{cmp}\space c$ then goto label
 - [X] if $\alpha_u\space\textbf{cmp}\space\rho(i)$ then goto label
