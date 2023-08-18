@@ -33,7 +33,7 @@ pub enum Instruction {
     /// p(i) := p(j)
     /// 
     /// See [assign_memory_cell_value_from_memory_cell](fn.assign_memory_cell_value_from_memory_cell.html)
-    AssingMemoryCellValueFromMemoryCell(String, String),
+    AssignMemoryCellValueFromMemoryCell(String, String),
     /// a := a op x
     /// 
     /// See [calc_accumulator_with_constant](fn.calc_accumulator_with_constant.html)
@@ -102,7 +102,7 @@ impl Instruction {
             Self::AssignAccumulatorValueFromMemoryCell(a_idx, label) => assign_accumulator_value_from_memory_cell(runtime_args, a_idx, label)?,
             Self::AssignMemoryCellValue(label, value) => assign_memory_cell_value(runtime_args, label, value)?,
             Self::AssignMemoryCellValueFromAccumulator(label, a_idx) => assign_memory_cell_value_from_accumulator(runtime_args, label, a_idx)?,
-            Self::AssingMemoryCellValueFromMemoryCell(label_a, label_b) => assign_memory_cell_value_from_memory_cell(runtime_args, label_a, label_b)?,
+            Self::AssignMemoryCellValueFromMemoryCell(label_a, label_b) => assign_memory_cell_value_from_memory_cell(runtime_args, label_a, label_b)?,
             Self::CalcAccumulatorWithConstant(operation, a_idx, value) => calc_accumulator_with_constant(runtime_args, operation, a_idx, value)?,
             Self::CalcAccumulatorWithAccumulator(operation, a_idx_a, a_idx_b) => calc_accumulator_with_accumulator(runtime_args, operation, a_idx_a, a_idx_b)?,
             Self::CalcAccumulatorWithAccumulators(operation, a_idx_a, a_idx_b, a_idx_c) => calc_accumulator_with_accumulators(runtime_args, operation, a_idx_a, a_idx_b, a_idx_c)?,
@@ -181,8 +181,14 @@ impl TryFrom<&str> for Instruction {
             return Ok(Instruction::Pop());
         }
 
+        // At this point only instructions follow that require a := in the second part
+        // Check if := is present
+        if parts[1] != ":=" {
+            return Err(InstructionParseError::NoMatch)
+        }
+
         // Instructions where the first part is an accumulator
-        if parts[0].starts_with('a') && parts[1] == ":=" {//TODO Add more verbal syntax check for := when it is required
+        if parts[0].starts_with('a') {
             let a_idx = parse_alpha(parts[0], 0)?;
             // Instructions that use a second accumulator to assign the value
             if parts[2].starts_with('a') {
@@ -247,6 +253,26 @@ impl TryFrom<&str> for Instruction {
             return Err(InstructionParseError::UnexpectedCharacter(err_idx(&parts, 2), parts[2].to_string()))
 
         }
+
+        // Instructions where the first part is a memory  cell
+        if let Ok(m_cell) = parse_memory_cell(parts[0], 0) {
+            // Instructions that use use second memory cell in part 2
+            if let Ok(m_cell_b) = parse_memory_cell(parts[2], err_idx(&parts, 2)) {
+
+            }
+
+            let a_idx = parse_alpha(parts[2], err_idx(&parts, 2));
+            let no = parse_number(parts[2], err_idx(&parts, 2));
+            // Check if instruction is assign_memory_cell_value_from_accumulator
+            if a_idx.is_ok() {
+                return Ok(Instruction::AssignMemoryCellValueFromAccumulator(m_cell, a_idx.unwrap()));
+            } else if no.is_ok() { // Check if instruction is assign_memory_cell_value
+                return Ok(Instruction::AssignMemoryCellValue(m_cell, no.unwrap()));
+            } else {
+                return Err(InstructionParseError::UnexpectedCharacter(err_idx(&parts, 2), parts[2].to_string()));
+            }
+        }
+
         Err(InstructionParseError::NoMatch)
     }
 }
@@ -826,6 +852,12 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_assign_memory_cell_value() {
+        assert_eq!(Instruction::try_from("p(h1) := 10"), Ok(Instruction::AssignMemoryCellValue("h1".to_string(), 10)));
+        assert_eq!(Instruction::try_from("p(h1) := x"), Err(InstructionParseError::UnexpectedCharacter(9, "x".to_string())));
+    }
+
+    #[test]
     fn test_assign_memory_cell_value_error() {
         let mut args = setup_empty_runtime_args();
         let mut control_flow = ControlFlow::new();
@@ -839,6 +871,12 @@ mod tests {
         Instruction::AssignAccumulatorValue(0, 20).run(&mut args, &mut control_flow).unwrap();
         Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(args.memory_cells.get("a").unwrap().data.unwrap(), 20);
+    }
+
+    #[test]
+    fn test_parse_assign_memory_cell_value_from_accumulator() {
+        assert_eq!(Instruction::try_from("p(h1) := a0"), Ok(Instruction::AssignMemoryCellValueFromAccumulator("h1".to_string(), 0)));
+        assert_eq!(Instruction::try_from("p(h1) := a0x"), Err(InstructionParseError::UnexpectedCharacter(9, "a0x".to_string())));
     }
 
     #[test]
@@ -860,7 +898,7 @@ mod tests {
         let mut args = setup_runtime_args();
         let mut control_flow = ControlFlow::new();
         Instruction::AssignMemoryCellValue("a".to_string(), 20).run(&mut args, &mut control_flow).unwrap();
-        Instruction::AssingMemoryCellValueFromMemoryCell("b".to_string(), "a".to_string()).run(&mut args, &mut control_flow).unwrap();
+        Instruction::AssignMemoryCellValueFromMemoryCell("b".to_string(), "a".to_string()).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(args.memory_cells.get("b").unwrap().data.unwrap(), 20);
     }
 
@@ -868,13 +906,13 @@ mod tests {
     fn test_assign_memory_cell_value_from_memory_cell_error() {
         let mut args = setup_empty_runtime_args();
         let mut control_flow = ControlFlow::new();
-        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("a".to_string(), "b".to_string()).run(&mut args, &mut control_flow).is_err());
-        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("b".to_string(), "a".to_string()).run(&mut args, &mut control_flow).is_err());
+        assert!(Instruction::AssignMemoryCellValueFromMemoryCell("a".to_string(), "b".to_string()).run(&mut args, &mut control_flow).is_err());
+        assert!(Instruction::AssignMemoryCellValueFromMemoryCell("b".to_string(), "a".to_string()).run(&mut args, &mut control_flow).is_err());
         args.memory_cells.insert("a", MemoryCell::new("a"));
         args.memory_cells.insert("b", MemoryCell::new("b"));
         args.memory_cells.get_mut("b").unwrap().data = Some(10);
-        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("b".to_string(), "a".to_string()).run(&mut args, &mut control_flow).is_err());
-        assert!(Instruction::AssingMemoryCellValueFromMemoryCell("a".to_string(), "b".to_string()).run(&mut args, &mut control_flow).is_ok());
+        assert!(Instruction::AssignMemoryCellValueFromMemoryCell("b".to_string(), "a".to_string()).run(&mut args, &mut control_flow).is_err());
+        assert!(Instruction::AssignMemoryCellValueFromMemoryCell("a".to_string(), "b".to_string()).run(&mut args, &mut control_flow).is_ok());
     }
 
     #[test]

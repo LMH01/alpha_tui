@@ -26,14 +26,14 @@ This section logs what instructions can be parsed from text
 
 - [X] $\alpha_u:=\alpha_v$
 - [X] $\alpha_u:=\rho(i)$
-- [ ] $\rho(i):=\alpha_u$
-- [ ] $\rho(i):=c$
 - [X] $\alpha_u:=c$
 - [X] $\alpha_u:=\alpha_u\space\textbf{op}\space c$
 - [X] $\alpha_u:=\alpha_u\space\textbf{op}\space\alpha_v$
 - [X] $\alpha_u:=\alpha_v\space\textbf{op}\space\alpha_w$
 - [X] $\alpha_u:=\alpha_u\space\textbf{op}\space \rho(i)$
 - [X] $\alpha_u:=\rho(i)\space\textbf{op}\space \rho(j)$
+- [X] $\rho(i):=\alpha_u$
+- [X] $\rho(i):=c$
 - [ ] $\rho(i):=\rho(j)\space\textbf{op}\space c$
 - [ ] $\rho(i):=\rho(j)\space\textbf{op}\space\alpha_u$
 - [ ] $\rho(i):=\rho(j)\space\textbf{op}\space\rho(k)$
@@ -51,14 +51,14 @@ This section logs what instructions are implemented in the backend
 
 - [X] $\alpha_u:=\alpha_v$
 - [X] $\alpha_u:=\rho(i)$
-- [X] $\rho(i):=\alpha_u$
-- [X] $\rho(i):=c$
 - [X] $\alpha_u:=c$
 - [X] $\alpha_u:=\alpha_u\space\textbf{op}\space c$
 - [X] $\alpha_u:=\alpha_u\space\textbf{op}\space\alpha_v$
 - [X] $\alpha_u:=\alpha_v\space\textbf{op}\space\alpha_w$
 - [X] $\alpha_u:=\alpha_u\space\textbf{op}\space \rho(i)$
 - [X] $\alpha_u:=\rho(i)\space\textbf{op}\space \rho(j)$
+- [X] $\rho(i):=\alpha_u$
+- [X] $\rho(i):=c$
 - [X] $\rho(i):=\rho(j)\space\textbf{op}\space c$
 - [X] $\rho(i):=\rho(j)\space\textbf{op}\space\alpha_u$
 - [X] $\rho(i):=\rho(j)\space\textbf{op}\space\rho(k)$
