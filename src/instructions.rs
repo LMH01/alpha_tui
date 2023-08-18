@@ -143,16 +143,27 @@ impl<'a> TryFrom<&str> for Instruction<'a> {
             let a_idx = parse_alpha(parts[0], 1)?;
             // Instructions that use a second accumulator to assign the value
             if parts[2].starts_with('a') {
-                let a_idx_b = parse_alpha(parts[2], parts[0].len() + parts[1].len() + 3)?;
+                let a_idx_b = parse_alpha(parts[2], err_idx(&parts, 2, 1))?;
                 // Check if instruction is assign_accumulator_value_from_accumulator
                 if parts.len() == 3 {
                     return Ok(Instruction::AssignAccumulatorValueFromAccumulator(a_idx, a_idx_b));
                 }
                 // Parse operation
-                let op = parse_operation(parts[3], parts[0].len() + parts[1].len() + parts[2].len() + 3)?;
+                let op = parse_operation(parts[3], err_idx(&parts, 3, 0))?;
+                // Instructions that use a third accumulator
+                if parts[4].starts_with('a') {
+                    let a_idx_c = parse_alpha(parts[4], err_idx(&parts, 4, 1))?;
+                    // Check if instruction is calc_accumulator_value_with_accumulator or calc_accumulator_value_with_accumulators
+                    if a_idx == a_idx_b {
+                        return Ok(Instruction::CalcAccumulatorWithAccumulator(op, a_idx, a_idx_c));
+                    } else {
+                        return Ok(Instruction::CalcAccumulatorWithAccumulators(op, a_idx, a_idx_b, a_idx_c));
+                    }
+                }
+                
                 // Check if instruction is calc_accumulator_value_with_constant
                 if a_idx == a_idx_b {//TODO Move behind all other instructions that use an operation and that have a 3rd part
-                    let no = parse_number(parts[4], parts[0].len() + parts[1].len() + parts[2].len() + parts[3].len() + 4)?;
+                    let no = parse_number(parts[4], err_idx(&parts, 4, 0))?;
                     return Ok(Instruction::CalcAccumulatorWithConstant(op, a_idx, no));
                 }
                 return Err(InstructionParseError::NoMatchSuggestion(suggestion!(parts[0], ":=", parts[0], parts[3], parts[4])));
@@ -238,6 +249,18 @@ fn parse_number(s: &str, err_idx: usize) -> Result<i32, InstructionParseError> {
         Ok(x) => Ok(x),
         Err(_) => Err(InstructionParseError::NotANumber(err_idx, s.to_string()))
     }
+}
+
+/// Calculates the error index depending on the part in which the error occurs.
+/// 
+/// `part_idx` specifies in what part the error occurs.
+/// `offset` is added to the result.
+fn err_idx(parts: &Vec<&str>, part_idx: usize, offset: usize) -> usize {
+    let mut idx = 0;
+    for i in 0..=part_idx-1 {
+        idx += parts[i].len() + 1;
+    }
+    idx + offset
 }
 
 /// Runs code equal to **push**
@@ -557,7 +580,7 @@ fn print_stack(runtime_args: &RuntimeArgs) {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::{runtime::{ControlFlow, RuntimeArgs, Runner}, instructions::{Instruction, parse_alpha,  InstructionParseError, parse_operation}, base::{Accumulator, MemoryCell, Comparison, Operation}};
+    use crate::{runtime::{ControlFlow, RuntimeArgs, Runner}, instructions::{Instruction, parse_alpha,  InstructionParseError, parse_operation, err_idx}, base::{Accumulator, MemoryCell, Comparison, Operation}};
 
     #[test]
     fn test_parse_alpha() {
@@ -575,6 +598,13 @@ mod tests {
         assert_eq!(parse_operation("*", 0), Ok(Operation::Multiplication));
         assert_eq!(parse_operation("/", 0), Ok(Operation::Division));
         assert_eq!(parse_operation("x", 0), Err(InstructionParseError::UnknownOperation(0, String::from("x"))));
+    }
+
+    #[test]
+    fn test_err_idx() {
+        let s = String::from("a1 := a2 + a4");
+        let parts: Vec<&str> = s.split_whitespace().collect();
+        assert_eq!(err_idx(&parts, 2, 1), 7);
     }
 
     #[test]
@@ -719,7 +749,7 @@ mod tests {
     #[test]
     fn test_parse_calc_accumulator_with_constant() {
         assert_eq!(Instruction::try_from("a1 := a1 + 20"), Ok(Instruction::CalcAccumulatorWithConstant(Operation::Plus, 1, 20)));
-        assert_eq!(Instruction::try_from("a1 := a1 + a29"), Err(InstructionParseError::NotANumber(11, "a29".to_string())));
+        assert_eq!(Instruction::try_from("a1 := a1 + z29"), Err(InstructionParseError::NotANumber(11, "z29".to_string())));
         assert_eq!(Instruction::try_from("a1 := ab2 + a29"), Err(InstructionParseError::NotANumber(7, "b2".to_string())));
         assert_eq!(Instruction::try_from("a1 := a2 + 20"), Err(InstructionParseError::NoMatchSuggestion("a1 := a1 + 20".to_string())));
     }
@@ -735,6 +765,12 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_calc_accumulator_with_accumulator() {
+        assert_eq!(Instruction::try_from("a1 := a1 + a2"), Ok(Instruction::CalcAccumulatorWithAccumulator(Operation::Plus, 1, 2)));
+        assert_eq!(Instruction::try_from("a1 := a1 / a5"), Ok(Instruction::CalcAccumulatorWithAccumulator(Operation::Division, 1, 5)));
+    }
+
+    #[test]
     fn test_calc_accumulator_with_accumulators() {
         let mut args = setup_runtime_args();
         let control_flow = &mut ControlFlow::new();
@@ -742,6 +778,12 @@ mod tests {
         Instruction::AssignAccumulatorValue(2, 20).run(&mut args, control_flow).unwrap();
         Instruction::CalcAccumulatorWithAccumulators(Operation::Plus, 0, 1, 2).run(&mut args, control_flow).unwrap();
         assert_eq!(args.accumulators[0].data.unwrap(), 40);
+    }
+
+    #[test]
+    fn test_parse_calc_accumulator_with_accumulators() {
+        assert_eq!(Instruction::try_from("a1 := a2 + a3"), Ok(Instruction::CalcAccumulatorWithAccumulators(Operation::Plus, 1, 2, 3)));
+        assert_eq!(Instruction::try_from("a1 := a3 / a5"), Ok(Instruction::CalcAccumulatorWithAccumulators(Operation::Division, 1, 3, 5)));
     }
 
     #[test]
