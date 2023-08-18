@@ -1,4 +1,4 @@
-use crate::{runtime::{RuntimeArgs, ControlFlow}, base::{Comparison, Operation}};
+use crate::{runtime::{RuntimeArgs, ControlFlow}, base::{Comparison, Operation}, suggestion};
 
 #[derive(Debug, PartialEq)]
 pub enum Instruction<'a> {
@@ -143,11 +143,19 @@ impl<'a> TryFrom<&str> for Instruction<'a> {
             let a_idx = parse_alpha(parts[0], 1)?;
             // Instructions that use a second accumulator to assign the value
             if parts[2].starts_with('a') {
-                let a_idx_b = parse_alpha(parts[2], parts[0].len() + 3)?;
+                let a_idx_b = parse_alpha(parts[2], parts[0].len() + parts[1].len() + 3)?;
                 // Check if instruction is assign_accumulator_value_from_accumulator
                 if parts.len() == 3 {
                     return Ok(Instruction::AssignAccumulatorValueFromAccumulator(a_idx, a_idx_b));
                 }
+                // Parse operation
+                let op = parse_operation(parts[3], parts[0].len() + parts[1].len() + parts[2].len() + 3)?;
+                // Check if instruction is calc_accumulator_value_with_constant
+                if a_idx == a_idx_b {//TODO Move behind all other instructions that use an operation and that have a 3rd part
+                    let no = parse_number(parts[4], parts[0].len() + parts[1].len() + parts[2].len() + parts[3].len() + 4)?;
+                    return Ok(Instruction::CalcAccumulatorWithConstant(op, a_idx, no));
+                }
+                return Err(InstructionParseError::NoMatchSuggestion(suggestion!(parts[0], ":=", parts[0], parts[3], parts[4])));
             }
         }
         Err(InstructionParseError::NoMatch)
@@ -171,11 +179,13 @@ pub enum InstructionParseError {
     UnexpectedCharacter(usize, String),
     /// Indicates that no instruction was found that matches the input.
     NoMatch,
+    /// Indicates that no instruction was found but gives a suggestion on what instruction might be meant.
+    NoMatchSuggestion(String),
 }
 
 /// Tries to parse the index of the accumulator.
 /// 
-/// `err_idx` indicates at what index the parse error originates in case it occurred.
+/// `err_idx` indicates at what index the parse error originates.
 /// 
 /// # Example
 /// ```
@@ -187,6 +197,46 @@ fn parse_alpha(s: &str, err_idx: usize) -> Result<usize, InstructionParseError> 
     match input.parse::<usize>() {
         Ok(x) => Ok(x),
         Err(_) => Err(InstructionParseError::NotANumber(err_idx, input))
+    }
+}
+
+/// Parses all parameters into string and returns the concatenated string.
+/// Inserts a whitespace between each parameters string representation.
+#[macro_export]
+macro_rules! suggestion {
+    () => {
+        String::new()
+    };
+    ($($val:expr),*) => {
+        {
+            let mut result = String::new();
+            $(
+                result.push_str(&format!("{} ", $val));
+            )*
+            result.trim().to_string()
+        }
+    };() => {
+        
+    };
+}
+
+/// Tries to parse the operation.
+/// 
+/// `err_idx` indicates at what index the parse error originates.
+fn parse_operation(s: &str, err_idx: usize) -> Result<Operation, InstructionParseError> {
+    match Operation::try_from(s) {
+        Ok(s) => Ok(s),
+        Err(_) => Err(InstructionParseError::UnknownOperation(err_idx, s.to_string())),
+    }
+}
+
+/// Tries to parse a number.
+/// 
+/// `err_idx` indicates at what index the parse error originates.
+fn parse_number(s: &str, err_idx: usize) -> Result<i32, InstructionParseError> {
+    match s.parse::<i32>() {
+        Ok(x) => Ok(x),
+        Err(_) => Err(InstructionParseError::NotANumber(err_idx, s.to_string()))
     }
 }
 
@@ -507,7 +557,7 @@ fn print_stack(runtime_args: &RuntimeArgs) {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::{runtime::{ControlFlow, RuntimeArgs, Runner}, instructions::{Instruction, parse_alpha,  InstructionParseError}, base::{Accumulator, MemoryCell, Comparison, Operation}};
+    use crate::{runtime::{ControlFlow, RuntimeArgs, Runner}, instructions::{Instruction, parse_alpha,  InstructionParseError, parse_operation}, base::{Accumulator, MemoryCell, Comparison, Operation}};
 
     #[test]
     fn test_parse_alpha() {
@@ -516,6 +566,15 @@ mod tests {
         assert_eq!(parse_alpha("a10x", 1), Err(InstructionParseError::NotANumber(1, String::from("10x"))));
         assert_eq!(parse_alpha("ab3", 1), Err(InstructionParseError::NotANumber(1, String::from("b3"))));
         assert_eq!(parse_alpha("ab3i", 1), Err(InstructionParseError::NotANumber(1, String::from("b3i"))));
+    }
+
+    #[test]
+    fn test_parse_operation() {
+        assert_eq!(parse_operation("+", 0), Ok(Operation::Plus));
+        assert_eq!(parse_operation("-", 0), Ok(Operation::Minus));
+        assert_eq!(parse_operation("*", 0), Ok(Operation::Multiplication));
+        assert_eq!(parse_operation("/", 0), Ok(Operation::Division));
+        assert_eq!(parse_operation("x", 0), Err(InstructionParseError::UnknownOperation(0, String::from("x"))));
     }
 
     #[test]
@@ -548,9 +607,11 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_accumulator_value_from_accumulator() {
+    fn test_parse_assign_accumulator_value_from_accumulator() {
         assert_eq!(Instruction::try_from("a0 := a1"), Ok(Instruction::AssignAccumulatorValueFromAccumulator(0, 1)));
         assert_eq!(Instruction::try_from("a3 := a15"), Ok(Instruction::AssignAccumulatorValueFromAccumulator(3, 15)));
+        assert_eq!(Instruction::try_from("a3 := a1x"), Err(InstructionParseError::NotANumber(7, String::from("1x"))));
+        assert_eq!(Instruction::try_from("ab := a1x"), Err(InstructionParseError::NotANumber(1, String::from("b"))));
     }
 
     #[test]
@@ -653,6 +714,14 @@ mod tests {
         Instruction::AssignAccumulatorValue(0, 20).run(&mut args, control_flow).unwrap();
         Instruction::CalcAccumulatorWithConstant(Operation::Plus, 0, 20).run(&mut args, control_flow).unwrap();
         assert_eq!(args.accumulators[0].data.unwrap(), 40);
+    }
+
+    #[test]
+    fn test_parse_calc_accumulator_with_constant() {
+        assert_eq!(Instruction::try_from("a1 := a1 + 20"), Ok(Instruction::CalcAccumulatorWithConstant(Operation::Plus, 1, 20)));
+        assert_eq!(Instruction::try_from("a1 := a1 + a29"), Err(InstructionParseError::NotANumber(11, "a29".to_string())));
+        assert_eq!(Instruction::try_from("a1 := ab2 + a29"), Err(InstructionParseError::NotANumber(7, "b2".to_string())));
+        assert_eq!(Instruction::try_from("a1 := a2 + 20"), Err(InstructionParseError::NoMatchSuggestion("a1 := a1 + 20".to_string())));
     }
 
     #[test]
