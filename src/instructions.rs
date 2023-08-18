@@ -161,12 +161,21 @@ impl<'a> TryFrom<&str> for Instruction<'a> {
                     }
                 }
                 
-                // Check if instruction is calc_accumulator_value_with_constant
-                if a_idx == a_idx_b {//TODO Move behind all other instructions that use an operation and that have a 3rd part
-                    let no = parse_number(parts[4], err_idx(&parts, 4, 0))?;
-                    return Ok(Instruction::CalcAccumulatorWithConstant(op, a_idx, no));
+                // Check if booth accumulators are the same
+                if a_idx == a_idx_b {
+                    let no = parse_number(parts[4], err_idx(&parts, 4, 0));
+                    let memory_cell = parse_memory_cell(parts[4], err_idx(&parts, 4, 0));
+
+                    // Check if instruction is calc_accumulator_value_with_constant
+                    if a_idx == a_idx_b && no.is_ok() {
+                        return Ok(Instruction::CalcAccumulatorWithConstant(op, a_idx, no.unwrap()));
+                    } else if memory_cell.is_ok() { // Check if instruction is calc_accumulator_value_with_memory_cell
+                        //return Ok(Instruction::CalcAccumulatorWithMemoryCell(op, a_idx, memory_cell.unwrap()));
+                    }
+                    return Err(InstructionParseError::NoMatchSuggestion(suggestion!(parts[0], ":=", parts[0], parts[3], parts[4])));
+
                 }
-                return Err(InstructionParseError::NoMatchSuggestion(suggestion!(parts[0], ":=", parts[0], parts[3], parts[4])));
+                
             }
         }
         Err(InstructionParseError::NoMatch)
@@ -194,23 +203,6 @@ pub enum InstructionParseError {
     NoMatchSuggestion(String),
 }
 
-/// Tries to parse the index of the accumulator.
-/// 
-/// `err_idx` indicates at what index the parse error originates.
-/// 
-/// # Example
-/// ```
-/// assert_eq!(parse_alpha("a10", 1), Ok(10));
-/// assert_eq!(parse_alpha("ab3", 1), Err(1));
-/// ```
-fn parse_alpha(s: &str, err_idx: usize) -> Result<usize, InstructionParseError> {
-    let input = s.replace("a", "");
-    match input.parse::<usize>() {
-        Ok(x) => Ok(x),
-        Err(_) => Err(InstructionParseError::NotANumber(err_idx, input))
-    }
-}
-
 /// Parses all parameters into string and returns the concatenated string.
 /// Inserts a whitespace between each parameters string representation.
 #[macro_export]
@@ -231,6 +223,23 @@ macro_rules! suggestion {
     };
 }
 
+/// Tries to parse the index of the accumulator.
+/// 
+/// `err_idx` indicates at what index the parse error originates.
+/// 
+/// # Example
+/// ```
+/// assert_eq!(parse_alpha("a10", 1), Ok(10));
+/// assert_eq!(parse_alpha("ab3", 1), Err(1));
+/// ```
+fn parse_alpha(s: &str, err_idx: usize) -> Result<usize, InstructionParseError> {
+    let input = s.replace("a", "");
+    match input.parse::<usize>() {
+        Ok(x) => Ok(x),
+        Err(_) => Err(InstructionParseError::NotANumber(err_idx, input))
+    }
+}
+
 /// Tries to parse the operation.
 /// 
 /// `err_idx` indicates at what index the parse error originates.
@@ -249,6 +258,24 @@ fn parse_number(s: &str, err_idx: usize) -> Result<i32, InstructionParseError> {
         Ok(x) => Ok(x),
         Err(_) => Err(InstructionParseError::NotANumber(err_idx, s.to_string()))
     }
+}
+
+/// Parses the name of a memory cell.
+/// For that the content inside p() is taken.
+/// 
+/// `err_base_idx` indicates at what index the input string starts.
+fn parse_memory_cell(s: &str, err_base_idx: usize) -> Result<String, InstructionParseError> {
+    if !s.starts_with("p(") {
+        return Err(InstructionParseError::UnexpectedCharacter(err_base_idx, String::from(s.chars().nth(0).unwrap())));
+    }
+    if !s.ends_with(")") {
+        return Err(InstructionParseError::UnexpectedCharacter(err_base_idx + s.len() - 1, String::from(s.chars().nth_back(0).unwrap())));
+    }
+    let name = s.replace("p(", "").replace(")", "");
+    if name.is_empty() {
+        return Err(InstructionParseError::UnexpectedCharacter(err_base_idx, s.to_string()));
+    }
+    return Ok(name)
 }
 
 /// Calculates the error index depending on the part in which the error occurs.
@@ -580,7 +607,7 @@ fn print_stack(runtime_args: &RuntimeArgs) {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::{runtime::{ControlFlow, RuntimeArgs, Runner}, instructions::{Instruction, parse_alpha,  InstructionParseError, parse_operation, err_idx}, base::{Accumulator, MemoryCell, Comparison, Operation}};
+    use crate::{runtime::{ControlFlow, RuntimeArgs, Runner}, instructions::{Instruction, parse_alpha,  InstructionParseError, parse_operation, err_idx, parse_memory_cell}, base::{Accumulator, MemoryCell, Comparison, Operation}};
 
     #[test]
     fn test_parse_alpha() {
@@ -598,6 +625,15 @@ mod tests {
         assert_eq!(parse_operation("*", 0), Ok(Operation::Multiplication));
         assert_eq!(parse_operation("/", 0), Ok(Operation::Division));
         assert_eq!(parse_operation("x", 0), Err(InstructionParseError::UnknownOperation(0, String::from("x"))));
+    }
+
+    #[test]
+    fn test_parse_memory_cell() {
+        assert_eq!(parse_memory_cell("p(a)", 0), Ok("a".to_string()));
+        assert_eq!(parse_memory_cell("p(xyz)", 0), Ok("xyz".to_string()));
+        assert_eq!(parse_memory_cell("p(xyzX", 0), Err(InstructionParseError::UnexpectedCharacter(5, "X".to_string())));
+        assert_eq!(parse_memory_cell("pxyz)", 0), Err(InstructionParseError::UnexpectedCharacter(0, "p".to_string())));
+        assert_eq!(parse_memory_cell("p(p()", 0), Err(InstructionParseError::UnexpectedCharacter(0, "p(p()".to_string())));
     }
 
     #[test]
