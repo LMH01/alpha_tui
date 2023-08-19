@@ -14,7 +14,8 @@ Internal handling of instructions is finished, programs can be run, when assembl
 	- [ ] (Customization of available memory cells)
 		- if no memory cells are set all commands that require memory cells should be disabled ("compiling" with those commands included should fail)	
 - [ ] Debug mode -> Step through each instruction
-- [ ] Add tests (at least one for each command)
+- [X] Add tests (at least one for each command)
+- [X] Add support for comments at end of line (marked with # or //)
 
 ### Instructions
 

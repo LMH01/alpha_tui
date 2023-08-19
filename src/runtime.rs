@@ -72,9 +72,9 @@ impl<'a> RuntimeBuilder<'a> {
         self.runtime_args = Some(runtime_args);
     }
 
-    /// Builds instructions from the string and sets them as current instructions.
+    /// Builds instructions from the vector.
     ///
-    /// Each line has to contain a single instruction.
+    /// Each element is a single instruction.
     ///
     /// Control flow is reset and updated accordingly.
     ///
@@ -83,6 +83,8 @@ impl<'a> RuntimeBuilder<'a> {
         self.control_flow.reset();
         let mut instructions = Vec::new();
         for (index, instruction) in instructions_input.iter().enumerate() {
+            // Remove comments
+            let instruction = instruction.split(&['#', '/'][..]).collect::<Vec<&str>>()[0];
             // Check for labels
             let mut splits = instruction.split_whitespace().collect::<Vec<&str>>();
             if splits[0].ends_with(":") {
@@ -479,4 +481,15 @@ mod tests {
             assert_eq!(b, Err(RuntimeBuildError::MemoryCellMissing(s.to_string())));
         }
     } 
+
+    #[test]
+    fn test_instruction_building_with_comments() {
+        let instructions = vec![
+            "a0 := 4 // Set alpha to 4",
+            "p(h1) := a0 # Set memory cell h1 to 4",
+            "a0 := a1 # Just some stuff",
+            "a1 := a2 // Just some more stuff"];
+        let mut rb = RuntimeBuilder::new_default();
+        assert!(rb.build_instructions(&instructions).is_ok());
+    }
 }
