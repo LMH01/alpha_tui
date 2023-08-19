@@ -122,13 +122,54 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
     // Wrapping block for a group
     // Just draw the block and the group on the same area and build the group
     // with at least a margin of 1
-    let size = f.size();
+    //let size = f.size();
+
+    let chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .margin(1)
+            .constraints(
+                [
+                    Constraint::Percentage(70),
+                    Constraint::Percentage(20),
+                    Constraint::Percentage(10)
+                ].as_ref()
+            )
+            .split(f.size());
+
+    let right_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint:: Percentage(30), Constraint::Percentage(70)])
+        .split(chunks[1]);
 
     // Surrounding block
-    let block = Block::default()
+    let code_area = Block::default()
         .borders(Borders::ALL)
-        .title("Main block with round corners")
+        .title("Code Area")
         .title_alignment(Alignment::Center)
         .border_type(BorderType::Rounded);
-    f.render_widget(block, size);
+    f.render_widget(code_area, chunks[0]);
+
+    // Accumulator block
+    let accumulator = Block::default()
+        .borders(Borders::ALL)
+        .title("Accumulators")
+        .title_alignment(Alignment::Center)
+        .border_type(BorderType::Rounded);
+    f.render_widget(accumulator, right_chunks[0]);
+    
+    // Memory cell block
+    let memory_cells = Block::default()
+        .borders(Borders::ALL)
+        .title("Memory cells")
+        .title_alignment(Alignment::Center)
+        .border_type(BorderType::Rounded);
+    f.render_widget(memory_cells, right_chunks[1]);
+
+    // Stack block
+    let stack = Block::default()
+        .borders(Borders::ALL)
+        .title("Stack")
+        .title_alignment(Alignment::Center)
+        .border_type(BorderType::Rounded);
+    f.render_widget(stack, chunks[2]);
 }
