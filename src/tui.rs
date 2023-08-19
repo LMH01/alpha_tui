@@ -161,13 +161,11 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
 
     let global_chunks = Layout::default()
         .direction(Direction::Vertical)
-        .margin(1)
         .constraints([Constraint::Percentage(95), Constraint::Percentage(5)])
         .split(f.size());
 
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
-        .margin(1)
         .constraints(
             [
                 Constraint::Percentage(70),
@@ -256,7 +254,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .title("Stack")
         .title_alignment(Alignment::Center)
         .border_type(BorderType::Rounded);
-    let stack_list = List::new(test_list_items());
+    let stack_list = List::new(test_list_items()).block(stack);
 
     f.render_widget(stack_list, chunks[2]);
 }
