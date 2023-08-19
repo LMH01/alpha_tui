@@ -411,6 +411,11 @@ impl<'a> Runtime<'a> {
         Ok(())
     }
 
+    /// Returns the index of the current instruction
+    pub fn current_instruction_index(&self) -> usize {
+        self.control_flow.next_instruction_index - 1
+    }
+
     /// Prints information about current register values, current accumulator values and the current status of the stack.
     pub fn debug(&self) {
         print_accumulators(&self.runtime_args);

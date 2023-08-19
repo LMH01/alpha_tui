@@ -1,0 +1,6 @@
+a0 := 1
+p(a) := 8
+loop: a0 := a0 * 2
+p(a) := p(a) - 1
+a1 := p(a)
+if a1 > 0 then goto loop

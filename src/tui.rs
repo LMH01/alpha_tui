@@ -23,6 +23,10 @@ impl StatefulInstructions {
         }
     }
 
+    fn set(&mut self, index: usize) {
+        self.state.select(Some(index));
+    }
+
     fn next(&mut self) {
         let i = match self.state.selected() {
             Some(i) => {
@@ -207,8 +211,9 @@ impl<'a> App<'a> {
                         self.keybind_hints.get_mut(&'r').unwrap().enabled = true;
                     }
                     KeyCode::Char('r') => {
-                        let res = self.runtime.step();
-                        self.instructions.next();
+                        let res = self.runtime.step();//TODO Add runtime error handling (=message to user)
+                        self.instructions.set(self.runtime.current_instruction_index());
+                        //self.instructions.next();
                     }
                     _ => (),
                 }
