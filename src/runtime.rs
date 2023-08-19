@@ -387,17 +387,23 @@ impl<'a> Runtime<'a> {
     /// Runs the complete program.
     pub fn run(&mut self) -> Result<(), String> {
         while self.control_flow.next_instruction_index < self.instructions.len() {
-            let current_instruction = self.control_flow.next_instruction_index;
-            self.control_flow.next_instruction_index += 1;
-            if let Err(e) = self.instructions[current_instruction]
-                .run(&mut self.runtime_args, &mut self.control_flow)
-            {
-                println!(
-                    "Unable to continue execution, an irrecoverable error occured: {}",
-                    e
-                );
-                return Err(format!("Execution terminated: {}", e));
-            }
+            self.step()?;
+        }
+        Ok(())
+    }
+
+    /// Runs the next instruction only.
+    pub fn step(&mut self) -> Result<(), String> {
+        let current_instruction = self.control_flow.next_instruction_index;
+        self.control_flow.next_instruction_index += 1;
+        if let Err(e) = self.instructions[current_instruction]
+            .run(&mut self.runtime_args, &mut self.control_flow)
+        {
+            println!(
+                "Unable to continue execution, an irrecoverable error occured: {}",
+                e
+            );
+            return Err(format!("Execution terminated: {}", e));
         }
         Ok(())
     }
