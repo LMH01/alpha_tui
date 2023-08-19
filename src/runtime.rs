@@ -2,7 +2,9 @@ use std::collections::HashMap;
 
 use crate::{
     base::{Accumulator, MemoryCell},
-    instructions::{Instruction, InstructionParseError, print_accumulators, print_memory_cells, print_stack},
+    instructions::{
+        print_accumulators, print_memory_cells, print_stack, Instruction, InstructionParseError,
+    },
     ACCUMULATORS, MEMORY_CELL_LABELS,
 };
 
@@ -37,9 +39,9 @@ impl<'a> RuntimeBuilder<'a> {
     }
 
     /// Constructs a new runtime.
-    /// 
+    ///
     /// Performs some compatibility checks.
-    /// 
+    ///
     /// Returns `RuntimeBuildError` when the runtime could not be constructed due to missing information.
     pub fn build(&mut self) -> Result<Runtime, RuntimeBuildError> {
         if self.runtime_args.is_none() {
@@ -60,7 +62,11 @@ impl<'a> RuntimeBuilder<'a> {
         if let Err(e) = self.check_memory_cells() {
             return Err(RuntimeBuildError::MemoryCellMissing(e));
         }
-        return Ok(Runtime { runtime_args: self.runtime_args.clone().unwrap(), instructions: self.instructions.clone().unwrap(), control_flow: self.control_flow.clone() })
+        return Ok(Runtime {
+            runtime_args: self.runtime_args.clone().unwrap(),
+            instructions: self.instructions.clone().unwrap(),
+            control_flow: self.control_flow.clone(),
+        });
     }
 
     /// Resets the current values to none.
@@ -103,19 +109,22 @@ impl<'a> RuntimeBuilder<'a> {
     }
 
     /// Sets the instructions to the provided instructions.
-    /// 
+    ///
     /// If loops and labels are used, they have to be set manually by using [RuntimeBuilder::add_label](#add_label).
     pub fn set_instructions(&mut self, instructions: Vec<Instruction>) {
         self.instructions = Some(instructions);
     }
-
 
     /// Adds label to instruction labels.
     ///
     /// Errors when **instruction_index** is out of bounds.
     ///
     /// Note: Make sure that you start counting at 0 and not 1!
-    pub fn add_label(&mut self, label: String, instruction_index: usize) -> Result<(), AddLabelError> {
+    pub fn add_label(
+        &mut self,
+        label: String,
+        instruction_index: usize,
+    ) -> Result<(), AddLabelError> {
         if self.instructions.is_none() {
             return Err(AddLabelError::InstructionsNotSet);
         }
@@ -130,7 +139,7 @@ impl<'a> RuntimeBuilder<'a> {
     }
 
     /// Checks if all labels that are called in the instructions exist in the control flow.
-    /// 
+    ///
     /// If label is missing the name of the label that is missing is returned.
     fn check_labels(&self) -> Result<(), String> {
         if self.instructions.is_none() {
@@ -139,9 +148,15 @@ impl<'a> RuntimeBuilder<'a> {
         for instruction in self.instructions.as_ref().unwrap() {
             match instruction {
                 Instruction::Goto(label) => check_label(&self.control_flow, label)?,
-                Instruction::GotoIfAccumulator(_, label, _, _) => check_label(&self.control_flow, label)?,
-                Instruction::GotoIfConstant(_, label, _, _) => check_label(&self.control_flow, label)?,
-                Instruction::GotoIfMemoryCell(_, label ,_ ,_ ) => check_label(&self.control_flow, label)?,
+                Instruction::GotoIfAccumulator(_, label, _, _) => {
+                    check_label(&self.control_flow, label)?
+                }
+                Instruction::GotoIfConstant(_, label, _, _) => {
+                    check_label(&self.control_flow, label)?
+                }
+                Instruction::GotoIfMemoryCell(_, label, _, _) => {
+                    check_label(&self.control_flow, label)?
+                }
                 _ => (),
             };
         }
@@ -149,9 +164,9 @@ impl<'a> RuntimeBuilder<'a> {
     }
 
     /// Checks if all accumulators that are used in the instructions exist in the runtime args.
-    /// 
+    ///
     /// If accumulator is missing, the id of the missing accumulator is returned.
-    /// 
+    ///
     /// Panics if runtime_args is `None`.
     fn check_accumulators(&self) -> Result<(), String> {
         if self.instructions.is_none() {
@@ -159,26 +174,40 @@ impl<'a> RuntimeBuilder<'a> {
         }
         for instruction in self.instructions.as_ref().unwrap() {
             match instruction {
-                Instruction::AssignAccumulatorValue(id, _) => check_accumulators(&self.runtime_args.as_ref().unwrap(), id)?,
+                Instruction::AssignAccumulatorValue(id, _) => {
+                    check_accumulators(&self.runtime_args.as_ref().unwrap(), id)?
+                }
                 Instruction::AssignAccumulatorValueFromAccumulator(id_a, id_b) => {
                     check_accumulators(self.runtime_args.as_ref().unwrap(), id_a)?;
                     check_accumulators(self.runtime_args.as_ref().unwrap(), id_b)?;
-                },
-                Instruction::AssignAccumulatorValueFromMemoryCell(id, _) => check_accumulators(self.runtime_args.as_ref().unwrap(), id)?,
-                Instruction::AssignMemoryCellValueFromAccumulator(_, id) => check_accumulators(self.runtime_args.as_ref().unwrap(), id)?,
+                }
+                Instruction::AssignAccumulatorValueFromMemoryCell(id, _) => {
+                    check_accumulators(self.runtime_args.as_ref().unwrap(), id)?
+                }
+                Instruction::AssignMemoryCellValueFromAccumulator(_, id) => {
+                    check_accumulators(self.runtime_args.as_ref().unwrap(), id)?
+                }
                 Instruction::CalcAccumulatorWithAccumulator(_, id_a, id_b) => {
                     check_accumulators(self.runtime_args.as_ref().unwrap(), id_a)?;
                     check_accumulators(self.runtime_args.as_ref().unwrap(), id_b)?;
-                },
+                }
                 Instruction::CalcAccumulatorWithAccumulators(_, id_a, id_b, id_c) => {
                     check_accumulators(self.runtime_args.as_ref().unwrap(), id_a)?;
                     check_accumulators(self.runtime_args.as_ref().unwrap(), id_b)?;
                     check_accumulators(self.runtime_args.as_ref().unwrap(), id_c)?;
-                },
-                Instruction::CalcAccumulatorWithConstant(_, id, _) => check_accumulators(self.runtime_args.as_ref().unwrap(), id)?,
-                Instruction::CalcAccumulatorWithMemoryCell(_, id, _) => check_accumulators(self.runtime_args.as_ref().unwrap(), id)?,
-                Instruction::CalcAccumulatorWithMemoryCells(_, id, _, _) => check_accumulators(self.runtime_args.as_ref().unwrap(), id)?,
-                Instruction::CalcMemoryCellWithMemoryCellAccumulator(_, _, _, id) => check_accumulators(self.runtime_args.as_ref().unwrap(), id)?,
+                }
+                Instruction::CalcAccumulatorWithConstant(_, id, _) => {
+                    check_accumulators(self.runtime_args.as_ref().unwrap(), id)?
+                }
+                Instruction::CalcAccumulatorWithMemoryCell(_, id, _) => {
+                    check_accumulators(self.runtime_args.as_ref().unwrap(), id)?
+                }
+                Instruction::CalcAccumulatorWithMemoryCells(_, id, _, _) => {
+                    check_accumulators(self.runtime_args.as_ref().unwrap(), id)?
+                }
+                Instruction::CalcMemoryCellWithMemoryCellAccumulator(_, _, _, id) => {
+                    check_accumulators(self.runtime_args.as_ref().unwrap(), id)?
+                }
                 Instruction::GotoIfAccumulator(_, _, id_a, id_b) => {
                     check_accumulators(self.runtime_args.as_ref().unwrap(), id_a)?;
                     check_accumulators(self.runtime_args.as_ref().unwrap(), id_b)?;
@@ -190,9 +219,9 @@ impl<'a> RuntimeBuilder<'a> {
     }
 
     /// Checks if all memory cells that are used in the instructions exist in the runtime args.
-    /// 
+    ///
     /// If memory cell is missing, the name of the missing memory cell is returned.
-    /// 
+    ///
     /// Panics if runtime_args is `None`.
     fn check_memory_cells(&self) -> Result<(), String> {
         if self.instructions.is_none() {
@@ -200,36 +229,58 @@ impl<'a> RuntimeBuilder<'a> {
         }
         for instruction in self.instructions.as_ref().unwrap() {
             match instruction {
-                Instruction::AssignAccumulatorValueFromMemoryCell(_, name) => check_memory_cell(self.runtime_args.as_ref().unwrap(), name)?,
-                Instruction::AssignMemoryCellValue(name, _) => check_memory_cell(self.runtime_args.as_ref().unwrap(), name)?,
-                Instruction::AssignMemoryCellValueFromAccumulator(name, _) => check_memory_cell(self.runtime_args.as_ref().unwrap(), name)?,
+                Instruction::AssignAccumulatorValueFromMemoryCell(_, name) => {
+                    check_memory_cell(self.runtime_args.as_ref().unwrap(), name)?
+                }
+                Instruction::AssignMemoryCellValue(name, _) => {
+                    check_memory_cell(self.runtime_args.as_ref().unwrap(), name)?
+                }
+                Instruction::AssignMemoryCellValueFromAccumulator(name, _) => {
+                    check_memory_cell(self.runtime_args.as_ref().unwrap(), name)?
+                }
                 Instruction::AssignMemoryCellValueFromMemoryCell(name_a, name_b) => {
                     check_memory_cell(self.runtime_args.as_ref().unwrap(), name_a)?;
                     check_memory_cell(self.runtime_args.as_ref().unwrap(), name_b)?;
-                },
-                Instruction::CalcAccumulatorWithMemoryCell(_, _, name) => check_memory_cell(self.runtime_args.as_ref().unwrap(), name)?,
+                }
+                Instruction::CalcAccumulatorWithMemoryCell(_, _, name) => {
+                    check_memory_cell(self.runtime_args.as_ref().unwrap(), name)?
+                }
                 Instruction::CalcAccumulatorWithMemoryCells(_, _, name_a, name_b) => {
                     check_memory_cell(self.runtime_args.as_ref().unwrap(), name_a)?;
                     check_memory_cell(self.runtime_args.as_ref().unwrap(), name_b)?;
-                },
-                Instruction::CalcMemoryCellWithMemoryCellConstant(_,  name_a, name_b, _) => {
-                    if !self.runtime_args.as_ref().unwrap().memory_cells.contains_key(name_a.as_str()) {
+                }
+                Instruction::CalcMemoryCellWithMemoryCellConstant(_, name_a, name_b, _) => {
+                    if !self
+                        .runtime_args
+                        .as_ref()
+                        .unwrap()
+                        .memory_cells
+                        .contains_key(name_a.as_str())
+                    {
                         return Err(name_a.clone());
                     }
-                    if !self.runtime_args.as_ref().unwrap().memory_cells.contains_key(name_b.as_str()) {
+                    if !self
+                        .runtime_args
+                        .as_ref()
+                        .unwrap()
+                        .memory_cells
+                        .contains_key(name_b.as_str())
+                    {
                         return Err(name_b.clone());
                     }
-                },
+                }
                 Instruction::CalcMemoryCellWithMemoryCellAccumulator(_, name_a, name_b, _) => {
                     check_memory_cell(self.runtime_args.as_ref().unwrap(), name_a)?;
                     check_memory_cell(self.runtime_args.as_ref().unwrap(), name_b)?;
-                },
+                }
                 Instruction::CalcMemoryCellWithMemoryCells(_, name_a, name_b, name_c) => {
                     check_memory_cell(self.runtime_args.as_ref().unwrap(), name_a)?;
                     check_memory_cell(self.runtime_args.as_ref().unwrap(), name_b)?;
                     check_memory_cell(self.runtime_args.as_ref().unwrap(), name_c)?;
-                },
-                Instruction::GotoIfMemoryCell(_, _, _, name) => check_memory_cell(self.runtime_args.as_ref().unwrap(), name)?,
+                }
+                Instruction::GotoIfMemoryCell(_, _, _, name) => {
+                    check_memory_cell(self.runtime_args.as_ref().unwrap(), name)?
+                }
                 _ => (),
             }
         }
@@ -238,7 +289,10 @@ impl<'a> RuntimeBuilder<'a> {
 }
 
 fn error_handling(e: InstructionParseError, instruction: &str, line: u32) -> String {
-    let mut message = String::from(format!("Error while building instruction (line {}):\n", line));
+    let mut message = String::from(format!(
+        "Error while building instruction (line {}):\n",
+        line
+    ));
     message.push_str(instruction);
     message.push('\n');
     match e {
@@ -330,7 +384,6 @@ pub struct Runtime<'a> {
 }
 
 impl<'a> Runtime<'a> {
-
     /// Runs the complete program.
     pub fn run(&mut self) -> Result<(), String> {
         while self.control_flow.next_instruction_index < self.instructions.len() {
@@ -349,7 +402,7 @@ impl<'a> Runtime<'a> {
         Ok(())
     }
 
-    /// Prints information about current register values, current accumulator values and the current status of the stack. 
+    /// Prints information about current register values, current accumulator values and the current status of the stack.
     pub fn debug(&self) {
         print_accumulators(&self.runtime_args);
         print_memory_cells(&self.runtime_args);
@@ -357,7 +410,8 @@ impl<'a> Runtime<'a> {
     }
 
     /// Adds an instruction to the end of the instruction vector with a label mapping.
-    pub fn add_instruction_with_label(&mut self, instruction: Instruction, label: String) {//TODO Move to runtime builder
+    pub fn add_instruction_with_label(&mut self, instruction: Instruction, label: String) {
+        //TODO Move to runtime builder
         self.instructions.push(instruction);
         self.control_flow
             .instruction_labels
@@ -423,7 +477,6 @@ pub struct RuntimeArgs<'a> {
 }
 
 impl<'a> RuntimeArgs<'a> {
-    
     /// Creates a new runtimes args struct with empty lists.
     pub fn new() -> Self {
         Self {
@@ -432,7 +485,7 @@ impl<'a> RuntimeArgs<'a> {
             stack: Vec::new(),
         }
     }
-    
+
     pub fn new_default() -> Self {
         let mut accumulators = Vec::new();
         for i in 0..ACCUMULATORS {
@@ -451,7 +504,6 @@ impl<'a> RuntimeArgs<'a> {
             stack: Vec::new(),
         }
     }
-
 
     /// Creates a new memory cell with label **label** if it does not already exist
     /// and adds it to the **memory_cells* hashmap.
@@ -480,17 +532,34 @@ impl<'a> RuntimeArgs<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{instructions::{Instruction, self}, runtime::RuntimeBuildError, base::{Operation, Comparison}};
+    use crate::{
+        base::{Comparison, Operation},
+        instructions::{self, Instruction},
+        runtime::RuntimeBuildError,
+    };
 
-    use super::{RuntimeBuilder, RuntimeArgs};
-
+    use super::{RuntimeArgs, RuntimeBuilder};
 
     #[test]
     fn test_label_missing() {
         test_label_instruction(Instruction::Goto("loop".to_string()), "loop");
-        test_label_instruction(Instruction::GotoIfAccumulator(Comparison::Equal, "loop".to_string(), 0, 0), "loop");
-        test_label_instruction(Instruction::GotoIfConstant(Comparison::Equal, "loop".to_string(), 0, 0), "loop");
-        test_label_instruction(Instruction::GotoIfMemoryCell(Comparison::Equal, "loop".to_string(), 0, "a".to_string()), "loop");
+        test_label_instruction(
+            Instruction::GotoIfAccumulator(Comparison::Equal, "loop".to_string(), 0, 0),
+            "loop",
+        );
+        test_label_instruction(
+            Instruction::GotoIfConstant(Comparison::Equal, "loop".to_string(), 0, 0),
+            "loop",
+        );
+        test_label_instruction(
+            Instruction::GotoIfMemoryCell(
+                Comparison::Equal,
+                "loop".to_string(),
+                0,
+                "a".to_string(),
+            ),
+            "loop",
+        );
     }
 
     fn test_label_instruction(instruction: Instruction, label: &str) {
@@ -502,23 +571,72 @@ mod tests {
         rb.reset();
         rb.set_instructions(instructions);
         rb.set_runtime_args(RuntimeArgs::new_default());
-        assert_eq!(rb.build(), Err(RuntimeBuildError::LabelMissing(label.to_string())));
+        assert_eq!(
+            rb.build(),
+            Err(RuntimeBuildError::LabelMissing(label.to_string()))
+        );
     }
 
     #[test]
     fn test_accumulator_missing() {
-        test_accumulator_instruction(Instruction::AssignAccumulatorValue(0, 1), vec![&(0 as usize)]);
-        test_accumulator_instruction(Instruction::AssignAccumulatorValueFromAccumulator(0, 1), vec![&(0 as usize), &(1 as usize)]);
-        test_accumulator_instruction(Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string()), vec![&(0 as usize)]);
-        test_accumulator_instruction(Instruction::AssignAccumulatorValue(0, 1), vec![&(0 as usize)]);
-        test_accumulator_instruction(Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0), vec![&(0 as usize)]);
-        test_accumulator_instruction(Instruction::CalcAccumulatorWithAccumulator(Operation::Plus, 0, 1), vec![&(0 as usize), &(1 as usize)]);
-        test_accumulator_instruction(Instruction::CalcAccumulatorWithAccumulators(Operation::Plus, 0, 1, 2), vec![&(0 as usize), &(1 as usize), &(2 as usize)]);
-        test_accumulator_instruction(Instruction::CalcAccumulatorWithConstant(Operation::Plus, 0, 0), vec![&(0 as usize)]);
-        test_accumulator_instruction(Instruction::CalcAccumulatorWithMemoryCell(Operation::Plus, 0, "a".to_string()), vec![&(0 as usize)]);
-        test_accumulator_instruction(Instruction::CalcAccumulatorWithMemoryCells(Operation::Plus, 0, "a".to_string(), "b".to_string()), vec![&(0 as usize)]);
-        test_accumulator_instruction(Instruction::CalcMemoryCellWithMemoryCellAccumulator(Operation::Plus, "a".to_string(), "b".to_string(), 0), vec![&(0 as usize)]);
-        test_accumulator_instruction(Instruction::GotoIfAccumulator(Comparison::Equal, "loop".to_string(), 0, 0), vec![&(0 as usize)]);
+        test_accumulator_instruction(
+            Instruction::AssignAccumulatorValue(0, 1),
+            vec![&(0 as usize)],
+        );
+        test_accumulator_instruction(
+            Instruction::AssignAccumulatorValueFromAccumulator(0, 1),
+            vec![&(0 as usize), &(1 as usize)],
+        );
+        test_accumulator_instruction(
+            Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string()),
+            vec![&(0 as usize)],
+        );
+        test_accumulator_instruction(
+            Instruction::AssignAccumulatorValue(0, 1),
+            vec![&(0 as usize)],
+        );
+        test_accumulator_instruction(
+            Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0),
+            vec![&(0 as usize)],
+        );
+        test_accumulator_instruction(
+            Instruction::CalcAccumulatorWithAccumulator(Operation::Plus, 0, 1),
+            vec![&(0 as usize), &(1 as usize)],
+        );
+        test_accumulator_instruction(
+            Instruction::CalcAccumulatorWithAccumulators(Operation::Plus, 0, 1, 2),
+            vec![&(0 as usize), &(1 as usize), &(2 as usize)],
+        );
+        test_accumulator_instruction(
+            Instruction::CalcAccumulatorWithConstant(Operation::Plus, 0, 0),
+            vec![&(0 as usize)],
+        );
+        test_accumulator_instruction(
+            Instruction::CalcAccumulatorWithMemoryCell(Operation::Plus, 0, "a".to_string()),
+            vec![&(0 as usize)],
+        );
+        test_accumulator_instruction(
+            Instruction::CalcAccumulatorWithMemoryCells(
+                Operation::Plus,
+                0,
+                "a".to_string(),
+                "b".to_string(),
+            ),
+            vec![&(0 as usize)],
+        );
+        test_accumulator_instruction(
+            Instruction::CalcMemoryCellWithMemoryCellAccumulator(
+                Operation::Plus,
+                "a".to_string(),
+                "b".to_string(),
+                0,
+            ),
+            vec![&(0 as usize)],
+        );
+        test_accumulator_instruction(
+            Instruction::GotoIfAccumulator(Comparison::Equal, "loop".to_string(), 0, 0),
+            vec![&(0 as usize)],
+        );
     }
 
     fn test_accumulator_instruction(instruction: Instruction, to_test: Vec<&usize>) {
@@ -541,27 +659,87 @@ mod tests {
             let mut runtime_args = RuntimeArgs::new();
             runtime_args.add_storage_cell("a");
             runtime_args.add_storage_cell("b");
-            for _ in 0..(to_test.len() - *s-1)  {
+            for _ in 0..(to_test.len() - *s - 1) {
                 runtime_args.add_accumulator();
             }
             rb.set_runtime_args(runtime_args);
             let b = rb.build();
-            assert_eq!(b, Err(RuntimeBuildError::AccumulatorMissing((to_test.len() - *s-1).to_string())));
+            assert_eq!(
+                b,
+                Err(RuntimeBuildError::AccumulatorMissing(
+                    (to_test.len() - *s - 1).to_string()
+                ))
+            );
         }
-    } 
+    }
 
     #[test]
     fn test_memory_cell_missing() {
-        test_memory_cell_instruction(Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string()), vec!["a"]);
-        test_memory_cell_instruction(Instruction::AssignMemoryCellValue("a".to_string(), 0), vec!["a"]);
-        test_memory_cell_instruction(Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0), vec!["a"]);
-        test_memory_cell_instruction(Instruction::AssignMemoryCellValueFromMemoryCell("a".to_string(), "b".to_string()), vec!["a", "b"]);
-        test_memory_cell_instruction(Instruction::CalcAccumulatorWithMemoryCell(Operation::Plus, 0, "a".to_string()), vec!["a"]);
-        test_memory_cell_instruction(Instruction::CalcAccumulatorWithMemoryCells(Operation::Plus, 0, "a".to_string(), "b".to_string()), vec!["a", "b"]);
-        test_memory_cell_instruction(Instruction::CalcMemoryCellWithMemoryCellAccumulator(Operation::Plus, "a".to_string(), "b".to_string(), 0), vec!["a", "b"]);
-        test_memory_cell_instruction(Instruction::CalcMemoryCellWithMemoryCellConstant(Operation::Plus, "a".to_string(), "b".to_string(), 0), vec!["a", "b"]);
-        test_memory_cell_instruction(Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "a".to_string(), "b".to_string(), "c".to_string()), vec!["a", "b", "c"]);
-        test_memory_cell_instruction(Instruction::GotoIfMemoryCell(Comparison::Equal, "loop".to_string(), 0, "a".to_string()), vec!["a"]);
+        test_memory_cell_instruction(
+            Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string()),
+            vec!["a"],
+        );
+        test_memory_cell_instruction(
+            Instruction::AssignMemoryCellValue("a".to_string(), 0),
+            vec!["a"],
+        );
+        test_memory_cell_instruction(
+            Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0),
+            vec!["a"],
+        );
+        test_memory_cell_instruction(
+            Instruction::AssignMemoryCellValueFromMemoryCell("a".to_string(), "b".to_string()),
+            vec!["a", "b"],
+        );
+        test_memory_cell_instruction(
+            Instruction::CalcAccumulatorWithMemoryCell(Operation::Plus, 0, "a".to_string()),
+            vec!["a"],
+        );
+        test_memory_cell_instruction(
+            Instruction::CalcAccumulatorWithMemoryCells(
+                Operation::Plus,
+                0,
+                "a".to_string(),
+                "b".to_string(),
+            ),
+            vec!["a", "b"],
+        );
+        test_memory_cell_instruction(
+            Instruction::CalcMemoryCellWithMemoryCellAccumulator(
+                Operation::Plus,
+                "a".to_string(),
+                "b".to_string(),
+                0,
+            ),
+            vec!["a", "b"],
+        );
+        test_memory_cell_instruction(
+            Instruction::CalcMemoryCellWithMemoryCellConstant(
+                Operation::Plus,
+                "a".to_string(),
+                "b".to_string(),
+                0,
+            ),
+            vec!["a", "b"],
+        );
+        test_memory_cell_instruction(
+            Instruction::CalcMemoryCellWithMemoryCells(
+                Operation::Plus,
+                "a".to_string(),
+                "b".to_string(),
+                "c".to_string(),
+            ),
+            vec!["a", "b", "c"],
+        );
+        test_memory_cell_instruction(
+            Instruction::GotoIfMemoryCell(
+                Comparison::Equal,
+                "loop".to_string(),
+                0,
+                "a".to_string(),
+            ),
+            vec!["a"],
+        );
     }
 
     fn test_memory_cell_instruction(instruction: Instruction, to_test: Vec<&str>) {
@@ -592,7 +770,7 @@ mod tests {
             let b = rb.build();
             assert_eq!(b, Err(RuntimeBuildError::MemoryCellMissing(s.to_string())));
         }
-    } 
+    }
 
     #[test]
     fn test_instruction_building_with_comments() {
@@ -600,7 +778,8 @@ mod tests {
             "a0 := 4 // Set alpha to 4",
             "p(h1) := a0 # Set memory cell h1 to 4",
             "a0 := a1 # Just some stuff",
-            "a1 := a2 // Just some more stuff"];
+            "a1 := a2 // Just some more stuff",
+        ];
         let mut rb = RuntimeBuilder::new_default();
         assert!(rb.build_instructions(&instructions).is_ok());
     }

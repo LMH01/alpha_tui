@@ -10,10 +10,7 @@ pub struct Accumulator {
 impl Accumulator {
     /// Creates a new accumulator
     pub fn new(id: usize) -> Self {
-        Self {
-            id,
-            data: None,
-        }
+        Self { id, data: None }
     }
 }
 
@@ -42,28 +39,18 @@ pub enum Comparison {
     LessOrEqual,
     Equal,
     MoreOrEqual,
-    More,    
+    More,
 }
 
 impl Comparison {
     /// Compares two values with the selected method of comparison.
     pub fn cmp(&self, x: i32, y: i32) -> bool {
         match self {
-            Self::Less => {
-                x < y
-            },
-            Self::LessOrEqual => {
-                x <= y
-            },
-            Self::Equal => {
-                x == y
-            },
-            Self::MoreOrEqual => {
-                x >= y
-            },
-            Self::More => {
-                x > y
-            }
+            Self::Less => x < y,
+            Self::LessOrEqual => x <= y,
+            Self::Equal => x == y,
+            Self::MoreOrEqual => x >= y,
+            Self::More => x > y,
         }
     }
 }
@@ -95,16 +82,14 @@ pub enum Operation {
 }
 
 impl Operation {
-    
     pub fn calc(&self, x: i32, y: i32) -> i32 {
         match self {
-            Self::Plus => x+y,
-            Self::Minus => x-y,
-            Self::Multiplication => x*y,
-            Self::Division => x/y,
+            Self::Plus => x + y,
+            Self::Minus => x - y,
+            Self::Multiplication => x * y,
+            Self::Division => x / y,
         }
     }
-
 }
 
 impl TryFrom<&str> for Operation {
@@ -164,5 +149,4 @@ mod tests {
         assert_eq!(Operation::try_from("/"), Ok(Operation::Division));
         assert_eq!(Operation::try_from("P"), Err(()));
     }
-
 }
