@@ -53,8 +53,10 @@ fn main() {
         },
     };
     println!("Running program");
+    println!("----- Program start -----");
     match rt.run() {
         Ok(_) => {
+            println!("----- Program end -----");
             rt.debug();
             println!("Program run successfully")
         },
