@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     base::{Accumulator, MemoryCell},
-    instructions::{Instruction, InstructionParseError},
+    instructions::{Instruction, InstructionParseError, print_accumulators, print_memory_cells, print_stack},
     ACCUMULATORS, MEMORY_CELL_LABELS,
 };
 
@@ -95,7 +95,7 @@ impl<'a> RuntimeBuilder<'a> {
             }
             match Instruction::try_from(&splits) {
                 Ok(i) => instructions.push(i),
-                Err(e) => return Err(error_handling(e, instruction)),
+                Err(e) => return Err(error_handling(e, instruction, (index as u32) + 1)),
             }
         }
         self.instructions = Some(instructions);
@@ -237,8 +237,8 @@ impl<'a> RuntimeBuilder<'a> {
     }
 }
 
-fn error_handling(e: InstructionParseError, instruction: &str) -> String {
-    let mut message = String::from("Error while building instruction:\n");
+fn error_handling(e: InstructionParseError, instruction: &str, line: u32) -> String {
+    let mut message = String::from(format!("Error while building instruction (line {}):\n", line));
     message.push_str(instruction);
     message.push('\n');
     match e {
@@ -347,6 +347,13 @@ impl<'a> Runtime<'a> {
             }
         }
         Ok(())
+    }
+
+    /// Prints information about current register values, current accumulator values and the current status of the stack. 
+    pub fn debug(&self) {
+        print_accumulators(&self.runtime_args);
+        print_memory_cells(&self.runtime_args);
+        print_stack(&self.runtime_args);
     }
 
     /// Adds an instruction to the end of the instruction vector with a label mapping.

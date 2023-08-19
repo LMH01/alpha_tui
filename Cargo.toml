@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 tui = "0.19"
 crossterm = "0.25"
+clap = { version = "4.3.23", features = ["derive", "color"] }

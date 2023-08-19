@@ -704,7 +704,7 @@ fn assert_memory_cell_contains_value(runtime_args: &mut RuntimeArgs, label: &str
 }
 
 /// Prints the current contents of the accumulators into the console
-fn print_accumulators(runtime_args: &RuntimeArgs) {
+pub fn print_accumulators(runtime_args: &RuntimeArgs) {
     println!("--- Accumulators ---");
     for (index, i) in runtime_args.accumulators.iter().enumerate() {
         println!("{} - {:?}", index, i.data);
@@ -713,7 +713,7 @@ fn print_accumulators(runtime_args: &RuntimeArgs) {
 }
 
 /// Prints the current contents of the memory cells into the console
-fn print_memory_cells(runtime_args: &RuntimeArgs) {
+pub fn print_memory_cells(runtime_args: &RuntimeArgs) {
     // TODO Make print sorted (Alpabetically by label name)
     println!("--- Memory Cells ---");
     for (k, v) in &runtime_args.memory_cells {
@@ -723,7 +723,7 @@ fn print_memory_cells(runtime_args: &RuntimeArgs) {
 }
 
 /// Prints the current layout of the stack into the console
-fn print_stack(runtime_args: &RuntimeArgs) {
+pub fn print_stack(runtime_args: &RuntimeArgs) {
     println!("------ Stack -------");
     for (index, i) in runtime_args.stack.iter().enumerate() {
         println!("{} - {:?}", index, i);
@@ -1298,7 +1298,7 @@ mod tests {
 
     /// Sets up runtime args in a conistent way because the default implementation for memory cells and accumulators is configgurable.
     fn setup_runtime_args() -> RuntimeArgs<'static> {
-        let mut args = RuntimeArgs::new_default();
+        let mut args = RuntimeArgs::new();
         args.memory_cells = HashMap::new();
         args.memory_cells.insert("a", MemoryCell::new("a"));
         args.memory_cells.insert("b", MemoryCell::new("b"));
@@ -1309,7 +1309,7 @@ mod tests {
 
     /// Sets up runtime args where no memory cells or accumulators are set.
     fn setup_empty_runtime_args() -> RuntimeArgs<'static> {
-        let mut args = RuntimeArgs::new_default();
+        let mut args = RuntimeArgs::new();
         args.accumulators = Vec::new();
         args.memory_cells = HashMap::new();
         args
