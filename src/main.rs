@@ -2,7 +2,7 @@ use std::{io, thread, time::Duration};
 
 use tui::{backend::CrosstermBackend, Terminal, widgets::{Block, Borders}};
 
-use crate::{instructions::Instruction, runtime::{Runner, RuntimeArgs, RuntimeBuilder}, base::{Operation, Comparison}};
+use crate::{instructions::Instruction, runtime::{Runtime, RuntimeArgs, RuntimeBuilder}, base::{Operation, Comparison}};
 
 /// Contains all required data types used to run programs
 mod base;
@@ -49,8 +49,10 @@ fn main() {
         Instruction::PrintMemoryCells(),
         Instruction::PrintStack(),
     ];
-    let mut runner = Runner::new(instructions);
-    runner.run().unwrap();
+    let mut runtime_builder = RuntimeBuilder::new_default();
+    runtime_builder.set_instructions(instructions);
+    let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
+    runtime.run().unwrap();
 
     let mut builder = RuntimeBuilder::new_default();
     let mut instructions = Vec::new();

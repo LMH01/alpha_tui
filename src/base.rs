@@ -1,4 +1,5 @@
 /// A single accumulator, represents "Akkumulator/Alpha" from SysInf lecture.
+#[derive(Debug, Clone)]
 pub struct Accumulator {
     /// Used to identify accumulator
     pub id: i32,
@@ -18,6 +19,7 @@ impl Accumulator {
 
 /// Representation of a single memory cell.
 /// The term memory cell is equal to "Speicherzelle" in the SysInf lecture.
+#[derive(Debug, Clone)]
 pub struct MemoryCell {
     pub label: String,
     pub data: Option<i32>,
@@ -34,7 +36,7 @@ impl MemoryCell {
 }
 
 /// Different ways of paring two values
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Comparison {
     Less,
     LessOrEqual,
@@ -84,7 +86,7 @@ impl TryFrom<&str> for Comparison {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Operation {
     Plus,
     Minus,

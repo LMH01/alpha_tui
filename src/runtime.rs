@@ -13,7 +13,7 @@ use crate::{
 pub struct RuntimeBuilder<'a> {
     runtime_args: Option<RuntimeArgs<'a>>,
     instructions: Option<Vec<Instruction>>,
-    control_flow: ControlFlow<'a>,
+    control_flow: ControlFlow,
 }
 
 impl<'a> RuntimeBuilder<'a> {
@@ -35,11 +35,30 @@ impl<'a> RuntimeBuilder<'a> {
         }
     }
 
+    /// Constructs a new runtime.
+    /// 
+    /// Performs some compatibility checks.
+    /// 
+    /// Returns `RuntimeBuildError` when the runtime could not be constructed due to missing information.
+    pub fn build(&mut self) -> Result<Runtime, RuntimeBuildError> {
+        //TODO Add check if all labels that are used in instructions exist in the control flow.
+        if self.runtime_args.is_none() {
+            return Err(RuntimeBuildError::RuntimeArgsMissing);
+        }
+        if self.instructions.is_none() {
+            return Err(RuntimeBuildError::InstructionsMissing);
+        }
+        if self.instructions.as_ref().unwrap().is_empty() {
+            return Err(RuntimeBuildError::InstructionsEmpty);
+        }
+        return Ok(Runtime { runtime_args: self.runtime_args.clone().unwrap(), instructions: self.instructions.clone().unwrap(), control_flow: self.control_flow.clone() })
+    }
+
     /// Resets the current values to none.
     pub fn reset(&mut self) {
         self.runtime_args = None;
         self.instructions = None;
-        self.control_flow = ControlFlow::new();
+        self.control_flow.reset();
     }
 
     pub fn set_runtime_args(&mut self, runtime_args: RuntimeArgs<'a>) {
@@ -50,17 +69,18 @@ impl<'a> RuntimeBuilder<'a> {
     ///
     /// Each line has to contain a single instruction.
     ///
-    /// Control flow is updated accordingly.
+    /// Control flow is reset and updated accordingly.
     ///
     /// If an instruction could not be parsed, an error is returned containing the reason.
     pub fn build_instructions(&mut self, instructions_input: &Vec<&str>) -> Result<(), String> {
+        self.control_flow.reset();
         let mut instructions = Vec::new();
         for (index, instruction) in instructions_input.iter().enumerate() {
             // Check for labels
             let mut splits = instruction.split_whitespace().collect::<Vec<&str>>();
             if splits[0].ends_with(":") {
                 let label = splits.remove(0).replace(":", "");
-                //self.control_flow.instruction_labels.insert(&label, index);
+                self.control_flow.instruction_labels.insert(label, index);
             }
             match Instruction::try_from(&splits) {
                 Ok(i) => instructions.push(i),
@@ -68,6 +88,33 @@ impl<'a> RuntimeBuilder<'a> {
             }
         }
         Ok(())
+    }
+
+    /// Sets the instructions to the provided instructions.
+    /// 
+    /// If loops and labels are used, they have to be set manually by using [RuntimeBuilder::add_label](#add_label).
+    pub fn set_instructions(&mut self, instructions: Vec<Instruction>) {
+        self.instructions = Some(instructions);
+    }
+
+
+    /// Adds label to instruction labels.
+    ///
+    /// Errors when **instruction_index** is out of bounds.
+    ///
+    /// Note: Make sure that you start counting at 0 and not 1!
+    pub fn add_label(&mut self, label: String, instruction_index: usize) -> Result<(), AddLabelError> {
+        if self.instructions.is_none() {
+            return Err(AddLabelError::InstructionsNotSet);
+        }
+        if self.instructions.as_ref().unwrap().len() <= instruction_index {
+            Err(AddLabelError::IndexOutOfBounds)
+        } else {
+            self.control_flow
+                .instruction_labels
+                .insert(label, instruction_index);
+            Ok(())
+        }
     }
 }
 
@@ -115,31 +162,33 @@ fn append_char_indicator(str: &mut String, idx: usize) {
     str.push_str("^\n");
 }
 
-//TODO make fields private and add access functions, move into separate module
-pub struct Runner<'a> {
-    runtime_args: RuntimeArgs<'a>,
-    instructions: Vec<Instruction>,
-    control_flow: ControlFlow<'a>,
+/// Errors that can occur when a runtime is constructed from a RuntimeBuilder.
+#[derive(Debug)]
+pub enum RuntimeBuildError {
+    RuntimeArgsMissing,
+    InstructionsMissing,
+    InstructionsEmpty,
+    /// Indicates that a label is used in an instruction that does not exist in the control flow.
+    /// This would lead to a runtime error.
+    LabelMissing(String),
 }
 
-impl<'a> Runner<'a> {
-    pub fn new(instructions: Vec<Instruction>) -> Self {
-        Self {
-            runtime_args: RuntimeArgs::new(),
-            instructions,
-            control_flow: ControlFlow::new(),
-        }
-    }
+#[derive(Debug)]
+pub enum AddLabelError {
+    InstructionsNotSet,
+    IndexOutOfBounds,
+}
 
-    /// Creates a new runner that can be initialized with different runtime args.
-    pub fn new_custom(instructions: Vec<Instruction>, runtime_args: RuntimeArgs<'a>) -> Self {
-        Self {
-            runtime_args,
-            instructions,
-            control_flow: ControlFlow::new(),
-        }
-    }
+//TODO make fields private and add access functions, move into separate module
+pub struct Runtime<'a> {
+    runtime_args: RuntimeArgs<'a>,
+    instructions: Vec<Instruction>,
+    control_flow: ControlFlow,
+}
 
+impl<'a> Runtime<'a> {
+
+    /// Runs the complete program.
     pub fn run(&mut self) -> Result<(), String> {
         while self.control_flow.next_instruction_index < self.instructions.len() {
             let current_instruction = self.control_flow.next_instruction_index;
@@ -158,30 +207,11 @@ impl<'a> Runner<'a> {
     }
 
     /// Adds an instruction to the end of the instruction vector with a label mapping.
-    pub fn add_instruction_with_label(&mut self, instruction: Instruction, label: &'a str) {
+    pub fn add_instruction_with_label(&mut self, instruction: Instruction, label: String) {//TODO Move to runtime builder
         self.instructions.push(instruction);
         self.control_flow
             .instruction_labels
             .insert(label, self.instructions.len() - 1);
-    }
-
-    /// Adds label to instruction labels.
-    ///
-    /// Errors when **instruction_index** is out of bounds.
-    ///
-    /// Note: Make sure that you start counting at 0 and not 1!
-    pub fn add_label(&mut self, label: &'a str, instruction_index: usize) -> Result<(), String> {
-        if self.instructions.len() <= instruction_index {
-            Err(format!(
-                "Unable to add label {}, index {} is out of bounds!",
-                label, instruction_index
-            ))
-        } else {
-            self.control_flow
-                .instruction_labels
-                .insert(label, instruction_index);
-            Ok(())
-        }
     }
 
     /// Returns reference to **runtime_args**.
@@ -191,7 +221,8 @@ impl<'a> Runner<'a> {
 }
 
 /// Used to control what instruction should be executed next.
-pub struct ControlFlow<'a> {
+#[derive(Debug, Clone)]
+pub struct ControlFlow {
     /// The index of the instruction that should be executed next in the **instructions** vector.
     pub next_instruction_index: usize,
     /// Stores label to instruction mappings.
@@ -199,10 +230,10 @@ pub struct ControlFlow<'a> {
     /// Key = label of the instruction
     ///
     /// Value = index of the instruction in the instructions vector
-    pub instruction_labels: HashMap<&'a str, usize>,
+    pub instruction_labels: HashMap<String, usize>,
 }
 
-impl<'a> ControlFlow<'a> {
+impl<'a> ControlFlow {
     pub fn new() -> Self {
         Self {
             next_instruction_index: 0,
@@ -223,8 +254,15 @@ impl<'a> ControlFlow<'a> {
             ))
         }
     }
+
+    /// Resets the `next_instruction_index` to 0 and clears the `instruction_labels` map.
+    pub fn reset(&mut self) {
+        self.next_instruction_index = 0;
+        self.instruction_labels.clear();
+    }
 }
 
+#[derive(Debug, Clone)]
 pub struct RuntimeArgs<'a> {
     /// Current values stored in accumulators
     pub accumulators: Vec<Accumulator>,

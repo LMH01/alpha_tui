@@ -1,6 +1,6 @@
 use crate::{runtime::{RuntimeArgs, ControlFlow}, base::{Comparison, Operation}, suggestion};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Instruction {
     /// push
     /// 
@@ -735,7 +735,7 @@ fn print_stack(runtime_args: &RuntimeArgs) {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::{runtime::{ControlFlow, RuntimeArgs, Runner}, instructions::{Instruction, parse_alpha,  InstructionParseError, parse_operation, err_idx, parse_memory_cell}, base::{Accumulator, MemoryCell, Comparison, Operation}};
+    use crate::{runtime::{ControlFlow, RuntimeArgs, Runtime, RuntimeBuilder, self}, instructions::{Instruction, parse_alpha,  InstructionParseError, parse_operation, err_idx, parse_memory_cell}, base::{Accumulator, MemoryCell, Comparison, Operation}};
 
     #[test]
     fn test_parse_alpha() {
@@ -1073,7 +1073,7 @@ mod tests {
     fn test_goto() {
         let mut args = setup_empty_runtime_args();
         let mut control_flow = ControlFlow::new();
-        control_flow.instruction_labels.insert("loop", 5);
+        control_flow.instruction_labels.insert("loop".to_string(), 5);
         Instruction::Goto("loop".to_string()).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(control_flow.next_instruction_index, 5);
     }
@@ -1094,7 +1094,7 @@ mod tests {
     fn test_goto_if_accumulator() {
         let mut args = setup_runtime_args();
         let mut control_flow = ControlFlow::new();
-        control_flow.instruction_labels.insert("loop", 20);
+        control_flow.instruction_labels.insert("loop".to_string(), 20);
         Instruction::AssignAccumulatorValue(0, 20).run(&mut args, &mut control_flow).unwrap();
         Instruction::AssignAccumulatorValue(1, 30).run(&mut args, &mut control_flow).unwrap();
         Instruction::GotoIfAccumulator(Comparison::Less, "loop".to_string(), 0, 1).run(&mut args, &mut control_flow).unwrap();
@@ -1116,7 +1116,7 @@ mod tests {
     fn test_goto_if_constant() {
         let mut args = setup_runtime_args();
         let mut control_flow = ControlFlow::new();
-        control_flow.instruction_labels.insert("loop", 20);
+        control_flow.instruction_labels.insert("loop".to_string(), 20);
         Instruction::AssignAccumulatorValue(0, 20).run(&mut args, &mut control_flow).unwrap();
         Instruction::GotoIfConstant(Comparison::Less, "loop".to_string(), 0, 40).run(&mut args, &mut control_flow).unwrap();
         assert_eq!(control_flow.next_instruction_index, 20);
@@ -1136,7 +1136,7 @@ mod tests {
     fn test_goto_if_memory_cell() {
         let mut args = setup_runtime_args();
         let mut control_flow = ControlFlow::new();
-        control_flow.instruction_labels.insert("loop", 20);
+        control_flow.instruction_labels.insert("loop".to_string(), 20);
         Instruction::AssignAccumulatorValue(0, 20).run(&mut args, &mut control_flow).unwrap();
         Instruction::AssignMemoryCellValue("a".to_string(), 50).run(&mut args, &mut control_flow).unwrap();
         Instruction::GotoIfMemoryCell(Comparison::Less, "loop".to_string(), 0, "a".to_string()).run(&mut args, &mut control_flow).unwrap();
@@ -1195,12 +1195,15 @@ mod tests {
             Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "d".to_string(), "h3".to_string(), "h4".to_string()),
             Instruction::PrintMemoryCells(),
         ];
-        let mut runner = Runner::new_custom(instructions, runtime_args);
-        runner.run().unwrap();
-        assert_eq!(runner.runtime_args().memory_cells.get("a").unwrap().data.unwrap(), 26);
-        assert_eq!(runner.runtime_args().memory_cells.get("b").unwrap().data.unwrap(), 44);
-        assert_eq!(runner.runtime_args().memory_cells.get("c").unwrap().data.unwrap(), 39);
-        assert_eq!(runner.runtime_args().memory_cells.get("d").unwrap().data.unwrap(), 42);
+        let mut runtime_builder = RuntimeBuilder::new();
+        runtime_builder.set_instructions(instructions);
+        runtime_builder.set_runtime_args(runtime_args);
+        let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
+        runtime.run().unwrap();
+        assert_eq!(runtime.runtime_args().memory_cells.get("a").unwrap().data.unwrap(), 26);
+        assert_eq!(runtime.runtime_args().memory_cells.get("b").unwrap().data.unwrap(), 44);
+        assert_eq!(runtime.runtime_args().memory_cells.get("c").unwrap().data.unwrap(), 39);
+        assert_eq!(runtime.runtime_args().memory_cells.get("d").unwrap().data.unwrap(), 42);
     }
 
     #[test]
@@ -1215,10 +1218,12 @@ mod tests {
             Instruction::PrintMemoryCells(),
             Instruction::PrintAccumulators(),
         ];
-        let mut runner = Runner::new(instructions);
-        runner.add_label("loop", 2).unwrap();
-        runner.run().unwrap();
-        assert_eq!(runner.runtime_args().accumulators[0].data.unwrap(), 256);
+        let mut runtime_builder = RuntimeBuilder::new_default();
+        runtime_builder.set_instructions(instructions);
+        runtime_builder.add_label("loop".to_string(), 2).unwrap();
+        let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
+        runtime.run().unwrap();
+        assert_eq!(runtime.runtime_args().accumulators[0].data.unwrap(), 256);
     }
 
     /// Sets up runtime args in a conistent way because the default implementation for memory cells and accumulators is configgurable.
