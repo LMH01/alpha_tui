@@ -89,7 +89,7 @@ impl MemoryListsManager {
         // Update accumulators
         for acc in &runtime_args.accumulators {
             let a = self.accumulators.get_mut(&acc.id).unwrap();
-            let update = format!("{:2}, {:?}", acc.id, acc.data);
+            let update = format!("{:2}: {:?}", acc.id, acc.data);
             if update == *a.0 {
                 a.1 = false;
             } else {
@@ -99,7 +99,7 @@ impl MemoryListsManager {
         // Update memory_cells
         for acc in &runtime_args.memory_cells {
             let a = self.memory_cells.get_mut(&acc.1.label).unwrap();
-            let update = format!("{:2}, {:?}", acc.1.label, acc.1.data);
+            let update = format!("{:2}: {:?}", acc.1.label, acc.1.data);
             if update == *a.0 {
                 a.1 = false;
             } else {
@@ -124,9 +124,10 @@ impl MemoryListsManager {
             if acc.1.1 {
                 item = item.style(Style::default().bg(Color::DarkGray));
             }
-            list.push(item);
+            list.push((item, acc.0));
         }
-        list
+        list.sort_by(|a, b| a.1.cmp(b.1));
+        list.iter().map(|f| f.0.clone()).collect()
     }
 
     /// Returns the current memory cells as list
@@ -137,9 +138,10 @@ impl MemoryListsManager {
             if cell.1.1 {
                 item = item.style(Style::default().bg(Color::DarkGray));
             }
-            list.push(item)
+            list.push((item, cell.0))
         }
-        list
+        list.sort_by(|a, b| a.1.cmp(b.1));
+        list.iter().map(|f| f.0.clone()).collect()
     }
 
     /// Returns the stack items as list
@@ -206,6 +208,7 @@ impl<'a> App<'a> {
                     }
                     KeyCode::Char('r') => {
                         let res = self.runtime.step();
+                        self.instructions.next();
                     }
                     _ => (),
                 }
