@@ -5,113 +5,6 @@ use tui::{backend::Backend, Frame, layout::{Layout, Direction, Constraint, Align
 
 use crate::runtime::Runtime;
 
-/// Draw the ui
-fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
-    // Wrapping block for a group
-    // Just draw the block and the group on the same area and build the group
-    // with at least a margin of 1
-    //let size = f.size();
-
-    let global_chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .margin(1)
-        .constraints([Constraint::Percentage(95), Constraint::Percentage(5)])
-        .split(f.size());
-
-    let chunks = Layout::default()
-        .direction(Direction::Horizontal)
-        .margin(1)
-        .constraints(
-            [
-                Constraint::Percentage(70),
-                Constraint::Percentage(20),
-                Constraint::Percentage(10),
-            ]
-            .as_ref(),
-        )
-        .split(global_chunks[0]);
-
-    let key_hints = Tabs::new(app.active_keybind_hints())
-        .block(Block::default().borders(Borders::NONE))
-        .style(Style::default().fg(Color::Cyan));
-        //.highlight_style(
-        //    Style::default()
-        //        .add_modifier(Modifier::BOLD)
-        //        .bg(Color::Black),
-        //);
-    f.render_widget(key_hints, global_chunks[1]);
-
-    let right_chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
-        .split(chunks[1]);
-
-    // Code area
-    let code_area = Block::default()
-        .borders(Borders::ALL)
-        .title(app.filename.clone())
-        .title_alignment(Alignment::Center)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Green));
-
-    // Iterate through all elements in the `items` app and append some debug text to it.
-    let items: Vec<ListItem> = app
-        .instructions
-        .instructions
-        .iter()
-        .map(|i| {
-            let content = vec![Spans::from(Span::raw(format!("{:2}: {}", i.0+1, i.1)))];
-            ListItem::new(content).style(Style::default())
-        })
-        .collect();
-
-    // Create a List from all list items and highlight the currently selected one
-    let items = List::new(items)
-        .block(code_area)
-        .highlight_style(
-            Style::default()
-                .bg(Color::DarkGray)
-                .add_modifier(Modifier::BOLD),
-        )
-        .highlight_symbol(">> ");
-
-    // We can now render the item list
-    f.render_stateful_widget(items, chunks[0], &mut app.instructions.state);
-    //f.render_widget(code_area, chunks[0]);
-
-    //let code_area_text = List::new(app.instructions.clone()).block(code_area);
-
-    //let code_area_text = Paragraph::new("Some Text")
-    //    .block(code_area)
-    //    .style(Style::default().fg(Color::White))
-    //    .alignment(Alignment::Left);
-    //f.render_widget(code_area_text, chunks[0]);
-
-    // Accumulator block
-    let accumulator = Block::default()
-        .borders(Borders::ALL)
-        .title("Accumulators")
-        .title_alignment(Alignment::Center)
-        .border_type(BorderType::Rounded);
-    f.render_widget(accumulator, right_chunks[0]);
-
-    // Memory cell block
-    let memory_cells = Block::default()
-        .borders(Borders::ALL)
-        .title("Memory cells")
-        .title_alignment(Alignment::Center)
-        .border_type(BorderType::Rounded);
-    f.render_widget(memory_cells, right_chunks[1]);
-
-    // Stack block
-    let stack = Block::default()
-        .borders(Borders::ALL)
-        .title("Stack")
-        .title_alignment(Alignment::Center)
-        .border_type(BorderType::Rounded);
-    f.render_widget(stack, chunks[2]);
-}
-
 /// Used to store the instructions and to remember what instruction should currently be highlighted.
 struct StatefulInstructions {
     state: ListState,
@@ -242,4 +135,128 @@ fn init_keybinds() -> HashMap<char, KeybindHint> {
     map.insert('r', KeybindHint::new('r', "Run", true));
     map.insert('n', KeybindHint::new('n', "Next instruction", false));
     map
+}
+
+/// Example how how I can highlight list items.
+/// 
+/// (should i keep the way I use the main List or should I change it to use such system?)
+fn test_list_items() -> Vec<ListItem<'static>> {
+    let mut items = Vec::new();
+    for i in 1..=10 {
+        let mut item = ListItem::new(format!("Item {}", i));
+        if i % 2 == 0 {
+            item = item.style(Style::default().bg(Color::DarkGray));
+        }
+        items.push(item);
+    }
+    items
+}
+
+/// Draw the ui
+fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
+    // Wrapping block for a group
+    // Just draw the block and the group on the same area and build the group
+    // with at least a margin of 1
+    //let size = f.size();
+
+    let global_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(1)
+        .constraints([Constraint::Percentage(95), Constraint::Percentage(5)])
+        .split(f.size());
+
+    let chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .margin(1)
+        .constraints(
+            [
+                Constraint::Percentage(70),
+                Constraint::Percentage(20),
+                Constraint::Percentage(10),
+            ]
+            .as_ref(),
+        )
+        .split(global_chunks[0]);
+
+    let key_hints = Tabs::new(app.active_keybind_hints())
+        .block(Block::default().borders(Borders::NONE))
+        .style(Style::default().fg(Color::Cyan));
+        //.highlight_style(
+        //    Style::default()
+        //        .add_modifier(Modifier::BOLD)
+        //        .bg(Color::Black),
+        //);
+    f.render_widget(key_hints, global_chunks[1]);
+
+    let right_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
+        .split(chunks[1]);
+
+    // Code area
+    let code_area = Block::default()
+        .borders(Borders::ALL)
+        .title(app.filename.clone())
+        .title_alignment(Alignment::Center)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(Color::Green));
+
+    // Iterate through all elements in the `items` app and append some debug text to it.
+    let items: Vec<ListItem> = app
+        .instructions
+        .instructions
+        .iter()
+        .map(|i| {
+            let content = vec![Spans::from(Span::raw(format!("{:2}: {}", i.0+1, i.1)))];
+            ListItem::new(content).style(Style::default())
+        })
+        .collect();
+
+    // Create a List from all list items and highlight the currently selected one
+    let items = List::new(items)
+        .block(code_area)
+        .highlight_style(
+            Style::default()
+                .bg(Color::DarkGray)
+                .add_modifier(Modifier::BOLD),
+        )
+        .highlight_symbol(">> ");
+
+    // We can now render the item list
+    f.render_stateful_widget(items, chunks[0], &mut app.instructions.state);
+    //f.render_widget(code_area, chunks[0]);
+
+    //let code_area_text = List::new(app.instructions.clone()).block(code_area);
+
+    //let code_area_text = Paragraph::new("Some Text")
+    //    .block(code_area)
+    //    .style(Style::default().fg(Color::White))
+    //    .alignment(Alignment::Left);
+    //f.render_widget(code_area_text, chunks[0]);
+
+    // Accumulator block
+    let accumulator = Block::default()
+        .borders(Borders::ALL)
+        .title("Accumulators")
+        .title_alignment(Alignment::Center)
+        .border_type(BorderType::Rounded);
+    f.render_widget(accumulator, right_chunks[0]);
+
+    // Memory cell block
+    let memory_cells = Block::default()
+        .borders(Borders::ALL)
+        .title("Memory cells")
+        .title_alignment(Alignment::Center)
+        .border_type(BorderType::Rounded);
+    f.render_widget(memory_cells, right_chunks[1]);
+
+    // Stack block
+    let stack = Block::default()
+        .borders(Borders::ALL)
+        .title("Stack")
+        .title_alignment(Alignment::Center)
+        .border_type(BorderType::Rounded);
+    let stack_list = List::new(test_list_items());
+
+    f.render_widget(stack_list, chunks[2]);
 }
