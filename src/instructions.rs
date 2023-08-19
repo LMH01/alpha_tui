@@ -123,20 +123,13 @@ impl Instruction {
     }
 }
 
-impl TryFrom<&str> for Instruction {
+impl TryFrom<&Vec<&str>> for Instruction {
     type Error = InstructionParseError;
 
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        let mut parts: Vec<&str> = value.split_whitespace().collect();
-        
-        // TODO This label detection has to be implemented in the function that calls this try_from.
-        // This function takes only the instruction without the label information.
-        //// check for label
-        //let mut label = None;
-        //if parts[0].ends_with(':') {
-        //    // label detected
-        //    label = Some(parts[0].replace(":", ""));
-        //}
+    /// Tries to parse an instruction from the input vector.
+    /// Each element in the vector is one part of the instruction.
+    fn try_from(value: &Vec<&str>) -> Result<Self, Self::Error> {
+        let mut parts = value;
 
         // Instructions that compare values
         if parts[0] == "if" {
@@ -291,6 +284,15 @@ impl TryFrom<&str> for Instruction {
         }
 
         Err(InstructionParseError::NoMatch)
+    }
+}
+
+impl TryFrom<&str> for Instruction {
+    type Error = InstructionParseError;
+
+    /// Tries to parse an instruction from the input string.
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Self::try_from(&value.split_whitespace().collect::<Vec<&str>>())
     }
 }
 

@@ -55,8 +55,14 @@ impl<'a> RuntimeBuilder<'a> {
     /// If an instruction could not be parsed, an error is returned containing the reason.
     pub fn build_instructions(&mut self, instructions_input: &Vec<&str>) -> Result<(), String> {
         let mut instructions = Vec::new();
-        for instruction in instructions_input {
-            match Instruction::try_from(*instruction) {
+        for (index, instruction) in instructions_input.iter().enumerate() {
+            // Check for labels
+            let mut splits = instruction.split_whitespace().collect::<Vec<&str>>();
+            if splits[0].ends_with(":") {
+                let label = splits.remove(0).replace(":", "");
+                //self.control_flow.instruction_labels.insert(&label, index);
+            }
+            match Instruction::try_from(&splits) {
                 Ok(i) => instructions.push(i),
                 Err(e) => return Err(error_handling(e, instruction)),
             }
