@@ -134,18 +134,10 @@ impl<'a> RuntimeBuilder<'a> {
         }
         for instruction in self.instructions.as_ref().unwrap() {
             match instruction {
-                Instruction::Goto(label) => if !self.control_flow.instruction_labels.contains_key(label) {
-                    return Err(label.clone());
-                },
-                Instruction::GotoIfAccumulator(_, label, _, _) => if !self.control_flow.instruction_labels.contains_key(label) {
-                    return Err(label.clone());
-                },
-                Instruction::GotoIfConstant(_, label, _, _) => if !self.control_flow.instruction_labels.contains_key(label) {
-                    return Err(label.clone());
-                },
-                Instruction::GotoIfMemoryCell(_, label ,_ ,_ ) => if !self.control_flow.instruction_labels.contains_key(label) {
-                    return Err(label.clone());
-                },
+                Instruction::Goto(label) => check_label(&self.control_flow, label)?,
+                Instruction::GotoIfAccumulator(_, label, _, _) => check_label(&self.control_flow, label)?,
+                Instruction::GotoIfConstant(_, label, _, _) => check_label(&self.control_flow, label)?,
+                Instruction::GotoIfMemoryCell(_, label ,_ ,_ ) => check_label(&self.control_flow, label)?,
                 _ => (),
             };
         }
@@ -192,6 +184,7 @@ impl<'a> RuntimeBuilder<'a> {
                     check_memory_cell(self.runtime_args.as_ref().unwrap(), name_b)?;
                     check_memory_cell(self.runtime_args.as_ref().unwrap(), name_c)?;
                 },
+                Instruction::GotoIfMemoryCell(_, _, _, name) => check_memory_cell(self.runtime_args.as_ref().unwrap(), name)?,
                 _ => (),
             }
         }
@@ -241,6 +234,13 @@ fn append_char_indicator(str: &mut String, idx: usize) {
         str.push(' ');
     }
     str.push_str("^\n");
+}
+
+fn check_label(control_flow: &ControlFlow, label: &str) -> Result<(), String> {
+    if !control_flow.instruction_labels.contains_key(label) {
+        return Err(label.to_string());
+    }
+    Ok(())
 }
 
 fn check_memory_cell(runtime_args: &RuntimeArgs, name: &str) -> Result<(), String> {
@@ -411,22 +411,29 @@ impl<'a> RuntimeArgs<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{instructions::{Instruction, self}, runtime::RuntimeBuildError, base::Operation};
+    use crate::{instructions::{Instruction, self}, runtime::RuntimeBuildError, base::{Operation, Comparison}};
 
     use super::{RuntimeBuilder, RuntimeArgs};
 
 
     #[test]
     fn test_label_missing() {
-        let instructions = vec![Instruction::Goto("loop".to_string())];
+        test_label_instruction(Instruction::Goto("loop".to_string()), "loop");
+        test_label_instruction(Instruction::GotoIfAccumulator(Comparison::Equal, "loop".to_string(), 0, 0), "loop");
+        test_label_instruction(Instruction::GotoIfConstant(Comparison::Equal, "loop".to_string(), 0, 0), "loop");
+        test_label_instruction(Instruction::GotoIfMemoryCell(Comparison::Equal, "loop".to_string(), 0, "a".to_string()), "loop");
+    }
+
+    fn test_label_instruction(instruction: Instruction, label: &str) {
+        let instructions = vec![instruction];
         let mut rb = RuntimeBuilder::new_default();
         rb.set_instructions(instructions.clone());
-        assert!(rb.add_label("loop".to_string(), 0).is_ok());
+        assert!(rb.add_label(label.to_string(), 0).is_ok());
         assert!(rb.build().is_ok());
         rb.reset();
         rb.set_instructions(instructions);
         rb.set_runtime_args(RuntimeArgs::new_default());
-        assert_eq!(rb.build(), Err(RuntimeBuildError::LabelMissing("loop".to_string())));
+        assert_eq!(rb.build(), Err(RuntimeBuildError::LabelMissing(label.to_string())));
     }
 
     #[test]
@@ -440,11 +447,13 @@ mod tests {
         test_memory_cell_instruction(Instruction::CalcMemoryCellWithMemoryCellAccumulator(Operation::Plus, "a".to_string(), "b".to_string(), 0), vec!["a", "b"]);
         test_memory_cell_instruction(Instruction::CalcMemoryCellWithMemoryCellConstant(Operation::Plus, "a".to_string(), "b".to_string(), 0), vec!["a", "b"]);
         test_memory_cell_instruction(Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "a".to_string(), "b".to_string(), "c".to_string()), vec!["a", "b", "c"]);
+        test_memory_cell_instruction(Instruction::GotoIfMemoryCell(Comparison::Equal, "loop".to_string(), 0, "a".to_string()), vec!["a"]);
     }
 
     fn test_memory_cell_instruction(instruction: Instruction, to_test: Vec<&str>) {
         let mut rb = RuntimeBuilder::new();
         rb.set_instructions(vec![instruction]);
+        _ = rb.add_label("loop".to_string(), 0);
         // Test if ok works
         let mut runtime_args = RuntimeArgs::new();
         runtime_args.add_accumulator();
