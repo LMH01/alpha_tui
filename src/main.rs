@@ -1,8 +1,9 @@
-use std::{io, thread, time::Duration, process::exit};
+use std::{io, thread, time::Duration, process::exit, error::Error};
 
 use clap::Parser;
 use cli::Args;
-use tui::{backend::CrosstermBackend, Terminal, widgets::{Block, Borders}};
+use crossterm::{terminal::{enable_raw_mode, EnterAlternateScreen, disable_raw_mode, LeaveAlternateScreen}, execute, event::{EnableMouseCapture, DisableMouseCapture, Event, self, KeyCode}};
+use tui::{backend::{CrosstermBackend, Backend}, Terminal, widgets::{Block, Borders, Paragraph, BorderType}, Frame, layout::{Layout, Direction, Constraint, Alignment}, text::{Text, Spans}};
 use utils::read_file;
 
 use crate::{instructions::Instruction, runtime::{Runtime, RuntimeArgs, RuntimeBuilder}, base::{Operation, Comparison}};
@@ -25,7 +26,7 @@ const ACCUMULATORS: usize = 4;
 /// Used to set the available memory cells.
 const MEMORY_CELL_LABELS: &'static [&'static str] = &["a", "b", "c", "d", "e", "f", "w", "x", "y", "z", "h1", "h2", "h3", "h4"];
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
     
     let instructions = match read_file(&args.input) {
@@ -52,57 +53,82 @@ fn main() {
             exit(-1);
         },
     };
-    println!("Running program");
-    println!("----- Program start -----");
-    match rt.run() {
-        Ok(_) => {
-            println!("----- Program end -----");
-            println!("Program run successfully")
-        },
-        Err(e) => {
-            println!("Runtime error: {}", e);
-            exit(-1);
+    println!("Ready to run, launching tui");
+    //println!("----- Program start -----");
+    //match rt.run() {
+    //    Ok(_) => {
+    //        println!("----- Program end -----");
+    //        println!("Program run successfully")
+    //    },
+    //    Err(e) => {
+    //        println!("Runtime error: {}", e);
+    //        exit(-1);
+    //    }
+    //};
+
+    //tui
+    // setup terminal
+    enable_raw_mode()?;
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+    let stdout = io::stdout();
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend).unwrap();
+
+    // create app
+    let app = App::from_runtime(rt);
+    let res = app.run(&mut terminal);
+
+    // restore terminal
+    disable_raw_mode()?;
+    execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        DisableMouseCapture
+    )?;
+    terminal.show_cursor()?;
+
+    Ok(())
+}
+
+struct App<'a> {
+    runtime: Runtime<'a>,
+}
+
+impl<'a> App<'a> {
+    fn from_runtime(runtime: Runtime<'a>) -> App<'a> {
+        Self {
+            runtime,
         }
-    };
-    //let stdout = io::stdout();
-    //let backend = CrosstermBackend::new(stdout);
-    //let mut terminal = Terminal::new(backend).unwrap();
+    }
 
-    //terminal.draw(|f| {
-    //    let size = f.size();
-    //    let block = Block::default()
-    //        .title("Block")
-    //        .borders(Borders::ALL);
-    //    f.render_widget(block, size);
-    //}).unwrap();
+    fn run<B: Backend>(&self, terminal: &mut Terminal<B>) -> io::Result<()> {
+        loop {
+            terminal.draw(|f| ui(f, &self))?;
+            if let Event::Key(key) = event::read()? {
+                match key.code {
+                    KeyCode::Char('q') => {
+                        return Ok(())
+                    }
+                    _ => (),
+                }
+            }
+            thread::sleep(Duration::from_millis(100));
+        }
+    }
+}
 
-    //thread::sleep(Duration::from_millis(5000));
+fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
+    // Wrapping block for a group
+    // Just draw the block and the group on the same area and build the group
+    // with at least a margin of 1
+    let size = f.size();
 
-    //let instructions = vec![
-    //    Instruction::AssignAccumulatorValue(0, 5),
-    //    Instruction::AssignAccumulatorValue(1, 10),
-    //    Instruction::AssignAccumulatorValue(2, 7),
-    //    Instruction::Push(),
-    //    Instruction::Pop(),
-    //    Instruction::AssignMemoryCellValueFromAccumulator("c".to_string(),1),
-    //    Instruction::AssignAccumulatorValueFromMemoryCell(3, "c".to_string()),
-    //    Instruction::AssignAccumulatorValueFromAccumulator(0, 2),
-    //    Instruction::AssignMemoryCellValue("f".to_string(), 17),
-    //    Instruction::PrintAccumulators(),
-    //    Instruction::PrintMemoryCells(),
-    //    Instruction::PrintStack(),
-    //];
-    //let mut runtime_builder = RuntimeBuilder::new_default();
-    //runtime_builder.set_instructions(instructions);
-    //let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
-    //runtime.run().unwrap();
-
-    //let mut builder = RuntimeBuilder::new_default();
-    //let mut instructions = Vec::new();
-    //instructions.push("a0 := af2 + 10");
-    //let res = builder.build_instructions(&instructions);
-    //if res.is_err() {
-    //    println!("{}", res.unwrap_err());
-    //}
-    
+    // Surrounding block
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .title("Main block with round corners")
+        .title_alignment(Alignment::Center)
+        .border_type(BorderType::Rounded);
+    f.render_widget(block, size);
 }
