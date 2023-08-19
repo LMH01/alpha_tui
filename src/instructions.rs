@@ -219,7 +219,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
     /// Each element in the vector is one part of the instruction.
     fn try_from(value: &Vec<&str>) -> Result<Self, Self::Error> {
         let mut parts = value;
-
+        
         // Instructions that compare values
         if parts[0] == "if" {
             if !parts[1].starts_with('a') {

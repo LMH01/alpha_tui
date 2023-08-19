@@ -1,4 +1,4 @@
-println("This program multiplies two matrices")
+//println("This program multiplies two matrices")
 p(a) := 5
 p(b) := 2
 p(c) := 3
@@ -19,8 +19,8 @@ p(h3) := p(c) * p(x)
 p(h4) := p(d) * p(z)
 p(c) := p(h1) + p(h2)
 p(d) := p(h3) + p(h4)
-println("Result of calculation:")
-print(p(a))
-print(p(b))
-print(p(c))
-print(p(d))
+//println("Result of calculation:")
+//print(p(a))
+//print(p(b))
+//print(p(c))
+//print(p(d))

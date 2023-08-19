@@ -95,6 +95,9 @@ impl<'a> RuntimeBuilder<'a> {
             let instruction = instruction.split(&['#', '/'][..]).collect::<Vec<&str>>()[0];
             // Check for labels
             let mut splits = instruction.split_whitespace().collect::<Vec<&str>>();
+            if splits.is_empty() {
+                continue;
+            }
             if splits[0].ends_with(":") {
                 let label = splits.remove(0).replace(":", "");
                 self.control_flow.instruction_labels.insert(label, index);
