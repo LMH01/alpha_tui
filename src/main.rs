@@ -57,7 +57,6 @@ fn main() {
     match rt.run() {
         Ok(_) => {
             println!("----- Program end -----");
-            rt.debug();
             println!("Program run successfully")
         },
         Err(e) => {

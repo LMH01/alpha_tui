@@ -1,3 +1,4 @@
+println("This program multiplies two matrices")
 p(a) := 5
 p(b) := 2
 p(c) := 3
