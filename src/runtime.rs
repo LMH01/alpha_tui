@@ -54,10 +54,12 @@ impl<'a> RuntimeBuilder<'a> {
         if let Err(e) = self.check_labels() {
             return Err(RuntimeBuildError::LabelMissing(e));
         }
+        if let Err(e) = self.check_accumulators() {
+            return Err(RuntimeBuildError::AccumulatorMissing(e));
+        }
         if let Err(e) = self.check_memory_cells() {
             return Err(RuntimeBuildError::MemoryCellMissing(e));
         }
-        //TODO Add check if all accumulators exist
         return Ok(Runtime { runtime_args: self.runtime_args.clone().unwrap(), instructions: self.instructions.clone().unwrap(), control_flow: self.control_flow.clone() })
     }
 
@@ -146,11 +148,52 @@ impl<'a> RuntimeBuilder<'a> {
         Ok(())
     }
 
+    /// Checks if all accumulators that are used in the instructions exist in the runtime args.
+    /// 
+    /// If accumulator is missing, the id of the missing accumulator is returned.
+    /// 
+    /// Panics if runtime_args is `None`.
+    fn check_accumulators(&self) -> Result<(), String> {
+        if self.instructions.is_none() {
+            return Ok(());
+        }
+        for instruction in self.instructions.as_ref().unwrap() {
+            match instruction {
+                Instruction::AssignAccumulatorValue(id, _) => check_accumulators(&self.runtime_args.as_ref().unwrap(), id)?,
+                Instruction::AssignAccumulatorValueFromAccumulator(id_a, id_b) => {
+                    check_accumulators(self.runtime_args.as_ref().unwrap(), id_a)?;
+                    check_accumulators(self.runtime_args.as_ref().unwrap(), id_b)?;
+                },
+                Instruction::AssignAccumulatorValueFromMemoryCell(id, _) => check_accumulators(self.runtime_args.as_ref().unwrap(), id)?,
+                Instruction::AssignMemoryCellValueFromAccumulator(_, id) => check_accumulators(self.runtime_args.as_ref().unwrap(), id)?,
+                Instruction::CalcAccumulatorWithAccumulator(_, id_a, id_b) => {
+                    check_accumulators(self.runtime_args.as_ref().unwrap(), id_a)?;
+                    check_accumulators(self.runtime_args.as_ref().unwrap(), id_b)?;
+                },
+                Instruction::CalcAccumulatorWithAccumulators(_, id_a, id_b, id_c) => {
+                    check_accumulators(self.runtime_args.as_ref().unwrap(), id_a)?;
+                    check_accumulators(self.runtime_args.as_ref().unwrap(), id_b)?;
+                    check_accumulators(self.runtime_args.as_ref().unwrap(), id_c)?;
+                },
+                Instruction::CalcAccumulatorWithConstant(_, id, _) => check_accumulators(self.runtime_args.as_ref().unwrap(), id)?,
+                Instruction::CalcAccumulatorWithMemoryCell(_, id, _) => check_accumulators(self.runtime_args.as_ref().unwrap(), id)?,
+                Instruction::CalcAccumulatorWithMemoryCells(_, id, _, _) => check_accumulators(self.runtime_args.as_ref().unwrap(), id)?,
+                Instruction::CalcMemoryCellWithMemoryCellAccumulator(_, _, _, id) => check_accumulators(self.runtime_args.as_ref().unwrap(), id)?,
+                Instruction::GotoIfAccumulator(_, _, id_a, id_b) => {
+                    check_accumulators(self.runtime_args.as_ref().unwrap(), id_a)?;
+                    check_accumulators(self.runtime_args.as_ref().unwrap(), id_b)?;
+                }
+                _ => (),
+            }
+        }
+        Ok(())
+    }
+
     /// Checks if all memory cells that are used in the instructions exist in the runtime args.
     /// 
     /// If memory cell is missing, the name of the missing memory cell is returned.
     /// 
-    /// Panics if runtime args is `None`.
+    /// Panics if runtime_args is `None`.
     fn check_memory_cells(&self) -> Result<(), String> {
         if self.instructions.is_none() {
             return Ok(());
@@ -241,6 +284,13 @@ fn append_char_indicator(str: &mut String, idx: usize) {
 fn check_label(control_flow: &ControlFlow, label: &str) -> Result<(), String> {
     if !control_flow.instruction_labels.contains_key(label) {
         return Err(label.to_string());
+    }
+    Ok(())
+}
+
+fn check_accumulators(runtime_args: &RuntimeArgs, id: &usize) -> Result<(), String> {
+    if !runtime_args.exists_accumulator(id) {
+        return Err(id.to_string());
     }
     Ok(())
 }
@@ -407,7 +457,17 @@ impl<'a> RuntimeArgs<'a> {
     /// Adds a new accumulator to the accumulators vector.
     pub fn add_accumulator(&mut self) {
         let id = self.accumulators.len();
-        self.accumulators.push(Accumulator::new(id as i32));
+        self.accumulators.push(Accumulator::new(id));
+    }
+
+    /// Checks if the accumulator with id exists.
+    pub fn exists_accumulator(&self, id: &usize) -> bool {
+        for acc in &self.accumulators {
+            if acc.id == *id {
+                return true;
+            }
+        }
+        false
     }
 }
 
@@ -437,6 +497,51 @@ mod tests {
         rb.set_runtime_args(RuntimeArgs::new_default());
         assert_eq!(rb.build(), Err(RuntimeBuildError::LabelMissing(label.to_string())));
     }
+
+    #[test]
+    fn test_accumulator_missing() {
+        test_accumulator_instruction(Instruction::AssignAccumulatorValue(0, 1), vec![&(0 as usize)]);
+        test_accumulator_instruction(Instruction::AssignAccumulatorValueFromAccumulator(0, 1), vec![&(0 as usize), &(1 as usize)]);
+        test_accumulator_instruction(Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string()), vec![&(0 as usize)]);
+        test_accumulator_instruction(Instruction::AssignAccumulatorValue(0, 1), vec![&(0 as usize)]);
+        test_accumulator_instruction(Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0), vec![&(0 as usize)]);
+        test_accumulator_instruction(Instruction::CalcAccumulatorWithAccumulator(Operation::Plus, 0, 1), vec![&(0 as usize), &(1 as usize)]);
+        test_accumulator_instruction(Instruction::CalcAccumulatorWithAccumulators(Operation::Plus, 0, 1, 2), vec![&(0 as usize), &(1 as usize), &(2 as usize)]);
+        test_accumulator_instruction(Instruction::CalcAccumulatorWithConstant(Operation::Plus, 0, 0), vec![&(0 as usize)]);
+        test_accumulator_instruction(Instruction::CalcAccumulatorWithMemoryCell(Operation::Plus, 0, "a".to_string()), vec![&(0 as usize)]);
+        test_accumulator_instruction(Instruction::CalcAccumulatorWithMemoryCells(Operation::Plus, 0, "a".to_string(), "b".to_string()), vec![&(0 as usize)]);
+        test_accumulator_instruction(Instruction::CalcMemoryCellWithMemoryCellAccumulator(Operation::Plus, "a".to_string(), "b".to_string(), 0), vec![&(0 as usize)]);
+        test_accumulator_instruction(Instruction::GotoIfAccumulator(Comparison::Equal, "loop".to_string(), 0, 0), vec![&(0 as usize)]);
+    }
+
+    fn test_accumulator_instruction(instruction: Instruction, to_test: Vec<&usize>) {
+        let mut rb = RuntimeBuilder::new();
+        rb.set_instructions(vec![instruction]);
+        _ = rb.add_label("loop".to_string(), 0);
+        // Test if ok works
+        let mut runtime_args = RuntimeArgs::new();
+        runtime_args.add_storage_cell("a");
+        runtime_args.add_storage_cell("b");
+        for _ in &to_test {
+            runtime_args.add_accumulator();
+        }
+        rb.set_runtime_args(runtime_args);
+        let build = rb.build();
+        println!("{:?}", build);
+        assert!(build.is_ok());
+        // Test if missing accumulators are detected
+        for (i1, s) in to_test.iter().enumerate() {
+            let mut runtime_args = RuntimeArgs::new();
+            runtime_args.add_storage_cell("a");
+            runtime_args.add_storage_cell("b");
+            for _ in 0..(to_test.len() - *s-1)  {
+                runtime_args.add_accumulator();
+            }
+            rb.set_runtime_args(runtime_args);
+            let b = rb.build();
+            assert_eq!(b, Err(RuntimeBuildError::AccumulatorMissing((to_test.len() - *s-1).to_string())));
+        }
+    } 
 
     #[test]
     fn test_memory_cell_missing() {

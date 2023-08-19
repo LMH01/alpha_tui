@@ -2,14 +2,14 @@
 #[derive(Debug, Clone, PartialEq)]
 pub struct Accumulator {
     /// Used to identify accumulator
-    pub id: i32,
+    pub id: usize,
     /// The data stored in the Accumulator
     pub data: Option<i32>,
 }
 
 impl Accumulator {
     /// Creates a new accumulator
-    pub fn new(id: i32) -> Self {
+    pub fn new(id: usize) -> Self {
         Self {
             id,
             data: None,

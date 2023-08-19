@@ -14,7 +14,7 @@ mod instructions;
 /// Used to set the maximum number of accumulators.
 ///
 /// Should be at least 1.
-const ACCUMULATORS: i32 = 4;
+const ACCUMULATORS: usize = 4;
 /// Used to set the available memory cells.
 const MEMORY_CELL_LABELS: &'static [&'static str] = &["a", "b", "c", "d", "e", "f"];
 
