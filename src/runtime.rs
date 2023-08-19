@@ -1,9 +1,13 @@
 use std::collections::HashMap;
 
-use crate::{instructions::{Instruction, InstructionParseError}, base::{Accumulator, MemoryCell}, ACCUMULATORS, MEMORY_CELL_LABELS};
+use crate::{
+    base::{Accumulator, MemoryCell},
+    instructions::{Instruction, InstructionParseError},
+    ACCUMULATORS, MEMORY_CELL_LABELS,
+};
 
 /// Type that is used to build a new runtime environment.
-/// 
+///
 /// This runtime can be configured to only allow a selected amount of accumulators and memory cells.
 /// When a runtime is build from this builder compatibility checks are performed.
 pub struct RuntimeBuilder<'a> {
@@ -43,60 +47,63 @@ impl<'a> RuntimeBuilder<'a> {
     }
 
     /// Builds instructions from the string and sets them as current instructions.
-    /// 
+    ///
     /// Each line has to contain a single instruction.
-    /// 
+    ///
     /// Control flow is updated accordingly.
-    /// 
+    ///
     /// If an instruction could not be parsed, an error is returned containing the reason.
     pub fn build_instructions(&mut self, instructions_input: &Vec<&str>) -> Result<(), String> {
         let mut instructions = Vec::new();
         for instruction in instructions_input {
             match Instruction::try_from(*instruction) {
                 Ok(i) => instructions.push(i),
-                Err(e) => {
-                    let mut message = String::from("Error while building instruction:\n");
-                    message.push_str(*instruction);
-                    message.push('\n');
-                    match e {
-                        InstructionParseError::UnknownOperation(idx, str) => {
-                            append_char_indicator(&mut message, idx);
-                            message.push_str(&format!("Unknown operation: {}", str));
-                        },
-                        InstructionParseError::UnknownComparison(idx, str) => {
-                            append_char_indicator(&mut message, idx);
-                            message.push_str(&format!("Unknown comparison: {}", str));
-                        },
-                        InstructionParseError::NotANumber(idx, str) => {
-                            append_char_indicator(&mut message, idx);
-                            message.push_str(&format!("Not a number: {}", str));
-                        },
-                        InstructionParseError::InvalidExpression(idx, str) => {
-                            append_char_indicator(&mut message, idx);
-                            message.push_str(&format!("Invalid expression: {}", str));
-                        },
-                        InstructionParseError::NoMatch => {
-                            message.push_str("^\n");
-                            message.push_str("No matching instruction found!");
-                        },
-                        InstructionParseError::NoMatchSuggestion(str) => {
-                            append_char_indicator(&mut message, 0);
-                            message.push_str(&format!("No matching instruction found, did you mean: {} ?", str));
-
-                        }
-                    }
-                    return Err(message);
-                },
+                Err(e) => return Err(error_handling(e, instruction)),
             }
         }
         Ok(())
     }
+}
 
+fn error_handling(e: InstructionParseError, instruction: &str) -> String {
+    let mut message = String::from("Error while building instruction:\n");
+    message.push_str(instruction);
+    message.push('\n');
+    match e {
+        InstructionParseError::UnknownOperation(idx, str) => {
+            append_char_indicator(&mut message, idx);
+            message.push_str(&format!("Unknown operation: {}", str));
+        }
+        InstructionParseError::UnknownComparison(idx, str) => {
+            append_char_indicator(&mut message, idx);
+            message.push_str(&format!("Unknown comparison: {}", str));
+        }
+        InstructionParseError::NotANumber(idx, str) => {
+            append_char_indicator(&mut message, idx);
+            message.push_str(&format!("Not a number: {}", str));
+        }
+        InstructionParseError::InvalidExpression(idx, str) => {
+            append_char_indicator(&mut message, idx);
+            message.push_str(&format!("Invalid expression: {}", str));
+        }
+        InstructionParseError::NoMatch => {
+            message.push_str("^\n");
+            message.push_str("No matching instruction found!");
+        }
+        InstructionParseError::NoMatchSuggestion(str) => {
+            append_char_indicator(&mut message, 0);
+            message.push_str(&format!(
+                "No matching instruction found, did you mean: {} ?",
+                str
+            ));
+        }
+    }
+    message
 }
 
 /// Prints a pointer at index.
 fn append_char_indicator(str: &mut String, idx: usize) {
-    for i in 0..idx {
+    for _i in 0..idx {
         str.push(' ');
     }
     str.push_str("^\n");
@@ -131,8 +138,13 @@ impl<'a> Runner<'a> {
         while self.control_flow.next_instruction_index < self.instructions.len() {
             let current_instruction = self.control_flow.next_instruction_index;
             self.control_flow.next_instruction_index += 1;
-            if let Err(e) = self.instructions[current_instruction].run(&mut self.runtime_args, &mut self.control_flow) {
-                println!("Unable to continue execution, an irrecoverable error occured: {}", e);
+            if let Err(e) = self.instructions[current_instruction]
+                .run(&mut self.runtime_args, &mut self.control_flow)
+            {
+                println!(
+                    "Unable to continue execution, an irrecoverable error occured: {}",
+                    e
+                );
                 return Err(format!("Execution terminated: {}", e));
             }
         }
@@ -142,19 +154,26 @@ impl<'a> Runner<'a> {
     /// Adds an instruction to the end of the instruction vector with a label mapping.
     pub fn add_instruction_with_label(&mut self, instruction: Instruction, label: &'a str) {
         self.instructions.push(instruction);
-        self.control_flow.instruction_labels.insert(label, self.instructions.len()-1);
+        self.control_flow
+            .instruction_labels
+            .insert(label, self.instructions.len() - 1);
     }
 
     /// Adds label to instruction labels.
-    /// 
+    ///
     /// Errors when **instruction_index** is out of bounds.
-    /// 
+    ///
     /// Note: Make sure that you start counting at 0 and not 1!
     pub fn add_label(&mut self, label: &'a str, instruction_index: usize) -> Result<(), String> {
         if self.instructions.len() <= instruction_index {
-            Err(format!("Unable to add label {}, index {} is out of bounds!", label, instruction_index))
+            Err(format!(
+                "Unable to add label {}, index {} is out of bounds!",
+                label, instruction_index
+            ))
         } else {
-            self.control_flow.instruction_labels.insert(label, instruction_index);
+            self.control_flow
+                .instruction_labels
+                .insert(label, instruction_index);
             Ok(())
         }
     }
@@ -163,7 +182,6 @@ impl<'a> Runner<'a> {
     pub fn runtime_args(&self) -> &RuntimeArgs {
         &self.runtime_args
     }
-
 }
 
 /// Used to control what instruction should be executed next.
@@ -171,15 +189,14 @@ pub struct ControlFlow<'a> {
     /// The index of the instruction that should be executed next in the **instructions** vector.
     pub next_instruction_index: usize,
     /// Stores label to instruction mappings.
-    /// 
+    ///
     /// Key = label of the instruction
-    /// 
+    ///
     /// Value = index of the instruction in the instructions vector
     pub instruction_labels: HashMap<&'a str, usize>,
 }
 
 impl<'a> ControlFlow<'a> {
-
     pub fn new() -> Self {
         Self {
             next_instruction_index: 0,
@@ -194,7 +211,10 @@ impl<'a> ControlFlow<'a> {
             self.next_instruction_index = *index;
             Ok(())
         } else {
-            Err(format!("Unable to update instruction index: no index found for label {}", label))
+            Err(format!(
+                "Unable to update instruction index: no index found for label {}",
+                label
+            ))
         }
     }
 }

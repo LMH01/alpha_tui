@@ -54,7 +54,7 @@ fn main() {
 
     let mut builder = RuntimeBuilder::new_default();
     let mut instructions = Vec::new();
-    instructions.push("a0 := df");
+    instructions.push("a0 := af2 + 10");
     let res = builder.build_instructions(&instructions);
     if res.is_err() {
         println!("{}", res.unwrap_err());
