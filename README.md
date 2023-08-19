@@ -19,6 +19,7 @@ Internal handling of instructions is finished, programs can be run, when assembl
 - [X] Add support for comments at end of line (marked with # or //)
 - [ ] Add log output window to tui and make messages get printed in there
 - [ ] Fix instruction pointer when lines are commented out (remove full line comments from list?)
+- [ ] Rename program into something better
 
 ### Instructions
 
