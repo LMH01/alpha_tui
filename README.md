@@ -8,14 +8,17 @@ Internal handling of instructions is finished, programs can be run, when assembl
 
 ## TODO
 
-- [ ] Make it possible to customize the available memory cells (preferably by adding an option to the gui)
-- [ ] Make progamm work with GUI 
-	- [ ] (Customization of available accumulators)
-	- [ ] (Customization of available memory cells)
+- [ ] Make it possible to customize the available memory cells (will be done by cli option)
+- [ ] Add option to load predetermined values into memory cells before program starts (cli option, probably read from file)
+- [X] Make progamm work with GUI 
+	- [ ] (Customization of available accumulators) - will be done with cli options
+	- [ ] (Customization of available memory cells) - will be done with cli options
 		- if no memory cells are set all commands that require memory cells should be disabled ("compiling" with those commands included should fail)	
-- [ ] Debug mode -> Step through each instruction
+- [X] Debug mode -> Step through each instruction
 - [X] Add tests (at least one for each command)
 - [X] Add support for comments at end of line (marked with # or //)
+- [ ] Add log output window to tui and make messages get printed in there
+- [ ] Fix instruction pointer when lines are commented out (remove full line comments from list?)
 
 ### Instructions
 
