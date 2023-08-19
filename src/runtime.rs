@@ -10,6 +10,7 @@ use crate::{
 ///
 /// This runtime can be configured to only allow a selected amount of accumulators and memory cells.
 /// When a runtime is build from this builder compatibility checks are performed.
+#[derive(Debug)]
 pub struct RuntimeBuilder<'a> {
     runtime_args: Option<RuntimeArgs<'a>>,
     instructions: Option<Vec<Instruction>>,
@@ -29,7 +30,7 @@ impl<'a> RuntimeBuilder<'a> {
     /// Creates a new runtime builder with default values.
     pub fn new_default() -> Self {
         Self {
-            runtime_args: Some(RuntimeArgs::new()),
+            runtime_args: Some(RuntimeArgs::new_default()),
             instructions: None,
             control_flow: ControlFlow::new(),
         }
@@ -41,10 +42,6 @@ impl<'a> RuntimeBuilder<'a> {
     /// 
     /// Returns `RuntimeBuildError` when the runtime could not be constructed due to missing information.
     pub fn build(&mut self) -> Result<Runtime, RuntimeBuildError> {
-        //TODO Add check if all memory cells and accumulators exist
-        if let Err(e) = self.check_labels() {
-            return Err(RuntimeBuildError::LabelMissing(e));
-        }
         if self.runtime_args.is_none() {
             return Err(RuntimeBuildError::RuntimeArgsMissing);
         }
@@ -54,6 +51,13 @@ impl<'a> RuntimeBuilder<'a> {
         if self.instructions.as_ref().unwrap().is_empty() {
             return Err(RuntimeBuildError::InstructionsEmpty);
         }
+        if let Err(e) = self.check_labels() {
+            return Err(RuntimeBuildError::LabelMissing(e));
+        }
+        if let Err(e) = self.check_memory_cells() {
+            return Err(RuntimeBuildError::MemoryCellMissing(e));
+        }
+        //TODO Add check if all accumulators exist
         return Ok(Runtime { runtime_args: self.runtime_args.clone().unwrap(), instructions: self.instructions.clone().unwrap(), control_flow: self.control_flow.clone() })
     }
 
@@ -147,6 +151,52 @@ impl<'a> RuntimeBuilder<'a> {
         }
         Ok(())
     }
+
+    /// Checks if all memory cells that are used in the instructions exist in the runtime args.
+    /// 
+    /// If memory cell is missing, the name of the missing memory cell is returned.
+    /// 
+    /// Panics if runtime args is `None`.
+    fn check_memory_cells(&self) -> Result<(), String> {
+        if self.instructions.is_none() {
+            return Ok(());
+        }
+        for instruction in self.instructions.as_ref().unwrap() {
+            match instruction {
+                Instruction::AssignAccumulatorValueFromMemoryCell(_, name) => check_memory_cell(self.runtime_args.as_ref().unwrap(), name)?,
+                Instruction::AssignMemoryCellValue(name, _) => check_memory_cell(self.runtime_args.as_ref().unwrap(), name)?,
+                Instruction::AssignMemoryCellValueFromAccumulator(name, _) => check_memory_cell(self.runtime_args.as_ref().unwrap(), name)?,
+                Instruction::AssignMemoryCellValueFromMemoryCell(name_a, name_b) => {
+                    check_memory_cell(self.runtime_args.as_ref().unwrap(), name_a)?;
+                    check_memory_cell(self.runtime_args.as_ref().unwrap(), name_b)?;
+                },
+                Instruction::CalcAccumulatorWithMemoryCell(_, _, name) => check_memory_cell(self.runtime_args.as_ref().unwrap(), name)?,
+                Instruction::CalcAccumulatorWithMemoryCells(_, _, name_a, name_b) => {
+                    check_memory_cell(self.runtime_args.as_ref().unwrap(), name_a)?;
+                    check_memory_cell(self.runtime_args.as_ref().unwrap(), name_b)?;
+                },
+                Instruction::CalcMemoryCellWithMemoryCellConstant(_,  name_a, name_b, _) => {
+                    if !self.runtime_args.as_ref().unwrap().memory_cells.contains_key(name_a.as_str()) {
+                        return Err(name_a.clone());
+                    }
+                    if !self.runtime_args.as_ref().unwrap().memory_cells.contains_key(name_b.as_str()) {
+                        return Err(name_b.clone());
+                    }
+                },
+                Instruction::CalcMemoryCellWithMemoryCellAccumulator(_, name_a, name_b, _) => {
+                    check_memory_cell(self.runtime_args.as_ref().unwrap(), name_a)?;
+                    check_memory_cell(self.runtime_args.as_ref().unwrap(), name_b)?;
+                },
+                Instruction::CalcMemoryCellWithMemoryCells(_, name_a, name_b, name_c) => {
+                    check_memory_cell(self.runtime_args.as_ref().unwrap(), name_a)?;
+                    check_memory_cell(self.runtime_args.as_ref().unwrap(), name_b)?;
+                    check_memory_cell(self.runtime_args.as_ref().unwrap(), name_c)?;
+                },
+                _ => (),
+            }
+        }
+        Ok(())
+    }
 }
 
 fn error_handling(e: InstructionParseError, instruction: &str) -> String {
@@ -193,6 +243,13 @@ fn append_char_indicator(str: &mut String, idx: usize) {
     str.push_str("^\n");
 }
 
+fn check_memory_cell(runtime_args: &RuntimeArgs, name: &str) -> Result<(), String> {
+    if !runtime_args.memory_cells.contains_key(&name) {
+        return Err(name.to_string());
+    }
+    Ok(())
+}
+
 /// Errors that can occur when a runtime is constructed from a RuntimeBuilder.
 #[derive(Debug, PartialEq)]
 pub enum RuntimeBuildError {
@@ -202,6 +259,8 @@ pub enum RuntimeBuildError {
     /// Indicates that a label is used in an instruction that does not exist in the control flow.
     /// This would lead to a runtime error.
     LabelMissing(String),
+    MemoryCellMissing(String),
+    AccumulatorMissing(String),
 }
 
 #[derive(Debug)]
@@ -305,7 +364,17 @@ pub struct RuntimeArgs<'a> {
 }
 
 impl<'a> RuntimeArgs<'a> {
+    
+    /// Creates a new runtimes args struct with empty lists.
     pub fn new() -> Self {
+        Self {
+            accumulators: Vec::new(),
+            memory_cells: HashMap::new(),
+            stack: Vec::new(),
+        }
+    }
+    
+    pub fn new_default() -> Self {
         let mut accumulators = Vec::new();
         for i in 0..ACCUMULATORS {
             accumulators.push(Accumulator::new(i));
@@ -324,14 +393,6 @@ impl<'a> RuntimeArgs<'a> {
         }
     }
 
-    /// Creates a new runtimes args struct with empty lists.
-    pub fn new_empty() -> Self {
-        Self {
-            accumulators: Vec::new(),
-            memory_cells: HashMap::new(),
-            stack: Vec::new(),
-        }
-    }
 
     /// Creates a new memory cell with label **label** if it does not already exist
     /// and adds it to the **memory_cells* hashmap.
@@ -350,9 +411,9 @@ impl<'a> RuntimeArgs<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{instructions::Instruction, runtime::RuntimeBuildError};
+    use crate::{instructions::{Instruction, self}, runtime::RuntimeBuildError, base::Operation};
 
-    use super::RuntimeBuilder;
+    use super::{RuntimeBuilder, RuntimeArgs};
 
 
     #[test]
@@ -364,6 +425,49 @@ mod tests {
         assert!(rb.build().is_ok());
         rb.reset();
         rb.set_instructions(instructions);
+        rb.set_runtime_args(RuntimeArgs::new_default());
         assert_eq!(rb.build(), Err(RuntimeBuildError::LabelMissing("loop".to_string())));
     }
+
+    #[test]
+    fn test_memory_cell_missing() {
+        test_memory_cell_instruction(Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string()), vec!["a"]);
+        test_memory_cell_instruction(Instruction::AssignMemoryCellValue("a".to_string(), 0), vec!["a"]);
+        test_memory_cell_instruction(Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0), vec!["a"]);
+        test_memory_cell_instruction(Instruction::AssignMemoryCellValueFromMemoryCell("a".to_string(), "b".to_string()), vec!["a", "b"]);
+        test_memory_cell_instruction(Instruction::CalcAccumulatorWithMemoryCell(Operation::Plus, 0, "a".to_string()), vec!["a"]);
+        test_memory_cell_instruction(Instruction::CalcAccumulatorWithMemoryCells(Operation::Plus, 0, "a".to_string(), "b".to_string()), vec!["a", "b"]);
+        test_memory_cell_instruction(Instruction::CalcMemoryCellWithMemoryCellAccumulator(Operation::Plus, "a".to_string(), "b".to_string(), 0), vec!["a", "b"]);
+        test_memory_cell_instruction(Instruction::CalcMemoryCellWithMemoryCellConstant(Operation::Plus, "a".to_string(), "b".to_string(), 0), vec!["a", "b"]);
+        test_memory_cell_instruction(Instruction::CalcMemoryCellWithMemoryCells(Operation::Plus, "a".to_string(), "b".to_string(), "c".to_string()), vec!["a", "b", "c"]);
+    }
+
+    fn test_memory_cell_instruction(instruction: Instruction, to_test: Vec<&str>) {
+        let mut rb = RuntimeBuilder::new();
+        rb.set_instructions(vec![instruction]);
+        // Test if ok works
+        let mut runtime_args = RuntimeArgs::new();
+        runtime_args.add_accumulator();
+        for s in &to_test {
+            runtime_args.add_storage_cell(s);
+        }
+        rb.set_runtime_args(runtime_args);
+        let build = rb.build();
+        println!("{:?}", build);
+        assert!(build.is_ok());
+        // Test if missing memory cells are detected
+        for (i1, s) in to_test.iter().enumerate() {
+            let mut runtime_args = RuntimeArgs::new();
+            runtime_args.add_accumulator();
+            for (i2, s2) in to_test.iter().enumerate() {
+                if i1 == i2 {
+                    continue;
+                }
+                runtime_args.add_storage_cell(s2);
+            }
+            rb.set_runtime_args(runtime_args);
+            let b = rb.build();
+            assert_eq!(b, Err(RuntimeBuildError::MemoryCellMissing(s.to_string())));
+        }
+    } 
 }

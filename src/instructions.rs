@@ -1156,7 +1156,7 @@ mod tests {
 
     #[test]
     fn test_example_program_1() {
-        let mut runtime_args = RuntimeArgs::new_empty();
+        let mut runtime_args = RuntimeArgs::new();
         for _i in 1..=4 {
             runtime_args.add_accumulator();
         }
@@ -1208,7 +1208,7 @@ mod tests {
 
     #[test]
     fn test_example_program_1_text_parsing() {
-        let mut runtime_args = RuntimeArgs::new_empty();
+        let mut runtime_args = RuntimeArgs::new();
         for _i in 1..=4 {
             runtime_args.add_accumulator();
         }
@@ -1298,7 +1298,7 @@ mod tests {
 
     /// Sets up runtime args in a conistent way because the default implementation for memory cells and accumulators is configgurable.
     fn setup_runtime_args() -> RuntimeArgs<'static> {
-        let mut args = RuntimeArgs::new();
+        let mut args = RuntimeArgs::new_default();
         args.memory_cells = HashMap::new();
         args.memory_cells.insert("a", MemoryCell::new("a"));
         args.memory_cells.insert("b", MemoryCell::new("b"));
@@ -1309,7 +1309,7 @@ mod tests {
 
     /// Sets up runtime args where no memory cells or accumulators are set.
     fn setup_empty_runtime_args() -> RuntimeArgs<'static> {
-        let mut args = RuntimeArgs::new();
+        let mut args = RuntimeArgs::new_default();
         args.accumulators = Vec::new();
         args.memory_cells = HashMap::new();
         args
