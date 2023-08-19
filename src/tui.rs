@@ -5,6 +5,7 @@ use tui::{backend::Backend, Frame, layout::{Layout, Direction, Constraint, Align
 
 use crate::runtime::Runtime;
 
+/// Draw the ui
 fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     // Wrapping block for a group
     // Just draw the block and the group on the same area and build the group
@@ -111,6 +112,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     f.render_widget(stack, chunks[2]);
 }
 
+/// Used to store the instructions and to remember what instruction should currently be highlighted.
 struct StatefulInstructions {
     state: ListState,
     instructions: Vec<(usize, String)>,
@@ -161,6 +163,7 @@ impl StatefulInstructions {
     }
 }
 
+/// Used organize hints to keybinds
 struct KeybindHint {
     key: char,
     action: String,
@@ -177,6 +180,7 @@ impl KeybindHint {
     }
 }
 
+/// App holds the state of the application
 pub struct App<'a> {
     runtime: Runtime<'a>,
     /// Filename of the file that contains the code
@@ -236,5 +240,6 @@ fn init_keybinds() -> HashMap<char, KeybindHint> {
     let mut map = HashMap::new();
     map.insert('q', KeybindHint::new('q', "Quit", true));
     map.insert('r', KeybindHint::new('r', "Run", true));
+    map.insert('n', KeybindHint::new('n', "Next instruction", false));
     map
 }
