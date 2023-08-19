@@ -1,7 +1,7 @@
 use std::{time::Duration, collections::{HashMap, HashSet}, thread, io};
 
 use crossterm::event::{Event, KeyCode, self};
-use tui::{backend::Backend, Frame, layout::{Layout, Direction, Constraint, Alignment}, widgets::{Tabs, Block, Borders, BorderType, ListItem, List, ListState}, style::{Style, Color, Modifier}, text::{Spans, Span}, Terminal};
+use tui::{backend::Backend, Frame, layout::{Layout, Direction, Constraint, Alignment, Rect}, widgets::{Tabs, Block, Borders, BorderType, ListItem, List, ListState, Clear, Paragraph}, style::{Style, Color, Modifier}, text::{Spans, Span}, Terminal};
 
 use crate::runtime::{Runtime, RuntimeArgs};
 
@@ -182,6 +182,8 @@ pub struct App<'a> {
     keybind_hints: HashMap<char, KeybindHint>,
     /// Manages accumulators, memory_cells and stack in the ui.
     memory_lists_manager: MemoryListsManager,
+    finished: bool,
+    running: bool,
 }
 
 impl<'a> App<'a> {
@@ -193,6 +195,8 @@ impl<'a> App<'a> {
             instructions: StatefulInstructions::new(instructions),
             keybind_hints: init_keybinds(),
             memory_lists_manager: mlm,
+            finished: false,
+            running: false,
         }
     }
 
@@ -210,10 +214,30 @@ impl<'a> App<'a> {
                     KeyCode::Char('m')  => {
                         self.keybind_hints.get_mut(&'r').unwrap().enabled = true;
                     }
+                    KeyCode::Char('s') => {
+                        if self.finished {
+                            self.runtime.reset();
+                            self.finished = false;
+                            self.running = false;
+                            self.set_keybind_hint('s', false);
+                            self.set_keybind_hint('r', true);
+                            self.set_keybind_message('r', "Run".to_string());
+                            self.instructions.set(0);
+                        }
+                    }
                     KeyCode::Char('r') => {
-                        let res = self.runtime.step();//TODO Add runtime error handling (=message to user)
-                        self.instructions.set(self.runtime.current_instruction_index());
-                        //self.instructions.next();
+                        self.running = true;
+                        if !self.finished {
+                            self.set_keybind_message('r', "Run next instruction".to_string());
+                            let res = self.runtime.step();//TODO Add runtime error handling (=message to user)
+                            self.instructions.set(self.runtime.current_instruction_index());
+                            if self.runtime.finished() {
+                                self.finished = true;
+                                self.set_keybind_hint('s', true);
+                                self.set_keybind_hint('r', false);
+                            }
+                            //self.instructions.next();
+                        }
                     }
                     _ => (),
                 }
@@ -235,6 +259,23 @@ impl<'a> App<'a> {
         }
         spans
     }
+
+    /// Set whether the keybind hint should be shown or not.
+    fn set_keybind_hint(&mut self, key: char, value: bool) {
+        match self.keybind_hints.get_mut(&key) {
+            Some(h) => h.enabled = value,
+            None => (),
+        }
+    }
+
+    /// Sets the message for the keybind.
+    fn set_keybind_message(&mut self, key: char, message: String) {
+        match self.keybind_hints.get_mut(&key) {
+            Some(h) => h.action = message,
+            None => (),
+        }
+    }
+
 }
 
 fn init_keybinds() -> HashMap<char, KeybindHint> {
@@ -242,6 +283,7 @@ fn init_keybinds() -> HashMap<char, KeybindHint> {
     map.insert('q', KeybindHint::new('q', "Quit", true));
     map.insert('r', KeybindHint::new('r', "Run", true));
     map.insert('n', KeybindHint::new('n', "Next instruction", false));
+    map.insert('s', KeybindHint::new('s', "Reset", false));
     map
 }
 
@@ -366,4 +408,41 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .border_type(BorderType::Rounded);
     let stack_list = List::new(app.memory_lists_manager.stack_list()).block(stack);
     f.render_widget(stack_list, chunks[2]);
+
+    // Popup if execution has finished
+    if app.finished {
+        let block = Block::default().title("Execution finished!").borders(Borders::ALL);
+        let area = centered_rect(60, 20, f.size());
+        let text = Paragraph::new("Press [q] to exit.\nPress [s] to reset to start.").block(block);
+        f.render_widget(Clear, area); //this clears out the background
+        f.render_widget(text, area);
+    }
+}
+
+/// helper function to create a centered rect using up certain percentage of the available rect `r`.
+/// Copied from tui examples.
+fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+                Constraint::Percentage((100 - percent_y) / 2),
+                Constraint::Percentage(percent_y),
+                Constraint::Percentage((100 - percent_y) / 2),
+            ]
+            .as_ref(),
+        )
+        .split(r);
+
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(
+            [
+                Constraint::Percentage((100 - percent_x) / 2),
+                Constraint::Percentage(percent_x),
+                Constraint::Percentage((100 - percent_x) / 2),
+            ]
+            .as_ref(),
+        )
+        .split(popup_layout[1])[1]
 }

@@ -411,6 +411,11 @@ impl<'a> Runtime<'a> {
         Ok(())
     }
 
+    /// Returns true when the execution is finished,
+    pub fn finished(&self) -> bool {
+        self.control_flow.next_instruction_index >= self.instructions.len()
+    }
+
     /// Returns the index of the current instruction
     pub fn current_instruction_index(&self) -> usize {
         self.control_flow.next_instruction_index - 1
@@ -435,6 +440,12 @@ impl<'a> Runtime<'a> {
     /// Returns reference to **runtime_args**.
     pub fn runtime_args(&self) -> &RuntimeArgs {
         &self.runtime_args
+    }
+
+    /// Resets the current runtime to defaults, resets instruction pointer.
+    pub fn reset(&mut self) {
+        self.control_flow.reset_soft();
+        self.runtime_args.reset();
     }
 }
 
@@ -477,6 +488,11 @@ impl<'a> ControlFlow {
     pub fn reset(&mut self) {
         self.next_instruction_index = 0;
         self.instruction_labels.clear();
+    }
+
+    /// Only resets the `next_instruction_index` to 0.
+    pub fn reset_soft(&mut self) {
+        self.next_instruction_index = 0;
     }
 }
 
@@ -541,6 +557,17 @@ impl<'a> RuntimeArgs<'a> {
             }
         }
         false
+    }
+
+    /// Resets all values back to None.
+    pub fn reset(&mut self) {
+        for acc in self.accumulators.iter_mut() {
+            acc.data = None;
+        }
+        for cell in self.memory_cells.iter_mut() {
+            cell.1.data = None;
+        }
+        self.stack = Vec::new();
     }
 }
 
