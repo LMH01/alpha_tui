@@ -1,4 +1,4 @@
-use std::{error::Error, io, process::exit, thread, time::Duration};
+use std::{error::Error, io, process::exit, thread, time::Duration, collections::HashMap, hash::Hash};
 
 use clap::Parser;
 use cli::Args;
@@ -7,12 +7,13 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use runtime::ControlFlow;
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Style, Modifier},
     text::{Spans, Text, Span},
-    widgets::{Block, BorderType, Borders, ListItem, Paragraph, List, ListState},
+    widgets::{Block, BorderType, Borders, ListItem, Paragraph, List, ListState, Tabs},
     Frame, Terminal,
 };
 use utils::read_file;
@@ -158,12 +159,30 @@ impl StatefulInstructions {
     }
 }
 
+struct KeybindHint {
+    key: char,
+    action: String,
+    enabled: bool,
+}
+
+impl KeybindHint {
+    fn new (key: char, action: &str, enabled: bool) -> Self {
+        Self {
+            key,
+            action: action.to_string(),
+            enabled,
+        }
+    }
+}
+
 struct App<'a> {
     runtime: Runtime<'a>,
     /// Filename of the file that contains the code
     filename: String,
     /// The code that is compiled and run
     instructions: StatefulInstructions,
+    /// List of keybind hints displayed at the bottom of the terminal
+    keybind_hints: HashMap<char, KeybindHint>,
 }
 
 impl<'a> App<'a> {
@@ -172,6 +191,7 @@ impl<'a> App<'a> {
             runtime,
             filename,
             instructions: StatefulInstructions::new(instructions),
+            keybind_hints: init_keybinds(),
         }
     }
 
@@ -183,12 +203,38 @@ impl<'a> App<'a> {
                     KeyCode::Char('q') => return Ok(()),
                     KeyCode::Down => self.instructions.next(),//TODO remove manual list control
                     KeyCode::Up => self.instructions.previous(),
+                    KeyCode::Char('n')  => {
+                        self.keybind_hints.get_mut(&'q').unwrap().enabled = false;
+                    }
+                    KeyCode::Char('m')  => {
+                        self.keybind_hints.get_mut(&'q').unwrap().enabled = true;
+                    }
                     _ => (),
                 }
             }
             thread::sleep(Duration::from_millis(30));
         }
     }
+
+    fn active_keybind_hints(&self) -> Vec<Spans> {
+        let mut spans = Vec::new();
+        for (k, v) in &self.keybind_hints {
+            if !v.enabled {
+                continue;
+            }
+            spans.push(Spans::from(vec![
+                Span::styled(format!("{} [{}]", v.action, v.key), Style::default()),
+            ]))
+        }
+        spans
+    }
+}
+
+fn init_keybinds() -> HashMap<char, KeybindHint> {
+    let mut map = HashMap::new();
+    map.insert('q', KeybindHint::new('q', "Quit", true));
+    map.insert('r', KeybindHint::new('r', "Run", true));
+    map
 }
 
 fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
@@ -196,6 +242,12 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     // Just draw the block and the group on the same area and build the group
     // with at least a margin of 1
     //let size = f.size();
+
+    let global_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(1)
+        .constraints([Constraint::Percentage(95), Constraint::Percentage(5)])
+        .split(f.size());
 
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
@@ -208,7 +260,17 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
             ]
             .as_ref(),
         )
-        .split(f.size());
+        .split(global_chunks[0]);
+
+    let key_hints = Tabs::new(app.active_keybind_hints())
+        .block(Block::default().borders(Borders::NONE))
+        .style(Style::default().fg(Color::Cyan));
+        //.highlight_style(
+        //    Style::default()
+        //        .add_modifier(Modifier::BOLD)
+        //        .bg(Color::Black),
+        //);
+    f.render_widget(key_hints, global_chunks[1]);
 
     let right_chunks = Layout::default()
         .direction(Direction::Vertical)
