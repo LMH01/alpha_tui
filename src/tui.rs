@@ -161,7 +161,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
 
     let global_chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(95), Constraint::Percentage(5)])
+        .constraints([Constraint::Percentage(99), Constraint::Percentage(1)])
         .split(f.size());
 
     let chunks = Layout::default()
