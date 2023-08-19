@@ -10,9 +10,9 @@ use crossterm::{
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Alignment, Constraint, Direction, Layout},
-    style::{Color, Style},
+    style::{Color, Style, Modifier},
     text::{Spans, Text, Span},
-    widgets::{Block, BorderType, Borders, ListItem, Paragraph, List},
+    widgets::{Block, BorderType, Borders, ListItem, Paragraph, List, ListState},
     Frame, Terminal,
 };
 use utils::read_file;
@@ -93,7 +93,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend).unwrap();
 
     // create app
-    let app = App::from_runtime(rt, args.input, &instructions);
+    let mut app = App::from_runtime(rt, args.input, instructions);
     let res = app.run(&mut terminal);
 
     // restore terminal
@@ -108,49 +108,90 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+struct StatefulInstructions {
+    state: ListState,
+    instructions: Vec<(usize, String)>,
+}
+
+impl StatefulInstructions {
+    fn new(instructions: Vec<String>) -> Self {
+        let mut i = Vec::new();
+        for (index, s) in instructions.iter().enumerate() {
+            i.push((index, s.clone()));
+        }
+        StatefulInstructions {
+            state: ListState::default(),
+            instructions: i,
+        }
+    }
+
+    fn next(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i >= self.instructions.len() - 1 {
+                    0
+                } else {
+                    i + 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+
+    fn previous(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i == 0 {
+                    self.instructions.len() - 1
+                } else {
+                    i - 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+
+    fn unselect(&mut self) {
+        self.state.select(None);
+    }
+}
+
 struct App<'a> {
     runtime: Runtime<'a>,
     /// Filename of the file that contains the code
     filename: String,
     /// The code that is compiled and run
-    instructions: Vec<ListItem<'a>>,
+    instructions: StatefulInstructions,
 }
 
 impl<'a> App<'a> {
-    fn from_runtime(runtime: Runtime<'a>, filename: String, instructions: &'a Vec<String>) -> App<'a> {
+    fn from_runtime(runtime: Runtime<'a>, filename: String, instructions: Vec<String>) -> App<'a> {
         Self {
             runtime,
             filename,
-            instructions: make_list_items(instructions),
+            instructions: StatefulInstructions::new(instructions),
         }
     }
 
-    fn run<B: Backend>(&self, terminal: &mut Terminal<B>) -> io::Result<()> {
+    fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> io::Result<()> {
         loop {
-            terminal.draw(|f| ui(f, &self))?;
+            terminal.draw(|f| ui(f, self))?;
             if let Event::Key(key) = event::read()? {
                 match key.code {
                     KeyCode::Char('q') => return Ok(()),
+                    KeyCode::Down => self.instructions.next(),//TODO remove manual list control
+                    KeyCode::Up => self.instructions.previous(),
                     _ => (),
                 }
             }
-            thread::sleep(Duration::from_millis(100));
+            thread::sleep(Duration::from_millis(30));
         }
     }
 }
 
-fn make_list_items(input: &Vec<String>) -> Vec<ListItem> {
-    input
-        .iter()
-        .enumerate()
-        .map(|(i, m)| {
-            let content = vec![Spans::from(Span::raw(format!("{:2}: {}", i+1, m)))];
-            ListItem::new(content)
-        })
-        .collect()
-}
-
-fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
+fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     // Wrapping block for a group
     // Just draw the block and the group on the same area and build the group
     // with at least a margin of 1
@@ -179,16 +220,41 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
         .borders(Borders::ALL)
         .title(app.filename.clone())
         .title_alignment(Alignment::Center)
-        .border_type(BorderType::Rounded);
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(Color::Green));
+
+    // Iterate through all elements in the `items` app and append some debug text to it.
+    let items: Vec<ListItem> = app
+        .instructions
+        .instructions
+        .iter()
+        .map(|i| {
+            let content = vec![Spans::from(Span::raw(format!("{:2}: {}", i.0+1, i.1)))];
+            ListItem::new(content).style(Style::default())
+        })
+        .collect();
+
+    // Create a List from all list items and highlight the currently selected one
+    let items = List::new(items)
+        .block(code_area)
+        .highlight_style(
+            Style::default()
+                .bg(Color::DarkGray)
+                .add_modifier(Modifier::BOLD),
+        )
+        .highlight_symbol(">> ");
+
+    // We can now render the item list
+    f.render_stateful_widget(items, chunks[0], &mut app.instructions.state);
     //f.render_widget(code_area, chunks[0]);
 
-    let code_area_text = List::new(app.instructions.clone()).block(code_area);
+    //let code_area_text = List::new(app.instructions.clone()).block(code_area);
 
     //let code_area_text = Paragraph::new("Some Text")
     //    .block(code_area)
     //    .style(Style::default().fg(Color::White))
     //    .alignment(Alignment::Left);
-    f.render_widget(code_area_text, chunks[0]);
+    //f.render_widget(code_area_text, chunks[0]);
 
     // Accumulator block
     let accumulator = Block::default()
