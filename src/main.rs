@@ -10,8 +10,9 @@ use crossterm::{
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Alignment, Constraint, Direction, Layout},
-    text::{Spans, Text},
-    widgets::{Block, BorderType, Borders, Paragraph},
+    style::{Color, Style},
+    text::{Spans, Text, Span},
+    widgets::{Block, BorderType, Borders, ListItem, Paragraph, List},
     Frame, Terminal,
 };
 use utils::read_file;
@@ -92,7 +93,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend).unwrap();
 
     // create app
-    let app = App::from_runtime(rt);
+    let app = App::from_runtime(rt, args.input, &instructions);
     let res = app.run(&mut terminal);
 
     // restore terminal
@@ -109,11 +110,19 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 struct App<'a> {
     runtime: Runtime<'a>,
+    /// Filename of the file that contains the code
+    filename: String,
+    /// The code that is compiled and run
+    instructions: Vec<ListItem<'a>>,
 }
 
 impl<'a> App<'a> {
-    fn from_runtime(runtime: Runtime<'a>) -> App<'a> {
-        Self { runtime }
+    fn from_runtime(runtime: Runtime<'a>, filename: String, instructions: &'a Vec<String>) -> App<'a> {
+        Self {
+            runtime,
+            filename,
+            instructions: make_list_items(instructions),
+        }
     }
 
     fn run<B: Backend>(&self, terminal: &mut Terminal<B>) -> io::Result<()> {
@@ -128,6 +137,17 @@ impl<'a> App<'a> {
             thread::sleep(Duration::from_millis(100));
         }
     }
+}
+
+fn make_list_items(input: &Vec<String>) -> Vec<ListItem> {
+    input
+        .iter()
+        .enumerate()
+        .map(|(i, m)| {
+            let content = vec![Spans::from(Span::raw(format!("{:2}: {}", i+1, m)))];
+            ListItem::new(content)
+        })
+        .collect()
 }
 
 fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
@@ -154,13 +174,21 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
         .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
         .split(chunks[1]);
 
-    // Surrounding block
+    // Code area
     let code_area = Block::default()
         .borders(Borders::ALL)
-        .title("Code Area")
+        .title(app.filename.clone())
         .title_alignment(Alignment::Center)
         .border_type(BorderType::Rounded);
-    f.render_widget(code_area, chunks[0]);
+    //f.render_widget(code_area, chunks[0]);
+
+    let code_area_text = List::new(app.instructions.clone()).block(code_area);
+
+    //let code_area_text = Paragraph::new("Some Text")
+    //    .block(code_area)
+    //    .style(Style::default().fg(Color::White))
+    //    .alignment(Alignment::Left);
+    f.render_widget(code_area_text, chunks[0]);
 
     // Accumulator block
     let accumulator = Block::default()
