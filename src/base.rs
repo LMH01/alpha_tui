@@ -1,5 +1,5 @@
 /// A single accumulator, represents "Akkumulator/Alpha" from SysInf lecture.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Accumulator {
     /// Used to identify accumulator
     pub id: i32,
@@ -19,7 +19,7 @@ impl Accumulator {
 
 /// Representation of a single memory cell.
 /// The term memory cell is equal to "Speicherzelle" in the SysInf lecture.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct MemoryCell {
     pub label: String,
     pub data: Option<i32>,

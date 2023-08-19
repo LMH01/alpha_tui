@@ -42,6 +42,9 @@ impl<'a> RuntimeBuilder<'a> {
     /// Returns `RuntimeBuildError` when the runtime could not be constructed due to missing information.
     pub fn build(&mut self) -> Result<Runtime, RuntimeBuildError> {
         //TODO Add check if all labels that are used in instructions exist in the control flow.
+        if let Err(e) = self.check_labels() {
+            return Err(RuntimeBuildError::LabelMissing(e));
+        }
         if self.runtime_args.is_none() {
             return Err(RuntimeBuildError::RuntimeArgsMissing);
         }
@@ -116,6 +119,33 @@ impl<'a> RuntimeBuilder<'a> {
             Ok(())
         }
     }
+
+    /// Checks if all labels that are called in the instructions exist in the control flow.
+    /// 
+    /// If label is missing the name of the label that is missing is returned.
+    fn check_labels(&self) -> Result<(), String> {
+        if self.instructions.is_none() {
+            return Ok(());
+        }
+        for instruction in self.instructions.as_ref().unwrap() {
+            match instruction {
+                Instruction::Goto(label) => if !self.control_flow.instruction_labels.contains_key(label) {
+                    return Err(label.clone());
+                },
+                Instruction::GotoIfAccumulator(_, label, _, _) => if !self.control_flow.instruction_labels.contains_key(label) {
+                    return Err(label.clone());
+                },
+                Instruction::GotoIfConstant(_, label, _, _) => if !self.control_flow.instruction_labels.contains_key(label) {
+                    return Err(label.clone());
+                },
+                Instruction::GotoIfMemoryCell(_, label ,_ ,_ ) => if !self.control_flow.instruction_labels.contains_key(label) {
+                    return Err(label.clone());
+                },
+                _ => (),
+            };
+        }
+        Ok(())
+    }
 }
 
 fn error_handling(e: InstructionParseError, instruction: &str) -> String {
@@ -163,7 +193,7 @@ fn append_char_indicator(str: &mut String, idx: usize) {
 }
 
 /// Errors that can occur when a runtime is constructed from a RuntimeBuilder.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum RuntimeBuildError {
     RuntimeArgsMissing,
     InstructionsMissing,
@@ -180,6 +210,7 @@ pub enum AddLabelError {
 }
 
 //TODO make fields private and add access functions, move into separate module
+#[derive(Debug, PartialEq)]
 pub struct Runtime<'a> {
     runtime_args: RuntimeArgs<'a>,
     instructions: Vec<Instruction>,
@@ -221,7 +252,7 @@ impl<'a> Runtime<'a> {
 }
 
 /// Used to control what instruction should be executed next.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ControlFlow {
     /// The index of the instruction that should be executed next in the **instructions** vector.
     pub next_instruction_index: usize,
@@ -262,7 +293,7 @@ impl<'a> ControlFlow {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct RuntimeArgs<'a> {
     /// Current values stored in accumulators
     pub accumulators: Vec<Accumulator>,
@@ -313,5 +344,25 @@ impl<'a> RuntimeArgs<'a> {
     pub fn add_accumulator(&mut self) {
         let id = self.accumulators.len();
         self.accumulators.push(Accumulator::new(id as i32));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{instructions::Instruction, runtime::RuntimeBuildError};
+
+    use super::RuntimeBuilder;
+
+
+    #[test]
+    fn test_label_missing() {
+        let instructions = vec![Instruction::Goto("loop".to_string())];
+        let mut rb = RuntimeBuilder::new_default();
+        rb.set_instructions(instructions.clone());
+        assert!(rb.add_label("loop".to_string(), 0).is_ok());
+        assert!(rb.build().is_ok());
+        rb.reset();
+        rb.set_instructions(instructions);
+        assert_eq!(rb.build(), Err(RuntimeBuildError::LabelMissing("loop".to_string())));
     }
 }
