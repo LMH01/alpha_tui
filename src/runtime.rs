@@ -41,7 +41,7 @@ impl<'a> RuntimeBuilder<'a> {
     /// 
     /// Returns `RuntimeBuildError` when the runtime could not be constructed due to missing information.
     pub fn build(&mut self) -> Result<Runtime, RuntimeBuildError> {
-        //TODO Add check if all labels that are used in instructions exist in the control flow.
+        //TODO Add check if all memory cells and accumulators exist
         if let Err(e) = self.check_labels() {
             return Err(RuntimeBuildError::LabelMissing(e));
         }
@@ -90,6 +90,7 @@ impl<'a> RuntimeBuilder<'a> {
                 Err(e) => return Err(error_handling(e, instruction)),
             }
         }
+        self.instructions = Some(instructions);
         Ok(())
     }
 

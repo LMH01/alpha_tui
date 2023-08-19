@@ -1207,6 +1207,58 @@ mod tests {
     }
 
     #[test]
+    fn test_example_program_1_text_parsing() {
+        let mut runtime_args = RuntimeArgs::new_empty();
+        for _i in 1..=4 {
+            runtime_args.add_accumulator();
+        }
+        runtime_args.add_storage_cell("a");
+        runtime_args.add_storage_cell("b");
+        runtime_args.add_storage_cell("c");
+        runtime_args.add_storage_cell("d");
+        runtime_args.add_storage_cell("w");
+        runtime_args.add_storage_cell("x");
+        runtime_args.add_storage_cell("y");
+        runtime_args.add_storage_cell("z");
+        runtime_args.add_storage_cell("h1");
+        runtime_args.add_storage_cell("h2");
+        runtime_args.add_storage_cell("h3");
+        runtime_args.add_storage_cell("h4");
+        let mut instructions = Vec::new();
+        instructions.push("p(a) := 5\n");
+        instructions.push("p(b) := 2\n");
+        instructions.push("p(c) := 3\n");
+        instructions.push("p(d) := 9\n");
+        instructions.push("p(w) := 4\n");
+        instructions.push("p(x) := 8\n");
+        instructions.push("p(y) := 3\n");
+        instructions.push("p(z) := 2\n");
+        instructions.push("p(h1) := p(a) * p(w)\n");
+        instructions.push("p(h2) := p(b) * p(y)\n");
+        instructions.push("p(h3) := p(a) * p(x)\n");
+        instructions.push("p(h4) := p(b) * p(z)\n");
+        instructions.push("p(a) := p(h1) + p(h2)\n");
+        instructions.push("p(b) := p(h3) + p(h4)\n");
+        instructions.push("p(h1) := p(c) * p(w)\n");
+        instructions.push("p(h2) := p(d) * p(y)\n");
+        instructions.push("p(h3) := p(c) * p(x)\n");
+        instructions.push("p(h4) := p(d) * p(z)\n");
+        instructions.push("p(c) := p(h1) + p(h2)\n");
+        instructions.push("p(d) := p(h3) + p(h4)\n");
+        let mut rb = RuntimeBuilder::new();
+        rb.set_runtime_args(runtime_args);
+        assert!(rb.build_instructions(&instructions).is_ok());
+        let rt = rb.build();
+        assert!(rt.is_ok());
+        let mut rt = rt.unwrap();
+        assert!(rt.run().is_ok());
+        assert_eq!(rt.runtime_args().memory_cells.get("a").unwrap().data.unwrap(), 26);
+        assert_eq!(rt.runtime_args().memory_cells.get("b").unwrap().data.unwrap(), 44);
+        assert_eq!(rt.runtime_args().memory_cells.get("c").unwrap().data.unwrap(), 39);
+        assert_eq!(rt.runtime_args().memory_cells.get("d").unwrap().data.unwrap(), 42);
+    }
+
+    #[test]
     fn test_example_program_2() {
         let instructions = vec![
             Instruction::AssignAccumulatorValue(0, 1),
@@ -1221,6 +1273,24 @@ mod tests {
         let mut runtime_builder = RuntimeBuilder::new_default();
         runtime_builder.set_instructions(instructions);
         runtime_builder.add_label("loop".to_string(), 2).unwrap();
+        let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
+        runtime.run().unwrap();
+        assert_eq!(runtime.runtime_args().accumulators[0].data.unwrap(), 256);
+    }
+
+    #[test]
+    fn test_example_program_2_text_parsing() {
+        let mut instructions = Vec::new();
+        instructions.push("a0 := 1");
+        instructions.push("p(a) := 8");
+        instructions.push("loop: a0 := a0 * 2");
+        instructions.push("p(a) := p(a) - 1");
+        instructions.push("a1 := p(a)");
+        instructions.push("if a1 > 0 then goto loop");
+        let mut runtime_builder = RuntimeBuilder::new_default();
+        let res = runtime_builder.build_instructions(&instructions);
+        println!("{:?}", res);
+        assert!(res.is_ok());
         let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
         runtime.run().unwrap();
         assert_eq!(runtime.runtime_args().accumulators[0].data.unwrap(), 256);
