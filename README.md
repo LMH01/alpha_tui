@@ -1,4 +1,4 @@
-# rust_alpha
+# alpha_tui
 
 This is my attempt at writing a compiler for the Alpha-Notation used in my Systemnahe Informatik lecture at university.
 
@@ -11,14 +11,14 @@ Internal handling of instructions is finished, programs can be run, when assembl
 - [X] Make it possible to customize the available memory cells (will be done by cli option)
 - [X] Add option to load predetermined values into memory cells before program starts (cli option, probably read from file)
 - [X] Make progamm work with GUI 
-	- [ ] (Customization of available accumulators) - will be done with cli options
-	- [ ] (Customization of available memory cells) - will be done with cli options
+	- [X] (Customization of available accumulators) - will be done with cli options
+	- [X] (Customization of available memory cells) - will be done with cli options
 		- if no memory cells are set all commands that require memory cells should be disabled ("compiling" with those commands included should fail)	
 - [X] Debug mode -> Step through each instruction
 - [X] Add tests (at least one for each command)
 - [X] Add support for comments at end of line (marked with # or //)
 - [X] Fix instruction pointer when lines are commented out
-- [ ] Rename program into something better
+- [X] Rename program into something better
 - [X] Add label ENDE or END that can be called to end the program
 - [ ] Write documentation and update readme to contain picture(s)
 - [X] Required accumulators and memory cells should be parsed from program (this should be the default), if this is not wanted memory cells can be set manually by the methods i already have

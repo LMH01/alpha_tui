@@ -1,5 +1,5 @@
 [package]
-name = "rust_alpha"
+name = "alpha_tui"
 version = "0.1.0"
 edition = "2021"
 

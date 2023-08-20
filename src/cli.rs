@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use clap::{Parser, ArgGroup};
 
 #[derive(Parser, Debug)]
-#[command(author = "LMH01", version, about, long_about = None)]
+#[command(author = "LMH01", version, about, long_about = "debugger and runtime environment for the alpha notation used in my Systemnahme Informatik lecture")]
 #[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_cell_file"]))]
 pub struct Args {
     #[arg(
@@ -27,7 +27,6 @@ pub struct Args {
         help = "Number of available memory cells",
         long_help = "Number of available memory cells.\nIf a large number of memory cells is specified, it can happen that some are not displayed in the gui.\nExample: -a a,b,c,d",
         value_delimiter = ',',
-        //default_value = "a,b,c,d,w,x,y,z,h1,h2,h3,h4",
     )]
     pub memory_cells: Option<Vec<String>>,
     #[arg(
