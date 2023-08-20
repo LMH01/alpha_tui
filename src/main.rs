@@ -101,5 +101,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     )?;
     terminal.show_cursor()?;
 
-    Ok(())
+    match res {
+        Ok(()) => exit(0),
+        Err(e) => {
+            println!("{e}");
+            exit(-1);
+        }
+    }
+
 }

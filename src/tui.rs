@@ -1,4 +1,4 @@
-use std::{time::Duration, collections::{HashMap, HashSet}, thread, io};
+use std::{time::Duration, collections::{HashMap, HashSet}, thread, io::{self, Error}};
 
 use crossterm::event::{Event, KeyCode, self};
 use tui::{backend::Backend, Frame, layout::{Layout, Direction, Constraint, Alignment, Rect}, widgets::{Tabs, Block, Borders, BorderType, ListItem, List, ListState, Clear, Paragraph}, style::{Style, Color, Modifier}, text::{Spans, Span}, Terminal};
@@ -207,7 +207,10 @@ impl<'a> App<'a> {
             terminal.draw(|f| ui(f, self))?;
             if let Event::Key(key) = event::read()? {
                 match key.code {
-                    KeyCode::Char('q') => return Ok(()),
+                    KeyCode::Char('q') => match self.errored.as_ref() {
+                        None => return Ok(()),
+                        Some(e) => return Err(Error::new(io::ErrorKind::Other, format!("Execution Terminated: {}", e))),
+                    },
                     KeyCode::Down => self.instructions.next(),//TODO remove manual list control
                     KeyCode::Up => self.instructions.previous(),
                     KeyCode::Char('n')  => {
@@ -236,8 +239,9 @@ impl<'a> App<'a> {
                                 self.running = false;
                                 self.errored = Some(res.unwrap_err());
                                 self.set_keybind_hint('r', false);
-                            } else if self.runtime.finished() {
-                                self.instructions.set(self.runtime.current_instruction_index());
+                            }
+                            self.instructions.set(self.runtime.current_instruction_index());
+                            if self.runtime.finished() && self.errored.is_none() {
                                 self.finished = true;
                                 self.set_keybind_hint('s', true);
                                 self.set_keybind_hint('r', false);
@@ -348,12 +352,16 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .split(chunks[1]);
 
     // Code area
-    let code_area = Block::default()
+    let mut code_area = Block::default()
         .borders(Borders::ALL)
         .title(app.filename.clone())
         .title_alignment(Alignment::Center)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Green));
+        .border_type(BorderType::Rounded);
+    if app.errored.is_some() {
+        code_area = code_area.border_style(Style::default().fg(Color::Red));
+    } else {
+        code_area = code_area.border_style(Style::default().fg(Color::Green));
+    }
 
     // Iterate through all elements in the `items` app and append some debug text to it.
     let items: Vec<ListItem> = app
