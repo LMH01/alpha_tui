@@ -228,28 +228,28 @@ impl TryFrom<&Vec<&str>> for Instruction {
             let no = parse_number(parts[3], err_idx(parts, 3));
             let m_cell = parse_memory_cell(parts[3], err_idx(parts, 3));
             // Check if instruction is goto_if_accumulator
-            if a_idx_b.is_ok() {
+            if let Ok(a_idx_b) = a_idx_b {
                 return Ok(Instruction::GotoIfAccumulator(
                     cmp,
                     parts[6].to_string(),
                     a_idx,
-                    a_idx_b.unwrap(),
+                    a_idx_b,
                 ));
-            } else if no.is_ok() {
+            } else if let Ok(no) = no {
                 // Check if instruction is goto_if_constant
                 return Ok(Instruction::GotoIfConstant(
                     cmp,
                     parts[6].to_string(),
                     a_idx,
-                    no.unwrap(),
+                    no,
                 ));
-            } else if m_cell.is_ok() {
+            } else if let Ok(m_cell) = m_cell {
                 // Check if instruction is goto_if_memory_cell
                 return Ok(Instruction::GotoIfMemoryCell(
                     cmp,
                     parts[6].to_string(),
                     a_idx,
-                    m_cell.unwrap(),
+                    m_cell,
                 ));
             } else {
                 return Err(InstructionParseError::InvalidExpression(
@@ -316,21 +316,24 @@ impl TryFrom<&Vec<&str>> for Instruction {
                     let m_cell = parse_memory_cell(parts[4], err_idx(parts, 4));
 
                     // Check if instruction is calc_accumulator_value_with_constant
-                    if no.is_ok() {
+                    if let Ok(no) = no {
                         return Ok(Instruction::CalcAccumulatorWithConstant(
                             op,
                             a_idx,
-                            no.unwrap(),
-                        ));
-                    } else if m_cell.is_ok() {
-                        // Check if instruction is calc_accumulator_value_with_memory_cell
-                        return Ok(Instruction::CalcAccumulatorWithMemoryCell(
-                            op,
-                            a_idx,
-                            m_cell.unwrap(),
+                            no,
                         ));
                     } else {
-                        return Err(m_cell.unwrap_err());
+                        // Check if instruction is calc_accumulator_value_with_memory_cell
+                        match m_cell {
+                            Ok(v) => {
+                                return Ok(Instruction::CalcAccumulatorWithMemoryCell(
+                                    op,
+                                    a_idx,
+                                    v,
+                                ));
+                            },
+                            Err(e) => return Err(e)
+                        }
                     }
                 }
 
@@ -343,12 +346,12 @@ impl TryFrom<&Vec<&str>> for Instruction {
             let no = parse_number(parts[2], err_idx(parts, 2));
 
             // Instructions where the third part is a memory cell
-            if m_cell_a.is_ok() {
+            if let Ok(m_cell_a) = m_cell_a {
                 // Check if instruction is assign_accumulator_value_from_memory_cell
                 if parts.len() == 3 {
                     return Ok(Instruction::AssignAccumulatorValueFromMemoryCell(
                         a_idx,
-                        m_cell_a.unwrap(),
+                        m_cell_a,
                     ));
                 }
                 // Longer, instruction is calc_accumulator_with_memory_cells
@@ -357,15 +360,14 @@ impl TryFrom<&Vec<&str>> for Instruction {
                 return Ok(Instruction::CalcAccumulatorWithMemoryCells(
                     op,
                     a_idx,
-                    m_cell_a.unwrap(),
+                    m_cell_a,
                     m_cell_b,
-                )); //TODO write test
+                ));
             }
 
             // Instruction is assign_accumulator__value
-            if no.is_ok() {
-                return Ok(Instruction::AssignAccumulatorValue(a_idx, no.unwrap()));
-                //TODO write test for this
+            if let Ok(no) = no {
+                return Ok(Instruction::AssignAccumulatorValue(a_idx, no));
             }
             return Err(InstructionParseError::InvalidExpression(
                 err_idx(parts, 2),
@@ -388,28 +390,28 @@ impl TryFrom<&Vec<&str>> for Instruction {
                 let no = parse_number(parts[4], err_idx(parts, 4)); //TODO Fix index out of bounds when parts is of length 4 or of length 1
                 let m_cell_c = parse_memory_cell(parts[4], err_idx(parts, 4));
                 // Check if instruction is calc_memory_cell_with_memory_cell_accumulator
-                if a_idx.is_ok() {
+                if let Ok(a_idx) = a_idx {
                     return Ok(Instruction::CalcMemoryCellWithMemoryCellAccumulator(
                         op,
                         m_cell,
                         m_cell_b,
-                        a_idx.unwrap(),
+                        a_idx,
                     ));
-                } else if no.is_ok() {
+                } else if let Ok(no) = no {
                     // Check if instruction is calc_memory_cell_with_memory_cell_constant
                     return Ok(Instruction::CalcMemoryCellWithMemoryCellConstant(
                         op,
                         m_cell,
                         m_cell_b,
-                        no.unwrap(),
+                        no,
                     ));
-                } else if m_cell_c.is_ok() {
+                } else if let Ok(m_cell_c) = m_cell_c {
                     // Check if instruction is calc_memory_cell_with_memory_cells
                     return Ok(Instruction::CalcMemoryCellWithMemoryCells(
                         op,
                         m_cell,
                         m_cell_b,
-                        m_cell_c.unwrap(),
+                        m_cell_c,
                     ));
                 } else {
                     return Err(InstructionParseError::InvalidExpression(
@@ -422,14 +424,14 @@ impl TryFrom<&Vec<&str>> for Instruction {
             let a_idx = parse_alpha(parts[2], err_idx(parts, 2));
             let no = parse_number(parts[2], err_idx(parts, 2));
             // Check if instruction is assign_memory_cell_value_from_accumulator
-            if a_idx.is_ok() {
+            if let Ok(idx) = a_idx {
                 return Ok(Instruction::AssignMemoryCellValueFromAccumulator(
                     m_cell,
-                    a_idx.unwrap(),
+                    idx,
                 ));
-            } else if no.is_ok() {
+            } else if let Ok(v) = no {
                 // Check if instruction is assign_memory_cell_value
-                return Ok(Instruction::AssignMemoryCellValue(m_cell, no.unwrap()));
+                return Ok(Instruction::AssignMemoryCellValue(m_cell, v));
             } else {
                 return Err(InstructionParseError::InvalidExpression(
                     err_idx(parts, 2),
@@ -583,7 +585,8 @@ fn parse_memory_cell(s: &str, err_base_idx: usize) -> Result<String, Instruction
 /// Calculates the error index depending on the part in which the error occurs.
 ///
 /// `part_idx` specifies in what part the error occurs.
-fn err_idx(parts: &Vec<&str>, part_idx: usize) -> usize {
+#[allow(clippy::needless_range_loop)]
+fn err_idx(parts: &[&str], part_idx: usize) -> usize {
     let mut idx = 0;
     for i in 0..=part_idx - 1 {
         idx += parts[i].len() + 1;
@@ -1005,7 +1008,7 @@ mod tests {
     };
 
     /// Used to set the available memory cells during testing.
-    const TEST_MEMORY_CELL_LABELS: &[&str] = &[
+    const TEST_MEMORY_CELL_LABELS: &'static [&'static str] = &[
         "a", "b", "c", "d", "e", "f", "w", "x", "y", "z", "h1", "h2", "h3", "h4",
     ];
 

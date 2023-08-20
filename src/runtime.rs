@@ -107,6 +107,7 @@ impl RuntimeBuilder {
     /// Control flow is reset and updated accordingly.
     ///
     /// If an instruction could not be parsed, an error is returned containing the reason.
+    #[allow(clippy::ptr_arg)]
     pub fn build_instructions(&mut self, instructions_input: &Vec<&str>) -> Result<(), String> {
         self.control_flow.reset();
         let mut instructions = Vec::new();
@@ -488,7 +489,7 @@ pub struct ControlFlow {
     pub instruction_labels: HashMap<String, usize>,
 }
 
-impl<'a> ControlFlow {
+impl ControlFlow {
     pub fn new() -> Self {
         Self {
             next_instruction_index: 0,
@@ -638,6 +639,7 @@ impl<'a> RuntimeArgs {
 /// If value is missing an empty memory cell will be created.
 /// 
 /// Errors when file could not be read.
+#[allow(clippy::unnecessary_unwrap)]
 fn read_memory_cells_from_file(path: &str) -> Result<HashMap<String, MemoryCell>, String> {
     let contents = read_file(path)?;
     let mut map = HashMap::new();

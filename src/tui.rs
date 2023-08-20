@@ -196,9 +196,9 @@ impl App {
                             self.running = true;
                             self.set_keybind_message('r', "Run next instruction".to_string());
                             let res = self.runtime.step();
-                            if res.is_err() {
+                            if let Err(e) = res {
                                 self.running = false;
-                                self.errored = Some(res.unwrap_err());
+                                self.errored = Some(e);
                                 self.set_keybind_hint('r', false);
                             }
                             self.instructions.set(self.runtime.current_instruction_index());
@@ -219,7 +219,7 @@ impl App {
 
     fn active_keybind_hints(&self) -> Vec<Spans> {
         let mut spans = Vec::new();
-        for (_k, v) in &self.keybind_hints {
+        for v in self.keybind_hints.values() {
             if !v.enabled {
                 continue;
             }
@@ -232,17 +232,15 @@ impl App {
 
     /// Set whether the keybind hint should be shown or not.
     fn set_keybind_hint(&mut self, key: char, value: bool) {
-        match self.keybind_hints.get_mut(&key) {
-            Some(h) => h.enabled = value,
-            None => (),
+        if let Some(h) = self.keybind_hints.get_mut(&key) {
+            h.enabled = value;
         }
     }
 
     /// Sets the message for the keybind.
     fn set_keybind_message(&mut self, key: char, message: String) {
-        match self.keybind_hints.get_mut(&key) {
-            Some(h) => h.action = message,
-            None => (),
+        if let Some(h) = self.keybind_hints.get_mut(&key) {
+            h.action = message;
         }
     }
 
