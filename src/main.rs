@@ -46,17 +46,17 @@ fn main() -> Result<()> {
             exit(-1);
         },
     };
-    //rb.build_instructions(&instructions.iter().map(|s| s.as_str()).collect())?;
-    match rb.build_instructions(&instructions.iter().map(|s| s.as_str()).collect()) {
-        Ok(_) => (),
-        Err(e) => {
-            Err(BuildProgramError {
-                src: NamedSource::new(&args.input, instructions.clone().join("\n")),
-                bad_bit: e.position(1),
-                reason: e,
-            })?
-        }
-    };
+    rb.build_instructions(&instructions.iter().map(|s| s.as_str()).collect(), &args.input)?;
+    //match rb.build_instructions(&instructions.iter().map(|s| s.as_str()).collect()) {
+    //    Ok(_) => (),
+    //    Err(e) => {
+    //        Err(BuildProgramError {
+    //            src: NamedSource::new(&args.input, instructions.clone().join("\n")),
+    //            bad_bit: e.position(1),
+    //            reason: e,
+    //        })?
+    //    }
+    //};
     println!("Building runtime");
     let rt = match rb.build() {
         Ok(rt) => rt,

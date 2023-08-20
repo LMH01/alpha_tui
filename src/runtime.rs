@@ -1,12 +1,12 @@
 use std::{collections::HashMap, fmt::Display};
 
-use miette::{Result, Diagnostic, NamedSource, IntoDiagnostic, Context};
+use miette::{Result, Diagnostic, NamedSource, IntoDiagnostic, Context, SourceOffset};
 use thiserror::Error;
 
 use crate::{
     base::{Accumulator, MemoryCell},
     instructions::{
-        Instruction, InstructionParseError,
+        Instruction, InstructionParseError, BuildProgramError,
     }, cli::Args, utils::read_file,
 };
 
@@ -111,7 +111,7 @@ impl RuntimeBuilder {
     ///
     /// If an instruction could not be parsed, an error is returned containing the reason.
     #[allow(clippy::ptr_arg)]
-    pub fn build_instructions(&mut self, instructions_input: &Vec<&str>) -> Result<(), InstructionParseError> {
+    pub fn build_instructions(&mut self, instructions_input: &Vec<&str>, file_name: &str) -> Result<()> {
         self.control_flow.reset();
         let mut instructions = Vec::new();
         for (index, instruction) in instructions_input.iter().enumerate() {
@@ -129,18 +129,27 @@ impl RuntimeBuilder {
                 self.control_flow.instruction_labels.insert(label, index);
             }
             //instructions.push(Instruction::try_from(&splits).wrap_err("when building instructions")?)
-            instructions.push(Instruction::try_from(&splits)?)
-            //match Instruction::try_from(&splits) {
-            //    Ok(i) => instructions.push(i),
-            //    Err(e) => {
-            //        Err(e)?
-            //        //Err(InstructionParseError {
-            //        //    src: NamedSource::new("test", "some code here"),
-            //        //    bad_bit: (0, 0).into(),
-            //        //})?
-            //        //return Err(error_handling(e, instruction, (index as u32) + 1))
-            //    },
-            //}
+            //instructions.push(Instruction::try_from(&splits)?)
+            match Instruction::try_from(&splits) {
+                Ok(i) => instructions.push(i),
+                Err(e) => {
+                    match e {
+                        InstructionParseError::NoMatch {src: _, pos: _} => {
+                            Err(BuildProgramError::Simple { reason: e })?
+                        }
+                        InstructionParseError::NoMatchSuggestion { help: _,  pos: _, src: _ } => {
+                            Err(BuildProgramError::Simple { reason: e })?
+                        }
+                        _ => {
+                            Err(BuildProgramError::Detailed {
+                                src: NamedSource::new(&file_name, instructions_input.clone().join("\n")),
+                                bad_bit: (SourceOffset::from_location(instructions_input.join("\n"), index+1, e.position()+1)).into(),
+                                reason: e,
+                            })?
+                        },
+                    };
+                },
+            }
         }
         self.instructions = Some(instructions);
         Ok(())
@@ -326,45 +335,6 @@ impl RuntimeBuilder {
         }
         Ok(())
     }
-}
-
-fn error_handling(e: InstructionParseError, instruction: &str, line: u32) -> String {
-    let mut message = format!(
-        "Error while building instruction (line {}):\n",
-        line
-    );
-    message.push_str(instruction);
-    message.push('\n');
-    match e {
-        InstructionParseError::UnknownOperation(idx, str) => {
-            append_char_indicator(&mut message, idx);
-            message.push_str(&format!("Unknown operation: {}", str));
-        }
-        InstructionParseError::UnknownComparison(idx, str) => {
-            append_char_indicator(&mut message, idx);
-            message.push_str(&format!("Unknown comparison: {}", str));
-        }
-        InstructionParseError::NotANumber(idx, str) => {
-            append_char_indicator(&mut message, idx);
-            message.push_str(&format!("Not a number: {}", str));
-        }
-        InstructionParseError::InvalidExpression(idx, str) => {
-            append_char_indicator(&mut message, idx);
-            message.push_str(&format!("Invalid expression: {}", str));
-        }
-        InstructionParseError::NoMatch => {
-            message.push_str("^\n");
-            message.push_str("No matching instruction found!");
-        }
-        InstructionParseError::NoMatchSuggestion(str) => {
-            append_char_indicator(&mut message, 0);
-            message.push_str(&format!(
-                "No matching instruction found, did you mean: {} ?",
-                str
-            ));
-        }
-    }
-    message
 }
 
 /// Prints a pointer at index.
@@ -928,6 +898,6 @@ mod tests {
             "a1 := a2 // Just some more stuff",
         ];
         let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
-        assert!(rb.build_instructions(&instructions).is_ok());
+        assert!(rb.build_instructions(&instructions, "test").is_ok());
     }
 }

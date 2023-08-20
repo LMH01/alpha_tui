@@ -1,4 +1,4 @@
-use miette::{Result, Diagnostic, NamedSource, SourceSpan};
+use miette::{Diagnostic, NamedSource, Result, SourceSpan, SourceOffset};
 use thiserror::Error;
 
 use crate::{
@@ -204,26 +204,17 @@ impl TryFrom<&Vec<&str>> for Instruction {
     /// Each element in the vector is one part of the instruction.
     fn try_from(value: &Vec<&str>) -> Result<Self, InstructionParseError> {
         let parts = value;
-        
+
         // Instructions that compare values
         if parts[0] == "if" {
             if !parts[1].starts_with('a') {
-                return Err(InstructionParseError::InvalidExpression(
-                    err_idx(parts, 1),
-                    parts[1].to_string(),
-                ));
+                return Err(InstructionParseError::InvalidExpression(err_idx(parts, 1)));
             }
             if parts[4] != "then" {
-                return Err(InstructionParseError::InvalidExpression(
-                    err_idx(parts, 4),
-                    parts[4].to_string(),
-                ));
+                return Err(InstructionParseError::InvalidExpression(err_idx(parts, 4)));
             }
             if parts[5] != "goto" {
-                return Err(InstructionParseError::InvalidExpression(
-                    err_idx(parts, 5),
-                    parts[5].to_string(),
-                ));
+                return Err(InstructionParseError::InvalidExpression(err_idx(parts, 5)));
             }
             let a_idx = parse_alpha(parts[1], err_idx(parts, 1))?;
             let cmp = parse_comparison(parts[2], err_idx(parts, 2))?;
@@ -255,10 +246,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
                     m_cell,
                 ));
             } else {
-                return Err(InstructionParseError::InvalidExpression(
-                    err_idx(parts, 3),
-                    parts[3].to_string(),
-                ));
+                return Err(InstructionParseError::InvalidExpression(err_idx(parts, 3)));
             }
         }
 
@@ -280,7 +268,11 @@ impl TryFrom<&Vec<&str>> for Instruction {
         // At this point only instructions follow that require a := in the second part
         // Check if := is present
         if parts[1] != ":=" {
-            return Err(InstructionParseError::NoMatch);
+            let non_instruction = parts.join(" ");
+            return Err(InstructionParseError::NoMatch {
+                pos: (0, non_instruction.len()),
+                src: non_instruction
+        });
         }
 
         // Instructions where the first part is an accumulator
@@ -320,29 +312,25 @@ impl TryFrom<&Vec<&str>> for Instruction {
 
                     // Check if instruction is calc_accumulator_value_with_constant
                     if let Ok(no) = no {
-                        return Ok(Instruction::CalcAccumulatorWithConstant(
-                            op,
-                            a_idx,
-                            no,
-                        ));
+                        return Ok(Instruction::CalcAccumulatorWithConstant(op, a_idx, no));
                     } else {
                         // Check if instruction is calc_accumulator_value_with_memory_cell
                         match m_cell {
                             Ok(v) => {
                                 return Ok(Instruction::CalcAccumulatorWithMemoryCell(
-                                    op,
-                                    a_idx,
-                                    v,
+                                    op, a_idx, v,
                                 ));
-                            },
-                            Err(e) => return Err(e)
+                            }
+                            Err(e) => return Err(e),
                         }
                     }
                 }
 
-                return Err(InstructionParseError::NoMatchSuggestion(suggestion!(
-                    parts[0], ":=", parts[0], parts[3], parts[4]
-                )));
+                return Err(InstructionParseError::NoMatchSuggestion {
+                    src: parts.join(" "),
+                    pos: (0, parts.join(" ").len()),
+                    help: suggestion!(parts[0], ":=", parts[0], parts[3], parts[4]),
+                });
             }
 
             let m_cell_a = parse_memory_cell(parts[2], err_idx(parts, 3));
@@ -353,18 +341,14 @@ impl TryFrom<&Vec<&str>> for Instruction {
                 // Check if instruction is assign_accumulator_value_from_memory_cell
                 if parts.len() == 3 {
                     return Ok(Instruction::AssignAccumulatorValueFromMemoryCell(
-                        a_idx,
-                        m_cell_a,
+                        a_idx, m_cell_a,
                     ));
                 }
                 // Longer, instruction is calc_accumulator_with_memory_cells
                 let op = parse_operation(parts[3], err_idx(parts, 3))?;
                 let m_cell_b = parse_memory_cell(parts[4], err_idx(parts, 4))?;
                 return Ok(Instruction::CalcAccumulatorWithMemoryCells(
-                    op,
-                    a_idx,
-                    m_cell_a,
-                    m_cell_b,
+                    op, a_idx, m_cell_a, m_cell_b,
                 ));
             }
 
@@ -372,10 +356,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
             if let Ok(no) = no {
                 return Ok(Instruction::AssignAccumulatorValue(a_idx, no));
             }
-            return Err(InstructionParseError::InvalidExpression(
-                err_idx(parts, 2),
-                parts[2].to_string(),
-            ));
+            return Err(InstructionParseError::InvalidExpression(err_idx(parts, 2)));
         }
 
         // Instructions where the first part is a memory  cell
@@ -395,32 +376,20 @@ impl TryFrom<&Vec<&str>> for Instruction {
                 // Check if instruction is calc_memory_cell_with_memory_cell_accumulator
                 if let Ok(a_idx) = a_idx {
                     return Ok(Instruction::CalcMemoryCellWithMemoryCellAccumulator(
-                        op,
-                        m_cell,
-                        m_cell_b,
-                        a_idx,
+                        op, m_cell, m_cell_b, a_idx,
                     ));
                 } else if let Ok(no) = no {
                     // Check if instruction is calc_memory_cell_with_memory_cell_constant
                     return Ok(Instruction::CalcMemoryCellWithMemoryCellConstant(
-                        op,
-                        m_cell,
-                        m_cell_b,
-                        no,
+                        op, m_cell, m_cell_b, no,
                     ));
                 } else if let Ok(m_cell_c) = m_cell_c {
                     // Check if instruction is calc_memory_cell_with_memory_cells
                     return Ok(Instruction::CalcMemoryCellWithMemoryCells(
-                        op,
-                        m_cell,
-                        m_cell_b,
-                        m_cell_c,
+                        op, m_cell, m_cell_b, m_cell_c,
                     ));
                 } else {
-                    return Err(InstructionParseError::InvalidExpression(
-                        err_idx(parts, 4),
-                        parts[4].to_string(),
-                    ));
+                    return Err(InstructionParseError::InvalidExpression(err_idx(parts, 4)));
                 }
             }
 
@@ -429,21 +398,21 @@ impl TryFrom<&Vec<&str>> for Instruction {
             // Check if instruction is assign_memory_cell_value_from_accumulator
             if let Ok(idx) = a_idx {
                 return Ok(Instruction::AssignMemoryCellValueFromAccumulator(
-                    m_cell,
-                    idx,
+                    m_cell, idx,
                 ));
             } else if let Ok(v) = no {
                 // Check if instruction is assign_memory_cell_value
                 return Ok(Instruction::AssignMemoryCellValue(m_cell, v));
             } else {
-                return Err(InstructionParseError::InvalidExpression(
-                    err_idx(parts, 2),
-                    parts[2].to_string(),
-                ));
+                return Err(InstructionParseError::InvalidExpression(err_idx(parts, 2)));
             }
         }
 
-        Err(InstructionParseError::NoMatch)
+        let non_instruction = parts.join(" ");
+        Err(InstructionParseError::NoMatch {
+            pos: (0, non_instruction.len()),
+            src: non_instruction,
+        })
     }
 }
 
@@ -469,61 +438,87 @@ impl TryFrom<&str> for Instruction {
 #[derive(Debug, PartialEq, Diagnostic, Error)]
 pub enum InstructionParseError {
     /// Indicates that the specified operation does not exist.
-    /// Argument specifies the character index at which the error occurred
-    /// and the string that caused it.
+    /// Argument specifies the character index at which the error occurred.
     #[error("unknown operation")]
-    #[diagnostic(code("parse_instruction::unknown_operation"), help("Allowed operations: + - * /"))]
-    UnknownOperation(usize, String),
+    #[diagnostic(
+        code("parse_instruction::unknown_operation"),
+        help("Did you mean one of these?: + - * /")
+    )]
+    UnknownOperation(usize),
     /// Indicates that the specified comparison does not exist.
     /// Argument specifies the character index at which the error occurred.
     /// and the string that caused it.
     #[error("unknown comparison")]
-    #[diagnostic(code("parse_instruction::unknown_comparison"))]
-    UnknownComparison(usize, String),
+    #[diagnostic(
+        code("parse_instruction::unknown_comparison"),
+        help("Did you mean one of these?: < <= == != >= >")
+    )]
+    UnknownComparison(usize),
     /// Indicates that a value that was expected to be a number is not a number.
     /// Argument specifies the character index at which the error occurred.
     /// and the string that caused it.
     #[error("not a number")]
     #[diagnostic(code("parse_instruction::not_a_number"))]
-    NotANumber(usize, String),
+    NotANumber(usize),
     /// Indicates that the market expression is not valid.
     /// The reason might be a syntax error.
     #[error("invalid expression")]
     #[diagnostic(code("parse_instruction::invalid_expression"))]
-    InvalidExpression(usize, String),
+    InvalidExpression(usize),
     /// Indicates that no instruction was found that matches the input.
     #[error("no match")]
     #[diagnostic(code("parse_instruction::no_match"))]
-    NoMatch,
+    NoMatch{
+        #[source_code]
+        src: String,
+        #[label("this instruction")]
+        pos: (usize, usize),
+    },
     /// Indicates that no instruction was found but gives a suggestion on what instruction might be meant.
-    #[error("no match suggestion")]
+    #[error("no match")]
     #[diagnostic(code("parse_instruction::no_match_suggestion"))]
-    NoMatchSuggestion(String),
+    NoMatchSuggestion {
+        #[source_code]
+        src: String,
+        #[label("this instruction")]
+        pos: (usize, usize),
+        #[help]
+        help: String,
+    },
 }
 
 impl InstructionParseError {
-
-    pub fn position(&self, line: usize) -> SourceSpan {
+    pub fn position(&self) -> usize {
         match self {
-            InstructionParseError::UnknownOperation(c, reason) => {
-                (*c, line).into()
-            },
-            _ => (0, 0).into()
+            InstructionParseError::UnknownOperation(c) => *c,
+            InstructionParseError::UnknownComparison(c) => *c,
+            InstructionParseError::NotANumber(c) => *c,
+            InstructionParseError::InvalidExpression(c) => *c,
+            _ => 0,
         }
     }
-
 }
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("when building program")]
 #[diagnostic(code("build_program"))]
-pub struct BuildProgramError {
-    #[source_code]
-    pub src: NamedSource,
-    #[label("here")]
-    pub bad_bit: SourceSpan,
-    #[diagnostic_source]
-    pub reason: InstructionParseError,
+pub enum BuildProgramError {
+
+    Detailed {
+        #[source_code]
+        src: NamedSource,
+        #[label("here")]
+        bad_bit: SourceSpan,
+        #[diagnostic_source]
+        reason: InstructionParseError,
+    },
+
+    #[error("no matching instruction")]
+    Simple {
+        #[diagnostic_source]
+        reason: InstructionParseError
+    }
+
 }
 
 //impl InstructionBuildError {
@@ -547,11 +542,13 @@ macro_rules! suggestion {
     };
     ($($val:expr),*) => {
         {
-            let mut result = String::new();
+            let mut result = String::from("Did you mean: \"");
             $(
                 result.push_str(&format!("{} ", $val));
             )*
-            result.trim().to_string()
+            result = result.trim().to_string();
+            result.push_str("\" ?");
+            result
         }
     };() => {
 
@@ -569,15 +566,12 @@ macro_rules! suggestion {
 /// ```
 fn parse_alpha(s: &str, err_idx: usize) -> Result<usize, InstructionParseError> {
     if !s.starts_with('a') && !s.is_empty() {
-        return Err(InstructionParseError::InvalidExpression(
-            err_idx,
-            String::from(s.chars().next().unwrap()),
-        ));
+        return Err(InstructionParseError::InvalidExpression(err_idx));
     }
     let input = s.replace('a', "");
     match input.parse::<usize>() {
         Ok(x) => Ok(x),
-        Err(_) => Err(InstructionParseError::NotANumber(err_idx + 1, input)),
+        Err(_) => Err(InstructionParseError::NotANumber(err_idx + 1)),
     }
 }
 
@@ -587,10 +581,7 @@ fn parse_alpha(s: &str, err_idx: usize) -> Result<usize, InstructionParseError> 
 fn parse_operation(s: &str, err_idx: usize) -> Result<Operation, InstructionParseError> {
     match Operation::try_from(s) {
         Ok(s) => Ok(s),
-        Err(_) => Err(InstructionParseError::UnknownOperation(
-            err_idx,
-            s.to_string(),
-        )),
+        Err(_) => Err(InstructionParseError::UnknownOperation(err_idx)),
     }
 }
 
@@ -600,10 +591,7 @@ fn parse_operation(s: &str, err_idx: usize) -> Result<Operation, InstructionPars
 fn parse_comparison(s: &str, err_idx: usize) -> Result<Comparison, InstructionParseError> {
     match Comparison::try_from(s) {
         Ok(s) => Ok(s),
-        Err(_) => Err(InstructionParseError::UnknownComparison(
-            err_idx,
-            s.to_string(),
-        )),
+        Err(_) => Err(InstructionParseError::UnknownComparison(err_idx)),
     }
 }
 
@@ -613,7 +601,7 @@ fn parse_comparison(s: &str, err_idx: usize) -> Result<Comparison, InstructionPa
 fn parse_number(s: &str, err_idx: usize) -> Result<i32, InstructionParseError> {
     match s.parse::<i32>() {
         Ok(x) => Ok(x),
-        Err(_) => Err(InstructionParseError::NotANumber(err_idx, s.to_string())),
+        Err(_) => Err(InstructionParseError::NotANumber(err_idx)),
     }
 }
 
@@ -623,23 +611,16 @@ fn parse_number(s: &str, err_idx: usize) -> Result<i32, InstructionParseError> {
 /// `err_base_idx` indicates at what index the input string starts.
 fn parse_memory_cell(s: &str, err_base_idx: usize) -> Result<String, InstructionParseError> {
     if !s.starts_with("p(") {
-        return Err(InstructionParseError::InvalidExpression(
-            err_base_idx,
-            String::from(s.chars().next().unwrap()),
-        ));
+        return Err(InstructionParseError::InvalidExpression(err_base_idx));
     }
     if !s.ends_with(')') {
         return Err(InstructionParseError::InvalidExpression(
             err_base_idx + s.len() - 1,
-            String::from(s.chars().nth_back(0).unwrap()),
         ));
     }
     let name = s.replace("p(", "").replace(')', "");
     if name.is_empty() {
-        return Err(InstructionParseError::InvalidExpression(
-            err_base_idx,
-            s.to_string(),
-        ));
+        return Err(InstructionParseError::InvalidExpression(err_base_idx));
     }
     Ok(name)
 }
@@ -657,7 +638,7 @@ fn err_idx(parts: &[&str], part_idx: usize) -> usize {
 }
 
 /// Runs code equal to **push**
-/// 
+///
 /// Causes runtime error if accumulator does not contain data.
 fn push(runtime_args: &mut RuntimeArgs) -> Result<(), String> {
     assert_accumulator_exists(runtime_args, &0)?;
@@ -669,7 +650,7 @@ fn push(runtime_args: &mut RuntimeArgs) -> Result<(), String> {
 }
 
 /// Runs code equal to **pop**
-/// 
+///
 /// Causes runtime error if stack does not contain data.
 fn pop(runtime_args: &mut RuntimeArgs) -> Result<(), String> {
     assert_accumulator_contains_value(runtime_args, &0)?;
@@ -922,10 +903,7 @@ fn calc_memory_cell_with_memory_cells(
 /// - label = label to which to jump
 ///
 /// Sets the next instruction index to index contained behind **label** in [instruction_labels](../runtime/struct.ControlFlow.html#structfield.instruction_labels) map.
-fn goto(
-    control_flow: &mut ControlFlow,
-    label: &str,
-) -> Result<(), String> {
+fn goto(control_flow: &mut ControlFlow, label: &str) -> Result<(), String> {
     control_flow.next_instruction_index(label)?;
     Ok(())
 }
@@ -1060,6 +1038,8 @@ fn assert_memory_cell_contains_value(
 mod tests {
     use std::collections::HashMap;
 
+    use miette::{SourceSpan, SourceOffset};
+
     use crate::{
         base::{Accumulator, Comparison, MemoryCell, Operation},
         instructions::{
@@ -1080,15 +1060,15 @@ mod tests {
         assert_eq!(parse_alpha("a10", 1), Ok(10));
         assert_eq!(
             parse_alpha("a10x", 0),
-            Err(InstructionParseError::NotANumber(1, String::from("10x")))
+            Err(InstructionParseError::NotANumber(1))
         );
         assert_eq!(
             parse_alpha("ab3", 0),
-            Err(InstructionParseError::NotANumber(1, String::from("b3")))
+            Err(InstructionParseError::NotANumber(1))
         );
         assert_eq!(
             parse_alpha("ab3i", 0),
-            Err(InstructionParseError::NotANumber(1, String::from("b3i")))
+            Err(InstructionParseError::NotANumber(1))
         );
     }
 
@@ -1100,10 +1080,7 @@ mod tests {
         assert_eq!(parse_operation("/", 0), Ok(Operation::Division));
         assert_eq!(
             parse_operation("x", 0),
-            Err(InstructionParseError::UnknownOperation(
-                0,
-                String::from("x")
-            ))
+            Err(InstructionParseError::UnknownOperation(0,))
         );
     }
 
@@ -1113,18 +1090,15 @@ mod tests {
         assert_eq!(parse_memory_cell("p(xyz)", 0), Ok("xyz".to_string()));
         assert_eq!(
             parse_memory_cell("p(xyzX", 0),
-            Err(InstructionParseError::InvalidExpression(5, "X".to_string()))
+            Err(InstructionParseError::InvalidExpression(5))
         );
         assert_eq!(
             parse_memory_cell("pxyz)", 0),
-            Err(InstructionParseError::InvalidExpression(0, "p".to_string()))
+            Err(InstructionParseError::InvalidExpression(0))
         );
         assert_eq!(
             parse_memory_cell("p(p()", 0),
-            Err(InstructionParseError::InvalidExpression(
-                0,
-                "p(p()".to_string()
-            ))
+            Err(InstructionParseError::InvalidExpression(0,))
         );
     }
 
@@ -1181,7 +1155,7 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("a0 := x"),
-            Err(InstructionParseError::InvalidExpression(6, "x".to_string()))
+            Err(InstructionParseError::InvalidExpression(6))
         );
     }
 
@@ -1220,11 +1194,11 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("a3 := a1x"),
-            Err(InstructionParseError::NotANumber(7, String::from("1x")))
+            Err(InstructionParseError::NotANumber(7))
         );
         assert_eq!(
             Instruction::try_from("ab := a1x"),
-            Err(InstructionParseError::NotANumber(1, String::from("b")))
+            Err(InstructionParseError::NotANumber(1))
         );
     }
 
@@ -1271,10 +1245,7 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("a4 := p()"),
-            Err(InstructionParseError::InvalidExpression(
-                6,
-                "p()".to_string()
-            ))
+            Err(InstructionParseError::InvalidExpression(6,))
         );
     }
 
@@ -1287,7 +1258,8 @@ mod tests {
             .run(&mut args, &mut control_flow);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Memory cell"));
-        args.memory_cells.insert("a".to_string(), MemoryCell::new("a"));
+        args.memory_cells
+            .insert("a".to_string(), MemoryCell::new("a"));
         let err = Instruction::AssignAccumulatorValueFromMemoryCell(1, "a".to_string())
             .run(&mut args, &mut control_flow);
         assert!(err.is_err());
@@ -1316,7 +1288,7 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("p(h1) := x"),
-            Err(InstructionParseError::InvalidExpression(9, "x".to_string()))
+            Err(InstructionParseError::InvalidExpression(9))
         );
     }
 
@@ -1353,10 +1325,7 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("p(h1) := a0x"),
-            Err(InstructionParseError::InvalidExpression(
-                9,
-                "a0x".to_string()
-            ))
+            Err(InstructionParseError::InvalidExpression(9,))
         );
     }
 
@@ -1369,7 +1338,8 @@ mod tests {
             .run(&mut args, &mut control_flow);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Memory cell"));
-        args.memory_cells.insert("a".to_string(), MemoryCell::new("a"));
+        args.memory_cells
+            .insert("a".to_string(), MemoryCell::new("a"));
         let err = Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 1)
             .run(&mut args, &mut control_flow);
         assert!(err.is_err());
@@ -1400,10 +1370,7 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("p(h1) := p()"),
-            Err(InstructionParseError::InvalidExpression(
-                9,
-                "p()".to_string()
-            ))
+            Err(InstructionParseError::InvalidExpression(9,))
         );
     }
 
@@ -1421,8 +1388,10 @@ mod tests {
                 .run(&mut args, &mut control_flow)
                 .is_err()
         );
-        args.memory_cells.insert("a".to_string(), MemoryCell::new("a"));
-        args.memory_cells.insert("b".to_string(), MemoryCell::new("b"));
+        args.memory_cells
+            .insert("a".to_string(), MemoryCell::new("a"));
+        args.memory_cells
+            .insert("b".to_string(), MemoryCell::new("b"));
         args.memory_cells.get_mut("b").unwrap().data = Some(10);
         assert!(
             Instruction::AssignMemoryCellValueFromMemoryCell("b".to_string(), "a".to_string())
@@ -1461,13 +1430,15 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("a1 := ab2 + a29"),
-            Err(InstructionParseError::NotANumber(7, "b2".to_string()))
+            Err(InstructionParseError::NotANumber(7))
         );
         assert_eq!(
             Instruction::try_from("a1 := a2 + 20"),
-            Err(InstructionParseError::NoMatchSuggestion(
-                "a1 := a1 + 20".to_string()
-            ))
+            Err(InstructionParseError::NoMatchSuggestion {
+                src: "a1 := a2 + 20".to_string(),
+                pos: (0, 13),
+                help: "Did you mean: \"a1 := a1 + 20\" ?".to_string()
+            })
         );
     }
 
@@ -1573,16 +1544,15 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("a1 := a2 * p(h1)"),
-            Err(InstructionParseError::NoMatchSuggestion(
-                "a1 := a1 * p(h1)".to_string()
-            ))
+            Err(InstructionParseError::NoMatchSuggestion {
+                src: "a1 := a2 * p(h1)".to_string(),
+                pos: (0, 16),
+                help: "Did you mean: \"a1 := a1 * p(h1)\" ?".to_string()
+            })
         );
         assert_eq!(
             Instruction::try_from("a1 := a1 * p()"),
-            Err(InstructionParseError::InvalidExpression(
-                11,
-                "p()".to_string()
-            ))
+            Err(InstructionParseError::InvalidExpression(11,))
         );
     }
 
@@ -1620,13 +1590,12 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("a0 := p(h1) x p(h2)"),
-            Err(InstructionParseError::UnknownOperation(12, "x".to_string()))
+            Err(InstructionParseError::UnknownOperation(12))
         );
         assert_eq!(
             Instruction::try_from("a0 := p(h1) / p()"),
             Err(InstructionParseError::InvalidExpression(
                 14,
-                "p()".to_string()
             ))
         );
     }
@@ -1662,7 +1631,7 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("p(h1) := p(h2) o 10"),
-            Err(InstructionParseError::UnknownOperation(15, "o".to_string()))
+            Err(InstructionParseError::UnknownOperation(15))
         );
     }
 
@@ -1811,7 +1780,7 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("if x <= a1 then goto loop"),
-            Err(InstructionParseError::InvalidExpression(3, "x".to_string()))
+            Err(InstructionParseError::InvalidExpression(3))
         );
     }
 
@@ -1912,7 +1881,7 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("if a0 == p then goto loop"),
-            Err(InstructionParseError::InvalidExpression(9, "p".to_string()))
+            Err(InstructionParseError::InvalidExpression(9))
         );
     }
 
@@ -2104,7 +2073,7 @@ mod tests {
         instructions.push("p(d) := p(h3) + p(h4)\n");
         let mut rb = RuntimeBuilder::new();
         rb.set_runtime_args(runtime_args);
-        assert!(rb.build_instructions(&instructions).is_ok());
+        assert!(rb.build_instructions(&instructions, "test").is_ok());
         let rt = rb.build();
         assert!(rt.is_ok());
         let mut rt = rt.unwrap();
@@ -2180,7 +2149,7 @@ mod tests {
         instructions.push("a1 := p(a)");
         instructions.push("if a1 > 0 then goto loop");
         let mut runtime_builder = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
-        let res = runtime_builder.build_instructions(&instructions);
+        let res = runtime_builder.build_instructions(&instructions, "test");
         println!("{:?}", res);
         assert!(res.is_ok());
         let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
@@ -2192,9 +2161,12 @@ mod tests {
     fn setup_runtime_args() -> RuntimeArgs {
         let mut args = RuntimeArgs::new_debug(TEST_MEMORY_CELL_LABELS);
         args.memory_cells = HashMap::new();
-        args.memory_cells.insert("a".to_string(), MemoryCell::new("a"));
-        args.memory_cells.insert("b".to_string(), MemoryCell::new("b"));
-        args.memory_cells.insert("c".to_string(), MemoryCell::new("c"));
+        args.memory_cells
+            .insert("a".to_string(), MemoryCell::new("a"));
+        args.memory_cells
+            .insert("b".to_string(), MemoryCell::new("b"));
+        args.memory_cells
+            .insert("c".to_string(), MemoryCell::new("c"));
         args.accumulators = vec![
             Accumulator::new(0),
             Accumulator::new(1),
