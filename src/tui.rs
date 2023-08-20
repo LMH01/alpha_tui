@@ -75,12 +75,12 @@ impl MemoryListsManager {
     fn new(runtime_args: &RuntimeArgs) -> Self {
         let mut accumulators = HashMap::new();
         for acc in &runtime_args.accumulators {
-            accumulators.insert(acc.id, (format!("{:2}: {:?}", acc.id, acc.data), false));
+            accumulators.insert(acc.id, (format!("{}", acc), false));
         }
         //accumulators.sort_by(|a, b| a.0.cmp(&b.0));
         let mut memory_cells = HashMap::new();
         for cell in &runtime_args.memory_cells {
-            memory_cells.insert(cell.1.label.clone(), (format!("{:2}: {:?}", cell.1.label, cell.1.data), false));
+            memory_cells.insert(cell.1.label.clone(), (format!("{}", cell.1), false));
         }
         Self {
             accumulators,
@@ -96,7 +96,7 @@ impl MemoryListsManager {
         // Update accumulators
         for acc in &runtime_args.accumulators {
             let a = self.accumulators.get_mut(&acc.id).unwrap();
-            let update = format!("{:2}: {:?}", acc.id, acc.data);
+            let update = format!("{}", acc);
             if update == *a.0 {
                 a.1 = false;
             } else {
@@ -106,7 +106,7 @@ impl MemoryListsManager {
         // Update memory_cells
         for acc in &runtime_args.memory_cells {
             let a = self.memory_cells.get_mut(&acc.1.label).unwrap();
-            let update = format!("{:2}: {:?}", acc.1.label, acc.1.data);
+            let update = format!("{}", acc.1);
             if update == *a.0 {
                 a.1 = false;
             } else {

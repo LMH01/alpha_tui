@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 /// A single accumulator, represents "Akkumulator/Alpha" from SysInf lecture.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Accumulator {
@@ -11,6 +13,15 @@ impl Accumulator {
     /// Creates a new accumulator
     pub fn new(id: usize) -> Self {
         Self { id, data: None }
+    }
+}
+
+impl Display for Accumulator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.data {
+            Some(d) => write!(f, "{:2}: {}", self.id, d),
+            None => write!(f, "{:2}: None", self.id),
+        }
     }
 }
 
@@ -28,6 +39,15 @@ impl MemoryCell {
         Self {
             label: label.to_string(),
             data: None,
+        }
+    }
+}
+
+impl Display for MemoryCell {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.data {
+            Some(d) => write!(f, "{:2}: {}", self.label, d),
+            None => write!(f, "{:2}: None", self.label),
         }
     }
 }
@@ -108,7 +128,27 @@ impl TryFrom<&str> for Operation {
 
 #[cfg(test)]
 mod tests {
-    use crate::base::{Comparison, Operation};
+    use crate::base::{Comparison, Operation, MemoryCell};
+
+    use super::Accumulator;
+
+    #[test]
+    fn test_accumultor_display() {
+        let mut acc = Accumulator::new(0);
+        acc.data = Some(5);
+        assert_eq!(format!("{}", acc), " 0: 5");
+        acc.data = None;
+        assert_eq!(format!("{}", acc), " 0: None");
+    }
+
+    #[test]
+    fn test_memory_cell_display() {
+        let mut acc = MemoryCell::new("a");
+        acc.data = Some(5);
+        assert_eq!(format!("{}", acc), "a : 5");
+        acc.data = None;
+        assert_eq!(format!("{}", acc), "a : None");
+    }
 
     #[test]
     fn test_comparison() {
