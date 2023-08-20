@@ -24,7 +24,7 @@ Internal handling of instructions is finished, programs can be run, when assembl
 
 ### Instructions
 
-Be $c,u,v\in\mathbb{Z};n\in\mathbb{N}|n\geq0:i,j\in\lbrace h_0,\ldots,h_n\rbrace;op\in\lbrace +,-,*,/\rbrace;cmp\in\lbrace <,\leq,=,\geq,>\rbrace$
+Be $c,u,v\in\mathbb{Z};n\in\mathbb{N}|n\geq0:i,j\in\lbrace h_0,\ldots,h_n\rbrace;op\in\lbrace +,-,*,/\rbrace;cmp\in\lbrace <,\leq,=, \ne,\geq,>\rbrace$
 
 Currently the following commands are supported (booth at runtime and when parsed):
 

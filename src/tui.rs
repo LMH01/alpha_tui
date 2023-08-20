@@ -5,9 +5,6 @@ use tui::{backend::Backend, Frame, layout::{Layout, Direction, Constraint, Align
 
 use crate::runtime::{Runtime, RuntimeArgs};
 
-//TODO Think about removing all print commands => is not official in alpha notation, is not needed because debugger works, I would not need to add a console into the gui => would probably look better without.
-// I could create a new branch where they are still enabled (but branch will not be updated further)
-
 /// Used to store the instructions and to remember what instruction should currently be highlighted.
 struct StatefulInstructions {
     state: ListState,

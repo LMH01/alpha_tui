@@ -58,6 +58,7 @@ pub enum Comparison {
     Less,
     LessOrEqual,
     Equal,
+    NotEqual,
     MoreOrEqual,
     More,
 }
@@ -69,6 +70,7 @@ impl Comparison {
             Self::Less => x < y,
             Self::LessOrEqual => x <= y,
             Self::Equal => x == y,
+            Self::NotEqual => x != y,
             Self::MoreOrEqual => x >= y,
             Self::More => x > y,
         }
@@ -85,6 +87,7 @@ impl TryFrom<&str> for Comparison {
             "=<" => Ok(Self::LessOrEqual),
             "=" => Ok(Self::Equal),
             "==" => Ok(Self::Equal),
+            "!=" => Ok(Self::NotEqual),
             ">=" => Ok(Self::MoreOrEqual),
             "=>" => Ok(Self::MoreOrEqual),
             ">" => Ok(Self::More),
@@ -156,6 +159,8 @@ mod tests {
         assert!(Comparison::LessOrEqual.cmp(5, 10));
         assert!(Comparison::LessOrEqual.cmp(5, 5));
         assert!(Comparison::Equal.cmp(5, 5));
+        assert!(Comparison::NotEqual.cmp(5,6));
+        assert!(!Comparison::NotEqual.cmp(6,6));
         assert!(Comparison::MoreOrEqual.cmp(5, 5));
         assert!(Comparison::MoreOrEqual.cmp(10, 5));
         assert!(Comparison::More.cmp(10, 5));
@@ -168,6 +173,7 @@ mod tests {
         assert_eq!(Comparison::try_from("=<"), Ok(Comparison::LessOrEqual));
         assert_eq!(Comparison::try_from("="), Ok(Comparison::Equal));
         assert_eq!(Comparison::try_from("=="), Ok(Comparison::Equal));
+        assert_eq!(Comparison::try_from("!="), Ok(Comparison::NotEqual));
         assert_eq!(Comparison::try_from(">="), Ok(Comparison::MoreOrEqual));
         assert_eq!(Comparison::try_from("=>"), Ok(Comparison::MoreOrEqual));
         assert_eq!(Comparison::try_from(">"), Ok(Comparison::More));
