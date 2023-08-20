@@ -211,14 +211,6 @@ impl<'a> App<'a> {
                         None => return Ok(()),
                         Some(e) => return Err(Error::new(io::ErrorKind::Other, format!("Execution Terminated: {}", e))),
                     },
-                    KeyCode::Down => self.instructions.next(),//TODO remove manual list control
-                    KeyCode::Up => self.instructions.previous(),
-                    KeyCode::Char('n')  => {
-                        self.keybind_hints.get_mut(&'r').unwrap().enabled = false;
-                    }
-                    KeyCode::Char('m')  => {
-                        self.keybind_hints.get_mut(&'r').unwrap().enabled = true;
-                    }
                     KeyCode::Char('s') => {
                         if self.finished {
                             self.runtime.reset();
@@ -246,7 +238,6 @@ impl<'a> App<'a> {
                                 self.set_keybind_hint('s', true);
                                 self.set_keybind_hint('r', false);
                             }
-                            //self.instructions.next();
                         }
                     }
                     _ => (),
