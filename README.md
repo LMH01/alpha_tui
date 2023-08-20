@@ -8,7 +8,7 @@ Internal handling of instructions is finished, programs can be run, when assembl
 
 ## TODO
 
-- [ ] Make it possible to customize the available memory cells (will be done by cli option)
+- [X] Make it possible to customize the available memory cells (will be done by cli option)
 - [ ] Add option to load predetermined values into memory cells before program starts (cli option, probably read from file)
 - [X] Make progamm work with GUI 
 	- [ ] (Customization of available accumulators) - will be done with cli options
@@ -21,6 +21,8 @@ Internal handling of instructions is finished, programs can be run, when assembl
 - [ ] Rename program into something better
 - [X] Add label ENDE or END that can be called to end the program
 - [ ] Write documentation and update readme to contain picture(s)
+- [ ] Required accumulators and memory cells should be parsed from program (this should be the default), if this is not wanted memory cells can be set manually by the methods i already have
+	- This leads to only memory cells that are being used somewhere in the program being displayed in the gui
 
 ### Instructions
 

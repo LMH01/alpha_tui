@@ -172,8 +172,8 @@ impl KeybindHint {
 }
 
 /// App holds the state of the application
-pub struct App<'a> {
-    runtime: Runtime<'a>,
+pub struct App {
+    runtime: Runtime,
     /// Filename of the file that contains the code
     filename: String,
     /// The code that is compiled and run
@@ -187,8 +187,8 @@ pub struct App<'a> {
     errored: Option<String>,
 }
 
-impl<'a> App<'a> {
-    pub fn from_runtime(runtime: Runtime<'a>, filename: String, instructions: Vec<String>) -> App<'a> {
+impl App {
+    pub fn from_runtime(runtime: Runtime, filename: String, instructions: Vec<String>) -> App {
         let mlm = MemoryListsManager::new(runtime.runtime_args());
         Self {
             runtime,

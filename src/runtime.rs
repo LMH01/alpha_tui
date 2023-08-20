@@ -4,8 +4,7 @@ use crate::{
     base::{Accumulator, MemoryCell},
     instructions::{
         Instruction, InstructionParseError,
-    },
-    ACCUMULATORS, MEMORY_CELL_LABELS,
+    }, cli::Args,
 };
 
 /// Type that is used to build a new runtime environment.
@@ -13,13 +12,14 @@ use crate::{
 /// This runtime can be configured to only allow a selected amount of accumulators and memory cells.
 /// When a runtime is build from this builder compatibility checks are performed.
 #[derive(Debug)]
-pub struct RuntimeBuilder<'a> {
-    runtime_args: Option<RuntimeArgs<'a>>,
+pub struct RuntimeBuilder {
+    runtime_args: Option<RuntimeArgs>,
     instructions: Option<Vec<Instruction>>,
     control_flow: ControlFlow,
 }
 
-impl<'a> RuntimeBuilder<'a> {
+impl RuntimeBuilder {
+
     /// Creates a new runtime builder with no values set.
     pub fn new() -> Self {
         Self {
@@ -29,10 +29,19 @@ impl<'a> RuntimeBuilder<'a> {
         }
     }
 
-    /// Creates a new runtime builder with default values.
-    pub fn new_default() -> Self {
+    /// Creates a new runtime builder from the cli arguments.
+    pub fn from_args(args: &Args) -> Self{
         Self {
-            runtime_args: Some(RuntimeArgs::new_default()),
+            runtime_args: Some(RuntimeArgs::from_args(args)),
+            instructions: None,
+            control_flow: ControlFlow::new(),
+        }
+    }
+
+    /// Creates a new runtime builder with default values.
+    pub fn new_debug(memory_cells: &[&'static str]) -> Self {
+        Self {
+            runtime_args: Some(RuntimeArgs::new_debug(memory_cells)),
             instructions: None,
             control_flow: ControlFlow::new(),
         }
@@ -78,7 +87,7 @@ impl<'a> RuntimeBuilder<'a> {
         self.control_flow.reset();
     }
 
-    pub fn set_runtime_args(&mut self, runtime_args: RuntimeArgs<'a>) {
+    pub fn set_runtime_args(&mut self, runtime_args: RuntimeArgs) {
         self.runtime_args = Some(runtime_args);
     }
 
@@ -357,7 +366,7 @@ fn check_accumulators(runtime_args: &RuntimeArgs, id: &usize) -> Result<(), Stri
 }
 
 fn check_memory_cell(runtime_args: &RuntimeArgs, name: &str) -> Result<(), String> {
-    if !runtime_args.memory_cells.contains_key(&name) {
+    if !runtime_args.memory_cells.contains_key(name) {
         return Err(name.to_string());
     }
     Ok(())
@@ -391,13 +400,13 @@ pub enum AddLabelError {
 
 //TODO make fields private and add access functions, move into separate module
 #[derive(Debug, PartialEq)]
-pub struct Runtime<'a> {
-    runtime_args: RuntimeArgs<'a>,
+pub struct Runtime {
+    runtime_args: RuntimeArgs,
     instructions: Vec<Instruction>,
     control_flow: ControlFlow,
 }
 
-impl<'a> Runtime<'a> {
+impl Runtime {
     /// Runs the complete program.
     pub fn run(&mut self) -> Result<(), String> {
         while self.control_flow.next_instruction_index < self.instructions.len() {
@@ -497,18 +506,26 @@ impl<'a> ControlFlow {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct RuntimeArgs<'a> {
+pub struct RuntimeArgs {
     /// Current values stored in accumulators
     pub accumulators: Vec<Accumulator>,
     /// All registers that are used to store data
-    pub memory_cells: HashMap<&'a str, MemoryCell>,
+    pub memory_cells: HashMap<String, MemoryCell>,
     /// The stack of the runner
     pub stack: Vec<i32>,
 }
 
-impl<'a> RuntimeArgs<'a> {
+impl<'a> RuntimeArgs {
     /// Creates a new runtimes args struct with empty lists.
-    pub fn new() -> Self {
+    pub fn from_args(args: &Args) -> Self {
+        Self::new(args.accumulators as usize, args.memory_cells.clone())
+    }
+
+    pub fn new_debug(memory_cells: &'a [&'static str]) -> Self {
+        Self::new(4, memory_cells.iter().map(|f| f.to_string()).collect())
+    }
+
+    pub fn new_empty() -> Self {
         Self {
             accumulators: Vec::new(),
             memory_cells: HashMap::new(),
@@ -516,17 +533,14 @@ impl<'a> RuntimeArgs<'a> {
         }
     }
 
-    pub fn new_default() -> Self {
+    fn new(acc: usize, m_cells: Vec<String>) -> Self {
         let mut accumulators = Vec::new();
-        for i in 0..ACCUMULATORS {
+        for i in 0..acc {
             accumulators.push(Accumulator::new(i));
         }
-        if ACCUMULATORS <= 0 {
-            accumulators.push(Accumulator::new(0));
-        }
-        let mut memory_cells: HashMap<&str, MemoryCell> = HashMap::new();
-        for i in MEMORY_CELL_LABELS {
-            memory_cells.insert(i, MemoryCell::new(i));
+        let mut memory_cells: HashMap<String, MemoryCell> = HashMap::new();
+        for i in m_cells {
+            memory_cells.insert(i.clone(), MemoryCell::new(i.as_str()));
         }
         Self {
             accumulators,
@@ -537,9 +551,9 @@ impl<'a> RuntimeArgs<'a> {
 
     /// Creates a new memory cell with label **label** if it does not already exist
     /// and adds it to the **memory_cells* hashmap.
-    pub fn add_storage_cell(&mut self, label: &'a str) {
+    pub fn add_storage_cell(&mut self, label: &str) {
         if !self.memory_cells.contains_key(label) {
-            self.memory_cells.insert(label, MemoryCell::new(label));
+            self.memory_cells.insert(label.to_string(), MemoryCell::new(label));
         }
     }
 
@@ -573,6 +587,8 @@ impl<'a> RuntimeArgs<'a> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use crate::{
         base::{Comparison, Operation},
         instructions::{self, Instruction},
@@ -580,6 +596,11 @@ mod tests {
     };
 
     use super::{RuntimeArgs, RuntimeBuilder};
+
+    /// Used to set the available memory cells during testing.
+    const TEST_MEMORY_CELL_LABELS: &'static [&'static str] = &[
+        "a", "b", "c", "d", "e", "f", "w", "x", "y", "z", "h1", "h2", "h3", "h4",
+    ];
 
     #[test]
     fn test_label_missing() {
@@ -605,13 +626,13 @@ mod tests {
 
     fn test_label_instruction(instruction: Instruction, label: &str) {
         let instructions = vec![instruction];
-        let mut rb = RuntimeBuilder::new_default();
+        let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
         rb.set_instructions(instructions.clone());
         assert!(rb.add_label(label.to_string(), 0).is_ok());
         assert!(rb.build().is_ok());
         rb.reset();
         rb.set_instructions(instructions);
-        rb.set_runtime_args(RuntimeArgs::new_default());
+        rb.set_runtime_args(RuntimeArgs::new_debug(TEST_MEMORY_CELL_LABELS));
         assert_eq!(
             rb.build(),
             Err(RuntimeBuildError::LabelMissing(label.to_string()))
@@ -685,7 +706,7 @@ mod tests {
         rb.set_instructions(vec![instruction]);
         _ = rb.add_label("loop".to_string(), 0);
         // Test if ok works
-        let mut runtime_args = RuntimeArgs::new();
+        let mut runtime_args = RuntimeArgs::new_empty();
         runtime_args.add_storage_cell("a");
         runtime_args.add_storage_cell("b");
         for _ in &to_test {
@@ -697,7 +718,7 @@ mod tests {
         assert!(build.is_ok());
         // Test if missing accumulators are detected
         for (i1, s) in to_test.iter().enumerate() {
-            let mut runtime_args = RuntimeArgs::new();
+            let mut runtime_args = RuntimeArgs::new_empty();
             runtime_args.add_storage_cell("a");
             runtime_args.add_storage_cell("b");
             for _ in 0..(to_test.len() - *s - 1) {
@@ -788,7 +809,7 @@ mod tests {
         rb.set_instructions(vec![instruction]);
         _ = rb.add_label("loop".to_string(), 0);
         // Test if ok works
-        let mut runtime_args = RuntimeArgs::new();
+        let mut runtime_args = RuntimeArgs::new_empty();
         runtime_args.add_accumulator();
         for s in &to_test {
             runtime_args.add_storage_cell(s);
@@ -799,7 +820,7 @@ mod tests {
         assert!(build.is_ok());
         // Test if missing memory cells are detected
         for (i1, s) in to_test.iter().enumerate() {
-            let mut runtime_args = RuntimeArgs::new();
+            let mut runtime_args = RuntimeArgs::new_empty();
             runtime_args.add_accumulator();
             for (i2, s2) in to_test.iter().enumerate() {
                 if i1 == i2 {
@@ -821,7 +842,7 @@ mod tests {
             "a0 := a1 # Just some stuff",
             "a1 := a2 // Just some more stuff",
         ];
-        let mut rb = RuntimeBuilder::new_default();
+        let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
         assert!(rb.build_instructions(&instructions).is_ok());
     }
 }

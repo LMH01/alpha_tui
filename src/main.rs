@@ -30,15 +30,6 @@ mod utils;
 /// Terminal user interface
 mod tui;
 
-/// Used to set the maximum number of accumulators.
-///
-/// Should be at least 1.
-const ACCUMULATORS: usize = 4;
-/// Used to set the available memory cells.
-const MEMORY_CELL_LABELS: &'static [&'static str] = &[
-    "a", "b", "c", "d", "e", "f", "w", "x", "y", "z", "h1", "h2", "h3", "h4",
-];
-
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
@@ -50,7 +41,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     };
     println!("Building program");
-    let mut rb = RuntimeBuilder::new_default();
+    let mut rb = RuntimeBuilder::from_args(&args);
     match rb.build_instructions(&instructions.iter().map(|s| s.as_str()).collect()) {
         Ok(_) => (),
         Err(e) => {

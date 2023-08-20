@@ -1005,6 +1005,11 @@ mod tests {
         runtime::{self, ControlFlow, Runtime, RuntimeArgs, RuntimeBuilder},
     };
 
+    /// Used to set the available memory cells during testing.
+    const TEST_MEMORY_CELL_LABELS: &'static [&'static str] = &[
+        "a", "b", "c", "d", "e", "f", "w", "x", "y", "z", "h1", "h2", "h3", "h4",
+    ];
+
     #[test]
     fn test_parse_alpha() {
         assert_eq!(parse_alpha("a3", 1), Ok(3));
@@ -1218,7 +1223,7 @@ mod tests {
             .run(&mut args, &mut control_flow);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Memory cell"));
-        args.memory_cells.insert("a", MemoryCell::new("a"));
+        args.memory_cells.insert("a".to_string(), MemoryCell::new("a"));
         let err = Instruction::AssignAccumulatorValueFromMemoryCell(1, "a".to_string())
             .run(&mut args, &mut control_flow);
         assert!(err.is_err());
@@ -1300,7 +1305,7 @@ mod tests {
             .run(&mut args, &mut control_flow);
         assert!(err.is_err());
         assert!(err.err().unwrap().contains("Memory cell"));
-        args.memory_cells.insert("a", MemoryCell::new("a"));
+        args.memory_cells.insert("a".to_string(), MemoryCell::new("a"));
         let err = Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 1)
             .run(&mut args, &mut control_flow);
         assert!(err.is_err());
@@ -1352,8 +1357,8 @@ mod tests {
                 .run(&mut args, &mut control_flow)
                 .is_err()
         );
-        args.memory_cells.insert("a", MemoryCell::new("a"));
-        args.memory_cells.insert("b", MemoryCell::new("b"));
+        args.memory_cells.insert("a".to_string(), MemoryCell::new("a"));
+        args.memory_cells.insert("b".to_string(), MemoryCell::new("b"));
         args.memory_cells.get_mut("b").unwrap().data = Some(10);
         assert!(
             Instruction::AssignMemoryCellValueFromMemoryCell("b".to_string(), "a".to_string())
@@ -1849,7 +1854,7 @@ mod tests {
 
     #[test]
     fn test_example_program_1() {
-        let mut runtime_args = RuntimeArgs::new();
+        let mut runtime_args = RuntimeArgs::new_debug(TEST_MEMORY_CELL_LABELS);
         for _i in 1..=4 {
             runtime_args.add_accumulator();
         }
@@ -1996,7 +2001,7 @@ mod tests {
 
     #[test]
     fn test_example_program_1_text_parsing() {
-        let mut runtime_args = RuntimeArgs::new();
+        let mut runtime_args = RuntimeArgs::new_debug(TEST_MEMORY_CELL_LABELS);
         for _i in 1..=4 {
             runtime_args.add_accumulator();
         }
@@ -2093,7 +2098,7 @@ mod tests {
             Instruction::AssignAccumulatorValueFromMemoryCell(1, "a".to_string()),
             Instruction::GotoIfConstant(Comparison::More, "loop".to_string(), 1, 0),
         ];
-        let mut runtime_builder = RuntimeBuilder::new_default();
+        let mut runtime_builder = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
         runtime_builder.set_instructions(instructions);
         runtime_builder.add_label("loop".to_string(), 2).unwrap();
         let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
@@ -2110,7 +2115,7 @@ mod tests {
         instructions.push("p(a) := p(a) - 1");
         instructions.push("a1 := p(a)");
         instructions.push("if a1 > 0 then goto loop");
-        let mut runtime_builder = RuntimeBuilder::new_default();
+        let mut runtime_builder = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
         let res = runtime_builder.build_instructions(&instructions);
         println!("{:?}", res);
         assert!(res.is_ok());
@@ -2120,12 +2125,12 @@ mod tests {
     }
 
     /// Sets up runtime args in a conistent way because the default implementation for memory cells and accumulators is configgurable.
-    fn setup_runtime_args() -> RuntimeArgs<'static> {
-        let mut args = RuntimeArgs::new();
+    fn setup_runtime_args() -> RuntimeArgs {
+        let mut args = RuntimeArgs::new_debug(TEST_MEMORY_CELL_LABELS);
         args.memory_cells = HashMap::new();
-        args.memory_cells.insert("a", MemoryCell::new("a"));
-        args.memory_cells.insert("b", MemoryCell::new("b"));
-        args.memory_cells.insert("c", MemoryCell::new("c"));
+        args.memory_cells.insert("a".to_string(), MemoryCell::new("a"));
+        args.memory_cells.insert("b".to_string(), MemoryCell::new("b"));
+        args.memory_cells.insert("c".to_string(), MemoryCell::new("c"));
         args.accumulators = vec![
             Accumulator::new(0),
             Accumulator::new(1),
@@ -2135,8 +2140,8 @@ mod tests {
     }
 
     /// Sets up runtime args where no memory cells or accumulators are set.
-    fn setup_empty_runtime_args() -> RuntimeArgs<'static> {
-        let mut args = RuntimeArgs::new();
+    fn setup_empty_runtime_args() -> RuntimeArgs {
+        let mut args = RuntimeArgs::new_debug(TEST_MEMORY_CELL_LABELS);
         args.accumulators = Vec::new();
         args.memory_cells = HashMap::new();
         args

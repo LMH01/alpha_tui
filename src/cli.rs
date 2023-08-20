@@ -10,4 +10,21 @@ pub struct Args {
         required = true
     )]
     pub input: String,
+    #[arg(
+        short,
+        long,
+        help = "Number of available accumulators",
+        long_help = "Number of available accumulators.\nIf the value is too large it can happen that accumulators are not displayed in the gui.",
+        default_value = "4"
+    )]
+    pub accumulators: u8,
+    #[arg(
+        short,
+        long,
+        help = "Number of available memory cells",
+        long_help = "Number of available memory cells.\nIf a large number of memory cells is specified, it can happen that some are not displayed in the gui.",
+        value_delimiter = ',',
+        default_value = "a,b,c,d,w,x,y,z,h1,h2,h3,h4"
+    )]
+    pub memory_cells: Vec<String>,
 }
