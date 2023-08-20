@@ -86,20 +86,6 @@ pub enum Instruction {
     ///
     /// See [goto_if_memory_cell](fn.goto_if_memory_cell.html)
     GotoIfMemoryCell(Comparison, String, usize, String),
-    /// See [print_accumulators](fn.print_accumulators.html)
-    PrintAccumulators(),
-    /// See [print_memory_cells](fn.print_memory_cells.html)
-    PrintMemoryCells(),
-    /// See [print_stack](fn.print_stack.html)
-    PrintStack(),
-    /// Prints the value of the accumulator into the console
-    PrintAccumulator(usize),
-    /// Prints the contents of the memory cell into the console
-    PrintMemoryCell(String),
-    /// Prints the string without a newline character into the console
-    PrintText(String),
-    /// Prints the string with a newline character into the console
-    PrintTextLn(String),
 }
 
 impl Instruction {
@@ -200,13 +186,6 @@ impl Instruction {
             Self::GotoIfMemoryCell(comparison, label, a_idx, mcl) => {
                 goto_if_memory_cell(runtime_args, control_flow, comparison, label, a_idx, mcl)?
             }
-            Self::PrintAccumulators() => print_accumulators(runtime_args),
-            Self::PrintMemoryCells() => print_memory_cells(runtime_args),
-            Self::PrintStack() => print_stack(runtime_args),
-            Self::PrintAccumulator(a_idx) => print_accumulator(runtime_args, a_idx),
-            Self::PrintMemoryCell(label) => print_memory_cell(runtime_args, label),
-            Self::PrintText(s) => print_text(s),
-            Self::PrintTextLn(s) => print_text_ln(s),
         }
         Ok(())
     }
@@ -290,40 +269,6 @@ impl TryFrom<&Vec<&str>> for Instruction {
         // Check if instruction is pop
         if parts[0] == "pop" {
             return Ok(Instruction::Pop());
-        }
-
-        // Instructions that print stuff
-        if parts[0].starts_with("print") {
-            // Remove white spaces
-            let mut part = parts[0].to_string();
-            for (idx, p) in parts.iter().enumerate() {
-                if idx == 0 {
-                    continue;
-                }
-                part.push(' ');
-                part.push_str(p);
-            }
-            // Check if instruction is println
-            if part.starts_with("println(\"") && part.ends_with("\")") {
-                let text = part.replace("println(\"", "").replace("\")", "");
-                return Ok(Instruction::PrintTextLn(text));
-            }
-            if part.starts_with("print(\"") && part.ends_with("\")") {
-                let text = part.replace("print(\"", "").replace("\")", "");
-                return Ok(Instruction::PrintText(text));
-            }
-            let a_idx = parse_alpha(&part.replace("print(", "").replace(")", ""), 6);
-            let m_cell = parse_memory_cell(&part.replace("print(", "").replacen(")", "", 1), 6);
-            if a_idx.is_ok() {
-                return Ok(Instruction::PrintAccumulator(a_idx.unwrap()));
-            } else if m_cell.is_ok() {
-                return Ok(Instruction::PrintMemoryCell(m_cell.unwrap()));
-            } else {
-                return Err(InstructionParseError::InvalidExpression(
-                    6,
-                    part.to_string(),
-                ));
-            }
         }
 
         // At this point only instructions follow that require a := in the second part
@@ -1034,54 +979,6 @@ fn assert_memory_cell_contains_value(
     } else {
         Err(format!("Memory cell with label {} does not exist!", label))
     }
-}
-
-/// Prints the current contents of the accumulators into the console
-pub fn print_accumulators(runtime_args: &RuntimeArgs) {
-    println!("--- Accumulators ---");
-    for (index, i) in runtime_args.accumulators.iter().enumerate() {
-        println!("{} - {:?}", index, i.data);
-    }
-    println!("--------------------");
-}
-
-/// Prints the current contents of the memory cells into the console
-pub fn print_memory_cells(runtime_args: &RuntimeArgs) {
-    // TODO Make print sorted (Alpabetically by label name)
-    println!("--- Memory Cells ---");
-    for (k, v) in &runtime_args.memory_cells {
-        println!("{} - {:?}", k, v.data);
-    }
-    println!("--------------------");
-}
-
-/// Prints the current layout of the stack into the console
-pub fn print_stack(runtime_args: &RuntimeArgs) {
-    println!("------ Stack -------");
-    for (index, i) in runtime_args.stack.iter().enumerate() {
-        println!("{} - {:?}", index, i);
-    }
-    println!("--------------------");
-}
-
-/// Prints the value of the accumulator into the console
-fn print_accumulator(runtime_args: &RuntimeArgs, a_idx: &usize) {
-    println!("{:?}", runtime_args.accumulators[*a_idx].data);
-}
-
-/// Prints the value of the memory cell into the console
-fn print_memory_cell(runtime_args: &RuntimeArgs, label: &str) {
-    println!("{:?}", runtime_args.memory_cells.get(label).unwrap().data);
-}
-
-/// Print the string into the console.
-fn print_text(s: &str) {
-    print!("{}", s);
-}
-
-/// Print the string into the console, a new line character is printed.
-fn print_text_ln(s: &str) {
-    println!("{}", s);
 }
 
 #[cfg(test)]
@@ -1940,52 +1837,6 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_print_accumulator() {
-        assert_eq!(
-            Instruction::try_from("print(a0)"),
-            Ok(Instruction::PrintAccumulator(0))
-        );
-        assert_eq!(
-            Instruction::try_from("print(x)"),
-            Err(InstructionParseError::InvalidExpression(
-                6,
-                "print(x)".to_string()
-            ))
-        );
-    }
-
-    #[test]
-    fn test_parse_print_memory_cell() {
-        assert_eq!(
-            Instruction::try_from("print(p(a))"),
-            Ok(Instruction::PrintMemoryCell("a".to_string()))
-        );
-        assert_eq!(
-            Instruction::try_from("print(p()"),
-            Err(InstructionParseError::InvalidExpression(
-                6,
-                "print(p()".to_string()
-            ))
-        );
-    }
-
-    #[test]
-    fn test_parse_print_text() {
-        assert_eq!(
-            Instruction::try_from("print(\"Hello, World!\")"),
-            Ok(Instruction::PrintText("Hello, World!".to_string()))
-        );
-    }
-
-    #[test]
-    fn test_parse_print_text_ln() {
-        assert_eq!(
-            Instruction::try_from("println(\"Hello, World!\")"),
-            Ok(Instruction::PrintTextLn("Hello, World!".to_string()))
-        );
-    }
-
-    #[test]
     fn test_example_program_1() {
         let mut runtime_args = RuntimeArgs::new();
         for _i in 1..=4 {
@@ -2084,7 +1935,6 @@ mod tests {
                 "h3".to_string(),
                 "h4".to_string(),
             ),
-            Instruction::PrintMemoryCells(),
         ];
         let mut runtime_builder = RuntimeBuilder::new();
         runtime_builder.set_instructions(instructions);
@@ -2231,8 +2081,6 @@ mod tests {
             ),
             Instruction::AssignAccumulatorValueFromMemoryCell(1, "a".to_string()),
             Instruction::GotoIfConstant(Comparison::More, "loop".to_string(), 1, 0),
-            Instruction::PrintMemoryCells(),
-            Instruction::PrintAccumulators(),
         ];
         let mut runtime_builder = RuntimeBuilder::new_default();
         runtime_builder.set_instructions(instructions);

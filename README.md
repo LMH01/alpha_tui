@@ -17,10 +17,10 @@ Internal handling of instructions is finished, programs can be run, when assembl
 - [X] Debug mode -> Step through each instruction
 - [X] Add tests (at least one for each command)
 - [X] Add support for comments at end of line (marked with # or //)
-- [ ] Add log output window to tui and make messages get printed in there
 - [ ] Fix instruction pointer when lines are commented out (remove full line comments from list?, remove full line comments entirely?)
 - [ ] Rename program into something better
 - [ ] Add label ENDE or END that can be called to end the program
+- [ ] Write documentation and update readme to contain picture(s)
 
 ### Instructions
 
@@ -48,11 +48,3 @@ Currently the following commands are supported (booth at runtime and when parsed
 - goto label 
 - push 
 - pop
-
-#### Unofficial instructions
-
-The following instructions are not "official", I added them because I thought that it would be useful:
-- $print(\alpha_u)$
-- $print(\rho(i))$
-- $print("STRING")$ // Prints the contents between the " into the console.
-- $println("STRING");$ // Prints the contents between the " into the console. Prints a newline.

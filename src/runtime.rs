@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     base::{Accumulator, MemoryCell},
     instructions::{
-        print_accumulators, print_memory_cells, print_stack, Instruction, InstructionParseError,
+        Instruction, InstructionParseError,
     },
     ACCUMULATORS, MEMORY_CELL_LABELS,
 };
@@ -419,13 +419,6 @@ impl<'a> Runtime<'a> {
     /// Returns the index of the current instruction
     pub fn current_instruction_index(&self) -> usize {
         self.control_flow.next_instruction_index - 1
-    }
-
-    /// Prints information about current register values, current accumulator values and the current status of the stack.
-    pub fn debug(&self) {
-        print_accumulators(&self.runtime_args);
-        print_memory_cells(&self.runtime_args);
-        print_stack(&self.runtime_args);
     }
 
     /// Adds an instruction to the end of the instruction vector with a label mapping.
