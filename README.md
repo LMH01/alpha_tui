@@ -9,7 +9,7 @@ Internal handling of instructions is finished, programs can be run, when assembl
 ## TODO
 
 - [X] Make it possible to customize the available memory cells (will be done by cli option)
-- [ ] Add option to load predetermined values into memory cells before program starts (cli option, probably read from file)
+- [X] Add option to load predetermined values into memory cells before program starts (cli option, probably read from file)
 - [X] Make progamm work with GUI 
 	- [ ] (Customization of available accumulators) - will be done with cli options
 	- [ ] (Customization of available memory cells) - will be done with cli options

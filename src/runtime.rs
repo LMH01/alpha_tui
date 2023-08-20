@@ -1,10 +1,10 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 
 use crate::{
     base::{Accumulator, MemoryCell},
     instructions::{
         Instruction, InstructionParseError,
-    }, cli::Args,
+    }, cli::Args, utils::read_file,
 };
 
 /// Type that is used to build a new runtime environment.
@@ -30,12 +30,12 @@ impl RuntimeBuilder {
     }
 
     /// Creates a new runtime builder from the cli arguments.
-    pub fn from_args(args: &Args) -> Self{
-        Self {
-            runtime_args: Some(RuntimeArgs::from_args(args)),
+    pub fn from_args(args: &Args) -> Result<Self, String> {
+        Ok(Self {
+            runtime_args: Some(RuntimeArgs::from_args(args)?),
             instructions: None,
             control_flow: ControlFlow::new(),
-        }
+        })
     }
 
     /// Creates a new runtime builder with default values.
@@ -516,9 +516,24 @@ pub struct RuntimeArgs {
 }
 
 impl<'a> RuntimeArgs {
+
     /// Creates a new runtimes args struct with empty lists.
-    pub fn from_args(args: &Args) -> Self {
-        Self::new(args.accumulators as usize, args.memory_cells.clone())
+    /// 
+    /// Errors if option is set to parse memory cells from file and the parsing fails.
+    pub fn from_args(args: &Args) -> Result<Self, String> {
+        if let Some(path) = &args.memory_cell_file {
+            match read_memory_cells_from_file(&path) {
+                Ok(memory_cells) => {
+                    let mut accumulators = Vec::new();
+                    for i in 0..args.accumulators {
+                        accumulators.push(Accumulator::new(i as usize));
+                    }
+                    return Ok(Self {accumulators, memory_cells, stack: Vec::new()})
+                },
+                Err(e) => return Err(e),
+            };
+        }
+        Ok(Self::new(args.accumulators as usize, args.memory_cells.clone()))
     }
 
     pub fn new_debug(memory_cells: &'a [&'static str]) -> Self {
@@ -583,6 +598,33 @@ impl<'a> RuntimeArgs {
         }
         self.stack = Vec::new();
     }
+}
+
+/// Reads memory cells from file and returns map of memory cells.
+/// 
+/// Each line contains a single memory cell in the following formatting: NAME=VALUE
+/// 
+/// If value is missing an empty memory cell will be created.
+/// 
+/// Errors when file could not be read.
+fn read_memory_cells_from_file(path: &str) -> Result<HashMap<String, MemoryCell>, String> {
+    let contents = read_file(path)?;
+    let mut map = HashMap::new();
+    for (index, line) in contents.iter().enumerate() {
+        let chunks = line.split('=').collect::<Vec<&str>>();
+        let v = chunks.get(1);
+        if v.is_some() && !v.unwrap().is_empty() {
+            let v = v.unwrap();
+            let value = match v.parse::<i32>() {
+                Ok(num) => num,
+                Err(e) => return Err(format!("{}: [Line {}] Unable to parse int: {} \"{}\"", path, index+1, e, v)),
+            };
+            map.insert(chunks[0].to_string(), MemoryCell {label: chunks[0].to_string(), data: Some(value)});
+        } else {
+            map.insert(chunks[0].to_string(), MemoryCell::new(chunks[0]));
+        }
+    }
+    Ok(map)
 }
 
 #[cfg(test)]
