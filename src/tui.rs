@@ -1,7 +1,7 @@
 use std::{time::Duration, collections::HashMap, thread, io::{self, Error}};
 
 use crossterm::event::{Event, KeyCode, self};
-use tui::{backend::Backend, Frame, layout::{Layout, Direction, Constraint, Alignment, Rect}, widgets::{Tabs, Block, Borders, BorderType, ListItem, List, ListState, Clear, Paragraph}, style::{Style, Color, Modifier}, text::{Spans, Span}, Terminal};
+use ratatui::{backend::Backend, Frame, layout::{Layout, Direction, Constraint, Alignment, Rect}, widgets::{Tabs, Block, Borders, BorderType, ListItem, List, ListState, Clear, Paragraph}, style::{Style, Color, Modifier}, text::{Line, Span}, Terminal};
 
 use crate::runtime::{Runtime, RuntimeArgs};
 
@@ -217,13 +217,13 @@ impl App {
         }
     }
 
-    fn active_keybind_hints(&self) -> Vec<Spans> {
+    fn active_keybind_hints(&self) -> Vec<Line> {
         let mut spans = Vec::new();
         for v in self.keybind_hints.values() {
             if !v.enabled {
                 continue;
             }
-            spans.push(Spans::from(vec![
+            spans.push(Line::from(vec![
                 Span::styled(format!("{} [{}]", v.action, v.key), Style::default()),
             ]))
         }
@@ -312,7 +312,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .instructions
         .iter()
         .map(|i| {
-            let content = vec![Spans::from(Span::raw(format!("{:2}: {}", i.0+1, i.1)))];
+            let content = vec![Line::from(Span::raw(format!("{:2}: {}", i.0+1, i.1)))];
             ListItem::new(content).style(Style::default())
         })
         .collect();

@@ -6,7 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tui = "0.19" #//TODO change to ratatui
-#tui = { package = "ratatui", version = "0.22.0", features = ["all-widgets"]}
+ratatui = { version = "0.22.0", features = ["all-widgets"]}
 crossterm = "0.25"
 clap = { version = "4.3.23", features = ["derive", "color"] }
