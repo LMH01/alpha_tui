@@ -231,7 +231,7 @@ impl<'a> App<'a> {
                         if !self.finished && self.errored.is_none(){
                             self.running = true;
                             self.set_keybind_message('r', "Run next instruction".to_string());
-                            let res = self.runtime.step();//TODO Add runtime error handling (=message to user)
+                            let res = self.runtime.step();
                             if res.is_err() {
                                 self.running = false;
                                 self.errored = Some(res.unwrap_err());
