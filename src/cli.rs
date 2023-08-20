@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
-use clap::Parser;
+use clap::{Parser, ArgGroup};
 
 #[derive(Parser, Debug)]
 #[command(author = "LMH01", version, about, long_about = None)]
+#[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_cell_file"]))]
 pub struct Args {
     #[arg(
         short,
@@ -21,6 +22,7 @@ pub struct Args {
     )]
     pub accumulators: Option<u8>,
     #[arg(
+        short,
         long,
         help = "Number of available memory cells",
         long_help = "Number of available memory cells.\nIf a large number of memory cells is specified, it can happen that some are not displayed in the gui.\nExample: -a a,b,c,d",
@@ -29,7 +31,6 @@ pub struct Args {
     )]
     pub memory_cells: Option<Vec<String>>,
     #[arg(
-        short,
         long,
         help = "Load memory cells from a file",
         long_help = "Load memory cell values from a file.\nEach line contains a single memory cell in the following formatting: NAME=VALUE\nExample: h1=5\nEmpty cells can be set with: NAME\nExample: h2",
@@ -39,9 +40,9 @@ pub struct Args {
     #[arg(
         short,
         long,
-        help = "Set to disable accumulator amd memory_cell detection",
+        help = "Set to disable accumulator and memory_cell detection",
         long_help = "Set to disable accumulator and memory_cell detection.\nIf disabled, accumulators and memory cells won't be read from program,\ninstead they have to be specified using \"--accumulators\" and \"--memory-cells\" or \"--memory-cell-file\"",
-        requires = "accumulators"
+        requires = "memory"
     )]
     pub disable_memory_detection: bool,
 }
