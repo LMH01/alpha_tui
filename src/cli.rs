@@ -17,23 +17,31 @@ pub struct Args {
         long,
         help = "Number of available accumulators",
         long_help = "Number of available accumulators.\nIf the value is too large it can happen that accumulators are not displayed in the gui.",
-        default_value = "4"
+        required_if_eq("disable_memory_detection", "true"),
     )]
-    pub accumulators: u8,
+    pub accumulators: Option<u8>,
     #[arg(
         long,
         help = "Number of available memory cells",
-        long_help = "Number of available memory cells.\nIf a large number of memory cells is specified, it can happen that some are not displayed in the gui.",
+        long_help = "Number of available memory cells.\nIf a large number of memory cells is specified, it can happen that some are not displayed in the gui.\nExample: -a a,b,c,d",
         value_delimiter = ',',
-        default_value = "a,b,c,d,w,x,y,z,h1,h2,h3,h4"
+        //default_value = "a,b,c,d,w,x,y,z,h1,h2,h3,h4",
     )]
-    pub memory_cells: Vec<String>,
+    pub memory_cells: Option<Vec<String>>,
     #[arg(
         short,
         long,
-        help = "Load memory cells from a file.",
+        help = "Load memory cells from a file",
         long_help = "Load memory cell values from a file.\nEach line contains a single memory cell in the following formatting: NAME=VALUE\nExample: h1=5\nEmpty cells can be set with: NAME\nExample: h2",
         conflicts_with = "memory_cells",
     )]
     pub memory_cell_file: Option<String>,
+    #[arg(
+        short,
+        long,
+        help = "Set to disable accumulator amd memory_cell detection",
+        long_help = "Set to disable accumulator and memory_cell detection.\nIf disabled, accumulators and memory cells won't be read from program,\ninstead they have to be specified using \"--accumulators\" and \"--memory-cells\" or \"--memory-cell-file\"",
+        requires = "accumulators"
+    )]
+    pub disable_memory_detection: bool,
 }
