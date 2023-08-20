@@ -1,20 +1,17 @@
-use std::{error::Error, io, process::exit, thread, time::Duration, collections::HashMap, hash::Hash};
+use std::{error::Error, io, process::exit};
 
 use clap::Parser;
 use cli::Args;
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    event::{DisableMouseCapture, EnableMouseCapture},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use runtime::ControlFlow;
 use ::tui::{backend::CrosstermBackend, Terminal};
 use utils::read_file;
 
 use crate::{
-    base::{Comparison, Operation},
-    instructions::Instruction,
-    runtime::{Runtime, RuntimeArgs, RuntimeBuilder}, tui::App,
+    runtime::RuntimeBuilder, tui::App,
 };
 
 /// Contains all required data types used to run programs
@@ -56,7 +53,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     };
     println!("Building runtime");
-    let mut rt = match rb.build() {
+    let rt = match rb.build() {
         Ok(rt) => rt,
         Err(e) => {
             println!("Unable to build runtime: {:?}", e);

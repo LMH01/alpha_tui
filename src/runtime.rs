@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::Path};
+use std::collections::HashMap;
 
 use crate::{
     base::{Accumulator, MemoryCell},
@@ -22,6 +22,7 @@ pub struct RuntimeBuilder {
 impl RuntimeBuilder {
 
     /// Creates a new runtime builder with no values set.
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self {
             runtime_args: None,
@@ -42,6 +43,7 @@ impl RuntimeBuilder {
     }
 
     /// Creates a new runtime builder with default values.
+    #[allow(dead_code)]
     pub fn new_debug(memory_cells: &[&'static str]) -> Self {
         Self {
             runtime_args: Some(RuntimeArgs::new_debug(memory_cells)),
@@ -86,12 +88,14 @@ impl RuntimeBuilder {
     }
 
     /// Resets the current values to none.
+    #[allow(dead_code)]
     pub fn reset(&mut self) {
         self.runtime_args = None;
         self.instructions = None;
         self.control_flow.reset();
     }
 
+    #[allow(dead_code)]
     pub fn set_runtime_args(&mut self, runtime_args: RuntimeArgs) {
         self.runtime_args = Some(runtime_args);
     }
@@ -132,6 +136,7 @@ impl RuntimeBuilder {
     /// Sets the instructions to the provided instructions.
     ///
     /// If loops and labels are used, they have to be set manually by using [RuntimeBuilder::add_label](#add_label).
+    #[allow(dead_code)]
     pub fn set_instructions(&mut self, instructions: Vec<Instruction>) {
         self.instructions = Some(instructions);
     }
@@ -141,6 +146,7 @@ impl RuntimeBuilder {
     /// Errors when **instruction_index** is out of bounds.
     ///
     /// Note: Make sure that you start counting at 0 and not 1!
+    #[allow(dead_code)]
     pub fn add_label(
         &mut self,
         label: String,
@@ -427,6 +433,7 @@ pub struct Runtime {
 
 impl Runtime {
     /// Runs the complete program.
+    #[allow(dead_code)]
     pub fn run(&mut self) -> Result<(), String> {
         while self.control_flow.next_instruction_index < self.instructions.len() {
             self.step()?;
@@ -454,15 +461,6 @@ impl Runtime {
     /// Returns the index of the current instruction
     pub fn current_instruction_index(&self) -> usize {
         self.control_flow.next_instruction_index - 1
-    }
-
-    /// Adds an instruction to the end of the instruction vector with a label mapping.
-    pub fn add_instruction_with_label(&mut self, instruction: Instruction, label: String) {
-        //TODO Move to runtime builder
-        self.instructions.push(instruction);
-        self.control_flow
-            .instruction_labels
-            .insert(label, self.instructions.len() - 1);
     }
 
     /// Returns reference to **runtime_args**.
@@ -545,9 +543,9 @@ impl<'a> RuntimeArgs {
                 Ok(memory_cells) => {
                     let accumulators = match args.accumulators {
                         None => Vec::new(),
-                        Some(value) => {
+                        Some(v) => {
                             let mut accumulators = Vec::new();
-                            for i in 0..args.accumulators.unwrap() {
+                            for i in 0..v {
                                 accumulators.push(Accumulator::new(i as usize));
                             }
                             accumulators
@@ -573,6 +571,7 @@ impl<'a> RuntimeArgs {
         Self::new(4, memory_cells.iter().map(|f| f.to_string()).collect())
     }
 
+    #[allow(dead_code)]
     pub fn new_empty() -> Self {
         Self {
             accumulators: Vec::new(),
@@ -599,6 +598,7 @@ impl<'a> RuntimeArgs {
 
     /// Creates a new memory cell with label **label** if it does not already exist
     /// and adds it to the **memory_cells* hashmap.
+    #[allow(dead_code)]
     pub fn add_storage_cell(&mut self, label: &str) {
         if !self.memory_cells.contains_key(label) {
             self.memory_cells.insert(label.to_string(), MemoryCell::new(label));
@@ -606,6 +606,7 @@ impl<'a> RuntimeArgs {
     }
 
     /// Adds a new accumulator to the accumulators vector.
+    #[allow(dead_code)]
     pub fn add_accumulator(&mut self) {
         let id = self.accumulators.len();
         self.accumulators.push(Accumulator::new(id));
@@ -662,11 +663,9 @@ fn read_memory_cells_from_file(path: &str) -> Result<HashMap<String, MemoryCell>
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-
     use crate::{
         base::{Comparison, Operation},
-        instructions::{self, Instruction},
+        instructions::Instruction,
         runtime::RuntimeBuildError,
     };
 
@@ -792,7 +791,7 @@ mod tests {
         println!("{:?}", build);
         assert!(build.is_ok());
         // Test if missing accumulators are detected
-        for (i1, s) in to_test.iter().enumerate() {
+        for (_, s) in to_test.iter().enumerate() {
             let mut runtime_args = RuntimeArgs::new_empty();
             runtime_args.add_storage_cell("a");
             runtime_args.add_storage_cell("b");

@@ -1,4 +1,4 @@
-use std::{time::Duration, collections::{HashMap, HashSet}, thread, io::{self, Error}};
+use std::{time::Duration, collections::HashMap, thread, io::{self, Error}};
 
 use crossterm::event::{Event, KeyCode, self};
 use tui::{backend::Backend, Frame, layout::{Layout, Direction, Constraint, Alignment, Rect}, widgets::{Tabs, Block, Borders, BorderType, ListItem, List, ListState, Clear, Paragraph}, style::{Style, Color, Modifier}, text::{Spans, Span}, Terminal};
@@ -27,37 +27,6 @@ impl StatefulInstructions {
         self.state.select(Some(index));
     }
 
-    fn next(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i >= self.instructions.len() - 1 {
-                    0
-                } else {
-                    i + 1
-                }
-            }
-            None => 0,
-        };
-        self.state.select(Some(i));
-    }
-
-    fn previous(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i == 0 {
-                    self.instructions.len() - 1
-                } else {
-                    i - 1
-                }
-            }
-            None => 0,
-        };
-        self.state.select(Some(i));
-    }
-
-    fn unselect(&mut self) {
-        self.state.select(None);
-    }
 }
 
 /// Used to update and set the lists for accumulators, memory cells and stack.
@@ -250,7 +219,7 @@ impl App {
 
     fn active_keybind_hints(&self) -> Vec<Spans> {
         let mut spans = Vec::new();
-        for (k, v) in &self.keybind_hints {
+        for (_k, v) in &self.keybind_hints {
             if !v.enabled {
                 continue;
             }
@@ -286,21 +255,6 @@ fn init_keybinds() -> HashMap<char, KeybindHint> {
     map.insert('n', KeybindHint::new('n', "Next instruction", false));
     map.insert('s', KeybindHint::new('s', "Reset", false));
     map
-}
-
-/// Example how how I can highlight list items.
-/// 
-/// (should i keep the way I use the main List or should I change it to use such system?)
-fn test_list_items() -> Vec<ListItem<'static>> {
-    let mut items = Vec::new();
-    for i in 1..=10 {
-        let mut item = ListItem::new(format!("Item {}", i));
-        if i % 2 == 0 {
-            item = item.style(Style::default().bg(Color::DarkGray));
-        }
-        items.push(item);
-    }
-    items
 }
 
 /// Draw the ui

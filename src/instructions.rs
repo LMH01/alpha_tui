@@ -173,7 +173,7 @@ impl Instruction {
                     label_c,
                 )?
             }
-            Self::Goto(label) => goto(runtime_args, control_flow, label)?,
+            Self::Goto(label) => goto(control_flow, label)?,
             Self::GotoIfAccumulator(comparison, label, a_idx_a, a_idx_b) => goto_if_accumulator(
                 runtime_args,
                 control_flow,
@@ -200,7 +200,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
     /// Tries to parse an instruction from the input vector.
     /// Each element in the vector is one part of the instruction.
     fn try_from(value: &Vec<&str>) -> Result<Self, Self::Error> {
-        let mut parts = value;
+        let parts = value;
         
         // Instructions that compare values
         if parts[0] == "if" {
@@ -858,7 +858,6 @@ fn calc_memory_cell_with_memory_cells(
 ///
 /// Sets the next instruction index to index contained behind **label** in [instruction_labels](../runtime/struct.ControlFlow.html#structfield.instruction_labels) map.
 fn goto(
-    runtime_args: &mut RuntimeArgs,
     control_flow: &mut ControlFlow,
     label: &str,
 ) -> Result<(), String> {
@@ -1002,7 +1001,7 @@ mod tests {
             err_idx, parse_alpha, parse_memory_cell, parse_operation, Instruction,
             InstructionParseError,
         },
-        runtime::{self, ControlFlow, Runtime, RuntimeArgs, RuntimeBuilder},
+        runtime::{ControlFlow, RuntimeArgs, RuntimeBuilder},
     };
 
     /// Used to set the available memory cells during testing.
