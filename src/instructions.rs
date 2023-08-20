@@ -1,3 +1,6 @@
+use miette::{Result, Diagnostic, NamedSource, SourceSpan};
+use thiserror::Error;
+
 use crate::{
     base::{Comparison, Operation},
     runtime::{ControlFlow, RuntimeArgs},
@@ -199,7 +202,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
 
     /// Tries to parse an instruction from the input vector.
     /// Each element in the vector is one part of the instruction.
-    fn try_from(value: &Vec<&str>) -> Result<Self, Self::Error> {
+    fn try_from(value: &Vec<&str>) -> Result<Self, InstructionParseError> {
         let parts = value;
         
         // Instructions that compare values
@@ -453,28 +456,87 @@ impl TryFrom<&str> for Instruction {
     }
 }
 
-#[derive(Debug, PartialEq)]
+//#[derive(Debug, Error, Diagnostic)]
+//#[error("InstructionParseError")]
+//pub struct InstructionParseError {
+//    //#[source_code]
+//    pub src: NamedSource,
+//    //#[label("Here")]
+//    pub bad_bit: SourceSpan,
+//    pub code: String,
+//}
+
+#[derive(Debug, PartialEq, Diagnostic, Error)]
 pub enum InstructionParseError {
     /// Indicates that the specified operation does not exist.
     /// Argument specifies the character index at which the error occurred
     /// and the string that caused it.
+    #[error("unknown operation")]
+    #[diagnostic(code("parse_instruction::unknown_operation"), help("Allowed operations: + - * /"))]
     UnknownOperation(usize, String),
     /// Indicates that the specified comparison does not exist.
     /// Argument specifies the character index at which the error occurred.
     /// and the string that caused it.
+    #[error("unknown comparison")]
+    #[diagnostic(code("parse_instruction::unknown_comparison"))]
     UnknownComparison(usize, String),
     /// Indicates that a value that was expected to be a number is not a number.
     /// Argument specifies the character index at which the error occurred.
     /// and the string that caused it.
+    #[error("not a number")]
+    #[diagnostic(code("parse_instruction::not_a_number"))]
     NotANumber(usize, String),
     /// Indicates that the market expression is not valid.
     /// The reason might be a syntax error.
+    #[error("invalid expression")]
+    #[diagnostic(code("parse_instruction::invalid_expression"))]
     InvalidExpression(usize, String),
     /// Indicates that no instruction was found that matches the input.
+    #[error("no match")]
+    #[diagnostic(code("parse_instruction::no_match"))]
     NoMatch,
     /// Indicates that no instruction was found but gives a suggestion on what instruction might be meant.
+    #[error("no match suggestion")]
+    #[diagnostic(code("parse_instruction::no_match_suggestion"))]
     NoMatchSuggestion(String),
 }
+
+impl InstructionParseError {
+
+    pub fn position(&self, line: usize) -> SourceSpan {
+        match self {
+            InstructionParseError::UnknownOperation(c, reason) => {
+                (*c, line).into()
+            },
+            _ => (0, 0).into()
+        }
+    }
+
+}
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("when building program")]
+#[diagnostic(code("build_program"))]
+pub struct BuildProgramError {
+    #[source_code]
+    pub src: NamedSource,
+    #[label("here")]
+    pub bad_bit: SourceSpan,
+    #[diagnostic_source]
+    pub reason: InstructionParseError,
+}
+
+//impl InstructionBuildError {
+//
+//    fn new(src: NamedSource, span: (usize, usize), reason: &dyn Diagnostic) -> Self {
+//        Self {
+//            src,
+//            bad_bit: span.into(),
+//            reason
+//        }
+//    }
+//
+//}
 
 /// Parses all parameters into string and returns the concatenated string.
 /// Inserts a whitespace between each parameters string representation.

@@ -9,3 +9,5 @@ edition = "2021"
 ratatui = { version = "0.22.0", features = ["all-widgets"]}
 crossterm = "0.25"
 clap = { version = "4.3.23", features = ["derive", "color"] }
+thiserror = "1.0.47"
+miette = { version = "5.10.0", features = ["fancy"] }

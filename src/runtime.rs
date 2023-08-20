@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
+
+use miette::{Result, Diagnostic, NamedSource, IntoDiagnostic, Context};
+use thiserror::Error;
 
 use crate::{
     base::{Accumulator, MemoryCell},
@@ -59,7 +62,7 @@ impl RuntimeBuilder {
     /// Set `add_missing` to true to automatically add missing accumulators and memory cells.
     ///
     /// Returns `RuntimeBuildError` when the runtime could not be constructed due to missing information.
-    pub fn build(&mut self) -> Result<Runtime, RuntimeBuildError> {
+    pub fn build(&mut self) -> Result<Runtime, RuntimeBuildError> {//TODO Add miette for this (maybe?)
         if self.runtime_args.is_none() {
             return Err(RuntimeBuildError::RuntimeArgsMissing);
         }
@@ -108,7 +111,7 @@ impl RuntimeBuilder {
     ///
     /// If an instruction could not be parsed, an error is returned containing the reason.
     #[allow(clippy::ptr_arg)]
-    pub fn build_instructions(&mut self, instructions_input: &Vec<&str>) -> Result<(), String> {
+    pub fn build_instructions(&mut self, instructions_input: &Vec<&str>) -> Result<(), InstructionParseError> {
         self.control_flow.reset();
         let mut instructions = Vec::new();
         for (index, instruction) in instructions_input.iter().enumerate() {
@@ -125,10 +128,19 @@ impl RuntimeBuilder {
                 let label = splits.remove(0).replace(':', "");
                 self.control_flow.instruction_labels.insert(label, index);
             }
-            match Instruction::try_from(&splits) {
-                Ok(i) => instructions.push(i),
-                Err(e) => return Err(error_handling(e, instruction, (index as u32) + 1)),
-            }
+            //instructions.push(Instruction::try_from(&splits).wrap_err("when building instructions")?)
+            instructions.push(Instruction::try_from(&splits)?)
+            //match Instruction::try_from(&splits) {
+            //    Ok(i) => instructions.push(i),
+            //    Err(e) => {
+            //        Err(e)?
+            //        //Err(InstructionParseError {
+            //        //    src: NamedSource::new("test", "some code here"),
+            //        //    bad_bit: (0, 0).into(),
+            //        //})?
+            //        //return Err(error_handling(e, instruction, (index as u32) + 1))
+            //    },
+            //}
         }
         self.instructions = Some(instructions);
         Ok(())

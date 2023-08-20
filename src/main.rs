@@ -1,4 +1,4 @@
-use std::{error::Error, io, process::exit};
+use std::{io, process::exit};
 
 use clap::Parser;
 use cli::Args;
@@ -7,11 +7,12 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use miette::{Result, IntoDiagnostic, NamedSource};
 use ::ratatui::{backend::CrosstermBackend, Terminal};
 use utils::read_file;
 
 use crate::{
-    runtime::RuntimeBuilder, tui::App,
+    runtime::RuntimeBuilder, tui::App, instructions::BuildProgramError,
 };
 
 /// Contains all required data types used to run programs
@@ -27,7 +28,7 @@ mod utils;
 /// Terminal user interface
 mod tui;
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<()> {
     let args = Args::parse();
 
     let instructions = match read_file(&args.input) {
@@ -45,11 +46,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             exit(-1);
         },
     };
+    //rb.build_instructions(&instructions.iter().map(|s| s.as_str()).collect())?;
     match rb.build_instructions(&instructions.iter().map(|s| s.as_str()).collect()) {
         Ok(_) => (),
         Err(e) => {
-            println!("{e}");
-            exit(-1);
+            Err(BuildProgramError {
+                src: NamedSource::new(&args.input, instructions.clone().join("\n")),
+                bad_bit: e.position(1),
+                reason: e,
+            })?
         }
     };
     println!("Building runtime");
@@ -75,9 +80,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     //tui
     // setup terminal
-    enable_raw_mode()?;
+    enable_raw_mode().into_diagnostic()?;
     let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+    execute!(stdout, EnterAlternateScreen, EnableMouseCapture).into_diagnostic()?;
     let stdout = io::stdout();
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend).unwrap();
@@ -87,13 +92,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     let res = app.run(&mut terminal);
 
     // restore terminal
-    disable_raw_mode()?;
+    disable_raw_mode().into_diagnostic()?;
     execute!(
         terminal.backend_mut(),
         LeaveAlternateScreen,
         DisableMouseCapture
-    )?;
-    terminal.show_cursor()?;
+    ).into_diagnostic()?;
+    terminal.show_cursor().into_diagnostic()?;
 
     match res {
         Ok(()) => exit(0),
