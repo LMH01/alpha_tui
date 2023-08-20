@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'rust_alpha'",
+            "name": "Debug executable 'alpha_tui'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=rust_alpha",
-                    "--package=rust_alpha"
+                    "--bin=alpha_tui",
+                    "--package=alpha_tui"
                 ],
                 "filter": {
-                    "name": "rust_alpha",
+                    "name": "alpha_tui",
                     "kind": "bin"
                 }
             },
@@ -25,16 +25,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'rust_alpha'",
+            "name": "Debug unit tests in executable 'alpha_tui'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=rust_alpha",
-                    "--package=rust_alpha"
+                    "--bin=alpha_tui",
+                    "--package=alpha_tui"
                 ],
                 "filter": {
-                    "name": "rust_alpha",
+                    "name": "alpha_tui",
                     "kind": "bin"
                 }
             },

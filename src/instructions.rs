@@ -1,4 +1,4 @@
-use miette::{Diagnostic, NamedSource, Result, SourceSpan, SourceOffset};
+use miette::{Diagnostic, NamedSource, Result, SourceOffset, SourceSpan};
 use thiserror::Error;
 
 use crate::{
@@ -208,19 +208,25 @@ impl TryFrom<&Vec<&str>> for Instruction {
         // Instructions that compare values
         if parts[0] == "if" {
             if !parts[1].starts_with('a') {
-                return Err(InstructionParseError::InvalidExpression(err_idx(parts, 1)));
+                return Err(InstructionParseError::InvalidExpression(part_range(
+                    parts, 1,
+                )));
             }
             if parts[4] != "then" {
-                return Err(InstructionParseError::InvalidExpression(err_idx(parts, 4)));
+                return Err(InstructionParseError::InvalidExpression(part_range(
+                    parts, 4,
+                )));
             }
             if parts[5] != "goto" {
-                return Err(InstructionParseError::InvalidExpression(err_idx(parts, 5)));
+                return Err(InstructionParseError::InvalidExpression(part_range(
+                    parts, 5,
+                )));
             }
-            let a_idx = parse_alpha(parts[1], err_idx(parts, 1))?;
-            let cmp = parse_comparison(parts[2], err_idx(parts, 2))?;
-            let a_idx_b = parse_alpha(parts[3], err_idx(parts, 3));
-            let no = parse_number(parts[3], err_idx(parts, 3));
-            let m_cell = parse_memory_cell(parts[3], err_idx(parts, 3));
+            let a_idx = parse_alpha(parts[1], part_range(parts, 1))?;
+            let cmp = parse_comparison(parts[2], part_range(parts, 2))?;
+            let a_idx_b = parse_alpha(parts[3], part_range(parts, 3));
+            let no = parse_number(parts[3], part_range(parts, 3));
+            let m_cell = parse_memory_cell(parts[3], part_range(parts, 3));
             // Check if instruction is goto_if_accumulator
             if let Ok(a_idx_b) = a_idx_b {
                 return Ok(Instruction::GotoIfAccumulator(
@@ -246,7 +252,9 @@ impl TryFrom<&Vec<&str>> for Instruction {
                     m_cell,
                 ));
             } else {
-                return Err(InstructionParseError::InvalidExpression(err_idx(parts, 3)));
+                return Err(InstructionParseError::InvalidExpression(part_range(
+                    parts, 3,
+                )));
             }
         }
 
@@ -269,18 +277,15 @@ impl TryFrom<&Vec<&str>> for Instruction {
         // Check if := is present
         if parts[1] != ":=" {
             let non_instruction = parts.join(" ");
-            return Err(InstructionParseError::NoMatch {
-                pos: (0, non_instruction.len()),
-                src: non_instruction
-        });
+            return Err(InstructionParseError::NoMatch(part_range(parts, 1)))
         }
 
         // Instructions where the first part is an accumulator
         if parts[0].starts_with('a') {
-            let a_idx = parse_alpha(parts[0], 0)?;
+            let a_idx = parse_alpha(parts[0], part_range(parts, 0))?;
             // Instructions that use a second accumulator to assign the value
             if parts[2].starts_with('a') {
-                let a_idx_b = parse_alpha(parts[2], err_idx(parts, 2))?;
+                let a_idx_b = parse_alpha(parts[2], part_range(parts, 2))?;
                 // Check if instruction is assign_accumulator_value_from_accumulator
                 if parts.len() == 3 {
                     return Ok(Instruction::AssignAccumulatorValueFromAccumulator(
@@ -288,11 +293,11 @@ impl TryFrom<&Vec<&str>> for Instruction {
                     ));
                 }
                 // Parse operation
-                let op = parse_operation(parts[3], err_idx(parts, 3))?;
+                let op = parse_operation(parts[3], part_range(parts, 3))?;
 
                 // Instructions that use a third accumulator
                 if parts[4].starts_with('a') {
-                    let a_idx_c = parse_alpha(parts[4], err_idx(parts, 4))?;
+                    let a_idx_c = parse_alpha(parts[4], part_range(parts, 4))?;
                     // Check if instruction is calc_accumulator_value_with_accumulator or calc_accumulator_value_with_accumulators
                     if a_idx == a_idx_b {
                         return Ok(Instruction::CalcAccumulatorWithAccumulator(
@@ -307,8 +312,8 @@ impl TryFrom<&Vec<&str>> for Instruction {
 
                 // Check if booth accumulators are the same
                 if a_idx == a_idx_b {
-                    let no = parse_number(parts[4], err_idx(parts, 4));
-                    let m_cell = parse_memory_cell(parts[4], err_idx(parts, 4));
+                    let no = parse_number(parts[4], part_range(parts, 4));
+                    let m_cell = parse_memory_cell(parts[4], part_range(parts, 4));
 
                     // Check if instruction is calc_accumulator_value_with_constant
                     if let Ok(no) = no {
@@ -327,14 +332,13 @@ impl TryFrom<&Vec<&str>> for Instruction {
                 }
 
                 return Err(InstructionParseError::NoMatchSuggestion {
-                    src: parts.join(" "),
-                    pos: (0, parts.join(" ").len()),
+                    range: (0, parts.join(" ").len()),
                     help: suggestion!(parts[0], ":=", parts[0], parts[3], parts[4]),
                 });
             }
 
-            let m_cell_a = parse_memory_cell(parts[2], err_idx(parts, 3));
-            let no = parse_number(parts[2], err_idx(parts, 2));
+            let m_cell_a = parse_memory_cell(parts[2], part_range(parts, 2));
+            let no = parse_number(parts[2], part_range(parts, 2));
 
             // Instructions where the third part is a memory cell
             if let Ok(m_cell_a) = m_cell_a {
@@ -345,8 +349,8 @@ impl TryFrom<&Vec<&str>> for Instruction {
                     ));
                 }
                 // Longer, instruction is calc_accumulator_with_memory_cells
-                let op = parse_operation(parts[3], err_idx(parts, 3))?;
-                let m_cell_b = parse_memory_cell(parts[4], err_idx(parts, 4))?;
+                let op = parse_operation(parts[3], part_range(parts, 3))?;
+                let m_cell_b = parse_memory_cell(parts[4], part_range(parts, 4))?;
                 return Ok(Instruction::CalcAccumulatorWithMemoryCells(
                     op, a_idx, m_cell_a, m_cell_b,
                 ));
@@ -356,23 +360,25 @@ impl TryFrom<&Vec<&str>> for Instruction {
             if let Ok(no) = no {
                 return Ok(Instruction::AssignAccumulatorValue(a_idx, no));
             }
-            return Err(InstructionParseError::InvalidExpression(err_idx(parts, 2)));
+            return Err(InstructionParseError::InvalidExpression(part_range(
+                parts, 2,
+            )));
         }
 
         // Instructions where the first part is a memory  cell
-        if let Ok(m_cell) = parse_memory_cell(parts[0], 0) {
+        if let Ok(m_cell) = parse_memory_cell(parts[0], part_range(parts, 0)) {
             // Instructions that use use second memory cell in part 2
-            if let Ok(m_cell_b) = parse_memory_cell(parts[2], err_idx(parts, 2)) {
+            if let Ok(m_cell_b) = parse_memory_cell(parts[2], part_range(parts, 2)) {
                 // Check if instruction is assign_memory_cell_value_from_memory_cell
                 if parts.len() == 3 {
                     return Ok(Instruction::AssignMemoryCellValueFromMemoryCell(
                         m_cell, m_cell_b,
                     ));
                 }
-                let op = parse_operation(parts[3], err_idx(parts, 3))?;
-                let a_idx = parse_alpha(parts[4], err_idx(parts, 4));
-                let no = parse_number(parts[4], err_idx(parts, 4)); //TODO Fix index out of bounds when parts is of length 4 or of length 1
-                let m_cell_c = parse_memory_cell(parts[4], err_idx(parts, 4));
+                let op = parse_operation(parts[3], part_range(parts, 3))?;
+                let a_idx = parse_alpha(parts[4], part_range(parts, 4));
+                let no = parse_number(parts[4], part_range(parts, 4)); //TODO Fix index out of bounds when parts is of length 4 or of length 1
+                let m_cell_c = parse_memory_cell(parts[4], part_range(parts, 4));
                 // Check if instruction is calc_memory_cell_with_memory_cell_accumulator
                 if let Ok(a_idx) = a_idx {
                     return Ok(Instruction::CalcMemoryCellWithMemoryCellAccumulator(
@@ -389,12 +395,14 @@ impl TryFrom<&Vec<&str>> for Instruction {
                         op, m_cell, m_cell_b, m_cell_c,
                     ));
                 } else {
-                    return Err(InstructionParseError::InvalidExpression(err_idx(parts, 4)));
+                    return Err(InstructionParseError::InvalidExpression(part_range(
+                        parts, 4,
+                    )));
                 }
             }
 
-            let a_idx = parse_alpha(parts[2], err_idx(parts, 2));
-            let no = parse_number(parts[2], err_idx(parts, 2));
+            let a_idx = parse_alpha(parts[2], part_range(parts, 2));
+            let no = parse_number(parts[2], part_range(parts, 2));
             // Check if instruction is assign_memory_cell_value_from_accumulator
             if let Ok(idx) = a_idx {
                 return Ok(Instruction::AssignMemoryCellValueFromAccumulator(
@@ -404,15 +412,14 @@ impl TryFrom<&Vec<&str>> for Instruction {
                 // Check if instruction is assign_memory_cell_value
                 return Ok(Instruction::AssignMemoryCellValue(m_cell, v));
             } else {
-                return Err(InstructionParseError::InvalidExpression(err_idx(parts, 2)));
+                return Err(InstructionParseError::InvalidExpression(part_range(
+                    parts, 2,
+                )));
             }
         }
 
         let non_instruction = parts.join(" ");
-        Err(InstructionParseError::NoMatch {
-            pos: (0, non_instruction.len()),
-            src: non_instruction,
-        })
+        Err(InstructionParseError::NoMatch((0, non_instruction.len())))
     }
 }
 
@@ -444,7 +451,7 @@ pub enum InstructionParseError {
         code("parse_instruction::unknown_operation"),
         help("Did you mean one of these?: + - * /")
     )]
-    UnknownOperation(usize),
+    UnknownOperation((usize, usize)),
     /// Indicates that the specified comparison does not exist.
     /// Argument specifies the character index at which the error occurred.
     /// and the string that caused it.
@@ -453,48 +460,41 @@ pub enum InstructionParseError {
         code("parse_instruction::unknown_comparison"),
         help("Did you mean one of these?: < <= == != >= >")
     )]
-    UnknownComparison(usize),
+    UnknownComparison((usize, usize)),
     /// Indicates that a value that was expected to be a number is not a number.
     /// Argument specifies the character index at which the error occurred.
     /// and the string that caused it.
     #[error("not a number")]
     #[diagnostic(code("parse_instruction::not_a_number"))]
-    NotANumber(usize),
+    NotANumber((usize, usize)),
     /// Indicates that the market expression is not valid.
     /// The reason might be a syntax error.
     #[error("invalid expression")]
     #[diagnostic(code("parse_instruction::invalid_expression"))]
-    InvalidExpression(usize),
+    InvalidExpression((usize, usize)),
     /// Indicates that no instruction was found that matches the input.
     #[error("no match")]
     #[diagnostic(code("parse_instruction::no_match"))]
-    NoMatch{
-        #[source_code]
-        src: String,
-        #[label("this instruction")]
-        pos: (usize, usize),
-    },
+    NoMatch((usize, usize)),
     /// Indicates that no instruction was found but gives a suggestion on what instruction might be meant.
     #[error("no match")]
     #[diagnostic(code("parse_instruction::no_match_suggestion"))]
-    NoMatchSuggestion {
-        #[source_code]
-        src: String,
-        #[label("this instruction")]
-        pos: (usize, usize),
+    NoMatchSuggestion{
+        range: (usize, usize),
         #[help]
         help: String,
     },
 }
 
 impl InstructionParseError {
-    pub fn position(&self) -> usize {
+    pub fn range(&self) -> (usize, usize) {
         match self {
             InstructionParseError::UnknownOperation(c) => *c,
             InstructionParseError::UnknownComparison(c) => *c,
             InstructionParseError::NotANumber(c) => *c,
             InstructionParseError::InvalidExpression(c) => *c,
-            _ => 0,
+            InstructionParseError::NoMatch(c) => *c,
+            InstructionParseError::NoMatchSuggestion { range: c, help: _ } => *c,
         }
     }
 }
@@ -503,27 +503,13 @@ impl InstructionParseError {
 #[error("when building program")]
 #[diagnostic(code("build_program"))]
 pub struct BuildProgramError {
-
     #[source_code]
     pub src: NamedSource,
     #[label("here")]
     pub bad_bit: SourceSpan,
     #[diagnostic_source]
     pub reason: InstructionParseError,
-
 }
-
-//impl InstructionBuildError {
-//
-//    fn new(src: NamedSource, span: (usize, usize), reason: &dyn Diagnostic) -> Self {
-//        Self {
-//            src,
-//            bad_bit: span.into(),
-//            reason
-//        }
-//    }
-//
-//}
 
 /// Parses all parameters into string and returns the concatenated string.
 /// Inserts a whitespace between each parameters string representation.
@@ -549,84 +535,90 @@ macro_rules! suggestion {
 
 /// Tries to parse the index of the accumulator.
 ///
-/// `err_idx` indicates at what index the parse error originates.
-///
-/// # Example
-/// ```
-/// assert_eq!(parse_alpha("a10", 1), Ok(10));
-/// assert_eq!(parse_alpha("ab3", 1), Err(1));
-/// ```
-fn parse_alpha(s: &str, err_idx: usize) -> Result<usize, InstructionParseError> {
+/// `part_range` indicates the area that is affected.
+fn parse_alpha(s: &str, part_range: (usize, usize)) -> Result<usize, InstructionParseError> {
     if !s.starts_with('a') && !s.is_empty() {
-        return Err(InstructionParseError::InvalidExpression(err_idx));
+        return Err(InstructionParseError::InvalidExpression(part_range));
     }
     let input = s.replace('a', "");
     match input.parse::<usize>() {
         Ok(x) => Ok(x),
-        Err(_) => Err(InstructionParseError::NotANumber(err_idx + 1)),
+        Err(_) => Err(InstructionParseError::NotANumber((
+            part_range.0+1,
+            part_range.1,
+        ))),
     }
 }
 
 /// Tries to parse the operation.
 ///
-/// `err_idx` indicates at what index the parse error originates.
-fn parse_operation(s: &str, err_idx: usize) -> Result<Operation, InstructionParseError> {
+/// `part_range` indicates the area that is affected.
+fn parse_operation(
+    s: &str,
+    part_range: (usize, usize),
+) -> Result<Operation, InstructionParseError> {
     match Operation::try_from(s) {
         Ok(s) => Ok(s),
-        Err(_) => Err(InstructionParseError::UnknownOperation(err_idx)),
+        Err(_) => Err(InstructionParseError::UnknownOperation(part_range)),
     }
 }
 
 /// Tries to parse the comparison.
 ///
-/// `err_idx` indicates at what index the parse error originates.
-fn parse_comparison(s: &str, err_idx: usize) -> Result<Comparison, InstructionParseError> {
+/// `part_range` indicates the area that is affected.
+fn parse_comparison(
+    s: &str,
+    part_range: (usize, usize),
+) -> Result<Comparison, InstructionParseError> {
     match Comparison::try_from(s) {
         Ok(s) => Ok(s),
-        Err(_) => Err(InstructionParseError::UnknownComparison(err_idx)),
+        Err(_) => Err(InstructionParseError::UnknownComparison(part_range)),
     }
 }
 
 /// Tries to parse a number.
 ///
-/// `err_idx` indicates at what index the parse error originates.
-fn parse_number(s: &str, err_idx: usize) -> Result<i32, InstructionParseError> {
+/// `part_range` indicates the area that is affected.
+fn parse_number(s: &str, part_range: (usize, usize)) -> Result<i32, InstructionParseError> {
     match s.parse::<i32>() {
         Ok(x) => Ok(x),
-        Err(_) => Err(InstructionParseError::NotANumber(err_idx)),
+        Err(_) => Err(InstructionParseError::NotANumber(part_range)),
     }
 }
 
 /// Parses the name of a memory cell.
 /// For that the content inside p() is taken.
 ///
-/// `err_base_idx` indicates at what index the input string starts.
-fn parse_memory_cell(s: &str, err_base_idx: usize) -> Result<String, InstructionParseError> {
+/// `part_range` indicates the area that is affected.
+fn parse_memory_cell(s: &str, part_range: (usize, usize)) -> Result<String, InstructionParseError> {
     if !s.starts_with("p(") {
-        return Err(InstructionParseError::InvalidExpression(err_base_idx));
+        return Err(InstructionParseError::InvalidExpression(part_range));
     }
     if !s.ends_with(')') {
         return Err(InstructionParseError::InvalidExpression(
-            err_base_idx + s.len() - 1,
+            (part_range.0, part_range.1),
         ));
     }
     let name = s.replace("p(", "").replace(')', "");
     if name.is_empty() {
-        return Err(InstructionParseError::InvalidExpression(err_base_idx));
+        return Err(InstructionParseError::InvalidExpression(part_range));
     }
     Ok(name)
 }
 
-/// Calculates the error index depending on the part in which the error occurs.
+/// Calculates the character index range of a part.
 ///
 /// `part_idx` specifies in what part the error occurs.
 #[allow(clippy::needless_range_loop)]
-fn err_idx(parts: &[&str], part_idx: usize) -> usize {
-    let mut idx = 0;
-    for i in 0..=part_idx - 1 {
-        idx += parts[i].len() + 1;
+fn part_range(parts: &[&str], part_idx: usize) -> (usize, usize) {
+    let mut start_idx = 0;
+    for (idx, part) in parts.iter().enumerate() {
+        if idx == part_idx {
+            break;
+        }
+        start_idx += part.len() + 1; //Add one to add in the space
     }
-    idx
+    (start_idx, start_idx + parts[part_idx].len()-1) // remove one because we start counting at 0
 }
 
 /// Runs code equal to **push**
@@ -1030,13 +1022,13 @@ fn assert_memory_cell_contains_value(
 mod tests {
     use std::collections::HashMap;
 
-    use miette::{SourceSpan, SourceOffset};
+    use miette::{SourceOffset, SourceSpan};
 
     use crate::{
         base::{Accumulator, Comparison, MemoryCell, Operation},
         instructions::{
-            err_idx, parse_alpha, parse_memory_cell, parse_operation, Instruction,
-            InstructionParseError,
+            parse_alpha, parse_memory_cell, parse_operation, part_range, Instruction,
+            InstructionParseError, parse_number,
         },
         runtime::{ControlFlow, RuntimeArgs, RuntimeBuilder},
     };
@@ -1048,57 +1040,63 @@ mod tests {
 
     #[test]
     fn test_parse_alpha() {
-        assert_eq!(parse_alpha("a3", 1), Ok(3));
-        assert_eq!(parse_alpha("a10", 1), Ok(10));
+        assert_eq!(parse_alpha("a3", (1, 1)), Ok(3));
+        assert_eq!(parse_alpha("a10", (1, 2)), Ok(10));
         assert_eq!(
-            parse_alpha("a10x", 0),
-            Err(InstructionParseError::NotANumber(1))
+            parse_alpha("a10x", (0, 3)),
+            Err(InstructionParseError::NotANumber((1, 3)))
         );
         assert_eq!(
-            parse_alpha("ab3", 0),
-            Err(InstructionParseError::NotANumber(1))
+            parse_alpha("ab3", (0, 2)),
+            Err(InstructionParseError::NotANumber((1, 2)))
         );
         assert_eq!(
-            parse_alpha("ab3i", 0),
-            Err(InstructionParseError::NotANumber(1))
+            parse_alpha("ab3i", (0, 3)),
+            Err(InstructionParseError::NotANumber((1, 3)))
         );
     }
 
     #[test]
     fn test_parse_operation() {
-        assert_eq!(parse_operation("+", 0), Ok(Operation::Plus));
-        assert_eq!(parse_operation("-", 0), Ok(Operation::Minus));
-        assert_eq!(parse_operation("*", 0), Ok(Operation::Multiplication));
-        assert_eq!(parse_operation("/", 0), Ok(Operation::Division));
+        assert_eq!(parse_operation("+", (0, 0)), Ok(Operation::Plus));
+        assert_eq!(parse_operation("-", (0, 0)), Ok(Operation::Minus));
+        assert_eq!(parse_operation("*", (0, 0)), Ok(Operation::Multiplication));
+        assert_eq!(parse_operation("/", (0, 0)), Ok(Operation::Division));
         assert_eq!(
-            parse_operation("x", 0),
-            Err(InstructionParseError::UnknownOperation(0,))
+            parse_operation("x", (0, 0)),
+            Err(InstructionParseError::UnknownOperation((0, 0)))
         );
     }
 
     #[test]
     fn test_parse_memory_cell() {
-        assert_eq!(parse_memory_cell("p(a)", 0), Ok("a".to_string()));
-        assert_eq!(parse_memory_cell("p(xyz)", 0), Ok("xyz".to_string()));
+        assert_eq!(parse_memory_cell("p(a)", (0, 3)), Ok("a".to_string()));
+        assert_eq!(parse_memory_cell("p(xyz)", (0, 3)), Ok("xyz".to_string()));
         assert_eq!(
-            parse_memory_cell("p(xyzX", 0),
-            Err(InstructionParseError::InvalidExpression(5))
+            parse_memory_cell("p(xyzX", (0, 6)),
+            Err(InstructionParseError::InvalidExpression((0, 6)))
         );
         assert_eq!(
-            parse_memory_cell("pxyz)", 0),
-            Err(InstructionParseError::InvalidExpression(0))
+            parse_memory_cell("pxyz)", (0, 4)),
+            Err(InstructionParseError::InvalidExpression((0, 4)))
         );
         assert_eq!(
-            parse_memory_cell("p(p()", 0),
-            Err(InstructionParseError::InvalidExpression(0,))
+            parse_memory_cell("p(p()", (0, 4)),
+            Err(InstructionParseError::InvalidExpression((0, 4)))
         );
     }
 
     #[test]
-    fn test_err_idx() {
+    fn test_parse_number() {
+        assert_eq!(parse_number("20", (0, 0)), Ok(20));
+        assert_eq!(parse_number("xxx", (0, 2)), Err(InstructionParseError::NotANumber((0, 2))));
+    }
+
+    #[test]
+    fn test_part_range() {
         let s = String::from("a1 := a2 + a4");
         let parts: Vec<&str> = s.split_whitespace().collect();
-        assert_eq!(err_idx(&parts, 2), 6);
+        assert_eq!(part_range(&parts, 2), (6, 7));
     }
 
     #[test]
@@ -1147,7 +1145,7 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("a0 := x"),
-            Err(InstructionParseError::InvalidExpression(6))
+            Err(InstructionParseError::InvalidExpression((6, 6)))
         );
     }
 
@@ -1186,11 +1184,11 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("a3 := a1x"),
-            Err(InstructionParseError::NotANumber(7))
+            Err(InstructionParseError::NotANumber((7, 8)))
         );
         assert_eq!(
             Instruction::try_from("ab := a1x"),
-            Err(InstructionParseError::NotANumber(1))
+            Err(InstructionParseError::NotANumber((1, 1)))
         );
     }
 
@@ -1237,7 +1235,7 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("a4 := p()"),
-            Err(InstructionParseError::InvalidExpression(6,))
+            Err(InstructionParseError::InvalidExpression((6, 8)))
         );
     }
 
@@ -1280,7 +1278,7 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("p(h1) := x"),
-            Err(InstructionParseError::InvalidExpression(9))
+            Err(InstructionParseError::InvalidExpression((9, 9)))
         );
     }
 
@@ -1317,7 +1315,7 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("p(h1) := a0x"),
-            Err(InstructionParseError::InvalidExpression(9,))
+            Err(InstructionParseError::InvalidExpression((9, 11)))
         );
     }
 
@@ -1362,7 +1360,7 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("p(h1) := p()"),
-            Err(InstructionParseError::InvalidExpression(9,))
+            Err(InstructionParseError::InvalidExpression((9, 11)))
         );
     }
 
@@ -1422,13 +1420,12 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("a1 := ab2 + a29"),
-            Err(InstructionParseError::NotANumber(7))
+            Err(InstructionParseError::NotANumber((7, 8)))
         );
         assert_eq!(
             Instruction::try_from("a1 := a2 + 20"),
             Err(InstructionParseError::NoMatchSuggestion {
-                src: "a1 := a2 + 20".to_string(),
-                pos: (0, 13),
+                range: (0, 13),
                 help: "Did you mean: \"a1 := a1 + 20\" ?".to_string()
             })
         );
@@ -1537,14 +1534,13 @@ mod tests {
         assert_eq!(
             Instruction::try_from("a1 := a2 * p(h1)"),
             Err(InstructionParseError::NoMatchSuggestion {
-                src: "a1 := a2 * p(h1)".to_string(),
-                pos: (0, 16),
+                range: (0, 16),
                 help: "Did you mean: \"a1 := a1 * p(h1)\" ?".to_string()
             })
         );
         assert_eq!(
             Instruction::try_from("a1 := a1 * p()"),
-            Err(InstructionParseError::InvalidExpression(11,))
+            Err(InstructionParseError::InvalidExpression((11, 13)))
         );
     }
 
@@ -1582,13 +1578,11 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("a0 := p(h1) x p(h2)"),
-            Err(InstructionParseError::UnknownOperation(12))
+            Err(InstructionParseError::UnknownOperation((12, 12)))
         );
         assert_eq!(
             Instruction::try_from("a0 := p(h1) / p()"),
-            Err(InstructionParseError::InvalidExpression(
-                14,
-            ))
+            Err(InstructionParseError::InvalidExpression((14, 16)))
         );
     }
 
@@ -1623,7 +1617,7 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("p(h1) := p(h2) o 10"),
-            Err(InstructionParseError::UnknownOperation(15))
+            Err(InstructionParseError::UnknownOperation((15, 15)))
         );
     }
 
@@ -1772,7 +1766,7 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("if x <= a1 then goto loop"),
-            Err(InstructionParseError::InvalidExpression(3))
+            Err(InstructionParseError::InvalidExpression((3, 3)))
         );
     }
 
@@ -1873,7 +1867,7 @@ mod tests {
         );
         assert_eq!(
             Instruction::try_from("if a0 == p then goto loop"),
-            Err(InstructionParseError::InvalidExpression(9))
+            Err(InstructionParseError::InvalidExpression((9, 9)))
         );
     }
 
