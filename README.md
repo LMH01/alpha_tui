@@ -2,51 +2,39 @@
 
 This is my attempt at writing a compiler for the Alpha-Notation used in my Systemnahe Informatik lecture at university.
 
-## Current status
+Programs are read in and then compiled, a terminal ui is then opened where you can run the program line by line.
 
-Internal handling of instructions is finished, programs can be run, when assembled by creating a list of instructions in code. Now the "compiler" needs be be written.
+## Getting started
 
-## TODO
+1. Download the [newest release]() specific for your system
+2. Extract the .zip file 
+3. Create a program by using the text editor of your choice or try an example program located in [examples/programs](examples/programs). The examples might help you write your program.
+4. Run `alpha_tui` by opening a terminal in the folder and then typing `alpha_tui -i FILENAME`
+5. The terminal ui will open where you can run the program line by line by using the `[r]` key
 
-- [X] Make it possible to customize the available memory cells (will be done by cli option)
-- [X] Add option to load predetermined values into memory cells before program starts (cli option, probably read from file)
-- [X] Make progamm work with GUI 
-	- [X] (Customization of available accumulators) - will be done with cli options
-	- [X] (Customization of available memory cells) - will be done with cli options
-		- if no memory cells are set all commands that require memory cells should be disabled ("compiling" with those commands included should fail)	
-- [X] Debug mode -> Step through each instruction
-- [X] Add tests (at least one for each command)
-- [X] Add support for comments at end of line (marked with # or //)
-- [X] Fix instruction pointer when lines are commented out
-- [X] Rename program into something better
-- [X] Add label ENDE or END that can be called to end the program
-- [ ] Write documentation and update readme to contain picture(s)
-- [X] Required accumulators and memory cells should be parsed from program (this should be the default), if this is not wanted memory cells can be set manually by the methods i already have
-	- This leads to only memory cells that are being used somewhere in the program being displayed in the gui
+### Compile from source
 
-### Instructions
+To compile the program from source the rust toolchain is needed. Once installed you can run the program by typing `cargo run`. To submit arguments you can use `--`, for example `cargo run -- -h` will print help.
 
-Be $c,u,v\in\mathbb{Z};n\in\mathbb{N}|n\geq0:i,j\in\lbrace h_0,\ldots,h_n\rbrace;op\in\lbrace +,-,*,/\rbrace;cmp\in\lbrace <,\leq,=, \ne,\geq,>\rbrace$
+## Instructions
 
-Currently the following commands are supported (booth at runtime and when parsed):
+See [instructions](instructions.md).
 
-- $\alpha_u:=\alpha_v$
-- $\alpha_u:=\rho(i)$
-- $\alpha_u:=c$
-- $\alpha_u:=\alpha_u\space\textbf{op}\space c$
-- $\alpha_u:=\alpha_u\space\textbf{op}\space\alpha_v$
-- $\alpha_u:=\alpha_v\space\textbf{op}\space\alpha_w$
-- $\alpha_u:=\alpha_u\space\textbf{op}\space \rho(i)$
-- $\alpha_u:=\rho(i)\space\textbf{op}\space \rho(j)$
-- $\rho(i):=\alpha_u$
-- $\rho(i):=c$
-- $\rho(i):=\rho(j)\space\textbf{op}\space c$
-- $\rho(i):=\rho(j)\space\textbf{op}\space\alpha_u$
-- $\rho(i):=\rho(j)\space\textbf{op}\space\rho(k)$
-- $\rho(i):=\rho(j)$
-- if $\alpha_u\space\textbf{cmp}\space\alpha_v$ then goto label
-- if $\alpha_u\space\textbf{cmp}\space c$ then goto label
-- if $\alpha_u\space\textbf{cmp}\space\rho(i)$ then goto label
-- goto label 
-- push 
-- pop
+## Options
+
+Accumulators and memory cells are automatically created when the input program is read.
+To circumvent that you can set the option `-d`. You then need to specify the accumulators and memory_cells that should be created. The options `-a` and `-m` or `--memory-cell-file` can be used to specify those values.
+
+If you require memory cells to be pre initialized you can use the option `--memory-cell-file` to read in a file that contains memory cell information. An example for such file can be found [here](examples/memory_cells.cells).
+
+For a full list of options and more explanation see `alpha_tui --help`.
+
+## Interface and usage
+
+The interface is written using the [ratatui](https://github.com/ratatui-org/ratatui) library.
+
+When a program is opened it can look like this: ![Program loaded example](media/gui_program_loaded.png)
+
+Press `[r]` to run the next instruction. Values that have changed and the line that was run last are highlighted.  This can look like this: ![Program running example](media/gui_program_running.png)
+
+When the last instruction was executed the following window is displayed. You can restart by pressing `[s]` or exit the program by pressing `[q]`. ![Program finished example](media/gui_program_finished.png)
