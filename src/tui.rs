@@ -416,7 +416,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
 
     // Popup if execution has finished
     if app.finished {
-        let block = Block::default().title("Execution finished!").borders(Borders::ALL);
+        let block = Block::default().title("Execution finished!").borders(Borders::ALL).border_style(Style::default().fg(Color::Green));
         let area = centered_rect(60, 20, f.size());
         let text = Paragraph::new("Press [q] to exit.\nPress [s] to reset to start.").block(block);
         f.render_widget(Clear, area); //this clears out the background
