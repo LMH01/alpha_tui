@@ -86,6 +86,8 @@ pub enum Instruction {
     ///
     /// See [goto_if_memory_cell](fn.goto_if_memory_cell.html)
     GotoIfMemoryCell(Comparison, String, usize, String),
+    /// This instruction does nothing.
+    Sleep(),
 }
 
 impl Instruction {
@@ -186,6 +188,7 @@ impl Instruction {
             Self::GotoIfMemoryCell(comparison, label, a_idx, mcl) => {
                 goto_if_memory_cell(runtime_args, control_flow, comparison, label, a_idx, mcl)?
             }
+            Self::Sleep() => (),
         }
         Ok(())
     }

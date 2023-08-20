@@ -96,6 +96,8 @@ impl<'a> RuntimeBuilder<'a> {
             // Check for labels
             let mut splits = instruction.split_whitespace().collect::<Vec<&str>>();
             if splits.is_empty() {
+                // Line is empty / line contains comment, add dummy instruction
+                instructions.push(Instruction::Sleep());
                 continue;
             }
             if splits[0].ends_with(":") {
