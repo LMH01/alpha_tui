@@ -592,18 +592,26 @@ fn err_idx(parts: &Vec<&str>, part_idx: usize) -> usize {
 }
 
 /// Runs code equal to **push**
+/// 
+/// Causes runtime error if accumulator does not contain data.
 fn push(runtime_args: &mut RuntimeArgs) -> Result<(), String> {
     assert_accumulator_exists(runtime_args, &0)?;
-    runtime_args
-        .stack
-        .push(runtime_args.accumulators[0].data.unwrap_or(0));
+    match runtime_args.accumulators[0].data {
+        Some(d) => runtime_args.stack.push(d),
+        None => return Err("unable to push: a0 is empty".to_string()),
+    }
     Ok(())
 }
 
 /// Runs code equal to **pop**
+/// 
+/// Causes runtime error if stack does not contain data.
 fn pop(runtime_args: &mut RuntimeArgs) -> Result<(), String> {
     assert_accumulator_contains_value(runtime_args, &0)?;
-    runtime_args.accumulators[0].data = Some(runtime_args.stack.pop().unwrap_or(0));
+    match runtime_args.stack.pop() {
+        Some(d) => runtime_args.accumulators[0].data = Some(d),
+        None => return Err("unable to pop: stack is empty".to_string()),
+    }
     Ok(())
 }
 

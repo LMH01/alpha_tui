@@ -413,11 +413,7 @@ impl<'a> Runtime<'a> {
         if let Err(e) = self.instructions[current_instruction]
             .run(&mut self.runtime_args, &mut self.control_flow)
         {
-            println!(
-                "Unable to continue execution, an irrecoverable error occured: {}",
-                e
-            );
-            return Err(format!("Execution terminated: {}", e));
+            return Err(format!("[Line {}] {}", current_instruction+1, e));
         }
         Ok(())
     }

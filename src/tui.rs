@@ -184,6 +184,7 @@ pub struct App<'a> {
     memory_lists_manager: MemoryListsManager,
     finished: bool,
     running: bool,
+    errored: Option<String>,
 }
 
 impl<'a> App<'a> {
@@ -197,6 +198,7 @@ impl<'a> App<'a> {
             memory_lists_manager: mlm,
             finished: false,
             running: false,
+            errored: None,
         }
     }
 
@@ -226,12 +228,16 @@ impl<'a> App<'a> {
                         }
                     }
                     KeyCode::Char('r') => {
-                        self.running = true;
-                        if !self.finished {
+                        if !self.finished && self.errored.is_none(){
+                            self.running = true;
                             self.set_keybind_message('r', "Run next instruction".to_string());
                             let res = self.runtime.step();//TODO Add runtime error handling (=message to user)
-                            self.instructions.set(self.runtime.current_instruction_index());
-                            if self.runtime.finished() {
+                            if res.is_err() {
+                                self.running = false;
+                                self.errored = Some(res.unwrap_err());
+                                self.set_keybind_hint('r', false);
+                            } else if self.runtime.finished() {
+                                self.instructions.set(self.runtime.current_instruction_index());
                                 self.finished = true;
                                 self.set_keybind_hint('s', true);
                                 self.set_keybind_hint('r', false);
@@ -414,6 +420,15 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         let block = Block::default().title("Execution finished!").borders(Borders::ALL);
         let area = centered_rect(60, 20, f.size());
         let text = Paragraph::new("Press [q] to exit.\nPress [s] to reset to start.").block(block);
+        f.render_widget(Clear, area); //this clears out the background
+        f.render_widget(text, area);
+    }
+
+    // Popup if runtime error
+    if app.errored.is_some() {
+        let block = Block::default().title("Runtime error!").borders(Borders::ALL).border_style(Style::default().fg(Color::Red));
+        let area = centered_rect(60, 30, f.size());
+        let text = Paragraph::new(format!("Execution can not continue due to the following problem:\n{}\n\nPress [q] to exit.", app.errored.as_ref().unwrap())).block(block);
         f.render_widget(Clear, area); //this clears out the background
         f.render_widget(text, area);
     }
