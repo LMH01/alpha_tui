@@ -502,22 +502,14 @@ impl InstructionParseError {
 #[derive(Debug, Error, Diagnostic)]
 #[error("when building program")]
 #[diagnostic(code("build_program"))]
-pub enum BuildProgramError {
+pub struct BuildProgramError {
 
-    Detailed {
-        #[source_code]
-        src: NamedSource,
-        #[label("here")]
-        bad_bit: SourceSpan,
-        #[diagnostic_source]
-        reason: InstructionParseError,
-    },
-
-    #[error("no matching instruction")]
-    Simple {
-        #[diagnostic_source]
-        reason: InstructionParseError
-    }
+    #[source_code]
+    pub src: NamedSource,
+    #[label("here")]
+    pub bad_bit: SourceSpan,
+    #[diagnostic_source]
+    pub reason: InstructionParseError,
 
 }
 

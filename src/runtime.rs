@@ -133,21 +133,11 @@ impl RuntimeBuilder {
             match Instruction::try_from(&splits) {
                 Ok(i) => instructions.push(i),
                 Err(e) => {
-                    match e {
-                        InstructionParseError::NoMatch {src: _, pos: _} => {
-                            Err(BuildProgramError::Simple { reason: e })?
-                        }
-                        InstructionParseError::NoMatchSuggestion { help: _,  pos: _, src: _ } => {
-                            Err(BuildProgramError::Simple { reason: e })?
-                        }
-                        _ => {
-                            Err(BuildProgramError::Detailed {
-                                src: NamedSource::new(&file_name, instructions_input.clone().join("\n")),
-                                bad_bit: (SourceOffset::from_location(instructions_input.join("\n"), index+1, e.position()+1)).into(),
-                                reason: e,
-                            })?
-                        },
-                    };
+                    Err(BuildProgramError {
+                        src: NamedSource::new(&file_name, instructions_input.clone().join("\n")),
+                        bad_bit: (SourceOffset::from_location(instructions_input.join("\n"), index+1, e.position()+1)).into(),
+                        reason: e,
+                    })?
                 },
             }
         }
