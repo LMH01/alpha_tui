@@ -19,7 +19,7 @@ Internal handling of instructions is finished, programs can be run, when assembl
 - [X] Add support for comments at end of line (marked with # or //)
 - [X] Fix instruction pointer when lines are commented out
 - [ ] Rename program into something better
-- [ ] Add label ENDE or END that can be called to end the program
+- [X] Add label ENDE or END that can be called to end the program
 - [ ] Write documentation and update readme to contain picture(s)
 
 ### Instructions

@@ -53,6 +53,8 @@ impl<'a> RuntimeBuilder<'a> {
         if self.instructions.as_ref().unwrap().is_empty() {
             return Err(RuntimeBuildError::InstructionsEmpty);
         }
+        // Inject end labels to give option to end program by using goto END
+        inject_end_labels(&mut self.control_flow, &self.instructions.as_ref().unwrap().len());
         if let Err(e) = self.check_labels() {
             return Err(RuntimeBuildError::LabelMissing(e));
         }
@@ -359,6 +361,13 @@ fn check_memory_cell(runtime_args: &RuntimeArgs, name: &str) -> Result<(), Strin
         return Err(name.to_string());
     }
     Ok(())
+}
+
+fn inject_end_labels(control_flow: &mut ControlFlow, last_instruction_index: &usize) {
+    control_flow.instruction_labels.insert("END".to_string(), *last_instruction_index);
+    control_flow.instruction_labels.insert("ENDE".to_string(), *last_instruction_index);
+    control_flow.instruction_labels.insert("end".to_string(), *last_instruction_index);
+    control_flow.instruction_labels.insert("ende".to_string(), *last_instruction_index);
 }
 
 /// Errors that can occur when a runtime is constructed from a RuntimeBuilder.
