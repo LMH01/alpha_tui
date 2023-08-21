@@ -534,6 +534,11 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_negative_number() {
+        assert_eq!(parse_number("-20", (0, 0)), Ok(-20));
+    }
+
+    #[test]
     fn test_part_range() {
         let s = String::from("a1 := a2 + a4");
         let parts: Vec<&str> = s.split_whitespace().collect();
