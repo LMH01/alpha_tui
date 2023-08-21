@@ -6,7 +6,7 @@ use thiserror::Error;
 use crate::{
     base::{Accumulator, MemoryCell},
     instructions::{
-        Instruction, InstructionParseError, BuildProgramError,
+        Instruction, error_handling::{InstructionParseError, BuildProgramError},
     }, cli::Args, utils::read_file,
 };
 

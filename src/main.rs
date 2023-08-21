@@ -7,12 +7,12 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use miette::{Result, IntoDiagnostic, NamedSource};
+use miette::{Result, IntoDiagnostic};
 use ::ratatui::{backend::CrosstermBackend, Terminal};
 use utils::read_file;
 
 use crate::{
-    runtime::RuntimeBuilder, tui::App, instructions::BuildProgramError,
+    runtime::RuntimeBuilder, tui::App,
 };
 
 /// Contains all required data types used to run programs
