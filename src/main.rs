@@ -51,6 +51,7 @@ fn main() -> Result<()> {
 
     // tui
     // setup terminal
+    println!("Ready to run, launching tui");
     enable_raw_mode().into_diagnostic()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture).into_diagnostic()?;
@@ -59,7 +60,6 @@ fn main() -> Result<()> {
     let mut terminal = Terminal::new(backend).unwrap();
 
     // create app
-    println!("Ready to run, launching tui");
     let mut app = App::from_runtime(rt, args.input, instructions);
     let res = app.run(&mut terminal);
 
