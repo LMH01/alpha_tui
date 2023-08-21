@@ -20,6 +20,8 @@ To compile the program from source the rust toolchain is needed. Once installed 
 
 See [instructions](instructions.md).
 
+You can use either `#` or `//` to mark inline or full-line comments.
+
 ## Options
 
 Accumulators and memory cells are automatically created when the input program is read.
