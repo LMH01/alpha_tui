@@ -57,7 +57,7 @@ fn test_parse_assign_accumulator_value() {
     );
     assert_eq!(
         Instruction::try_from("a0 := x"),
-        Err(InstructionParseError::InvalidExpression((6, 6)))
+        Err(InstructionParseError::InvalidExpression((6, 6), "x".to_string()))
     );
 }
 
@@ -96,11 +96,11 @@ fn test_parse_assign_accumulator_value_from_accumulator() {
     );
     assert_eq!(
         Instruction::try_from("a3 := a1x"),
-        Err(InstructionParseError::NotANumber((7, 8)))
+        Err(InstructionParseError::NotANumber((7, 8), "1x".to_string()))
     );
     assert_eq!(
         Instruction::try_from("ab := a1x"),
-        Err(InstructionParseError::NotANumber((1, 1)))
+        Err(InstructionParseError::NotANumber((1, 1), "b".to_string()))
     );
 }
 
@@ -147,7 +147,7 @@ fn test_parse_assign_accumulator_value_from_memory_cell() {
     );
     assert_eq!(
         Instruction::try_from("a4 := p()"),
-        Err(InstructionParseError::InvalidExpression((6, 8)))
+        Err(InstructionParseError::InvalidExpression((6, 8), "p()".to_string()))
     );
 }
 
@@ -190,7 +190,7 @@ fn test_parse_assign_memory_cell_value() {
     );
     assert_eq!(
         Instruction::try_from("p(h1) := x"),
-        Err(InstructionParseError::InvalidExpression((9, 9)))
+        Err(InstructionParseError::InvalidExpression((9, 9), "x".to_string()))
     );
 }
 
@@ -227,7 +227,7 @@ fn test_parse_assign_memory_cell_value_from_accumulator() {
     );
     assert_eq!(
         Instruction::try_from("p(h1) := a0x"),
-        Err(InstructionParseError::InvalidExpression((9, 11)))
+        Err(InstructionParseError::InvalidExpression((9, 11), "a0x".to_string()))
     );
 }
 
@@ -272,7 +272,7 @@ fn test_parse_assign_memory_cell_value_from_memory_cell() {
     );
     assert_eq!(
         Instruction::try_from("p(h1) := p()"),
-        Err(InstructionParseError::InvalidExpression((9, 11)))
+        Err(InstructionParseError::InvalidExpression((9, 11), "p()".to_string()))
     );
 }
 
@@ -332,13 +332,14 @@ fn test_parse_calc_accumulator_with_constant() {
     );
     assert_eq!(
         Instruction::try_from("a1 := ab2 + a29"),
-        Err(InstructionParseError::NotANumber((7, 8)))
+        Err(InstructionParseError::NotANumber((7, 8), "b2".to_string()))
     );
     assert_eq!(
         Instruction::try_from("a1 := a2 + 20"),
         Err(InstructionParseError::UnknownInstructionSuggestion {
             range: (0, 13),
-            help: "Did you mean: \"a1 := a1 + 20\" ?".to_string()
+            help: "Did you mean: \"a1 := a1 + 20\" ?".to_string(),
+            src: "a1 := a2 + 20".to_string()
         })
     );
 }
@@ -447,12 +448,13 @@ fn test_parse_calc_accumulator_with_memory_cell() {
         Instruction::try_from("a1 := a2 * p(h1)"),
         Err(InstructionParseError::UnknownInstructionSuggestion {
             range: (0, 16),
-            help: "Did you mean: \"a1 := a1 * p(h1)\" ?".to_string()
+            help: "Did you mean: \"a1 := a1 * p(h1)\" ?".to_string(),
+            src: "a1 := a2 * p(h1)".to_string()
         })
     );
     assert_eq!(
         Instruction::try_from("a1 := a1 * p()"),
-        Err(InstructionParseError::InvalidExpression((11, 13)))
+        Err(InstructionParseError::InvalidExpression((11, 13), "p()".to_string()))
     );
 }
 
@@ -490,11 +492,11 @@ fn test_parse_calc_accumulator_with_memory_cells() {
     );
     assert_eq!(
         Instruction::try_from("a0 := p(h1) x p(h2)"),
-        Err(InstructionParseError::UnknownOperation((12, 12)))
+        Err(InstructionParseError::UnknownOperation((12, 12), "x".to_string()))
     );
     assert_eq!(
         Instruction::try_from("a0 := p(h1) / p()"),
-        Err(InstructionParseError::InvalidExpression((14, 16)))
+        Err(InstructionParseError::InvalidExpression((14, 16), "p()".to_string()))
     );
 }
 
@@ -529,7 +531,7 @@ fn test_parse_calc_memory_cell_with_memory_cell_constant() {
     );
     assert_eq!(
         Instruction::try_from("p(h1) := p(h2) o 10"),
-        Err(InstructionParseError::UnknownOperation((15, 15)))
+        Err(InstructionParseError::UnknownOperation((15, 15), "o".to_string()))
     );
 }
 
@@ -678,7 +680,7 @@ fn test_parse_goto_if_accumulator() {
     );
     assert_eq!(
         Instruction::try_from("if x <= a1 then goto loop"),
-        Err(InstructionParseError::InvalidExpression((3, 3)))
+        Err(InstructionParseError::InvalidExpression((3, 3), "x".to_string()))
     );
 }
 
@@ -779,7 +781,7 @@ fn test_parse_goto_if_memory_cell() {
     );
     assert_eq!(
         Instruction::try_from("if a0 == p then goto loop"),
-        Err(InstructionParseError::InvalidExpression((9, 9)))
+        Err(InstructionParseError::InvalidExpression((9, 9), "p".to_string()))
     );
 }
 

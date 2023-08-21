@@ -127,12 +127,12 @@ impl RuntimeBuilder {
                     // Workaround for wrong end_range value depending on error.
                     // For the line to be printed when more then one character is affected for some reason the range needs to be increased by one.
                     let end_range = match e {
-                        InstructionParseError::InvalidExpression(_) => e.range().1-e.range().0+1,
-                        InstructionParseError::UnknownInstruction(_) => e.range().1-e.range().0+1,
-                        InstructionParseError::UnknownInstructionSuggestion { range: _, help: _ } => e.range().1-e.range().0+1,
-                        InstructionParseError::NotANumber(_) => e.range().1-e.range().0,
-                        InstructionParseError::UnknownComparison(_) => e.range().1-e.range().0,
-                        InstructionParseError::UnknownOperation(_) => e.range().1-e.range().0,
+                        InstructionParseError::InvalidExpression(_, _) => e.range().1-e.range().0+1,
+                        InstructionParseError::UnknownInstruction(_, _) => e.range().1-e.range().0+1,
+                        InstructionParseError::UnknownInstructionSuggestion { range: _, help: _ , src: _} => e.range().1-e.range().0+1,
+                        InstructionParseError::NotANumber(_, _) => e.range().1-e.range().0,
+                        InstructionParseError::UnknownComparison(_, _) => e.range().1-e.range().0,
+                        InstructionParseError::UnknownOperation(_, _) => e.range().1-e.range().0,
                         InstructionParseError::MissingExpression { range: _, help: _ } => e.range().1-e.range().0,
                     };
                     let file_contents = instructions_input.join("\n");

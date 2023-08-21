@@ -18,8 +18,8 @@ impl TryFrom<&Vec<&str>> for Instruction {
             check_expression_missing(parts, 1, Some("an accumulator"))?;
             if !parts[1].starts_with('a') {
                 return Err(InstructionParseError::InvalidExpression(part_range(
-                    parts, 1,
-                )));
+                    parts, 1
+                ), parts[1].to_string()));
             }
             let a_idx = parse_alpha(parts[1], part_range(parts, 1))?;
             check_expression_missing(parts, 2, Some("a comparison"))?;
@@ -29,13 +29,13 @@ impl TryFrom<&Vec<&str>> for Instruction {
             if parts[4] != "then" {
                 return Err(InstructionParseError::InvalidExpression(part_range(
                     parts, 4,
-                )));
+                ), parts[5].to_string()));
             }
             check_expression_missing(parts, 5, Some("goto"))?;
             if parts[5] != "goto" {
                 return Err(InstructionParseError::InvalidExpression(part_range(
                     parts, 5,
-                )));
+                ), parts[5].to_string()));
             }
             check_expression_missing(parts, 6, Some("a label"))?;
             let a_idx_b = parse_alpha(parts[3], part_range(parts, 3));
@@ -68,7 +68,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
             } else {
                 return Err(InstructionParseError::InvalidExpression(part_range(
                     parts, 3,
-                )));
+                ), parts[3].to_string()));
             }
         }
 
@@ -93,7 +93,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
 
         // Check if := is present
         if parts[1] != ":=" {
-            return Err(InstructionParseError::UnknownInstruction(whole_range(parts)));
+            return Err(InstructionParseError::UnknownInstruction(whole_range(parts), parts.join(" ")));
         }
 
         // Instructions where the first part is an accumulator
@@ -153,6 +153,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
                 return Err(InstructionParseError::UnknownInstructionSuggestion {
                     range: (0, parts.join(" ").len()),
                     help: suggestion!(parts[0], ":=", parts[0], parts[3], parts[4]),
+                    src: parts.join(" ")
                 });
             }
 
@@ -180,12 +181,12 @@ impl TryFrom<&Vec<&str>> for Instruction {
                 if parts.len() == 3 {
                     return Ok(Instruction::AssignAccumulatorValue(a_idx, no));
                 } else {
-                    return Err(InstructionParseError::UnknownInstruction(whole_range(parts)));
+                    return Err(InstructionParseError::UnknownInstruction(whole_range(parts), parts.join(" ")));
                 }
             }
             return Err(InstructionParseError::InvalidExpression(part_range(
                 parts, 2,
-            )));
+            ), parts[2].to_string()));
         }
 
         // Instructions where the first part is a memory  cell
@@ -223,7 +224,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
                 } else {
                     return Err(InstructionParseError::InvalidExpression(part_range(
                         parts, 4,
-                    )));
+                    ), parts[4].to_string()));
                 }
             }
 
@@ -240,11 +241,11 @@ impl TryFrom<&Vec<&str>> for Instruction {
             } else {
                 return Err(InstructionParseError::InvalidExpression(part_range(
                     parts, 2,
-                )));
+                ), parts[2].to_string()));
             }
         }
 
-        Err(InstructionParseError::UnknownInstruction(whole_range(parts)))
+        Err(InstructionParseError::UnknownInstruction(whole_range(parts), parts.join(" ")))
     }
 }
 
@@ -284,7 +285,7 @@ macro_rules! suggestion {
 /// `part_range` indicates the area that is affected.
 fn parse_alpha(s: &str, part_range: (usize, usize)) -> Result<usize, InstructionParseError> {
     if !s.starts_with('a') && !s.is_empty() {
-        return Err(InstructionParseError::InvalidExpression(part_range));
+        return Err(InstructionParseError::InvalidExpression(part_range, s.to_string()));
     }
     let input = s.replace('a', "");
     match input.parse::<usize>() {
@@ -292,7 +293,7 @@ fn parse_alpha(s: &str, part_range: (usize, usize)) -> Result<usize, Instruction
         Err(_) => Err(InstructionParseError::NotANumber((
             part_range.0 + 1,
             part_range.1,
-        ))),
+        ), input)),
     }
 }
 
@@ -305,7 +306,7 @@ fn parse_operation(
 ) -> Result<Operation, InstructionParseError> {
     match Operation::try_from(s) {
         Ok(s) => Ok(s),
-        Err(_) => Err(InstructionParseError::UnknownOperation(part_range)),
+        Err(_) => Err(InstructionParseError::UnknownOperation(part_range, s.to_string())),
     }
 }
 
@@ -318,7 +319,7 @@ fn parse_comparison(
 ) -> Result<Comparison, InstructionParseError> {
     match Comparison::try_from(s) {
         Ok(s) => Ok(s),
-        Err(_) => Err(InstructionParseError::UnknownComparison(part_range)),
+        Err(_) => Err(InstructionParseError::UnknownComparison(part_range, s.to_string())),
     }
 }
 
@@ -328,7 +329,7 @@ fn parse_comparison(
 fn parse_number(s: &str, part_range: (usize, usize)) -> Result<i32, InstructionParseError> {
     match s.parse::<i32>() {
         Ok(x) => Ok(x),
-        Err(_) => Err(InstructionParseError::NotANumber(part_range)),
+        Err(_) => Err(InstructionParseError::NotANumber(part_range, s.to_string())),
     }
 }
 
@@ -338,17 +339,17 @@ fn parse_number(s: &str, part_range: (usize, usize)) -> Result<i32, InstructionP
 /// `part_range` indicates the area that is affected.
 fn parse_memory_cell(s: &str, part_range: (usize, usize)) -> Result<String, InstructionParseError> {
     if !s.starts_with("p(") {
-        return Err(InstructionParseError::InvalidExpression(part_range));
+        return Err(InstructionParseError::InvalidExpression(part_range, s.to_string()));
     }
     if !s.ends_with(')') {
         return Err(InstructionParseError::InvalidExpression((
             part_range.0,
             part_range.1,
-        )));
+        ), s.to_string()));
     }
     let name = s.replace("p(", "").replace(')', "");
     if name.is_empty() {
-        return Err(InstructionParseError::InvalidExpression(part_range));
+        return Err(InstructionParseError::InvalidExpression(part_range, s.to_string()));
     }
     Ok(name)
 }
@@ -414,15 +415,15 @@ mod tests {
         assert_eq!(parse_alpha("a10", (1, 2)), Ok(10));
         assert_eq!(
             parse_alpha("a10x", (0, 3)),
-            Err(InstructionParseError::NotANumber((1, 3)))
+            Err(InstructionParseError::NotANumber((1, 3), "10x".to_string()))
         );
         assert_eq!(
             parse_alpha("ab3", (0, 2)),
-            Err(InstructionParseError::NotANumber((1, 2)))
+            Err(InstructionParseError::NotANumber((1, 2), "b3".to_string()))
         );
         assert_eq!(
             parse_alpha("ab3i", (0, 3)),
-            Err(InstructionParseError::NotANumber((1, 3)))
+            Err(InstructionParseError::NotANumber((1, 3), "b3i".to_string()))
         );
     }
 
@@ -434,7 +435,7 @@ mod tests {
         assert_eq!(parse_operation("/", (0, 0)), Ok(Operation::Division));
         assert_eq!(
             parse_operation("x", (0, 0)),
-            Err(InstructionParseError::UnknownOperation((0, 0)))
+            Err(InstructionParseError::UnknownOperation((0, 0), "x".to_string()))
         );
     }
 
@@ -448,11 +449,11 @@ mod tests {
         assert_eq!(parse_comparison(">", (0, 0)), Ok(Comparison::More));
         assert_eq!(
             parse_comparison("!x", (0, 1)),
-            Err(InstructionParseError::UnknownComparison((0, 1)))
+            Err(InstructionParseError::UnknownComparison((0, 1), "!x".to_string()))
         );
         assert_eq!(
             parse_comparison("x", (0, 0)),
-            Err(InstructionParseError::UnknownComparison((0, 0)))
+            Err(InstructionParseError::UnknownComparison((0, 0), "x".to_string()))
         );
     }
 
@@ -462,15 +463,15 @@ mod tests {
         assert_eq!(parse_memory_cell("p(xyz)", (0, 3)), Ok("xyz".to_string()));
         assert_eq!(
             parse_memory_cell("p(xyzX", (0, 6)),
-            Err(InstructionParseError::InvalidExpression((0, 6)))
+            Err(InstructionParseError::InvalidExpression((0, 6), "p(xyzX".to_string()))
         );
         assert_eq!(
             parse_memory_cell("pxyz)", (0, 4)),
-            Err(InstructionParseError::InvalidExpression((0, 4)))
+            Err(InstructionParseError::InvalidExpression((0, 4), "pxyz)".to_string()))
         );
         assert_eq!(
             parse_memory_cell("p(p()", (0, 4)),
-            Err(InstructionParseError::InvalidExpression((0, 4)))
+            Err(InstructionParseError::InvalidExpression((0, 4), "p(p()".to_string()))
         );
     }
 
@@ -479,7 +480,7 @@ mod tests {
         assert_eq!(parse_number("20", (0, 0)), Ok(20));
         assert_eq!(
             parse_number("xxx", (0, 2)),
-            Err(InstructionParseError::NotANumber((0, 2)))
+            Err(InstructionParseError::NotANumber((0, 2), "xxx".to_string()))
         );
     }
 
@@ -539,8 +540,8 @@ mod tests {
 
     #[test]
     fn test_unknown_instruction() {
-        assert_eq!(Instruction::try_from("a0 := 5 * 5"), Err(InstructionParseError::UnknownInstruction((0, 10))));
-        assert_eq!(Instruction::try_from("xyz := 5"), Err(InstructionParseError::UnknownInstruction((0, 7))));
-        assert_eq!(Instruction::try_from("xyz abf daf"), Err(InstructionParseError::UnknownInstruction((0, 10))));
+        assert_eq!(Instruction::try_from("a0 := 5 * 5"), Err(InstructionParseError::UnknownInstruction((0, 10), "a0 := 5 * 5".to_string())));
+        assert_eq!(Instruction::try_from("xyz := 5"), Err(InstructionParseError::UnknownInstruction((0, 7), "xyz := 5".to_string())));
+        assert_eq!(Instruction::try_from("xyz abf daf"), Err(InstructionParseError::UnknownInstruction((0, 10), "xyz abf daf".to_string())));
     }
 }
