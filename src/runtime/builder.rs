@@ -312,6 +312,12 @@ impl RuntimeBuilder {
                     check_accumulators(self.runtime_args.as_mut().unwrap(), id_a, add_missing)?;
                     check_accumulators(self.runtime_args.as_mut().unwrap(), id_b, add_missing)?;
                 }
+                Instruction::GotoIfConstant(_, _, id_a, _) => {
+                    check_accumulators(self.runtime_args.as_mut().unwrap(), id_a, add_missing)?;
+                }
+                Instruction::GotoIfMemoryCell(_, _, id_a, _) => {
+                    check_accumulators(self.runtime_args.as_mut().unwrap(), id_a, add_missing)?;
+                }
                 _ => (),
             }
         }
