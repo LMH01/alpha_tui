@@ -82,13 +82,30 @@ impl InstructionParseError {
 }
 
 #[derive(Debug, Error, Diagnostic)]
+pub enum BuildProgramErrorTypes {
+    
+    #[error("when parsing instruction")]
+    #[diagnostic(code(build_program::parse_error))]
+    ParseError {
+        #[source_code]
+        src: NamedSource,
+        #[label("here")]
+        bad_bit: SourceSpan,
+        #[source]
+        #[diagnostic_source]
+        reason: InstructionParseError,
+    },
+
+    #[error("label '{0}' is defined multiple times")]
+    #[diagnostic(code("build_program::label_definition_error"), help("Make sure that you define the label only once"))]
+    LabelDefinedMultipleTimes(String)
+
+}
+
+#[derive(Debug, Diagnostic, Error)]
 #[error("when building program")]
-#[diagnostic(code("build_program"))]
+#[diagnostic(code("build_program_error"))]
 pub struct BuildProgramError {
-    #[source_code]
-    pub src: NamedSource,
-    #[label("here")]
-    pub bad_bit: SourceSpan,
     #[diagnostic_source]
-    pub reason: InstructionParseError,
+    pub reason: BuildProgramErrorTypes,
 }

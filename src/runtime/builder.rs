@@ -1,6 +1,6 @@
-use miette::{NamedSource, SourceSpan, SourceOffset, Result};
+use miette::{NamedSource, SourceSpan, SourceOffset, Result, Context};
 
-use crate::{instructions::{Instruction, error_handling::{InstructionParseError, BuildProgramError}}, cli::Args, base::{Accumulator, MemoryCell}};
+use crate::{instructions::{Instruction, error_handling::{InstructionParseError, BuildProgramErrorTypes, BuildProgramError}}, cli::Args, base::{Accumulator, MemoryCell}};
 
 use super::{RuntimeArgs, ControlFlow, Runtime, error_handling::{RuntimeBuildError, AddLabelError}};
 
@@ -117,7 +117,10 @@ impl RuntimeBuilder {
             }
             if splits[0].ends_with(':') {
                 let label = splits.remove(0).replace(':', "");
-                self.control_flow.instruction_labels.insert(label, index);
+                if self.control_flow.instruction_labels.insert(label.clone(), index).is_some() {
+                    // label defined multiple times
+                    Err(BuildProgramError { reason: BuildProgramErrorTypes::LabelDefinedMultipleTimes(label)})?;
+                }
             }
             //instructions.push(Instruction::try_from(&splits).wrap_err("when building instructions")?)
             //instructions.push(Instruction::try_from(&splits)?)
@@ -136,11 +139,12 @@ impl RuntimeBuilder {
                         InstructionParseError::MissingExpression { range: _, help: _ } => e.range().1-e.range().0,
                     };
                     let file_contents = instructions_input.join("\n");
-                    Err(BuildProgramError {
+                    Err(BuildProgramError{ reason: BuildProgramErrorTypes::ParseError {
                         src: NamedSource::new(file_name, instructions_input.clone().join("\n")),
                         bad_bit: SourceSpan::new(SourceOffset::from_location(file_contents.clone(), index+1, e.range().0+1), SourceOffset::from(end_range)),
                         reason: e,
-                    })?
+                    }})?
+                    //})?
                 },
             }
         }

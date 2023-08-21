@@ -7,8 +7,10 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use miette::{Result, IntoDiagnostic, Context};
+use instructions::error_handling::BuildProgramErrorTypes;
+use miette::{Result, IntoDiagnostic, Context, miette, Diagnostic};
 use ::ratatui::{backend::CrosstermBackend, Terminal};
+use thiserror::Error;
 use utils::read_file;
 
 use crate::{
@@ -46,13 +48,13 @@ fn main() -> Result<()> {
             exit(-1);
         },
     };
+    //Err(miette!("First").wrap_err("Second").wrap_err("Thrid").wrap_err("fourth"))?;
+    //rb.build_instructions(&instructions.iter().map(|s| s.as_str()).collect(), &args.input).wrap_err("when building program")?;
     rb.build_instructions(&instructions.iter().map(|s| s.as_str()).collect(), &args.input)?;
-    //match rb.build_instructions(&instructions.iter().map(|s| s.as_str()).collect()) {
+    //match rb.build_instructions(&instructions.iter().map(|s| s.as_str()).collect(), &args.input) {
     //    Ok(_) => (),
     //    Err(e) => {
-    //        Err(BuildProgramError {
-    //            src: NamedSource::new(&args.input, instructions.clone().join("\n")),
-    //            bad_bit: e.position(1),
+    //        Err(Test {
     //            reason: e,
     //        })?
     //    }
