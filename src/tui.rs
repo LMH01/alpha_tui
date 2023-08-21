@@ -258,10 +258,6 @@ fn init_keybinds() -> HashMap<char, KeybindHint> {
 
 /// Draw the ui
 fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
-    // Wrapping block for a group
-    // Just draw the block and the group on the same area and build the group
-    // with at least a margin of 1
-    //let size = f.size();
 
     let global_chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -283,11 +279,6 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let key_hints = Tabs::new(app.active_keybind_hints())
         .block(Block::default().borders(Borders::NONE))
         .style(Style::default().fg(Color::Cyan));
-        //.highlight_style(
-        //    Style::default()
-        //        .add_modifier(Modifier::BOLD)
-        //        .bg(Color::Black),
-        //);
     f.render_widget(key_hints, global_chunks[1]);
 
     let right_chunks = Layout::default()
@@ -330,15 +321,6 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
 
     // We can now render the item list
     f.render_stateful_widget(items, chunks[0], &mut app.instructions.state);
-    //f.render_widget(code_area, chunks[0]);
-
-    //let code_area_text = List::new(app.instructions.clone()).block(code_area);
-
-    //let code_area_text = Paragraph::new("Some Text")
-    //    .block(code_area)
-    //    .style(Style::default().fg(Color::White))
-    //    .alignment(Alignment::Left);
-    //f.render_widget(code_area_text, chunks[0]);
 
     // Accumulator block
     let accumulator = Block::default()

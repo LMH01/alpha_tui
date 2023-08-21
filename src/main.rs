@@ -48,40 +48,12 @@ fn main() -> Result<()> {
             exit(-1);
         },
     };
-    //Err(miette!("First").wrap_err("Second").wrap_err("Thrid").wrap_err("fourth"))?;
-    //rb.build_instructions(&instructions.iter().map(|s| s.as_str()).collect(), &args.input).wrap_err("when building program")?;
     rb.build_instructions(&instructions.iter().map(|s| s.as_str()).collect(), &args.input)?;
-    //match rb.build_instructions(&instructions.iter().map(|s| s.as_str()).collect(), &args.input) {
-    //    Ok(_) => (),
-    //    Err(e) => {
-    //        Err(Test {
-    //            reason: e,
-    //        })?
-    //    }
-    //};
+    
     println!("Building runtime");
     let rt = rb.build().wrap_err("while building runtime")?;
-    //let rt = match rb.build() {
-    //    Ok(rt) => rt,
-    //    Err(e) => {
-    //        println!("Unable to build runtime: {:?}", e);
-    //        exit(-1);
-    //    }
-    //};
-    println!("Ready to run, launching tui");
-    //println!("----- Program start -----");
-    //match rt.run() {
-    //    Ok(_) => {
-    //        println!("----- Program end -----");
-    //        println!("Program run successfully")
-    //    },
-    //    Err(e) => {
-    //        println!("Runtime error: {}", e);
-    //        exit(-1);
-    //    }
-    //};
 
-    //tui
+    // tui
     // setup terminal
     enable_raw_mode().into_diagnostic()?;
     let mut stdout = io::stdout();
@@ -91,6 +63,7 @@ fn main() -> Result<()> {
     let mut terminal = Terminal::new(backend).unwrap();
 
     // create app
+    println!("Ready to run, launching tui");
     let mut app = App::from_runtime(rt, args.input, instructions);
     let res = app.run(&mut terminal);
 
