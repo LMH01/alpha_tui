@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
     instructions::{error_handling::InstructionParseError, Instruction},
-    runtime::{ControlFlow, RuntimeArgs, RuntimeBuilder},
+    runtime::{ControlFlow, RuntimeArgs, builder::RuntimeBuilder},
 };
 
 /// Used to set the available memory cells during testing.

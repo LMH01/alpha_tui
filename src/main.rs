@@ -12,7 +12,7 @@ use ::ratatui::{backend::CrosstermBackend, Terminal};
 use utils::read_file;
 
 use crate::{
-    runtime::RuntimeBuilder, tui::App,
+    runtime::builder::RuntimeBuilder, tui::App,
 };
 
 /// Contains all required data types used to run programs
