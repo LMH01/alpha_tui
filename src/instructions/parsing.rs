@@ -348,7 +348,7 @@ fn part_range(parts: &[&str], part_idx: usize) -> (usize, usize) {
 
 #[cfg(test)]
 mod tests {
-    use crate::{instructions::{parsing::{parse_alpha, parse_operation, parse_memory_cell, parse_number, part_range}, error_handling::InstructionParseError}, base::Operation};
+    use crate::{instructions::{parsing::{parse_alpha, parse_operation, parse_memory_cell, parse_number, part_range, parse_comparison}, error_handling::InstructionParseError}, base::{Operation, Comparison}};
 
     #[test]
     fn test_parse_alpha() {
@@ -380,7 +380,17 @@ mod tests {
         );
     }
 
-    //TODO Add test for comparison parsing
+    #[test]
+    fn test_parse_comparison() {
+        assert_eq!(parse_comparison("<", (0, 0)), Ok(Comparison::Less));
+        assert_eq!(parse_comparison("<=", (0, 1)), Ok(Comparison::LessOrEqual));
+        assert_eq!(parse_comparison("==", (0, 1)), Ok(Comparison::Equal));
+        assert_eq!(parse_comparison("!=", (0, 1)), Ok(Comparison::NotEqual));
+        assert_eq!(parse_comparison(">=", (0, 1)), Ok(Comparison::MoreOrEqual));
+        assert_eq!(parse_comparison(">", (0, 0)), Ok(Comparison::More));
+        assert_eq!(parse_comparison("!x", (0, 1)), Err(InstructionParseError::UnknownComparison((0, 1))));
+        assert_eq!(parse_comparison("x", (0, 0)), Err(InstructionParseError::UnknownComparison((0, 0))));
+    }
 
     #[test]
     fn test_parse_memory_cell() {
