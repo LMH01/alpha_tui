@@ -133,9 +133,10 @@ impl RuntimeBuilder {
                         InstructionParseError::InvalidExpression(_) => e.range().1-e.range().0+1,
                         InstructionParseError::NoMatch(_) => e.range().1-e.range().0+1,
                         InstructionParseError::NoMatchSuggestion { range: _, help: _ } => e.range().1-e.range().0+1,
-                        InstructionParseError::NotANumber(_) => e.range().1-e.range().0+1,
+                        InstructionParseError::NotANumber(_) => e.range().1-e.range().0,
                         InstructionParseError::UnknownComparison(_) => e.range().1-e.range().0,
                         InstructionParseError::UnknownOperation(_) => e.range().1-e.range().0,
+                        InstructionParseError::MissingExpression { range: _, help: _ } => e.range().1-e.range().0,
                     };
                     let file_contents = instructions_input.join("\n");
                     Err(BuildProgramError {

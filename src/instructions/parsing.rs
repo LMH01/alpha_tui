@@ -1,6 +1,9 @@
-use crate::{base::{Comparison, Operation}, suggestion};
+use crate::{
+    base::{Comparison, Operation},
+    suggestion,
+};
 
-use super::{Instruction, error_handling::InstructionParseError};
+use super::{error_handling::InstructionParseError, Instruction};
 
 impl TryFrom<&Vec<&str>> for Instruction {
     type Error = InstructionParseError;
@@ -12,23 +15,29 @@ impl TryFrom<&Vec<&str>> for Instruction {
 
         // Instructions that compare values
         if parts[0] == "if" {
+            check_expression_missing(parts, 1, Some("an accumulator"))?;
             if !parts[1].starts_with('a') {
                 return Err(InstructionParseError::InvalidExpression(part_range(
                     parts, 1,
                 )));
             }
+            let a_idx = parse_alpha(parts[1], part_range(parts, 1))?;
+            check_expression_missing(parts, 2, Some("a comparison"))?;
+            let cmp = parse_comparison(parts[2], part_range(parts, 2))?;
+            check_expression_missing(parts, 3, None)?;
+            check_expression_missing(parts, 4, Some("then"))?;
             if parts[4] != "then" {
                 return Err(InstructionParseError::InvalidExpression(part_range(
                     parts, 4,
                 )));
             }
+            check_expression_missing(parts, 5, Some("goto"))?;
             if parts[5] != "goto" {
                 return Err(InstructionParseError::InvalidExpression(part_range(
                     parts, 5,
                 )));
             }
-            let a_idx = parse_alpha(parts[1], part_range(parts, 1))?;
-            let cmp = parse_comparison(parts[2], part_range(parts, 2))?;
+            check_expression_missing(parts, 6, Some("a label"))?;
             let a_idx_b = parse_alpha(parts[3], part_range(parts, 3));
             let no = parse_number(parts[3], part_range(parts, 3));
             let m_cell = parse_memory_cell(parts[3], part_range(parts, 3));
@@ -65,6 +74,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
 
         // Check if instruction is goto
         if parts[0] == "goto" {
+            check_expression_missing(parts, 1, Some("a label"))?;
             return Ok(Instruction::Goto(parts[1].to_string()));
         }
 
@@ -79,14 +89,18 @@ impl TryFrom<&Vec<&str>> for Instruction {
         }
 
         // At this point only instructions follow that require a := in the second part
+        check_expression_missing(parts, 1, Some(":="))?;
+
         // Check if := is present
         if parts[1] != ":=" {
-            return Err(InstructionParseError::NoMatch(part_range(parts, 1)))
+            return Err(InstructionParseError::NoMatch(part_range(parts, 1)));
         }
 
         // Instructions where the first part is an accumulator
         if parts[0].starts_with('a') {
             let a_idx = parse_alpha(parts[0], part_range(parts, 0))?;
+            // Check if instruction is missing expression
+            check_expression_missing(parts, 2, None)?;
             // Instructions that use a second accumulator to assign the value
             if parts[2].starts_with('a') {
                 let a_idx_b = parse_alpha(parts[2], part_range(parts, 2))?;
@@ -99,6 +113,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
                 // Parse operation
                 let op = parse_operation(parts[3], part_range(parts, 3))?;
 
+                check_expression_missing(parts, 4, None)?;
                 // Instructions that use a third accumulator
                 if parts[4].starts_with('a') {
                     let a_idx_c = parse_alpha(parts[4], part_range(parts, 4))?;
@@ -162,7 +177,11 @@ impl TryFrom<&Vec<&str>> for Instruction {
 
             // Instruction is assign_accumulator__value
             if let Ok(no) = no {
-                return Ok(Instruction::AssignAccumulatorValue(a_idx, no));
+                if parts.len() == 3 {
+                    return Ok(Instruction::AssignAccumulatorValue(a_idx, no));
+                } else {
+                    return Err(InstructionParseError::NoMatch(whole_range(parts)));
+                }
             }
             return Err(InstructionParseError::InvalidExpression(part_range(
                 parts, 2,
@@ -171,6 +190,8 @@ impl TryFrom<&Vec<&str>> for Instruction {
 
         // Instructions where the first part is a memory  cell
         if let Ok(m_cell) = parse_memory_cell(parts[0], part_range(parts, 0)) {
+            // Check if instruction is missing expression
+            check_expression_missing(parts, 2, None)?;
             // Instructions that use use second memory cell in part 2
             if let Ok(m_cell_b) = parse_memory_cell(parts[2], part_range(parts, 2)) {
                 // Check if instruction is assign_memory_cell_value_from_memory_cell
@@ -180,8 +201,9 @@ impl TryFrom<&Vec<&str>> for Instruction {
                     ));
                 }
                 let op = parse_operation(parts[3], part_range(parts, 3))?;
+                check_expression_missing(parts, 4, None)?;
                 let a_idx = parse_alpha(parts[4], part_range(parts, 4));
-                let no = parse_number(parts[4], part_range(parts, 4)); //TODO Fix index out of bounds when parts is of length 4 or of length 1
+                let no = parse_number(parts[4], part_range(parts, 4));
                 let m_cell_c = parse_memory_cell(parts[4], part_range(parts, 4));
                 // Check if instruction is calc_memory_cell_with_memory_cell_accumulator
                 if let Ok(a_idx) = a_idx {
@@ -269,7 +291,7 @@ fn parse_alpha(s: &str, part_range: (usize, usize)) -> Result<usize, Instruction
     match input.parse::<usize>() {
         Ok(x) => Ok(x),
         Err(_) => Err(InstructionParseError::NotANumber((
-            part_range.0+1,
+            part_range.0 + 1,
             part_range.1,
         ))),
     }
@@ -320,9 +342,10 @@ fn parse_memory_cell(s: &str, part_range: (usize, usize)) -> Result<String, Inst
         return Err(InstructionParseError::InvalidExpression(part_range));
     }
     if !s.ends_with(')') {
-        return Err(InstructionParseError::InvalidExpression(
-            (part_range.0, part_range.1),
-        ));
+        return Err(InstructionParseError::InvalidExpression((
+            part_range.0,
+            part_range.1,
+        )));
     }
     let name = s.replace("p(", "").replace(')', "");
     if name.is_empty() {
@@ -343,12 +366,48 @@ fn part_range(parts: &[&str], part_idx: usize) -> (usize, usize) {
         }
         start_idx += part.len() + 1; //Add one to add in the space
     }
-    (start_idx, start_idx + parts[part_idx].len()-1) // remove one because we start counting at 0
+    (start_idx, start_idx + parts[part_idx].len() - 1) // remove one because we start counting at 0
+}
+
+/// Calculates a range over all parts
+fn whole_range(parts: &[&str]) -> (usize, usize) {
+    (0, parts.join(" ").len()-1)
+}
+
+/// Returns error when the input vector does only contain `number` of elements.
+fn check_expression_missing(
+    parts: &[&str],
+    number: usize,
+    suggestion: Option<&str>,
+) -> Result<(), InstructionParseError> {
+    if parts.len() <= number {
+        let pos = parts.join(" ").len();
+        let base_help = "Make sure that you use a supported instruction.".to_string();
+        let help = match suggestion {
+            Some(s) => format!("{}\nMaybe you are missing: {}", base_help, s),
+            None => base_help,
+        };
+        return Err(InstructionParseError::MissingExpression {
+            range: (pos, pos),
+            help,
+        })?;
+    }
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{instructions::{parsing::{parse_alpha, parse_operation, parse_memory_cell, parse_number, part_range, parse_comparison}, error_handling::InstructionParseError}, base::{Operation, Comparison}};
+    use crate::{
+        base::{Comparison, Operation},
+        instructions::{
+            error_handling::InstructionParseError,
+            parsing::{
+                parse_alpha, parse_comparison, parse_memory_cell, parse_number, parse_operation,
+                part_range, whole_range,
+            },
+            Instruction,
+        },
+    };
 
     #[test]
     fn test_parse_alpha() {
@@ -388,8 +447,14 @@ mod tests {
         assert_eq!(parse_comparison("!=", (0, 1)), Ok(Comparison::NotEqual));
         assert_eq!(parse_comparison(">=", (0, 1)), Ok(Comparison::MoreOrEqual));
         assert_eq!(parse_comparison(">", (0, 0)), Ok(Comparison::More));
-        assert_eq!(parse_comparison("!x", (0, 1)), Err(InstructionParseError::UnknownComparison((0, 1))));
-        assert_eq!(parse_comparison("x", (0, 0)), Err(InstructionParseError::UnknownComparison((0, 0))));
+        assert_eq!(
+            parse_comparison("!x", (0, 1)),
+            Err(InstructionParseError::UnknownComparison((0, 1)))
+        );
+        assert_eq!(
+            parse_comparison("x", (0, 0)),
+            Err(InstructionParseError::UnknownComparison((0, 0)))
+        );
     }
 
     #[test]
@@ -413,7 +478,10 @@ mod tests {
     #[test]
     fn test_parse_number() {
         assert_eq!(parse_number("20", (0, 0)), Ok(20));
-        assert_eq!(parse_number("xxx", (0, 2)), Err(InstructionParseError::NotANumber((0, 2))));
+        assert_eq!(
+            parse_number("xxx", (0, 2)),
+            Err(InstructionParseError::NotANumber((0, 2)))
+        );
     }
 
     #[test]
@@ -421,5 +489,57 @@ mod tests {
         let s = String::from("a1 := a2 + a4");
         let parts: Vec<&str> = s.split_whitespace().collect();
         assert_eq!(part_range(&parts, 2), (6, 7));
+    }
+
+    #[test]
+    fn test_whole_range() {
+        let s = String::from("a1 := a2 + a4");
+        let parts: Vec<&str> = s.split_whitespace().collect();
+        assert_eq!(whole_range(&parts), (0, 12))
+    }
+
+    #[test]
+    fn test_missing_expression() {
+        assert_instruction_parse_error_suggestion("a", (1, 1), Some(":="));
+        assert_instruction_parse_error("a0 :=", (5, 5));
+        assert_instruction_parse_error("a0 := a0 +", (10, 10));
+        assert_instruction_parse_error_suggestion("p(h1)", (5, 5), Some(":="));
+        assert_instruction_parse_error("p(h1) :=", (8, 8));
+        assert_instruction_parse_error("p(h1) := p(h2) +", (16, 16));
+        assert_instruction_parse_error_suggestion("if", (2, 2), Some("an accumulator"));
+        assert_instruction_parse_error_suggestion("if a0", (5, 5), Some("a comparison"));
+        assert_instruction_parse_error("if a0 ==", (8, 8));
+        assert_instruction_parse_error_suggestion("if a0 == 5", (10, 10), Some("then"));
+        assert_instruction_parse_error_suggestion("if a0 == 5 then", (15, 15), Some("goto"));
+        assert_instruction_parse_error_suggestion("if a0 == 5 then goto", (20, 20), Some("a label"));
+        assert_instruction_parse_error_suggestion("goto", (4, 4), Some("a label"));
+    }
+
+    /// Shortcut for instruction parse errors that don't specify a suggestion.
+    fn assert_instruction_parse_error(src: &str, range: (usize, usize)) {
+        assert_instruction_parse_error_suggestion(src, range, None);
+    }
+    
+    /// Shortcut for instruction parse errors that specify a suggestion.
+    fn assert_instruction_parse_error_suggestion(src: &str, range: (usize, usize), suggestion: Option<&str>) {
+        let base_help = "Make sure that you use a supported instruction.".to_string();
+        let help = match suggestion {
+            Some(s) => format!("{}\nMaybe you are missing: {}", base_help, s),
+            None => base_help,
+        };
+        println!("src: {src}");
+        assert_eq!(
+            Instruction::try_from(src),
+            Err(InstructionParseError::MissingExpression {
+                range,
+                help,
+            })
+        );
+
+    }
+
+    #[test]
+    fn test_no_match() {
+        assert_eq!(Instruction::try_from("a0 := 5 * 5"), Err(InstructionParseError::NoMatch((0, 10))));
     }
 }

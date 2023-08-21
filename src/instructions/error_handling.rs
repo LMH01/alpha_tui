@@ -47,9 +47,19 @@ pub enum InstructionParseError {
     #[error("no match")]
     #[diagnostic(
         code("parse_instruction::no_match_suggestion"),
-        url("https://github.com/LMH01/alpha_tui/blob/master/instructions.md"),
+        url("https://github.com/LMH01/alpha_tui/blob/master/instructions.md")
     )]
     NoMatchSuggestion {
+        range: (usize, usize),
+        #[help]
+        help: String,
+    },
+    #[error("missing expression")]
+    #[diagnostic(
+        code("parse_instruction::missing_expression"),
+        url("https://github.com/LMH01/alpha_tui/blob/master/instructions.md")
+    )]
+    MissingExpression {
         range: (usize, usize),
         #[help]
         help: String,
@@ -65,6 +75,7 @@ impl InstructionParseError {
             InstructionParseError::InvalidExpression(c) => *c,
             InstructionParseError::NoMatch(c) => *c,
             InstructionParseError::NoMatchSuggestion { range: c, help: _ } => *c,
+            InstructionParseError::MissingExpression { range: c, help: _ } => *c,
         }
     }
 }
