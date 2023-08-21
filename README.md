@@ -39,7 +39,7 @@ Press `[r]` to run the next instruction. Values that have changed and the line t
 
 When the last instruction was executed the following window is displayed. You can restart by pressing `[s]` or exit the program by pressing `[q]`. ![Program finished example](media/gui_program_finished.png)
 
-[Miette](https://github.com/zkat/miette) is used for error handling, this provides helpful error messages when a program can not be compiled to tue an unknown instruction.
+[Miette](https://github.com/zkat/miette) is used for error handling, this provides helpful error messages when a program can not be compiled due to an unknown instruction.
 
 Such error could look like this ![Miette error handling](media/miette_error.png)
 
