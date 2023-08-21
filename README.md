@@ -44,3 +44,7 @@ When the last instruction was executed the following window is displayed. You ca
 Such error could look like this ![Miette error handling](media/miette_error.png)
 
 or this: ![Miette error handling](media/miette_error_2.png)
+
+## Future ideas
+
+- [ ] Add support for breakpoints
