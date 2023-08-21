@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 
-use miette::Result;
+use miette::{Result, miette};
 
 use crate::{
     base::{Accumulator, MemoryCell},
     instructions::Instruction, cli::Args, utils::read_file,
 };
+
+use self::error_handling::{RuntimeError, RuntimeErrorType};
 
 /// Structs related to building a runtime
 pub mod builder;
@@ -21,7 +23,7 @@ pub struct Runtime {
 impl Runtime {
     /// Runs the complete program.
     #[allow(dead_code)]
-    pub fn run(&mut self) -> Result<(), String> {
+    pub fn run(&mut self) -> Result<(), RuntimeError> {
         while self.control_flow.next_instruction_index < self.instructions.len() {
             self.step()?;
         }
@@ -29,13 +31,13 @@ impl Runtime {
     }
 
     /// Runs the next instruction only.
-    pub fn step(&mut self) -> Result<(), String> {
+    pub fn step(&mut self) -> Result<(), RuntimeError> {
         let current_instruction = self.control_flow.next_instruction_index;
         self.control_flow.next_instruction_index += 1;
         if let Err(e) = self.instructions[current_instruction]
             .run(&mut self.runtime_args, &mut self.control_flow)
         {
-            return Err(format!("[Line {}] {}", current_instruction+1, e));
+            return Err(RuntimeError {reason: e})?;
         }
         Ok(())
     }
@@ -85,15 +87,12 @@ impl ControlFlow {
 
     /// Updates **next_instruction_index** if **label** is contained in **instruction_labels**,
     /// otherwise returns an error.
-    pub fn next_instruction_index(&mut self, label: &str) -> Result<(), String> {
+    pub fn next_instruction_index(&mut self, label: &str) -> Result<(), RuntimeErrorType> {
         if let Some(index) = self.instruction_labels.get(label) {
             self.next_instruction_index = *index;
             Ok(())
         } else {
-            Err(format!(
-                "Unable to update instruction index: no index found for label {}",
-                label
-            ))
+            Err(RuntimeErrorType::LabelMissing(label.to_string()))
         }
     }
 

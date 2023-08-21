@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
     instructions::{error_handling::InstructionParseError, Instruction},
-    runtime::{ControlFlow, RuntimeArgs, builder::RuntimeBuilder},
+    runtime::{ControlFlow, RuntimeArgs, builder::RuntimeBuilder, error_handling::RuntimeErrorType},
 };
 
 /// Used to set the available memory cells during testing.
@@ -159,13 +159,13 @@ fn test_assign_accumulator_value_from_memory_cell_error() {
     let err = Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string())
         .run(&mut args, &mut control_flow);
     assert!(err.is_err());
-    assert!(err.err().unwrap().contains("Memory cell"));
+    assert_eq!(err, Err(RuntimeErrorType::MemoryCellDoesNotExist("a".to_string())));
     args.memory_cells
         .insert("a".to_string(), MemoryCell::new("a"));
     let err = Instruction::AssignAccumulatorValueFromMemoryCell(1, "a".to_string())
         .run(&mut args, &mut control_flow);
     assert!(err.is_err());
-    assert!(err.err().unwrap().contains("Accumulator"));
+    assert_eq!(err, Err(RuntimeErrorType::AccumulatorDoesNotExist(1)));
 }
 
 #[test]
@@ -238,14 +238,12 @@ fn test_assign_memory_cell_value_from_accumulator_error() {
     args.accumulators = vec![Accumulator::new(0)];
     let err = Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0)
         .run(&mut args, &mut control_flow);
-    assert!(err.is_err());
-    assert!(err.err().unwrap().contains("Memory cell"));
+    assert_eq!(err, Err(RuntimeErrorType::MemoryCellDoesNotExist("a".to_string())));
     args.memory_cells
         .insert("a".to_string(), MemoryCell::new("a"));
     let err = Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 1)
         .run(&mut args, &mut control_flow);
-    assert!(err.is_err());
-    assert!(err.err().unwrap().contains("Accumulator"));
+    assert_eq!(err, Err(RuntimeErrorType::AccumulatorDoesNotExist(1)));
 }
 
 #[test]

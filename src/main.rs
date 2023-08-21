@@ -103,12 +103,6 @@ fn main() -> Result<()> {
     ).into_diagnostic()?;
     terminal.show_cursor().into_diagnostic()?;
 
-    match res {
-        Ok(()) => exit(0),
-        Err(e) => {
-            println!("{e}");
-            exit(-1);
-        }
-    }
-
+    res?;
+    Ok(())
 }

@@ -2,7 +2,7 @@ use miette::Result;
 
 use crate::{
     base::{Comparison, Operation},
-    runtime::{ControlFlow, RuntimeArgs},
+    runtime::{ControlFlow, RuntimeArgs, error_handling::RuntimeErrorType},
 };
 
 /// Functions and structs related to error handling
@@ -106,7 +106,7 @@ impl Instruction {
         &self,
         runtime_args: &mut RuntimeArgs,
         control_flow: &mut ControlFlow,
-    ) -> Result<(), String> {
+    ) -> Result<(), RuntimeErrorType> {
         match self {
             Self::Push() => push(runtime_args)?,
             Self::Pop() => pop(runtime_args)?,
@@ -206,11 +206,11 @@ impl Instruction {
 /// Runs code equal to **push**
 ///
 /// Causes runtime error if accumulator does not contain data.
-fn push(runtime_args: &mut RuntimeArgs) -> Result<(), String> {
+fn push(runtime_args: &mut RuntimeArgs) -> Result<(), RuntimeErrorType> {
     assert_accumulator_exists(runtime_args, &0)?;
     match runtime_args.accumulators[0].data {
         Some(d) => runtime_args.stack.push(d),
-        None => return Err("unable to push: a0 is empty".to_string()),
+        None => return Err(RuntimeErrorType::PushFail),
     }
     Ok(())
 }
@@ -218,11 +218,11 @@ fn push(runtime_args: &mut RuntimeArgs) -> Result<(), String> {
 /// Runs code equal to **pop**
 ///
 /// Causes runtime error if stack does not contain data.
-fn pop(runtime_args: &mut RuntimeArgs) -> Result<(), String> {
-    assert_accumulator_contains_value(runtime_args, &0)?;
+fn pop(runtime_args: &mut RuntimeArgs) -> Result<(), RuntimeErrorType> {
+    assert_accumulator_exists(runtime_args, &0)?;
     match runtime_args.stack.pop() {
         Some(d) => runtime_args.accumulators[0].data = Some(d),
-        None => return Err("unable to pop: stack is empty".to_string()),
+        None => return Err(RuntimeErrorType::PopFail),
     }
     Ok(())
 }
@@ -235,7 +235,7 @@ fn assign_accumulator_value(
     runtime_args: &mut RuntimeArgs,
     a_idx: &usize,
     value: &i32,
-) -> Result<(), String> {
+) -> Result<(), RuntimeErrorType> {
     assert_accumulator_exists(runtime_args, a_idx)?;
     runtime_args.accumulators.get_mut(*a_idx).unwrap().data = Some(*value);
     Ok(())
@@ -249,7 +249,7 @@ fn assign_accumulator_value_from_accumulator(
     runtime_args: &mut RuntimeArgs,
     a_idx_a: &usize,
     a_idx_b: &usize,
-) -> Result<(), String> {
+) -> Result<(), RuntimeErrorType> {
     let src = assert_accumulator_contains_value(runtime_args, a_idx_b)?;
     assert_accumulator_exists(runtime_args, a_idx_a)?;
     runtime_args.accumulators.get_mut(*a_idx_a).unwrap().data = Some(src);
@@ -264,7 +264,7 @@ fn assign_accumulator_value_from_memory_cell(
     runtime_args: &mut RuntimeArgs,
     a_idx: &usize,
     label: &str,
-) -> Result<(), String> {
+) -> Result<(), RuntimeErrorType> {
     assert_accumulator_exists(runtime_args, a_idx)?;
     let value = assert_memory_cell_contains_value(runtime_args, label)?;
     runtime_args.accumulators.get_mut(*a_idx).unwrap().data = Some(value);
@@ -279,7 +279,7 @@ fn assign_memory_cell_value(
     runtime_args: &mut RuntimeArgs,
     label: &str,
     value: &i32,
-) -> Result<(), String> {
+) -> Result<(), RuntimeErrorType> {
     assert_memory_cell_exists(runtime_args, label)?;
     runtime_args.memory_cells.get_mut(label).unwrap().data = Some(*value);
     Ok(())
@@ -293,7 +293,7 @@ fn assign_memory_cell_value_from_accumulator(
     runtime_args: &mut RuntimeArgs,
     label: &str,
     a_idx: &usize,
-) -> Result<(), String> {
+) -> Result<(), RuntimeErrorType> {
     assert_memory_cell_exists(runtime_args, label)?;
     let value = assert_accumulator_contains_value(runtime_args, a_idx)?;
     runtime_args.memory_cells.get_mut(label).unwrap().data = Some(value);
@@ -308,7 +308,7 @@ fn assign_memory_cell_value_from_memory_cell(
     runtime_args: &mut RuntimeArgs,
     label_a: &str,
     label_b: &str,
-) -> Result<(), String> {
+) -> Result<(), RuntimeErrorType> {
     assert_memory_cell_exists(runtime_args, label_a)?;
     let value = assert_memory_cell_contains_value(runtime_args, label_b)?;
     runtime_args.memory_cells.get_mut(label_a).unwrap().data = Some(value);
@@ -325,7 +325,7 @@ fn calc_accumulator_with_constant(
     operation: &Operation,
     a_idx: &usize,
     value: &i32,
-) -> Result<(), String> {
+) -> Result<(), RuntimeErrorType> {
     let v = assert_accumulator_contains_value(runtime_args, a_idx)?;
     runtime_args.accumulators.get_mut(*a_idx).unwrap().data = Some(operation.calc(v, *value));
     Ok(())
@@ -341,7 +341,7 @@ fn calc_accumulator_with_accumulator(
     operation: &Operation,
     a_idx_a: &usize,
     a_idx_b: &usize,
-) -> Result<(), String> {
+) -> Result<(), RuntimeErrorType> {
     let a = assert_accumulator_contains_value(runtime_args, a_idx_a)?;
     let b = assert_accumulator_contains_value(runtime_args, a_idx_b)?;
     runtime_args.accumulators.get_mut(*a_idx_a).unwrap().data = Some(operation.calc(a, b));
@@ -360,7 +360,7 @@ fn calc_accumulator_with_accumulators(
     a_idx_a: &usize,
     a_idx_b: &usize,
     a_idx_c: &usize,
-) -> Result<(), String> {
+) -> Result<(), RuntimeErrorType> {
     assert_accumulator_exists(runtime_args, a_idx_a)?;
     let a = assert_accumulator_contains_value(runtime_args, a_idx_b)?;
     let b = assert_accumulator_contains_value(runtime_args, a_idx_c)?;
@@ -378,7 +378,7 @@ fn calc_accumulator_with_memory_cell(
     operation: &Operation,
     a_idx: &usize,
     label: &str,
-) -> Result<(), String> {
+) -> Result<(), RuntimeErrorType> {
     let a = assert_accumulator_contains_value(runtime_args, a_idx)?;
     let b = assert_memory_cell_contains_value(runtime_args, label)?;
     runtime_args.accumulators.get_mut(*a_idx).unwrap().data = Some(operation.calc(a, b));
@@ -397,7 +397,7 @@ fn calc_accumulator_with_memory_cells(
     a_idx: &usize,
     label_a: &str,
     label_b: &str,
-) -> Result<(), String> {
+) -> Result<(), RuntimeErrorType> {
     assert_accumulator_exists(runtime_args, a_idx)?;
     let a = assert_memory_cell_contains_value(runtime_args, label_a)?;
     let b = assert_memory_cell_contains_value(runtime_args, label_b)?;
@@ -417,7 +417,7 @@ fn calc_memory_cell_with_memory_cell_constant(
     label_a: &str,
     label_b: &str,
     value: &i32,
-) -> Result<(), String> {
+) -> Result<(), RuntimeErrorType> {
     assert_memory_cell_exists(runtime_args, label_a)?;
     let a = assert_memory_cell_contains_value(runtime_args, label_b)?;
     runtime_args.memory_cells.get_mut(label_a).unwrap().data = Some(operation.calc(a, *value));
@@ -436,7 +436,7 @@ fn calc_memory_cell_with_memory_cell_accumulator(
     label_a: &str,
     label_b: &str,
     a_idx: &usize,
-) -> Result<(), String> {
+) -> Result<(), RuntimeErrorType> {
     assert_memory_cell_exists(runtime_args, label_a)?;
     let a = assert_memory_cell_contains_value(runtime_args, label_b)?;
     let b = assert_accumulator_contains_value(runtime_args, a_idx)?;
@@ -456,7 +456,7 @@ fn calc_memory_cell_with_memory_cells(
     label_a: &str,
     label_b: &str,
     label_c: &str,
-) -> Result<(), String> {
+) -> Result<(), RuntimeErrorType> {
     assert_memory_cell_exists(runtime_args, label_a)?;
     let a = assert_memory_cell_contains_value(runtime_args, label_b)?;
     let b = assert_memory_cell_contains_value(runtime_args, label_c)?;
@@ -469,7 +469,7 @@ fn calc_memory_cell_with_memory_cells(
 /// - label = label to which to jump
 ///
 /// Sets the next instruction index to index contained behind **label** in [instruction_labels](../runtime/struct.ControlFlow.html#structfield.instruction_labels) map.
-fn goto(control_flow: &mut ControlFlow, label: &str) -> Result<(), String> {
+fn goto(control_flow: &mut ControlFlow, label: &str) -> Result<(), RuntimeErrorType> {
     control_flow.next_instruction_index(label)?;
     Ok(())
 }
@@ -486,7 +486,7 @@ fn goto_if_accumulator(
     label: &str,
     a_idx_a: &usize,
     a_idx_b: &usize,
-) -> Result<(), String> {
+) -> Result<(), RuntimeErrorType> {
     let a = assert_accumulator_contains_value(runtime_args, a_idx_a)?;
     let b = assert_accumulator_contains_value(runtime_args, a_idx_b)?;
     if comparison.cmp(a, b) {
@@ -507,7 +507,7 @@ fn goto_if_constant(
     label: &str,
     a_idx: &usize,
     c: &i32,
-) -> Result<(), String> {
+) -> Result<(), RuntimeErrorType> {
     let a = assert_accumulator_contains_value(runtime_args, a_idx)?;
     if comparison.cmp(a, *c) {
         control_flow.next_instruction_index(label)?
@@ -527,7 +527,7 @@ fn goto_if_memory_cell(
     label: &str,
     a_idx: &usize,
     mcl: &str,
-) -> Result<(), String> {
+) -> Result<(), RuntimeErrorType> {
     let a = assert_accumulator_contains_value(runtime_args, a_idx)?;
     let b = assert_memory_cell_contains_value(runtime_args, mcl)?;
     if comparison.cmp(a, b) {
@@ -537,11 +537,11 @@ fn goto_if_memory_cell(
 }
 
 /// Tests if the accumulator with **index** exists.
-fn assert_accumulator_exists(runtime_args: &mut RuntimeArgs, index: &usize) -> Result<(), String> {
+fn assert_accumulator_exists(runtime_args: &mut RuntimeArgs, index: &usize) -> Result<(), RuntimeErrorType> {
     if let Some(_value) = runtime_args.accumulators.get(*index) {
         Ok(())
     } else {
-        Err(format!("Accumulator with index {} does not exist!", index))
+        Err(RuntimeErrorType::AccumulatorDoesNotExist(*index))
     }
 }
 
@@ -553,27 +553,24 @@ fn assert_accumulator_exists(runtime_args: &mut RuntimeArgs, index: &usize) -> R
 fn assert_accumulator_contains_value(
     runtime_args: &mut RuntimeArgs,
     index: &usize,
-) -> Result<i32, String> {
+) -> Result<i32, RuntimeErrorType> {
     if let Some(value) = runtime_args.accumulators.get(*index) {
         if value.data.is_some() {
             Ok(runtime_args.accumulators.get(*index).unwrap().data.unwrap())
         } else {
-            Err(format!(
-                "Accumulator with index {} does not contain data!",
-                index
-            ))
+            Err(RuntimeErrorType::AccumulatorUninitialized(*index))
         }
     } else {
-        Err(format!("Accumulator with index {} does not exist!", index))
+        Err(RuntimeErrorType::AccumulatorDoesNotExist(*index))
     }
 }
 
 /// Tests if the memory cell with **label** exists.
-fn assert_memory_cell_exists(runtime_args: &mut RuntimeArgs, label: &str) -> Result<(), String> {
+fn assert_memory_cell_exists(runtime_args: &mut RuntimeArgs, label: &str) -> Result<(), RuntimeErrorType> {
     if let Some(_value) = runtime_args.memory_cells.get(label) {
         Ok(())
     } else {
-        Err(format!("Memory cell with label {} does not exist!", label))
+        Err(RuntimeErrorType::MemoryCellDoesNotExist(label.to_string()))
     }
 }
 
@@ -585,17 +582,14 @@ fn assert_memory_cell_exists(runtime_args: &mut RuntimeArgs, label: &str) -> Res
 fn assert_memory_cell_contains_value(
     runtime_args: &mut RuntimeArgs,
     label: &str,
-) -> Result<i32, String> {
+) -> Result<i32, RuntimeErrorType> {
     if let Some(value) = runtime_args.memory_cells.get(label) {
         if value.data.is_some() {
             Ok(runtime_args.memory_cells.get(label).unwrap().data.unwrap())
         } else {
-            Err(format!(
-                "Memory cell with label {} does not contain data!",
-                label
-            ))
+            Err(RuntimeErrorType::MemoryCellUninitialized(label.to_string()))
         }
     } else {
-        Err(format!("Memory cell with label {} does not exist!", label))
+        Err(RuntimeErrorType::MemoryCellDoesNotExist(label.to_string()))
     }
 }

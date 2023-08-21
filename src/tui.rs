@@ -1,9 +1,10 @@
 use std::{time::Duration, collections::HashMap, thread, io::{self, Error}};
 
 use crossterm::event::{Event, KeyCode, self};
+use miette::{Result, IntoDiagnostic};
 use ratatui::{backend::Backend, Frame, layout::{Layout, Direction, Constraint, Alignment, Rect}, widgets::{Tabs, Block, Borders, BorderType, ListItem, List, ListState, Clear, Paragraph}, style::{Style, Color, Modifier}, text::{Line, Span}, Terminal};
 
-use crate::runtime::{Runtime, RuntimeArgs};
+use crate::runtime::{Runtime, RuntimeArgs, error_handling::RuntimeError};
 
 /// Used to store the instructions and to remember what instruction should currently be highlighted.
 struct StatefulInstructions {
@@ -153,7 +154,7 @@ pub struct App {
     memory_lists_manager: MemoryListsManager,
     finished: bool,
     running: bool,
-    errored: Option<String>,
+    errored: Option<RuntimeError>,
 }
 
 impl App {
@@ -171,14 +172,14 @@ impl App {
         }
     }
 
-    pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> io::Result<()> {
+    pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<()> {
         loop {
-            terminal.draw(|f| ui(f, self))?;
-            if let Event::Key(key) = event::read()? {
+            terminal.draw(|f| ui(f, self)).into_diagnostic()?;
+            if let Event::Key(key) = event::read().into_diagnostic()? {
                 match key.code {
                     KeyCode::Char('q') => match self.errored.as_ref() {
                         None => return Ok(()),
-                        Some(e) => return Err(Error::new(io::ErrorKind::Other, format!("Execution Terminated: {}", e))),
+                        Some(e) => Err(e.clone())?,
                     },
                     KeyCode::Char('s') => {
                         if self.finished {
