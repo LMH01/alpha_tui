@@ -294,7 +294,7 @@ mod tests {
         rb.set_runtime_args(RuntimeArgs::new_debug(TEST_MEMORY_CELL_LABELS));
         assert_eq!(
             rb.build(),
-            Err(RuntimeBuildError::LabelMissing(label.to_string()))
+            Err(RuntimeBuildError::LabelUndefined(label.to_string()))
         );
     }
 

@@ -7,7 +7,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use miette::{Result, IntoDiagnostic};
+use miette::{Result, IntoDiagnostic, Context};
 use ::ratatui::{backend::CrosstermBackend, Terminal};
 use utils::read_file;
 
@@ -58,13 +58,14 @@ fn main() -> Result<()> {
     //    }
     //};
     println!("Building runtime");
-    let rt = match rb.build() {
-        Ok(rt) => rt,
-        Err(e) => {
-            println!("Unable to build runtime: {:?}", e);
-            exit(-1);
-        }
-    };
+    let rt = rb.build().wrap_err("while building runtime")?;
+    //let rt = match rb.build() {
+    //    Ok(rt) => rt,
+    //    Err(e) => {
+    //        println!("Unable to build runtime: {:?}", e);
+    //        exit(-1);
+    //    }
+    //};
     println!("Ready to run, launching tui");
     //println!("----- Program start -----");
     //match rt.run() {

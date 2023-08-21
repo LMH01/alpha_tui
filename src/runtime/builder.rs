@@ -60,16 +60,13 @@ impl RuntimeBuilder {
         if self.runtime_args.is_none() {
             return Err(RuntimeBuildError::RuntimeArgsMissing);
         }
-        if self.instructions.is_none() {
+        if self.instructions.is_none() || self.instructions.as_ref().unwrap().is_empty() {
             return Err(RuntimeBuildError::InstructionsMissing);
-        }
-        if self.instructions.as_ref().unwrap().is_empty() {
-            return Err(RuntimeBuildError::InstructionsEmpty);
         }
         // Inject end labels to give option to end program by using goto END
         inject_end_labels(&mut self.control_flow, &self.instructions.as_ref().unwrap().len());
         if let Err(e) = self.check_labels() {
-            return Err(RuntimeBuildError::LabelMissing(e));
+            return Err(RuntimeBuildError::LabelUndefined(e));
         }
         if let Err(e) = self.check_accumulators(self.add_missing) {
             return Err(RuntimeBuildError::AccumulatorMissing(e));
