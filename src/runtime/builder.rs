@@ -350,24 +350,8 @@ impl RuntimeBuilder {
                     check_memory_cell(self.runtime_args.as_mut().unwrap(), name_b, add_missing)?;
                 }
                 Instruction::CalcMemoryCellWithMemoryCellConstant(_, name_a, name_b, _) => {
-                    if !self
-                        .runtime_args
-                        .as_ref()
-                        .unwrap()
-                        .memory_cells
-                        .contains_key(name_a.as_str())
-                    {
-                        return Err(name_a.clone());
-                    }
-                    if !self
-                        .runtime_args
-                        .as_ref()
-                        .unwrap()
-                        .memory_cells
-                        .contains_key(name_b.as_str())
-                    {
-                        return Err(name_b.clone());
-                    }
+                    check_memory_cell(self.runtime_args.as_mut().unwrap(), name_a, add_missing)?;
+                    check_memory_cell(self.runtime_args.as_mut().unwrap(), name_b, add_missing)?;
                 }
                 Instruction::CalcMemoryCellWithMemoryCellAccumulator(_, name_a, name_b, _) => {
                     check_memory_cell(self.runtime_args.as_mut().unwrap(), name_a, add_missing)?;
