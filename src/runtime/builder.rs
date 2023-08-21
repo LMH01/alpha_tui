@@ -56,7 +56,7 @@ impl RuntimeBuilder {
     /// Set `add_missing` to true to automatically add missing accumulators and memory cells.
     ///
     /// Returns `RuntimeBuildError` when the runtime could not be constructed due to missing information.
-    pub fn build(&mut self) -> Result<Runtime, RuntimeBuildError> {//TODO Add miette for this (maybe?)
+    pub fn build(&mut self) -> Result<Runtime, RuntimeBuildError> {
         if self.runtime_args.is_none() {
             return Err(RuntimeBuildError::RuntimeArgsMissing);
         }
