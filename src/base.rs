@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::runtime::error_handling::RuntimeErrorType;
+use crate::runtime::error_handling::{RuntimeErrorType, CalcError};
 
 /// A single accumulator, represents "Akkumulator/Alpha" from SysInf lecture.
 #[derive(Debug, Clone, PartialEq)]
@@ -109,14 +109,32 @@ pub enum Operation {
 impl Operation {
     pub fn calc(&self, x: i32, y: i32) -> Result<i32, RuntimeErrorType> {
         match self {
-            Self::Plus => Ok(x + y),
-            Self::Minus => Ok(x - y),
-            Self::Multiplication => Ok(x * y),
+            Self::Plus => {
+                match x.checked_add(y) {
+                    Some(v) => Ok(v),
+                    None => Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("add".to_string(), "Addition".to_string()) })
+                }
+            },
+            Self::Minus => {
+                match x.checked_sub(y) {
+                    Some(v) => Ok(v),
+                    None => Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("subtract".to_string(), "Subtraction".to_string()) })
+                }
+            },
+            Self::Multiplication => {
+                match x.checked_mul(y) {
+                    Some(v) => Ok(v),
+                    None => Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("multiply".to_string(), "Multiplication".to_string()) })
+                }
+            },
             Self::Division => {
                 if x != y {
-                    Ok(x / y)
+                    match x.checked_div(y) {
+                        Some(v) => Ok(v),
+                        None => Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("divide".to_string(), "Division".to_string()) })
+                    }
                 } else {
-                    Err(RuntimeErrorType::AttemptToDivideByZero())
+                    Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToDivideByZero() })
                 }
             },
         }

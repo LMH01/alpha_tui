@@ -91,12 +91,37 @@ pub enum RuntimeErrorType {
     )]
     LabelMissing(String),
 
+    //#[error("Attempt to divide by zero")]
+    //#[diagnostic(
+    //    code("runtime_error::attempt_to_divide_by_zero"),
+    //    help("Division by zero is undefined in mathematics")
+    //)]
+    //AttemptToDivideByZero(),
+
+    #[error("Illegal calculation")]
+    #[diagnostic(code(runtime_error::illegal_calculation))]
+    IllegalCalculation {
+        #[diagnostic_source]
+        cause: CalcError
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Error, Diagnostic)]
+pub enum CalcError {
+
     #[error("Attempt to divide by zero")]
     #[diagnostic(
-        code("runtime_error::attempt_to_divide_by_zero"),
+        code("calc_error::attempt_to_divide_by_zero"),
         help("Division by zero is undefined in mathematics")
     )]
     AttemptToDivideByZero(),
+    
+    #[error("Attempt to {0} with overflow")]
+    #[diagnostic(
+        code("calc_error::attempt_to_overflow"),
+        help("{1} would have resulted in an overflow leading to a wrong value.\nMake sure the integer never leaves the following range: [{},{}]", i32::MIN, i32::MAX)
+    )]
+    AttemptToOverflow(String, String),
 }
 
 #[cfg(test)]
@@ -105,7 +130,7 @@ mod tests {
         instructions::Instruction,
         runtime::{
             builder::RuntimeBuilder,
-            error_handling::{RuntimeBuildError, RuntimeErrorType},
+            error_handling::{RuntimeBuildError, RuntimeErrorType, CalcError},
             ControlFlow, RuntimeArgs,
         }, base::Operation,
     };
@@ -233,14 +258,62 @@ mod tests {
     }
 
     #[test]
-    fn test_re_attempt_to_divide_by_zero() {
+    fn test_ce_me_attempt_to_divide_by_zero() {
         let mut ra = RuntimeArgs::new(2, vec![]);
         ra.accumulators[0].data = Some(0);
         ra.accumulators[1].data = Some(0);
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::CalcAccumulatorWithAccumulator(Operation::Division, 0, 1).run(&mut ra, &mut cf),
-            Err(RuntimeErrorType::AttemptToDivideByZero())
+            Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToDivideByZero() })
+        );
+    }
+
+    #[test]
+    fn test_re_ce_attempt_to_overflow_add() {
+        let mut ra = RuntimeArgs::new(2, vec![]);
+        ra.accumulators[0].data = Some(i32::MAX);
+        ra.accumulators[1].data = Some(1);
+        let mut cf = ControlFlow::new();
+        assert_eq!(
+            Instruction::CalcAccumulatorWithAccumulator(Operation::Plus, 0, 1).run(&mut ra, &mut cf),
+            Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("add".to_string(), "Addition".to_string()) })
+        );
+    }
+
+    #[test]
+    fn test_re_ce_attempt_to_overflow_sub() {
+        let mut ra = RuntimeArgs::new(2, vec![]);
+        ra.accumulators[0].data = Some(i32::MIN);
+        ra.accumulators[1].data = Some(1);
+        let mut cf = ControlFlow::new();
+        assert_eq!(
+            Instruction::CalcAccumulatorWithAccumulator(Operation::Minus, 0, 1).run(&mut ra, &mut cf),
+            Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("subtract".to_string(), "Subtraction".to_string()) })
+        );
+    }
+
+    #[test]
+    fn test_re_ce_attempt_to_overflow_div() {
+        let mut ra = RuntimeArgs::new(2, vec![]);
+        ra.accumulators[0].data = Some(i32::MIN);
+        ra.accumulators[1].data = Some(-1);
+        let mut cf = ControlFlow::new();
+        assert_eq!(
+            Instruction::CalcAccumulatorWithAccumulator(Operation::Division, 0, 1).run(&mut ra, &mut cf),
+            Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("divide".to_string(), "Division".to_string()) })
+        );
+    }
+
+    #[test]
+    fn test_re_ce_attempt_to_overflow_mult() {
+        let mut ra = RuntimeArgs::new(2, vec![]);
+        ra.accumulators[0].data = Some(i32::MAX);
+        ra.accumulators[1].data = Some(2);
+        let mut cf = ControlFlow::new();
+        assert_eq!(
+            Instruction::CalcAccumulatorWithAccumulator(Operation::Multiplication, 0, 1).run(&mut ra, &mut cf),
+            Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("multiply".to_string(), "Multiplication".to_string()) })
         );
     }
 }
