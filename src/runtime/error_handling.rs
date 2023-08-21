@@ -31,3 +31,46 @@ pub enum AddLabelError {
     InstructionsNotSet,
     IndexOutOfBounds,
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{runtime::{builder::RuntimeBuilder, error_handling::RuntimeBuildError, RuntimeArgs}, instructions::Instruction};
+
+
+    #[test]
+    fn test_runtime_args_missing_error() {
+        let mut rt = RuntimeBuilder::new();
+        rt.set_instructions(vec![Instruction::Push()]);
+        assert_eq!(rt.build(), Err(RuntimeBuildError::RuntimeArgsMissing));
+    }
+
+    #[test]
+    fn test_instructions_missing_error() {
+        let mut rt = RuntimeBuilder::new();
+        rt.set_runtime_args(RuntimeArgs::new_debug(&vec![""]));
+        assert_eq!(rt.build(), Err(RuntimeBuildError::InstructionsMissing));
+    }
+
+    #[test]
+    fn test_label_undefined_error() {
+        let mut rt = RuntimeBuilder::new_debug(&vec![]);
+        rt.set_instructions(vec![Instruction::Goto("loop".to_string())]);
+        assert_eq!(rt.build(), Err(RuntimeBuildError::LabelUndefined("loop".to_string())));
+    }
+
+    #[test]
+    fn test_memory_cell_missing() {
+        let mut rt = RuntimeBuilder::new_debug(&vec![]);
+        rt.set_instructions(vec![Instruction::AssignMemoryCellValue("h1".to_string(), 10)]);
+        assert_eq!(rt.build(), Err(RuntimeBuildError::MemoryCellMissing("h1".to_string())));
+    }
+
+    #[test]
+    fn test_accumulator_missing() {
+        let mut rt = RuntimeBuilder::new();
+        rt.set_runtime_args(RuntimeArgs::new_empty());
+        rt.set_instructions(vec![Instruction::AssignAccumulatorValue(0, 10)]);
+        assert_eq!(rt.build(), Err(RuntimeBuildError::AccumulatorMissing("0".to_string())));
+    }
+
+}
