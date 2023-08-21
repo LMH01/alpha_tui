@@ -544,4 +544,5 @@ mod tests {
         assert_eq!(Instruction::try_from("xyz := 5"), Err(InstructionParseError::UnknownInstruction((0, 7), "xyz := 5".to_string())));
         assert_eq!(Instruction::try_from("xyz abf daf"), Err(InstructionParseError::UnknownInstruction((0, 10), "xyz abf daf".to_string())));
     }
+
 }
