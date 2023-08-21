@@ -1,4 +1,4 @@
-use miette::{NamedSource, SourceSpan, SourceOffset, Result, Context};
+use miette::{NamedSource, SourceSpan, SourceOffset, Result};
 
 use crate::{instructions::{Instruction, error_handling::{InstructionParseError, BuildProgramErrorTypes, BuildProgramError}}, cli::Args, base::{Accumulator, MemoryCell}};
 

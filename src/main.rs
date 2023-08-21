@@ -1,4 +1,4 @@
-use std::{io, process::exit};
+use std::io;
 
 use clap::Parser;
 use cli::Args;
@@ -7,10 +7,8 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use instructions::error_handling::BuildProgramErrorTypes;
-use miette::{Result, IntoDiagnostic, Context, miette, Diagnostic};
+use miette::{Result, IntoDiagnostic, Context, miette};
 use ::ratatui::{backend::CrosstermBackend, Terminal};
-use thiserror::Error;
 use utils::read_file;
 
 use crate::{

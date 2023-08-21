@@ -1,4 +1,4 @@
-use std::{time::Duration, collections::HashMap, thread, io::{self, Error}};
+use std::{time::Duration, collections::HashMap, thread};
 
 use crossterm::event::{Event, KeyCode, self};
 use miette::{Result, IntoDiagnostic};
@@ -362,7 +362,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     if app.errored.is_some() {
         let block = Block::default().title("Runtime error!").borders(Borders::ALL).border_style(Style::default().fg(Color::Red));
         let area = centered_rect(60, 30, f.size());
-        let text = Paragraph::new(format!("Execution can not continue due to the following problem:\n{}\n\nPress [q] to exit.", app.errored.as_ref().unwrap().reason.to_string())).block(block);
+        let text = Paragraph::new(format!("Execution can not continue due to the following problem:\n{}\n\nPress [q] to exit.", app.errored.as_ref().unwrap().reason)).block(block);
         f.render_widget(Clear, area); //this clears out the background
         f.render_widget(text, area);
     }

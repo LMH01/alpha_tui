@@ -94,14 +94,12 @@ pub enum RuntimeErrorType {
 
 #[cfg(test)]
 mod tests {
-    use miette::Result;
-
     use crate::{
         instructions::Instruction,
         runtime::{
             builder::RuntimeBuilder,
             error_handling::{RuntimeBuildError, RuntimeErrorType},
-            ControlFlow, Runtime, RuntimeArgs,
+            ControlFlow, RuntimeArgs,
         },
     };
 

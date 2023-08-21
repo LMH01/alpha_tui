@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use miette::{Result, miette};
+use miette::Result;
 
 use crate::{
     base::{Accumulator, MemoryCell},
