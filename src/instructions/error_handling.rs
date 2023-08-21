@@ -29,16 +29,27 @@ pub enum InstructionParseError {
     /// Indicates that the market expression is not valid.
     /// The reason might be a syntax error.
     #[error("invalid expression")]
-    #[diagnostic(code("parse_instruction::invalid_expression"))]
+    #[diagnostic(
+        code("parse_instruction::invalid_expression"),
+        url("https://github.com/LMH01/alpha_tui/blob/master/instructions.md"),
+        help("Make sure that you use a supported instruction.")
+    )]
     InvalidExpression((usize, usize)),
     /// Indicates that no instruction was found that matches the input.
     #[error("no match")]
-    #[diagnostic(code("parse_instruction::no_match"))]
+    #[diagnostic(
+        code("parse_instruction::no_match"),
+        url("https://github.com/LMH01/alpha_tui/blob/master/instructions.md"),
+        help("Make sure that you use a supported instruction.")
+    )]
     NoMatch((usize, usize)),
     /// Indicates that no instruction was found but gives a suggestion on what instruction might be meant.
     #[error("no match")]
-    #[diagnostic(code("parse_instruction::no_match_suggestion"))]
-    NoMatchSuggestion{
+    #[diagnostic(
+        code("parse_instruction::no_match_suggestion"),
+        url("https://github.com/LMH01/alpha_tui/blob/master/instructions.md"),
+    )]
+    NoMatchSuggestion {
         range: (usize, usize),
         #[help]
         help: String,
