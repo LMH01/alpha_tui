@@ -131,7 +131,7 @@ impl TryFrom<&str> for Operation {
 
 #[cfg(test)]
 mod tests {
-    use crate::base::{Comparison, Operation, MemoryCell};
+    use crate::base::{Comparison, MemoryCell, Operation};
 
     use super::Accumulator;
 
@@ -159,8 +159,8 @@ mod tests {
         assert!(Comparison::LessOrEqual.cmp(5, 10));
         assert!(Comparison::LessOrEqual.cmp(5, 5));
         assert!(Comparison::Equal.cmp(5, 5));
-        assert!(Comparison::NotEqual.cmp(5,6));
-        assert!(!Comparison::NotEqual.cmp(6,6));
+        assert!(Comparison::NotEqual.cmp(5, 6));
+        assert!(!Comparison::NotEqual.cmp(6, 6));
         assert!(Comparison::MoreOrEqual.cmp(5, 5));
         assert!(Comparison::MoreOrEqual.cmp(10, 5));
         assert!(Comparison::More.cmp(10, 5));

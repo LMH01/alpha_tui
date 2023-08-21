@@ -4,7 +4,9 @@ use miette::Result;
 
 use crate::{
     base::{Accumulator, MemoryCell},
-    instructions::Instruction, cli::Args, utils::read_file,
+    cli::Args,
+    instructions::Instruction,
+    utils::read_file,
 };
 
 use self::error_handling::{RuntimeError, RuntimeErrorType};
@@ -37,7 +39,10 @@ impl Runtime {
         if let Err(e) = self.instructions[current_instruction]
             .run(&mut self.runtime_args, &mut self.control_flow)
         {
-            return Err(RuntimeError {reason: e, line_number: current_instruction+1})?;
+            return Err(RuntimeError {
+                reason: e,
+                line_number: current_instruction + 1,
+            })?;
         }
         Ok(())
     }
@@ -119,9 +124,8 @@ pub struct RuntimeArgs {
 }
 
 impl<'a> RuntimeArgs {
-
     /// Creates a new runtimes args struct with empty lists.
-    /// 
+    ///
     /// Errors if option is set to parse memory cells from file and the parsing fails.
     pub fn from_args(args: &Args) -> Result<Self, String> {
         if let Some(path) = &args.memory_cell_file {
@@ -135,10 +139,14 @@ impl<'a> RuntimeArgs {
                                 accumulators.push(Accumulator::new(i as usize));
                             }
                             accumulators
-                        },
+                        }
                     };
-                    return Ok(Self {accumulators, memory_cells, stack: Vec::new()})
-                },
+                    return Ok(Self {
+                        accumulators,
+                        memory_cells,
+                        stack: Vec::new(),
+                    });
+                }
                 Err(e) => return Err(e),
             };
         }
@@ -184,7 +192,8 @@ impl<'a> RuntimeArgs {
     #[allow(dead_code)]
     pub fn add_storage_cell(&mut self, label: &str) {
         if !self.memory_cells.contains_key(label) {
-            self.memory_cells.insert(label.to_string(), MemoryCell::new(label));
+            self.memory_cells
+                .insert(label.to_string(), MemoryCell::new(label));
         }
     }
 
@@ -218,11 +227,11 @@ impl<'a> RuntimeArgs {
 }
 
 /// Reads memory cells from file and returns map of memory cells.
-/// 
+///
 /// Each line contains a single memory cell in the following formatting: NAME=VALUE
-/// 
+///
 /// If value is missing an empty memory cell will be created.
-/// 
+///
 /// Errors when file could not be read.
 #[allow(clippy::unnecessary_unwrap)]
 fn read_memory_cells_from_file(path: &str) -> Result<HashMap<String, MemoryCell>, String> {
@@ -235,9 +244,23 @@ fn read_memory_cells_from_file(path: &str) -> Result<HashMap<String, MemoryCell>
             let v = v.unwrap();
             let value = match v.parse::<i32>() {
                 Ok(num) => num,
-                Err(e) => return Err(format!("{}: [Line {}] Unable to parse int: {} \"{}\"", path, index+1, e, v)),
+                Err(e) => {
+                    return Err(format!(
+                        "{}: [Line {}] Unable to parse int: {} \"{}\"",
+                        path,
+                        index + 1,
+                        e,
+                        v
+                    ))
+                }
             };
-            map.insert(chunks[0].to_string(), MemoryCell {label: chunks[0].to_string(), data: Some(value)});
+            map.insert(
+                chunks[0].to_string(),
+                MemoryCell {
+                    label: chunks[0].to_string(),
+                    data: Some(value),
+                },
+            );
         } else {
             map.insert(chunks[0].to_string(), MemoryCell::new(chunks[0]));
         }
@@ -299,10 +322,7 @@ mod tests {
 
     #[test]
     fn test_accumulator_missing() {
-        test_accumulator_instruction(
-            Instruction::AssignAccumulatorValue(0, 1),
-            vec![&0_usize],
-        );
+        test_accumulator_instruction(Instruction::AssignAccumulatorValue(0, 1), vec![&0_usize]);
         test_accumulator_instruction(
             Instruction::AssignAccumulatorValueFromAccumulator(0, 1),
             vec![&0_usize, &1_usize],
@@ -311,10 +331,7 @@ mod tests {
             Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string()),
             vec![&0_usize],
         );
-        test_accumulator_instruction(
-            Instruction::AssignAccumulatorValue(0, 1),
-            vec![&0_usize],
-        );
+        test_accumulator_instruction(Instruction::AssignAccumulatorValue(0, 1), vec![&0_usize]);
         test_accumulator_instruction(
             Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0),
             vec![&0_usize],
@@ -491,5 +508,4 @@ mod tests {
             assert_eq!(b, Err(RuntimeBuildError::MemoryCellMissing(s.to_string())));
         }
     }
-
 }

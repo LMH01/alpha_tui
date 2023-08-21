@@ -1,10 +1,17 @@
-use std::{time::Duration, collections::HashMap, thread};
+use std::{collections::HashMap, thread, time::Duration};
 
-use crossterm::event::{Event, KeyCode, self};
-use miette::{Result, IntoDiagnostic};
-use ratatui::{backend::Backend, Frame, layout::{Layout, Direction, Constraint, Alignment, Rect}, widgets::{Tabs, Block, Borders, BorderType, ListItem, List, ListState, Clear, Paragraph}, style::{Style, Color, Modifier}, text::{Line, Span}, Terminal};
+use crossterm::event::{self, Event, KeyCode};
+use miette::{IntoDiagnostic, Result};
+use ratatui::{
+    backend::Backend,
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    style::{Color, Modifier, Style},
+    text::{Line, Span},
+    widgets::{Block, BorderType, Borders, Clear, List, ListItem, ListState, Paragraph, Tabs},
+    Frame, Terminal,
+};
 
-use crate::runtime::{Runtime, RuntimeArgs, error_handling::RuntimeError};
+use crate::runtime::{error_handling::RuntimeError, Runtime, RuntimeArgs};
 
 /// Used to store the instructions and to remember what instruction should currently be highlighted.
 struct StatefulInstructions {
@@ -27,7 +34,6 @@ impl StatefulInstructions {
     fn set(&mut self, index: usize) {
         self.state.select(Some(index));
     }
-
 }
 
 /// Used to update and set the lists for accumulators, memory cells and stack.
@@ -82,9 +88,16 @@ impl MemoryListsManager {
         }
         // Update stack
         let stack_changed = self.stack.len() != runtime_args.stack.len();
-        let mut new_stack: Vec<ListItem<'_>> = runtime_args.stack.iter().map(|f| ListItem::new(f.to_string())).collect();
+        let mut new_stack: Vec<ListItem<'_>> = runtime_args
+            .stack
+            .iter()
+            .map(|f| ListItem::new(f.to_string()))
+            .collect();
         if stack_changed && !new_stack.is_empty() {
-            let last_stack = new_stack.pop().unwrap().style(Style::default().bg(Color::DarkGray));
+            let last_stack = new_stack
+                .pop()
+                .unwrap()
+                .style(Style::default().bg(Color::DarkGray));
             new_stack.push(last_stack);
         }
         self.stack = new_stack;
@@ -94,8 +107,8 @@ impl MemoryListsManager {
     fn accumulator_list(&self) -> Vec<ListItem<'static>> {
         let mut list = Vec::new();
         for acc in &self.accumulators {
-            let mut item = ListItem::new(acc.1.0.clone());
-            if acc.1.1 {
+            let mut item = ListItem::new(acc.1 .0.clone());
+            if acc.1 .1 {
                 item = item.style(Style::default().bg(Color::DarkGray));
             }
             list.push((item, acc.0));
@@ -108,8 +121,8 @@ impl MemoryListsManager {
     fn memory_cell_list(&self) -> Vec<ListItem<'static>> {
         let mut list = Vec::new();
         for cell in &self.memory_cells {
-            let mut item = ListItem::new(cell.1.0.clone());
-            if cell.1.1 {
+            let mut item = ListItem::new(cell.1 .0.clone());
+            if cell.1 .1 {
                 item = item.style(Style::default().bg(Color::DarkGray));
             }
             list.push((item, cell.0))
@@ -132,7 +145,7 @@ struct KeybindHint {
 }
 
 impl KeybindHint {
-    fn new (key: char, action: &str, enabled: bool) -> Self {
+    fn new(key: char, action: &str, enabled: bool) -> Self {
         Self {
             key,
             action: action.to_string(),
@@ -193,7 +206,7 @@ impl App {
                         }
                     }
                     KeyCode::Char('r') => {
-                        if !self.finished && self.errored.is_none(){
+                        if !self.finished && self.errored.is_none() {
                             self.running = true;
                             self.set_keybind_message('r', "Run next instruction".to_string());
                             let res = self.runtime.step();
@@ -202,7 +215,8 @@ impl App {
                                 self.errored = Some(e);
                                 self.set_keybind_hint('r', false);
                             }
-                            self.instructions.set(self.runtime.current_instruction_index());
+                            self.instructions
+                                .set(self.runtime.current_instruction_index());
                             if self.runtime.finished() && self.errored.is_none() {
                                 self.finished = true;
                                 self.set_keybind_hint('s', true);
@@ -213,7 +227,8 @@ impl App {
                     _ => (),
                 }
             }
-            self.memory_lists_manager.update(self.runtime.runtime_args());
+            self.memory_lists_manager
+                .update(self.runtime.runtime_args());
             thread::sleep(Duration::from_millis(30));
         }
     }
@@ -224,9 +239,10 @@ impl App {
             if !v.enabled {
                 continue;
             }
-            spans.push(Line::from(vec![
-                Span::styled(format!("{} [{}]", v.action, v.key), Style::default()),
-            ]))
+            spans.push(Line::from(vec![Span::styled(
+                format!("{} [{}]", v.action, v.key),
+                Style::default(),
+            )]))
         }
         spans
     }
@@ -244,7 +260,6 @@ impl App {
             h.action = message;
         }
     }
-
 }
 
 fn init_keybinds() -> HashMap<char, KeybindHint> {
@@ -258,7 +273,6 @@ fn init_keybinds() -> HashMap<char, KeybindHint> {
 
 /// Draw the ui
 fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
-
     let global_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Percentage(99), Constraint::Percentage(1)])
@@ -304,7 +318,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .instructions
         .iter()
         .map(|i| {
-            let content = vec![Line::from(Span::raw(format!("{:2}: {}", i.0+1, i.1)))];
+            let content = vec![Line::from(Span::raw(format!("{:2}: {}", i.0 + 1, i.1)))];
             ListItem::new(content).style(Style::default())
         })
         .collect();
@@ -328,7 +342,8 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .title("Accumulators")
         .title_alignment(Alignment::Center)
         .border_type(BorderType::Rounded);
-    let accumulator_list = List::new(app.memory_lists_manager.accumulator_list()).block(accumulator);
+    let accumulator_list =
+        List::new(app.memory_lists_manager.accumulator_list()).block(accumulator);
     f.render_widget(accumulator_list, right_chunks[0]);
 
     // Memory cell block
@@ -337,7 +352,8 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .title("Memory cells")
         .title_alignment(Alignment::Center)
         .border_type(BorderType::Rounded);
-    let memory_cell_list = List::new(app.memory_lists_manager.memory_cell_list()).block(memory_cells);
+    let memory_cell_list =
+        List::new(app.memory_lists_manager.memory_cell_list()).block(memory_cells);
     f.render_widget(memory_cell_list, right_chunks[1]);
 
     // Stack block
@@ -351,7 +367,10 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
 
     // Popup if execution has finished
     if app.finished {
-        let block = Block::default().title("Execution finished!").borders(Borders::ALL).border_style(Style::default().fg(Color::Green));
+        let block = Block::default()
+            .title("Execution finished!")
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(Color::Green));
         let area = centered_rect(60, 20, f.size());
         let text = Paragraph::new("Press [q] to exit.\nPress [s] to reset to start.").block(block);
         f.render_widget(Clear, area); //this clears out the background
@@ -360,9 +379,16 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
 
     // Popup if runtime error
     if app.errored.is_some() {
-        let block = Block::default().title("Runtime error!").borders(Borders::ALL).border_style(Style::default().fg(Color::Red));
+        let block = Block::default()
+            .title("Runtime error!")
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(Color::Red));
         let area = centered_rect(60, 30, f.size());
-        let text = Paragraph::new(format!("Execution can not continue due to the following problem:\n{}\n\nPress [q] to exit.", app.errored.as_ref().unwrap().reason)).block(block);
+        let text = Paragraph::new(format!(
+            "Execution can not continue due to the following problem:\n{}\n\nPress [q] to exit.",
+            app.errored.as_ref().unwrap().reason
+        ))
+        .block(block);
         f.render_widget(Clear, area); //this clears out the background
         f.render_widget(text, area);
     }

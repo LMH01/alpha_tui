@@ -3,7 +3,9 @@ use std::collections::HashMap;
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
     instructions::{error_handling::InstructionParseError, Instruction},
-    runtime::{ControlFlow, RuntimeArgs, builder::RuntimeBuilder, error_handling::RuntimeErrorType},
+    runtime::{
+        builder::RuntimeBuilder, error_handling::RuntimeErrorType, ControlFlow, RuntimeArgs,
+    },
 };
 
 /// Used to set the available memory cells during testing.
@@ -57,7 +59,10 @@ fn test_parse_assign_accumulator_value() {
     );
     assert_eq!(
         Instruction::try_from("a0 := x"),
-        Err(InstructionParseError::InvalidExpression((6, 6), "x".to_string()))
+        Err(InstructionParseError::InvalidExpression(
+            (6, 6),
+            "x".to_string()
+        ))
     );
 }
 
@@ -147,7 +152,10 @@ fn test_parse_assign_accumulator_value_from_memory_cell() {
     );
     assert_eq!(
         Instruction::try_from("a4 := p()"),
-        Err(InstructionParseError::InvalidExpression((6, 8), "p()".to_string()))
+        Err(InstructionParseError::InvalidExpression(
+            (6, 8),
+            "p()".to_string()
+        ))
     );
 }
 
@@ -159,7 +167,10 @@ fn test_assign_accumulator_value_from_memory_cell_error() {
     let err = Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string())
         .run(&mut args, &mut control_flow);
     assert!(err.is_err());
-    assert_eq!(err, Err(RuntimeErrorType::MemoryCellDoesNotExist("a".to_string())));
+    assert_eq!(
+        err,
+        Err(RuntimeErrorType::MemoryCellDoesNotExist("a".to_string()))
+    );
     args.memory_cells
         .insert("a".to_string(), MemoryCell::new("a"));
     let err = Instruction::AssignAccumulatorValueFromMemoryCell(1, "a".to_string())
@@ -190,7 +201,10 @@ fn test_parse_assign_memory_cell_value() {
     );
     assert_eq!(
         Instruction::try_from("p(h1) := x"),
-        Err(InstructionParseError::InvalidExpression((9, 9), "x".to_string()))
+        Err(InstructionParseError::InvalidExpression(
+            (9, 9),
+            "x".to_string()
+        ))
     );
 }
 
@@ -227,7 +241,10 @@ fn test_parse_assign_memory_cell_value_from_accumulator() {
     );
     assert_eq!(
         Instruction::try_from("p(h1) := a0x"),
-        Err(InstructionParseError::InvalidExpression((9, 11), "a0x".to_string()))
+        Err(InstructionParseError::InvalidExpression(
+            (9, 11),
+            "a0x".to_string()
+        ))
     );
 }
 
@@ -238,7 +255,10 @@ fn test_assign_memory_cell_value_from_accumulator_error() {
     args.accumulators = vec![Accumulator::new(0)];
     let err = Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0)
         .run(&mut args, &mut control_flow);
-    assert_eq!(err, Err(RuntimeErrorType::MemoryCellDoesNotExist("a".to_string())));
+    assert_eq!(
+        err,
+        Err(RuntimeErrorType::MemoryCellDoesNotExist("a".to_string()))
+    );
     args.memory_cells
         .insert("a".to_string(), MemoryCell::new("a"));
     let err = Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 1)
@@ -270,7 +290,10 @@ fn test_parse_assign_memory_cell_value_from_memory_cell() {
     );
     assert_eq!(
         Instruction::try_from("p(h1) := p()"),
-        Err(InstructionParseError::InvalidExpression((9, 11), "p()".to_string()))
+        Err(InstructionParseError::InvalidExpression(
+            (9, 11),
+            "p()".to_string()
+        ))
     );
 }
 
@@ -307,19 +330,37 @@ fn test_assign_memory_cell_value_from_memory_cell_error() {
 
 #[test]
 fn test_calc_accumulator_with_constant() {
-    assert_eq!(run_calc_accumulator_with_constant(Operation::Plus, 20, 20), 40);
-    assert_eq!(run_calc_accumulator_with_constant(Operation::Minus, 20, 20), 0);
-    assert_eq!(run_calc_accumulator_with_constant(Operation::Multiplication, 20, 20), 400);
-    assert_eq!(run_calc_accumulator_with_constant(Operation::Division, 50, 3), 16);
+    assert_eq!(
+        run_calc_accumulator_with_constant(Operation::Plus, 20, 20),
+        40
+    );
+    assert_eq!(
+        run_calc_accumulator_with_constant(Operation::Minus, 20, 20),
+        0
+    );
+    assert_eq!(
+        run_calc_accumulator_with_constant(Operation::Multiplication, 20, 20),
+        400
+    );
+    assert_eq!(
+        run_calc_accumulator_with_constant(Operation::Division, 50, 3),
+        16
+    );
 }
 
-fn run_calc_accumulator_with_constant(operation: Operation, acc_value: i32, const_value: i32) -> i32 {
+fn run_calc_accumulator_with_constant(
+    operation: Operation,
+    acc_value: i32,
+    const_value: i32,
+) -> i32 {
     let mut args = setup_runtime_args();
     let control_flow = &mut ControlFlow::new();
     Instruction::AssignAccumulatorValue(0, acc_value)
-        .run(&mut args, control_flow).unwrap();
+        .run(&mut args, control_flow)
+        .unwrap();
     Instruction::CalcAccumulatorWithConstant(operation, 0, const_value)
-        .run(&mut args, control_flow).unwrap();
+        .run(&mut args, control_flow)
+        .unwrap();
     args.accumulators[0].data.unwrap()
 }
 
@@ -349,14 +390,33 @@ fn test_parse_calc_accumulator_with_constant() {
 
 #[test]
 fn test_calc_accumulator_with_accumulator() {
-    assert_eq!(run_calc_accumulator_with_accumulator(Operation::Plus, 20, 5), 25);
-    assert_eq!(run_calc_accumulator_with_accumulator(Operation::Minus, 20, 5), 15);
-    assert_eq!(run_calc_accumulator_with_accumulator(Operation::Multiplication, 20, 5), 100);
-    assert_eq!(run_calc_accumulator_with_accumulator(Operation::Division, 20, 5), 4);
-    assert_eq!(run_calc_accumulator_with_accumulator(Operation::Division, 93, 5), 18);
+    assert_eq!(
+        run_calc_accumulator_with_accumulator(Operation::Plus, 20, 5),
+        25
+    );
+    assert_eq!(
+        run_calc_accumulator_with_accumulator(Operation::Minus, 20, 5),
+        15
+    );
+    assert_eq!(
+        run_calc_accumulator_with_accumulator(Operation::Multiplication, 20, 5),
+        100
+    );
+    assert_eq!(
+        run_calc_accumulator_with_accumulator(Operation::Division, 20, 5),
+        4
+    );
+    assert_eq!(
+        run_calc_accumulator_with_accumulator(Operation::Division, 93, 5),
+        18
+    );
 }
 
-fn run_calc_accumulator_with_accumulator(operation: Operation, acc_a_value: i32, acc_b_value: i32) -> i32 {
+fn run_calc_accumulator_with_accumulator(
+    operation: Operation,
+    acc_a_value: i32,
+    acc_b_value: i32,
+) -> i32 {
     let mut args = setup_runtime_args();
     let control_flow = &mut ControlFlow::new();
     Instruction::AssignAccumulatorValue(0, acc_a_value)
@@ -393,14 +453,33 @@ fn test_parse_calc_accumulator_with_accumulator() {
 
 #[test]
 fn test_calc_accumulator_with_accumulators() {
-    assert_eq!(run_calc_accumulator_with_accumulators(Operation::Plus, 20, 5), 25);
-    assert_eq!(run_calc_accumulator_with_accumulators(Operation::Minus, 20, 5), 15);
-    assert_eq!(run_calc_accumulator_with_accumulators(Operation::Multiplication, 20, 5), 100);
-    assert_eq!(run_calc_accumulator_with_accumulators(Operation::Division, 20, 5), 4);
-    assert_eq!(run_calc_accumulator_with_accumulators(Operation::Division, 93, 5), 18);
+    assert_eq!(
+        run_calc_accumulator_with_accumulators(Operation::Plus, 20, 5),
+        25
+    );
+    assert_eq!(
+        run_calc_accumulator_with_accumulators(Operation::Minus, 20, 5),
+        15
+    );
+    assert_eq!(
+        run_calc_accumulator_with_accumulators(Operation::Multiplication, 20, 5),
+        100
+    );
+    assert_eq!(
+        run_calc_accumulator_with_accumulators(Operation::Division, 20, 5),
+        4
+    );
+    assert_eq!(
+        run_calc_accumulator_with_accumulators(Operation::Division, 93, 5),
+        18
+    );
 }
 
-fn run_calc_accumulator_with_accumulators(operation: Operation, acc_b_value: i32, acc_c_value: i32) -> i32 {
+fn run_calc_accumulator_with_accumulators(
+    operation: Operation,
+    acc_b_value: i32,
+    acc_c_value: i32,
+) -> i32 {
     let mut args = setup_runtime_args();
     let control_flow = &mut ControlFlow::new();
     Instruction::AssignAccumulatorValue(1, acc_b_value)
@@ -439,14 +518,33 @@ fn test_parse_calc_accumulator_with_accumulators() {
 
 #[test]
 fn test_calc_accumulator_with_memory_cell() {
-    assert_eq!(run_calc_accumulator_with_memory_cell(Operation::Plus, 20, 5), 25);
-    assert_eq!(run_calc_accumulator_with_memory_cell(Operation::Minus, 20, 5), 15);
-    assert_eq!(run_calc_accumulator_with_memory_cell(Operation::Multiplication, 20, 5), 100);
-    assert_eq!(run_calc_accumulator_with_memory_cell(Operation::Division, 20, 5), 4);
-    assert_eq!(run_calc_accumulator_with_memory_cell(Operation::Division, 93, 5), 18);
+    assert_eq!(
+        run_calc_accumulator_with_memory_cell(Operation::Plus, 20, 5),
+        25
+    );
+    assert_eq!(
+        run_calc_accumulator_with_memory_cell(Operation::Minus, 20, 5),
+        15
+    );
+    assert_eq!(
+        run_calc_accumulator_with_memory_cell(Operation::Multiplication, 20, 5),
+        100
+    );
+    assert_eq!(
+        run_calc_accumulator_with_memory_cell(Operation::Division, 20, 5),
+        4
+    );
+    assert_eq!(
+        run_calc_accumulator_with_memory_cell(Operation::Division, 93, 5),
+        18
+    );
 }
 
-fn run_calc_accumulator_with_memory_cell(operation: Operation, acc_a_value: i32, m_cell_value: i32) -> i32 {
+fn run_calc_accumulator_with_memory_cell(
+    operation: Operation,
+    acc_a_value: i32,
+    m_cell_value: i32,
+) -> i32 {
     let mut args = setup_runtime_args();
     let control_flow = &mut ControlFlow::new();
     Instruction::AssignAccumulatorValue(0, acc_a_value)
@@ -481,17 +579,35 @@ fn test_parse_calc_accumulator_with_memory_cell() {
     );
     assert_eq!(
         Instruction::try_from("a1 := a1 * p()"),
-        Err(InstructionParseError::InvalidExpression((11, 13), "p()".to_string()))
+        Err(InstructionParseError::InvalidExpression(
+            (11, 13),
+            "p()".to_string()
+        ))
     );
 }
 
 #[test]
 fn test_calc_accumulator_with_memory_cells() {
-    assert_eq!(run_calc_accumulator_with_memory_cells(Operation::Plus, 20, 5), 25);
-    assert_eq!(run_calc_accumulator_with_memory_cells(Operation::Minus, 20, 5), 15);
-    assert_eq!(run_calc_accumulator_with_memory_cells(Operation::Multiplication, 20, 5), 100);
-    assert_eq!(run_calc_accumulator_with_memory_cells(Operation::Division, 20, 5), 4);
-    assert_eq!(run_calc_accumulator_with_memory_cells(Operation::Division, 93, 5), 18);
+    assert_eq!(
+        run_calc_accumulator_with_memory_cells(Operation::Plus, 20, 5),
+        25
+    );
+    assert_eq!(
+        run_calc_accumulator_with_memory_cells(Operation::Minus, 20, 5),
+        15
+    );
+    assert_eq!(
+        run_calc_accumulator_with_memory_cells(Operation::Multiplication, 20, 5),
+        100
+    );
+    assert_eq!(
+        run_calc_accumulator_with_memory_cells(Operation::Division, 20, 5),
+        4
+    );
+    assert_eq!(
+        run_calc_accumulator_with_memory_cells(Operation::Division, 93, 5),
+        18
+    );
 }
 
 fn run_calc_accumulator_with_memory_cells(operation: Operation, value_a: i32, value_b: i32) -> i32 {
@@ -503,14 +619,9 @@ fn run_calc_accumulator_with_memory_cells(operation: Operation, value_a: i32, va
     Instruction::AssignMemoryCellValue("b".to_string(), value_b)
         .run(&mut args, control_flow)
         .unwrap();
-    Instruction::CalcAccumulatorWithMemoryCells(
-        operation,
-        0,
-        "a".to_string(),
-        "b".to_string(),
-    )
-    .run(&mut args, control_flow)
-    .unwrap();
+    Instruction::CalcAccumulatorWithMemoryCells(operation, 0, "a".to_string(), "b".to_string())
+        .run(&mut args, control_flow)
+        .unwrap();
     args.accumulators[0].data.unwrap()
 }
 
@@ -527,24 +638,49 @@ fn test_parse_calc_accumulator_with_memory_cells() {
     );
     assert_eq!(
         Instruction::try_from("a0 := p(h1) x p(h2)"),
-        Err(InstructionParseError::UnknownOperation((12, 12), "x".to_string()))
+        Err(InstructionParseError::UnknownOperation(
+            (12, 12),
+            "x".to_string()
+        ))
     );
     assert_eq!(
         Instruction::try_from("a0 := p(h1) / p()"),
-        Err(InstructionParseError::InvalidExpression((14, 16), "p()".to_string()))
+        Err(InstructionParseError::InvalidExpression(
+            (14, 16),
+            "p()".to_string()
+        ))
     );
 }
 
 #[test]
 fn test_calc_memory_cell_with_memory_cell_constant() {
-    assert_eq!(run_calc_accumulator_with_memory_cell_constant(Operation::Plus, 20, 5), 25);
-    assert_eq!(run_calc_accumulator_with_memory_cell_constant(Operation::Minus, 20, 5), 15);
-    assert_eq!(run_calc_accumulator_with_memory_cell_constant(Operation::Multiplication, 20, 5), 100);
-    assert_eq!(run_calc_accumulator_with_memory_cell_constant(Operation::Division, 20, 5), 4);
-    assert_eq!(run_calc_accumulator_with_memory_cell_constant(Operation::Division, 93, 5), 18);
+    assert_eq!(
+        run_calc_accumulator_with_memory_cell_constant(Operation::Plus, 20, 5),
+        25
+    );
+    assert_eq!(
+        run_calc_accumulator_with_memory_cell_constant(Operation::Minus, 20, 5),
+        15
+    );
+    assert_eq!(
+        run_calc_accumulator_with_memory_cell_constant(Operation::Multiplication, 20, 5),
+        100
+    );
+    assert_eq!(
+        run_calc_accumulator_with_memory_cell_constant(Operation::Division, 20, 5),
+        4
+    );
+    assert_eq!(
+        run_calc_accumulator_with_memory_cell_constant(Operation::Division, 93, 5),
+        18
+    );
 }
 
-fn run_calc_accumulator_with_memory_cell_constant(operation: Operation, value_a: i32, value_b: i32) -> i32 {
+fn run_calc_accumulator_with_memory_cell_constant(
+    operation: Operation,
+    value_a: i32,
+    value_b: i32,
+) -> i32 {
     let mut args = setup_runtime_args();
     let control_flow = &mut ControlFlow::new();
     Instruction::AssignMemoryCellValue("b".to_string(), value_a)
@@ -574,20 +710,42 @@ fn test_parse_calc_memory_cell_with_memory_cell_constant() {
     );
     assert_eq!(
         Instruction::try_from("p(h1) := p(h2) o 10"),
-        Err(InstructionParseError::UnknownOperation((15, 15), "o".to_string()))
+        Err(InstructionParseError::UnknownOperation(
+            (15, 15),
+            "o".to_string()
+        ))
     );
 }
 
 #[test]
 fn test_calc_memory_cell_with_memory_cell_accumulator() {
-    assert_eq!(run_calc_memory_cell_with_memory_cell_accumulator(Operation::Plus, 20, 5), 25);
-    assert_eq!(run_calc_memory_cell_with_memory_cell_accumulator(Operation::Minus, 20, 5), 15);
-    assert_eq!(run_calc_memory_cell_with_memory_cell_accumulator(Operation::Multiplication, 20, 5), 100);
-    assert_eq!(run_calc_memory_cell_with_memory_cell_accumulator(Operation::Division, 20, 5), 4);
-    assert_eq!(run_calc_memory_cell_with_memory_cell_accumulator(Operation::Division, 93, 5), 18);
+    assert_eq!(
+        run_calc_memory_cell_with_memory_cell_accumulator(Operation::Plus, 20, 5),
+        25
+    );
+    assert_eq!(
+        run_calc_memory_cell_with_memory_cell_accumulator(Operation::Minus, 20, 5),
+        15
+    );
+    assert_eq!(
+        run_calc_memory_cell_with_memory_cell_accumulator(Operation::Multiplication, 20, 5),
+        100
+    );
+    assert_eq!(
+        run_calc_memory_cell_with_memory_cell_accumulator(Operation::Division, 20, 5),
+        4
+    );
+    assert_eq!(
+        run_calc_memory_cell_with_memory_cell_accumulator(Operation::Division, 93, 5),
+        18
+    );
 }
 
-fn run_calc_memory_cell_with_memory_cell_accumulator(operation: Operation, value_a: i32, value_b: i32) -> i32 {
+fn run_calc_memory_cell_with_memory_cell_accumulator(
+    operation: Operation,
+    value_a: i32,
+    value_b: i32,
+) -> i32 {
     let mut args = setup_runtime_args();
     let control_flow = &mut ControlFlow::new();
     Instruction::AssignMemoryCellValue("b".to_string(), value_a)
@@ -622,11 +780,26 @@ fn test_parse_calc_memory_cell_with_memory_cell_accumulator() {
 
 #[test]
 fn test_calc_memory_cell_with_memory_cells() {
-    assert_eq!(run_calc_memory_cell_with_memory_cells(Operation::Plus, 20, 5), 25);
-    assert_eq!(run_calc_memory_cell_with_memory_cells(Operation::Minus, 20, 5), 15);
-    assert_eq!(run_calc_memory_cell_with_memory_cells(Operation::Multiplication, 20, 5), 100);
-    assert_eq!(run_calc_memory_cell_with_memory_cells(Operation::Division, 20, 5), 4);
-    assert_eq!(run_calc_memory_cell_with_memory_cells(Operation::Division, 93, 5), 18);
+    assert_eq!(
+        run_calc_memory_cell_with_memory_cells(Operation::Plus, 20, 5),
+        25
+    );
+    assert_eq!(
+        run_calc_memory_cell_with_memory_cells(Operation::Minus, 20, 5),
+        15
+    );
+    assert_eq!(
+        run_calc_memory_cell_with_memory_cells(Operation::Multiplication, 20, 5),
+        100
+    );
+    assert_eq!(
+        run_calc_memory_cell_with_memory_cells(Operation::Division, 20, 5),
+        4
+    );
+    assert_eq!(
+        run_calc_memory_cell_with_memory_cells(Operation::Division, 93, 5),
+        18
+    );
 }
 
 fn run_calc_memory_cell_with_memory_cells(operation: Operation, value_a: i32, value_b: i32) -> i32 {
@@ -739,7 +912,10 @@ fn test_parse_goto_if_accumulator() {
     );
     assert_eq!(
         Instruction::try_from("if x <= a1 then goto loop"),
-        Err(InstructionParseError::InvalidExpression((3, 3), "x".to_string()))
+        Err(InstructionParseError::InvalidExpression(
+            (3, 3),
+            "x".to_string()
+        ))
     );
 }
 
@@ -840,7 +1016,10 @@ fn test_parse_goto_if_memory_cell() {
     );
     assert_eq!(
         Instruction::try_from("if a0 == p then goto loop"),
-        Err(InstructionParseError::InvalidExpression((9, 9), "p".to_string()))
+        Err(InstructionParseError::InvalidExpression(
+            (9, 9),
+            "p".to_string()
+        ))
     );
 }
 

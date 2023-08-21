@@ -47,7 +47,7 @@ pub enum InstructionParseError {
     #[error("unknown instruction '{src}'")]
     #[diagnostic(
         code("parse_instruction::unknown_instruction_suggestion"),
-        url("https://github.com/LMH01/alpha_tui/blob/master/instructions.md"),
+        url("https://github.com/LMH01/alpha_tui/blob/master/instructions.md")
     )]
     UnknownInstructionSuggestion {
         range: (usize, usize),
@@ -75,7 +75,11 @@ impl InstructionParseError {
             InstructionParseError::NotANumber(c, _) => *c,
             InstructionParseError::InvalidExpression(c, _) => *c,
             InstructionParseError::UnknownInstruction(c, _) => *c,
-            InstructionParseError::UnknownInstructionSuggestion { range: c, help: _ , src: _} => *c,
+            InstructionParseError::UnknownInstructionSuggestion {
+                range: c,
+                help: _,
+                src: _,
+            } => *c,
             InstructionParseError::MissingExpression { range: c, help: _ } => *c,
         }
     }
@@ -83,7 +87,6 @@ impl InstructionParseError {
 
 #[derive(Debug, Error, Diagnostic)]
 pub enum BuildProgramErrorTypes {
-    
     #[error("when parsing instruction")]
     #[diagnostic(code(build_program::parse_error))]
     ParseError {
@@ -97,9 +100,11 @@ pub enum BuildProgramErrorTypes {
     },
 
     #[error("label '{0}' is defined multiple times")]
-    #[diagnostic(code("build_program::label_definition_error"), help("Make sure that you define the label only once"))]
-    LabelDefinedMultipleTimes(String)
-
+    #[diagnostic(
+        code("build_program::label_definition_error"),
+        help("Make sure that you define the label only once")
+    )]
+    LabelDefinedMultipleTimes(String),
 }
 
 #[derive(Debug, Diagnostic, Error)]

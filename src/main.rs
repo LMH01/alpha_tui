@@ -1,5 +1,6 @@
 use std::io;
 
+use ::ratatui::{backend::CrosstermBackend, Terminal};
 use clap::Parser;
 use cli::Args;
 use crossterm::{
@@ -7,13 +8,10 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use miette::{Result, IntoDiagnostic, Context, miette};
-use ::ratatui::{backend::CrosstermBackend, Terminal};
+use miette::{miette, Context, IntoDiagnostic, Result};
 use utils::read_file;
 
-use crate::{
-    runtime::builder::RuntimeBuilder, tui::App,
-};
+use crate::{runtime::builder::RuntimeBuilder, tui::App};
 
 /// Contains all required data types used to run programs
 mod base;
@@ -23,10 +21,10 @@ mod cli;
 mod instructions;
 /// Program execution
 mod runtime;
-/// Utility functions
-mod utils;
 /// Terminal user interface
 mod tui;
+/// Utility functions
+mod utils;
 
 fn main() -> Result<()> {
     let args = Args::parse();
@@ -41,11 +39,16 @@ fn main() -> Result<()> {
     let mut rb = match RuntimeBuilder::from_args(&args) {
         Ok(rb) => rb,
         Err(e) => {
-            return Err(miette!("Unable to create RuntimeBuilder, memory cells could not be loaded from file:\n{e}"));
-        },
+            return Err(miette!(
+                "Unable to create RuntimeBuilder, memory cells could not be loaded from file:\n{e}"
+            ));
+        }
     };
-    rb.build_instructions(&instructions.iter().map(|s| s.as_str()).collect(), &args.input)?;
-    
+    rb.build_instructions(
+        &instructions.iter().map(|s| s.as_str()).collect(),
+        &args.input,
+    )?;
+
     println!("Building runtime");
     let rt = rb.build().wrap_err("while building runtime")?;
 
@@ -69,7 +72,8 @@ fn main() -> Result<()> {
         terminal.backend_mut(),
         LeaveAlternateScreen,
         DisableMouseCapture
-    ).into_diagnostic()?;
+    )
+    .into_diagnostic()?;
     terminal.show_cursor().into_diagnostic()?;
 
     res?;

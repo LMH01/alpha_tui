@@ -1,8 +1,18 @@
-use miette::{NamedSource, SourceSpan, SourceOffset, Result};
+use miette::{NamedSource, Result, SourceOffset, SourceSpan};
 
-use crate::{instructions::{Instruction, error_handling::{InstructionParseError, BuildProgramErrorTypes, BuildProgramError}}, cli::Args, base::{Accumulator, MemoryCell}};
+use crate::{
+    base::{Accumulator, MemoryCell},
+    cli::Args,
+    instructions::{
+        error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
+        Instruction,
+    },
+};
 
-use super::{RuntimeArgs, ControlFlow, Runtime, error_handling::{RuntimeBuildError, AddLabelError}};
+use super::{
+    error_handling::{AddLabelError, RuntimeBuildError},
+    ControlFlow, Runtime, RuntimeArgs,
+};
 
 /// Type that is used to build a new runtime environment.
 ///
@@ -17,7 +27,6 @@ pub struct RuntimeBuilder {
 }
 
 impl RuntimeBuilder {
-
     /// Creates a new runtime builder with no values set.
     #[allow(dead_code)]
     pub fn new() -> Self {
@@ -64,7 +73,10 @@ impl RuntimeBuilder {
             return Err(RuntimeBuildError::InstructionsMissing);
         }
         // Inject end labels to give option to end program by using goto END
-        inject_end_labels(&mut self.control_flow, &self.instructions.as_ref().unwrap().len());
+        inject_end_labels(
+            &mut self.control_flow,
+            &self.instructions.as_ref().unwrap().len(),
+        );
         if let Err(e) = self.check_labels() {
             return Err(RuntimeBuildError::LabelUndefined(e));
         }
@@ -102,24 +114,28 @@ impl RuntimeBuilder {
     ///
     /// If an instruction could not be parsed, an error is returned containing the reason.
     #[allow(clippy::ptr_arg)]
-    pub fn build_instructions(&mut self, instructions_input: &Vec<&str>, file_name: &str) -> Result<()> {
+    pub fn build_instructions(
+        &mut self,
+        instructions_input: &Vec<&str>,
+        file_name: &str,
+    ) -> Result<()> {
         self.control_flow.reset();
         let mut instructions = Vec::new();
         for (index, instruction) in instructions_input.iter().enumerate() {
             // Remove comments
             let instruction = instruction
-                    .lines()
-                    .map(|line| {
-                        if let Some(index) = line.find("//") {
-                            &line[..index]
-                        } else if let Some(index) = line.find("#") {
-                            &line[..index]
-                        } else {
-                            line
-                        }
-                        })
-                        .collect::<Vec<_>>()
-                        .join("\n");
+                .lines()
+                .map(|line| {
+                    if let Some(index) = line.find("//") {
+                        &line[..index]
+                    } else if let Some(index) = line.find("#") {
+                        &line[..index]
+                    } else {
+                        line
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join("\n");
             // Check for labels
             let mut splits = instruction.split_whitespace().collect::<Vec<&str>>();
             if splits.is_empty() {
@@ -129,9 +145,16 @@ impl RuntimeBuilder {
             }
             if splits[0].ends_with(':') {
                 let label = splits.remove(0).replace(':', "");
-                if self.control_flow.instruction_labels.insert(label.clone(), index).is_some() {
+                if self
+                    .control_flow
+                    .instruction_labels
+                    .insert(label.clone(), index)
+                    .is_some()
+                {
                     // label defined multiple times
-                    Err(BuildProgramError { reason: BuildProgramErrorTypes::LabelDefinedMultipleTimes(label)})?;
+                    Err(BuildProgramError {
+                        reason: BuildProgramErrorTypes::LabelDefinedMultipleTimes(label),
+                    })?;
                 }
             }
             //instructions.push(Instruction::try_from(&splits).wrap_err("when building instructions")?)
@@ -142,22 +165,41 @@ impl RuntimeBuilder {
                     // Workaround for wrong end_range value depending on error.
                     // For the line to be printed when more then one character is affected for some reason the range needs to be increased by one.
                     let end_range = match e {
-                        InstructionParseError::InvalidExpression(_, _) => e.range().1-e.range().0+1,
-                        InstructionParseError::UnknownInstruction(_, _) => e.range().1-e.range().0+1,
-                        InstructionParseError::UnknownInstructionSuggestion { range: _, help: _ , src: _} => e.range().1-e.range().0+1,
-                        InstructionParseError::NotANumber(_, _) => e.range().1-e.range().0,
-                        InstructionParseError::UnknownComparison(_, _) => e.range().1-e.range().0,
-                        InstructionParseError::UnknownOperation(_, _) => e.range().1-e.range().0,
-                        InstructionParseError::MissingExpression { range: _, help: _ } => e.range().1-e.range().0,
+                        InstructionParseError::InvalidExpression(_, _) => {
+                            e.range().1 - e.range().0 + 1
+                        }
+                        InstructionParseError::UnknownInstruction(_, _) => {
+                            e.range().1 - e.range().0 + 1
+                        }
+                        InstructionParseError::UnknownInstructionSuggestion {
+                            range: _,
+                            help: _,
+                            src: _,
+                        } => e.range().1 - e.range().0 + 1,
+                        InstructionParseError::NotANumber(_, _) => e.range().1 - e.range().0,
+                        InstructionParseError::UnknownComparison(_, _) => e.range().1 - e.range().0,
+                        InstructionParseError::UnknownOperation(_, _) => e.range().1 - e.range().0,
+                        InstructionParseError::MissingExpression { range: _, help: _ } => {
+                            e.range().1 - e.range().0
+                        }
                     };
                     let file_contents = instructions_input.join("\n");
-                    Err(BuildProgramError{ reason: BuildProgramErrorTypes::ParseError {
-                        src: NamedSource::new(file_name, instructions_input.clone().join("\n")),
-                        bad_bit: SourceSpan::new(SourceOffset::from_location(file_contents.clone(), index+1, e.range().0+1), SourceOffset::from(end_range)),
-                        reason: e,
-                    }})?
+                    Err(BuildProgramError {
+                        reason: BuildProgramErrorTypes::ParseError {
+                            src: NamedSource::new(file_name, instructions_input.clone().join("\n")),
+                            bad_bit: SourceSpan::new(
+                                SourceOffset::from_location(
+                                    file_contents.clone(),
+                                    index + 1,
+                                    e.range().0 + 1,
+                                ),
+                                SourceOffset::from(end_range),
+                            ),
+                            reason: e,
+                        },
+                    })?
                     //})?
-                },
+                }
             }
         }
         self.instructions = Some(instructions);
@@ -344,14 +386,21 @@ impl RuntimeBuilder {
         }
         Ok(())
     }
-
 }
 
 fn inject_end_labels(control_flow: &mut ControlFlow, last_instruction_index: &usize) {
-    control_flow.instruction_labels.insert("END".to_string(), *last_instruction_index);
-    control_flow.instruction_labels.insert("ENDE".to_string(), *last_instruction_index);
-    control_flow.instruction_labels.insert("end".to_string(), *last_instruction_index);
-    control_flow.instruction_labels.insert("ende".to_string(), *last_instruction_index);
+    control_flow
+        .instruction_labels
+        .insert("END".to_string(), *last_instruction_index);
+    control_flow
+        .instruction_labels
+        .insert("ENDE".to_string(), *last_instruction_index);
+    control_flow
+        .instruction_labels
+        .insert("end".to_string(), *last_instruction_index);
+    control_flow
+        .instruction_labels
+        .insert("ende".to_string(), *last_instruction_index);
 }
 
 fn check_label(control_flow: &ControlFlow, label: &str) -> Result<(), String> {
@@ -362,9 +411,13 @@ fn check_label(control_flow: &ControlFlow, label: &str) -> Result<(), String> {
 }
 
 /// Checks if accumulators with id exist.
-/// 
+///
 /// If `add_missing` is set, the accumulator is added with empty value instead of returning an error.
-fn check_accumulators(runtime_args: &mut RuntimeArgs, id: &usize, add_missing: bool) -> Result<(), String> {
+fn check_accumulators(
+    runtime_args: &mut RuntimeArgs,
+    id: &usize,
+    add_missing: bool,
+) -> Result<(), String> {
     if !runtime_args.exists_accumulator(id) {
         if add_missing {
             runtime_args.accumulators.push(Accumulator::new(*id));
@@ -376,12 +429,18 @@ fn check_accumulators(runtime_args: &mut RuntimeArgs, id: &usize, add_missing: b
 }
 
 /// Checks if the memory cell with name exists.
-/// 
+///
 /// If `add_missing` is set, the memory cell is added with empty value instead of returning an error.
-fn check_memory_cell(runtime_args: &mut RuntimeArgs, name: &str, add_missing: bool) -> Result<(), String> {
+fn check_memory_cell(
+    runtime_args: &mut RuntimeArgs,
+    name: &str,
+    add_missing: bool,
+) -> Result<(), String> {
     if !runtime_args.memory_cells.contains_key(name) {
         if add_missing {
-            runtime_args.memory_cells.insert(name.to_string(), MemoryCell::new(name));
+            runtime_args
+                .memory_cells
+                .insert(name.to_string(), MemoryCell::new(name));
         } else {
             return Err(name.to_string());
         }

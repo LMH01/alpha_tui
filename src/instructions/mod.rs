@@ -2,7 +2,7 @@ use miette::Result;
 
 use crate::{
     base::{Comparison, Operation},
-    runtime::{ControlFlow, RuntimeArgs, error_handling::RuntimeErrorType},
+    runtime::{error_handling::RuntimeErrorType, ControlFlow, RuntimeArgs},
 };
 
 /// Functions and structs related to error handling
@@ -537,7 +537,10 @@ fn goto_if_memory_cell(
 }
 
 /// Tests if the accumulator with **index** exists.
-fn assert_accumulator_exists(runtime_args: &mut RuntimeArgs, index: &usize) -> Result<(), RuntimeErrorType> {
+fn assert_accumulator_exists(
+    runtime_args: &mut RuntimeArgs,
+    index: &usize,
+) -> Result<(), RuntimeErrorType> {
     if let Some(_value) = runtime_args.accumulators.get(*index) {
         Ok(())
     } else {
@@ -566,7 +569,10 @@ fn assert_accumulator_contains_value(
 }
 
 /// Tests if the memory cell with **label** exists.
-fn assert_memory_cell_exists(runtime_args: &mut RuntimeArgs, label: &str) -> Result<(), RuntimeErrorType> {
+fn assert_memory_cell_exists(
+    runtime_args: &mut RuntimeArgs,
+    label: &str,
+) -> Result<(), RuntimeErrorType> {
     if let Some(_value) = runtime_args.memory_cells.get(label) {
         Ok(())
     } else {

@@ -37,7 +37,7 @@ pub enum AddLabelError {
 pub struct RuntimeError {
     #[diagnostic_source]
     pub reason: RuntimeErrorType,
-    pub line_number: usize
+    pub line_number: usize,
 }
 
 #[derive(Debug, Clone, PartialEq, Error, Diagnostic)]
@@ -172,7 +172,7 @@ mod tests {
             Err(RuntimeErrorType::AccumulatorDoesNotExist(0))
         );
     }
-    
+
     #[test]
     fn test_re_memory_cell_uninitialized() {
         let mut ra = RuntimeArgs::new(1, vec!["a".to_string()]);
@@ -200,8 +200,7 @@ mod tests {
         let mut ra = RuntimeArgs::new(1, vec![]);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::Push()
-                .run(&mut ra, &mut cf),
+            Instruction::Push().run(&mut ra, &mut cf),
             Err(RuntimeErrorType::PushFail)
         );
     }
@@ -211,8 +210,7 @@ mod tests {
         let mut ra = RuntimeArgs::new(1, vec!["a".to_string()]);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::Pop()
-                .run(&mut ra, &mut cf),
+            Instruction::Pop().run(&mut ra, &mut cf),
             Err(RuntimeErrorType::PopFail)
         );
     }
@@ -222,10 +220,8 @@ mod tests {
         let mut ra = RuntimeArgs::new(1, vec!["a".to_string()]);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::Goto("loop".to_string())
-                .run(&mut ra, &mut cf),
+            Instruction::Goto("loop".to_string()).run(&mut ra, &mut cf),
             Err(RuntimeErrorType::LabelMissing("loop".to_string()))
         );
     }
-
 }
