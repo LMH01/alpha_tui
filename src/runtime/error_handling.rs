@@ -33,10 +33,11 @@ pub enum AddLabelError {
 }
 
 #[derive(Debug, Error, Diagnostic, Clone)]
-#[error("runtime error")]
+#[error("runtime error in line {line_number}")]
 pub struct RuntimeError {
     #[diagnostic_source]
     pub reason: RuntimeErrorType,
+    pub line_number: usize
 }
 
 #[derive(Debug, Clone, PartialEq, Error, Diagnostic)]

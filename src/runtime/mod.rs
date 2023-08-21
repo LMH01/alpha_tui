@@ -37,7 +37,7 @@ impl Runtime {
         if let Err(e) = self.instructions[current_instruction]
             .run(&mut self.runtime_args, &mut self.control_flow)
         {
-            return Err(RuntimeError {reason: e})?;
+            return Err(RuntimeError {reason: e, line_number: current_instruction+1})?;
         }
         Ok(())
     }
