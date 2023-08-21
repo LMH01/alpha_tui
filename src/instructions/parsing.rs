@@ -460,10 +460,10 @@ mod tests {
 
     #[test]
     fn test_parse_operation() {
-        assert_eq!(parse_operation("+", (0, 0)), Ok(Operation::Plus));
-        assert_eq!(parse_operation("-", (0, 0)), Ok(Operation::Minus));
-        assert_eq!(parse_operation("*", (0, 0)), Ok(Operation::Multiplication));
-        assert_eq!(parse_operation("/", (0, 0)), Ok(Operation::Division));
+        assert_eq!(parse_operation("+", (0, 0)), Ok(Operation::Add));
+        assert_eq!(parse_operation("-", (0, 0)), Ok(Operation::Sub));
+        assert_eq!(parse_operation("*", (0, 0)), Ok(Operation::Mul));
+        assert_eq!(parse_operation("/", (0, 0)), Ok(Operation::Div));
         assert_eq!(
             parse_operation("x", (0, 0)),
             Err(InstructionParseError::UnknownOperation(

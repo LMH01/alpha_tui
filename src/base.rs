@@ -100,34 +100,34 @@ impl TryFrom<&str> for Comparison {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Operation {
-    Plus,
-    Minus,
-    Multiplication,
-    Division,
+    Add,
+    Sub,
+    Mul,
+    Div,
 }
 
 impl Operation {
     pub fn calc(&self, x: i32, y: i32) -> Result<i32, RuntimeErrorType> {
         match self {
-            Self::Plus => {
+            Self::Add => {
                 match x.checked_add(y) {
                     Some(v) => Ok(v),
                     None => Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("add".to_string(), "Addition".to_string()) })
                 }
             },
-            Self::Minus => {
+            Self::Sub => {
                 match x.checked_sub(y) {
                     Some(v) => Ok(v),
                     None => Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("subtract".to_string(), "Subtraction".to_string()) })
                 }
             },
-            Self::Multiplication => {
+            Self::Mul => {
                 match x.checked_mul(y) {
                     Some(v) => Ok(v),
                     None => Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("multiply".to_string(), "Multiplication".to_string()) })
                 }
             },
-            Self::Division => {
+            Self::Div => {
                 if x != y {
                     match x.checked_div(y) {
                         Some(v) => Ok(v),
@@ -146,10 +146,10 @@ impl TryFrom<&str> for Operation {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
-            "+" => Ok(Operation::Plus),
-            "-" => Ok(Operation::Minus),
-            "*" => Ok(Operation::Multiplication),
-            "/" => Ok(Operation::Division),
+            "+" => Ok(Operation::Add),
+            "-" => Ok(Operation::Sub),
+            "*" => Ok(Operation::Mul),
+            "/" => Ok(Operation::Div),
             _ => Err(()),
         }
     }
@@ -207,18 +207,18 @@ mod tests {
 
     #[test]
     fn test_operation() {
-        assert_eq!(Operation::Plus.calc(20, 5).unwrap(), 25);
-        assert_eq!(Operation::Minus.calc(20, 5).unwrap(), 15);
-        assert_eq!(Operation::Multiplication.calc(20, 5).unwrap(), 100);
-        assert_eq!(Operation::Division.calc(20, 5).unwrap(), 4);
+        assert_eq!(Operation::Add.calc(20, 5).unwrap(), 25);
+        assert_eq!(Operation::Sub.calc(20, 5).unwrap(), 15);
+        assert_eq!(Operation::Mul.calc(20, 5).unwrap(), 100);
+        assert_eq!(Operation::Div.calc(20, 5).unwrap(), 4);
     }
 
     #[test]
     fn test_operation_try_from_str() {
-        assert_eq!(Operation::try_from("+"), Ok(Operation::Plus));
-        assert_eq!(Operation::try_from("-"), Ok(Operation::Minus));
-        assert_eq!(Operation::try_from("*"), Ok(Operation::Multiplication));
-        assert_eq!(Operation::try_from("/"), Ok(Operation::Division));
+        assert_eq!(Operation::try_from("+"), Ok(Operation::Add));
+        assert_eq!(Operation::try_from("-"), Ok(Operation::Sub));
+        assert_eq!(Operation::try_from("*"), Ok(Operation::Mul));
+        assert_eq!(Operation::try_from("/"), Ok(Operation::Div));
         assert_eq!(Operation::try_from("P"), Err(()));
     }
 }

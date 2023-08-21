@@ -264,7 +264,7 @@ mod tests {
         ra.accumulators[1].data = Some(0);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::CalcAccumulatorWithAccumulator(Operation::Division, 0, 1).run(&mut ra, &mut cf),
+            Instruction::CalcAccumulatorWithAccumulator(Operation::Div, 0, 1).run(&mut ra, &mut cf),
             Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToDivideByZero() })
         );
     }
@@ -276,7 +276,7 @@ mod tests {
         ra.accumulators[1].data = Some(1);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::CalcAccumulatorWithAccumulator(Operation::Plus, 0, 1).run(&mut ra, &mut cf),
+            Instruction::CalcAccumulatorWithAccumulator(Operation::Add, 0, 1).run(&mut ra, &mut cf),
             Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("add".to_string(), "Addition".to_string()) })
         );
     }
@@ -288,7 +288,7 @@ mod tests {
         ra.accumulators[1].data = Some(1);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::CalcAccumulatorWithAccumulator(Operation::Minus, 0, 1).run(&mut ra, &mut cf),
+            Instruction::CalcAccumulatorWithAccumulator(Operation::Sub, 0, 1).run(&mut ra, &mut cf),
             Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("subtract".to_string(), "Subtraction".to_string()) })
         );
     }
@@ -300,7 +300,7 @@ mod tests {
         ra.accumulators[1].data = Some(-1);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::CalcAccumulatorWithAccumulator(Operation::Division, 0, 1).run(&mut ra, &mut cf),
+            Instruction::CalcAccumulatorWithAccumulator(Operation::Div, 0, 1).run(&mut ra, &mut cf),
             Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("divide".to_string(), "Division".to_string()) })
         );
     }
@@ -312,7 +312,7 @@ mod tests {
         ra.accumulators[1].data = Some(2);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::CalcAccumulatorWithAccumulator(Operation::Multiplication, 0, 1).run(&mut ra, &mut cf),
+            Instruction::CalcAccumulatorWithAccumulator(Operation::Mul, 0, 1).run(&mut ra, &mut cf),
             Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("multiply".to_string(), "Multiplication".to_string()) })
         );
     }

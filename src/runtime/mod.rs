@@ -337,24 +337,24 @@ mod tests {
             vec![&0_usize],
         );
         test_accumulator_instruction(
-            Instruction::CalcAccumulatorWithAccumulator(Operation::Plus, 0, 1),
+            Instruction::CalcAccumulatorWithAccumulator(Operation::Add, 0, 1),
             vec![&0_usize, &1_usize],
         );
         test_accumulator_instruction(
-            Instruction::CalcAccumulatorWithAccumulators(Operation::Plus, 0, 1, 2),
+            Instruction::CalcAccumulatorWithAccumulators(Operation::Add, 0, 1, 2),
             vec![&0_usize, &1_usize, &2_usize],
         );
         test_accumulator_instruction(
-            Instruction::CalcAccumulatorWithConstant(Operation::Plus, 0, 0),
+            Instruction::CalcAccumulatorWithConstant(Operation::Add, 0, 0),
             vec![&0_usize],
         );
         test_accumulator_instruction(
-            Instruction::CalcAccumulatorWithMemoryCell(Operation::Plus, 0, "a".to_string()),
+            Instruction::CalcAccumulatorWithMemoryCell(Operation::Add, 0, "a".to_string()),
             vec![&0_usize],
         );
         test_accumulator_instruction(
             Instruction::CalcAccumulatorWithMemoryCells(
-                Operation::Plus,
+                Operation::Add,
                 0,
                 "a".to_string(),
                 "b".to_string(),
@@ -363,7 +363,7 @@ mod tests {
         );
         test_accumulator_instruction(
             Instruction::CalcMemoryCellWithMemoryCellAccumulator(
-                Operation::Plus,
+                Operation::Add,
                 "a".to_string(),
                 "b".to_string(),
                 0,
@@ -429,12 +429,12 @@ mod tests {
             vec!["a", "b"],
         );
         test_memory_cell_instruction(
-            Instruction::CalcAccumulatorWithMemoryCell(Operation::Plus, 0, "a".to_string()),
+            Instruction::CalcAccumulatorWithMemoryCell(Operation::Add, 0, "a".to_string()),
             vec!["a"],
         );
         test_memory_cell_instruction(
             Instruction::CalcAccumulatorWithMemoryCells(
-                Operation::Plus,
+                Operation::Add,
                 0,
                 "a".to_string(),
                 "b".to_string(),
@@ -443,7 +443,7 @@ mod tests {
         );
         test_memory_cell_instruction(
             Instruction::CalcMemoryCellWithMemoryCellAccumulator(
-                Operation::Plus,
+                Operation::Add,
                 "a".to_string(),
                 "b".to_string(),
                 0,
@@ -452,7 +452,7 @@ mod tests {
         );
         test_memory_cell_instruction(
             Instruction::CalcMemoryCellWithMemoryCellConstant(
-                Operation::Plus,
+                Operation::Add,
                 "a".to_string(),
                 "b".to_string(),
                 0,
@@ -461,7 +461,7 @@ mod tests {
         );
         test_memory_cell_instruction(
             Instruction::CalcMemoryCellWithMemoryCells(
-                Operation::Plus,
+                Operation::Add,
                 "a".to_string(),
                 "b".to_string(),
                 "c".to_string(),

@@ -331,19 +331,19 @@ fn test_assign_memory_cell_value_from_memory_cell_error() {
 #[test]
 fn test_calc_accumulator_with_constant() {
     assert_eq!(
-        run_calc_accumulator_with_constant(Operation::Plus, 20, 20),
+        run_calc_accumulator_with_constant(Operation::Add, 20, 20),
         40
     );
     assert_eq!(
-        run_calc_accumulator_with_constant(Operation::Minus, 20, 20),
+        run_calc_accumulator_with_constant(Operation::Sub, 20, 20),
         0
     );
     assert_eq!(
-        run_calc_accumulator_with_constant(Operation::Multiplication, 20, 20),
+        run_calc_accumulator_with_constant(Operation::Mul, 20, 20),
         400
     );
     assert_eq!(
-        run_calc_accumulator_with_constant(Operation::Division, 50, 3),
+        run_calc_accumulator_with_constant(Operation::Div, 50, 3),
         16
     );
 }
@@ -369,7 +369,7 @@ fn test_parse_calc_accumulator_with_constant() {
     assert_eq!(
         Instruction::try_from("a1 := a1 + 20"),
         Ok(Instruction::CalcAccumulatorWithConstant(
-            Operation::Plus,
+            Operation::Add,
             1,
             20
         ))
@@ -391,23 +391,23 @@ fn test_parse_calc_accumulator_with_constant() {
 #[test]
 fn test_calc_accumulator_with_accumulator() {
     assert_eq!(
-        run_calc_accumulator_with_accumulator(Operation::Plus, 20, 5),
+        run_calc_accumulator_with_accumulator(Operation::Add, 20, 5),
         25
     );
     assert_eq!(
-        run_calc_accumulator_with_accumulator(Operation::Minus, 20, 5),
+        run_calc_accumulator_with_accumulator(Operation::Sub, 20, 5),
         15
     );
     assert_eq!(
-        run_calc_accumulator_with_accumulator(Operation::Multiplication, 20, 5),
+        run_calc_accumulator_with_accumulator(Operation::Mul, 20, 5),
         100
     );
     assert_eq!(
-        run_calc_accumulator_with_accumulator(Operation::Division, 20, 5),
+        run_calc_accumulator_with_accumulator(Operation::Div, 20, 5),
         4
     );
     assert_eq!(
-        run_calc_accumulator_with_accumulator(Operation::Division, 93, 5),
+        run_calc_accumulator_with_accumulator(Operation::Div, 93, 5),
         18
     );
 }
@@ -436,7 +436,7 @@ fn test_parse_calc_accumulator_with_accumulator() {
     assert_eq!(
         Instruction::try_from("a1 := a1 + a2"),
         Ok(Instruction::CalcAccumulatorWithAccumulator(
-            Operation::Plus,
+            Operation::Add,
             1,
             2
         ))
@@ -444,7 +444,7 @@ fn test_parse_calc_accumulator_with_accumulator() {
     assert_eq!(
         Instruction::try_from("a1 := a1 / a5"),
         Ok(Instruction::CalcAccumulatorWithAccumulator(
-            Operation::Division,
+            Operation::Div,
             1,
             5
         ))
@@ -454,23 +454,23 @@ fn test_parse_calc_accumulator_with_accumulator() {
 #[test]
 fn test_calc_accumulator_with_accumulators() {
     assert_eq!(
-        run_calc_accumulator_with_accumulators(Operation::Plus, 20, 5),
+        run_calc_accumulator_with_accumulators(Operation::Add, 20, 5),
         25
     );
     assert_eq!(
-        run_calc_accumulator_with_accumulators(Operation::Minus, 20, 5),
+        run_calc_accumulator_with_accumulators(Operation::Sub, 20, 5),
         15
     );
     assert_eq!(
-        run_calc_accumulator_with_accumulators(Operation::Multiplication, 20, 5),
+        run_calc_accumulator_with_accumulators(Operation::Mul, 20, 5),
         100
     );
     assert_eq!(
-        run_calc_accumulator_with_accumulators(Operation::Division, 20, 5),
+        run_calc_accumulator_with_accumulators(Operation::Div, 20, 5),
         4
     );
     assert_eq!(
-        run_calc_accumulator_with_accumulators(Operation::Division, 93, 5),
+        run_calc_accumulator_with_accumulators(Operation::Div, 93, 5),
         18
     );
 }
@@ -499,7 +499,7 @@ fn test_parse_calc_accumulator_with_accumulators() {
     assert_eq!(
         Instruction::try_from("a1 := a2 + a3"),
         Ok(Instruction::CalcAccumulatorWithAccumulators(
-            Operation::Plus,
+            Operation::Add,
             1,
             2,
             3
@@ -508,7 +508,7 @@ fn test_parse_calc_accumulator_with_accumulators() {
     assert_eq!(
         Instruction::try_from("a1 := a3 / a5"),
         Ok(Instruction::CalcAccumulatorWithAccumulators(
-            Operation::Division,
+            Operation::Div,
             1,
             3,
             5
@@ -519,23 +519,23 @@ fn test_parse_calc_accumulator_with_accumulators() {
 #[test]
 fn test_calc_accumulator_with_memory_cell() {
     assert_eq!(
-        run_calc_accumulator_with_memory_cell(Operation::Plus, 20, 5),
+        run_calc_accumulator_with_memory_cell(Operation::Add, 20, 5),
         25
     );
     assert_eq!(
-        run_calc_accumulator_with_memory_cell(Operation::Minus, 20, 5),
+        run_calc_accumulator_with_memory_cell(Operation::Sub, 20, 5),
         15
     );
     assert_eq!(
-        run_calc_accumulator_with_memory_cell(Operation::Multiplication, 20, 5),
+        run_calc_accumulator_with_memory_cell(Operation::Mul, 20, 5),
         100
     );
     assert_eq!(
-        run_calc_accumulator_with_memory_cell(Operation::Division, 20, 5),
+        run_calc_accumulator_with_memory_cell(Operation::Div, 20, 5),
         4
     );
     assert_eq!(
-        run_calc_accumulator_with_memory_cell(Operation::Division, 93, 5),
+        run_calc_accumulator_with_memory_cell(Operation::Div, 93, 5),
         18
     );
 }
@@ -564,7 +564,7 @@ fn test_parse_calc_accumulator_with_memory_cell() {
     assert_eq!(
         Instruction::try_from("a1 := a1 * p(h1)"),
         Ok(Instruction::CalcAccumulatorWithMemoryCell(
-            Operation::Multiplication,
+            Operation::Mul,
             1,
             "h1".to_string()
         ))
@@ -589,23 +589,23 @@ fn test_parse_calc_accumulator_with_memory_cell() {
 #[test]
 fn test_calc_accumulator_with_memory_cells() {
     assert_eq!(
-        run_calc_accumulator_with_memory_cells(Operation::Plus, 20, 5),
+        run_calc_accumulator_with_memory_cells(Operation::Add, 20, 5),
         25
     );
     assert_eq!(
-        run_calc_accumulator_with_memory_cells(Operation::Minus, 20, 5),
+        run_calc_accumulator_with_memory_cells(Operation::Sub, 20, 5),
         15
     );
     assert_eq!(
-        run_calc_accumulator_with_memory_cells(Operation::Multiplication, 20, 5),
+        run_calc_accumulator_with_memory_cells(Operation::Mul, 20, 5),
         100
     );
     assert_eq!(
-        run_calc_accumulator_with_memory_cells(Operation::Division, 20, 5),
+        run_calc_accumulator_with_memory_cells(Operation::Div, 20, 5),
         4
     );
     assert_eq!(
-        run_calc_accumulator_with_memory_cells(Operation::Division, 93, 5),
+        run_calc_accumulator_with_memory_cells(Operation::Div, 93, 5),
         18
     );
 }
@@ -630,7 +630,7 @@ fn test_parse_calc_accumulator_with_memory_cells() {
     assert_eq!(
         Instruction::try_from("a0 := p(h1) / p(h2)"),
         Ok(Instruction::CalcAccumulatorWithMemoryCells(
-            Operation::Division,
+            Operation::Div,
             0,
             "h1".to_string(),
             "h2".to_string()
@@ -655,23 +655,23 @@ fn test_parse_calc_accumulator_with_memory_cells() {
 #[test]
 fn test_calc_memory_cell_with_memory_cell_constant() {
     assert_eq!(
-        run_calc_accumulator_with_memory_cell_constant(Operation::Plus, 20, 5),
+        run_calc_accumulator_with_memory_cell_constant(Operation::Add, 20, 5),
         25
     );
     assert_eq!(
-        run_calc_accumulator_with_memory_cell_constant(Operation::Minus, 20, 5),
+        run_calc_accumulator_with_memory_cell_constant(Operation::Sub, 20, 5),
         15
     );
     assert_eq!(
-        run_calc_accumulator_with_memory_cell_constant(Operation::Multiplication, 20, 5),
+        run_calc_accumulator_with_memory_cell_constant(Operation::Mul, 20, 5),
         100
     );
     assert_eq!(
-        run_calc_accumulator_with_memory_cell_constant(Operation::Division, 20, 5),
+        run_calc_accumulator_with_memory_cell_constant(Operation::Div, 20, 5),
         4
     );
     assert_eq!(
-        run_calc_accumulator_with_memory_cell_constant(Operation::Division, 93, 5),
+        run_calc_accumulator_with_memory_cell_constant(Operation::Div, 93, 5),
         18
     );
 }
@@ -702,7 +702,7 @@ fn test_parse_calc_memory_cell_with_memory_cell_constant() {
     assert_eq!(
         Instruction::try_from("p(h1) := p(h2) * 10"),
         Ok(Instruction::CalcMemoryCellWithMemoryCellConstant(
-            Operation::Multiplication,
+            Operation::Mul,
             "h1".to_string(),
             "h2".to_string(),
             10
@@ -720,23 +720,23 @@ fn test_parse_calc_memory_cell_with_memory_cell_constant() {
 #[test]
 fn test_calc_memory_cell_with_memory_cell_accumulator() {
     assert_eq!(
-        run_calc_memory_cell_with_memory_cell_accumulator(Operation::Plus, 20, 5),
+        run_calc_memory_cell_with_memory_cell_accumulator(Operation::Add, 20, 5),
         25
     );
     assert_eq!(
-        run_calc_memory_cell_with_memory_cell_accumulator(Operation::Minus, 20, 5),
+        run_calc_memory_cell_with_memory_cell_accumulator(Operation::Sub, 20, 5),
         15
     );
     assert_eq!(
-        run_calc_memory_cell_with_memory_cell_accumulator(Operation::Multiplication, 20, 5),
+        run_calc_memory_cell_with_memory_cell_accumulator(Operation::Mul, 20, 5),
         100
     );
     assert_eq!(
-        run_calc_memory_cell_with_memory_cell_accumulator(Operation::Division, 20, 5),
+        run_calc_memory_cell_with_memory_cell_accumulator(Operation::Div, 20, 5),
         4
     );
     assert_eq!(
-        run_calc_memory_cell_with_memory_cell_accumulator(Operation::Division, 93, 5),
+        run_calc_memory_cell_with_memory_cell_accumulator(Operation::Div, 93, 5),
         18
     );
 }
@@ -770,7 +770,7 @@ fn test_parse_calc_memory_cell_with_memory_cell_accumulator() {
     assert_eq!(
         Instruction::try_from("p(h1) := p(h2) * a0"),
         Ok(Instruction::CalcMemoryCellWithMemoryCellAccumulator(
-            Operation::Multiplication,
+            Operation::Mul,
             "h1".to_string(),
             "h2".to_string(),
             0
@@ -781,23 +781,23 @@ fn test_parse_calc_memory_cell_with_memory_cell_accumulator() {
 #[test]
 fn test_calc_memory_cell_with_memory_cells() {
     assert_eq!(
-        run_calc_memory_cell_with_memory_cells(Operation::Plus, 20, 5),
+        run_calc_memory_cell_with_memory_cells(Operation::Add, 20, 5),
         25
     );
     assert_eq!(
-        run_calc_memory_cell_with_memory_cells(Operation::Minus, 20, 5),
+        run_calc_memory_cell_with_memory_cells(Operation::Sub, 20, 5),
         15
     );
     assert_eq!(
-        run_calc_memory_cell_with_memory_cells(Operation::Multiplication, 20, 5),
+        run_calc_memory_cell_with_memory_cells(Operation::Mul, 20, 5),
         100
     );
     assert_eq!(
-        run_calc_memory_cell_with_memory_cells(Operation::Division, 20, 5),
+        run_calc_memory_cell_with_memory_cells(Operation::Div, 20, 5),
         4
     );
     assert_eq!(
-        run_calc_memory_cell_with_memory_cells(Operation::Division, 93, 5),
+        run_calc_memory_cell_with_memory_cells(Operation::Div, 93, 5),
         18
     );
 }
@@ -827,7 +827,7 @@ fn test_parse_calc_memory_cell_with_memory_cells() {
     assert_eq!(
         Instruction::try_from("p(h1) := p(h2) * p(h3)"),
         Ok(Instruction::CalcMemoryCellWithMemoryCells(
-            Operation::Multiplication,
+            Operation::Mul,
             "h1".to_string(),
             "h2".to_string(),
             "h3".to_string()
@@ -1051,73 +1051,73 @@ fn test_example_program_1() {
         Instruction::AssignMemoryCellValue("y".to_string(), 3),
         Instruction::AssignMemoryCellValue("z".to_string(), 2),
         Instruction::CalcMemoryCellWithMemoryCells(
-            Operation::Multiplication,
+            Operation::Mul,
             "h1".to_string(),
             "a".to_string(),
             "w".to_string(),
         ),
         Instruction::CalcMemoryCellWithMemoryCells(
-            Operation::Multiplication,
+            Operation::Mul,
             "h2".to_string(),
             "b".to_string(),
             "y".to_string(),
         ),
         Instruction::CalcMemoryCellWithMemoryCells(
-            Operation::Multiplication,
+            Operation::Mul,
             "h3".to_string(),
             "a".to_string(),
             "x".to_string(),
         ),
         Instruction::CalcMemoryCellWithMemoryCells(
-            Operation::Multiplication,
+            Operation::Mul,
             "h4".to_string(),
             "b".to_string(),
             "z".to_string(),
         ),
         Instruction::CalcMemoryCellWithMemoryCells(
-            Operation::Plus,
+            Operation::Add,
             "a".to_string(),
             "h1".to_string(),
             "h2".to_string(),
         ),
         Instruction::CalcMemoryCellWithMemoryCells(
-            Operation::Plus,
+            Operation::Add,
             "b".to_string(),
             "h3".to_string(),
             "h4".to_string(),
         ),
         Instruction::CalcMemoryCellWithMemoryCells(
-            Operation::Multiplication,
+            Operation::Mul,
             "h1".to_string(),
             "c".to_string(),
             "w".to_string(),
         ),
         Instruction::CalcMemoryCellWithMemoryCells(
-            Operation::Multiplication,
+            Operation::Mul,
             "h2".to_string(),
             "d".to_string(),
             "y".to_string(),
         ),
         Instruction::CalcMemoryCellWithMemoryCells(
-            Operation::Multiplication,
+            Operation::Mul,
             "h3".to_string(),
             "c".to_string(),
             "x".to_string(),
         ),
         Instruction::CalcMemoryCellWithMemoryCells(
-            Operation::Multiplication,
+            Operation::Mul,
             "h4".to_string(),
             "d".to_string(),
             "z".to_string(),
         ),
         Instruction::CalcMemoryCellWithMemoryCells(
-            Operation::Plus,
+            Operation::Add,
             "c".to_string(),
             "h1".to_string(),
             "h2".to_string(),
         ),
         Instruction::CalcMemoryCellWithMemoryCells(
-            Operation::Plus,
+            Operation::Add,
             "d".to_string(),
             "h3".to_string(),
             "h4".to_string(),
@@ -1259,9 +1259,9 @@ fn test_example_program_2() {
     let instructions = vec![
         Instruction::AssignAccumulatorValue(0, 1),
         Instruction::AssignMemoryCellValue("a".to_string(), 8),
-        Instruction::CalcAccumulatorWithConstant(Operation::Multiplication, 0, 2),
+        Instruction::CalcAccumulatorWithConstant(Operation::Mul, 0, 2),
         Instruction::CalcMemoryCellWithMemoryCellConstant(
-            Operation::Minus,
+            Operation::Sub,
             "a".to_string(),
             "a".to_string(),
             1,
