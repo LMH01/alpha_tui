@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use crate::runtime::error_handling::RuntimeErrorType;
+
 /// A single accumulator, represents "Akkumulator/Alpha" from SysInf lecture.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Accumulator {
@@ -105,12 +107,18 @@ pub enum Operation {
 }
 
 impl Operation {
-    pub fn calc(&self, x: i32, y: i32) -> i32 {
+    pub fn calc(&self, x: i32, y: i32) -> Result<i32, RuntimeErrorType> {
         match self {
-            Self::Plus => x + y,
-            Self::Minus => x - y,
-            Self::Multiplication => x * y,
-            Self::Division => x / y,
+            Self::Plus => Ok(x + y),
+            Self::Minus => Ok(x - y),
+            Self::Multiplication => Ok(x * y),
+            Self::Division => {
+                if x != y {
+                    Ok(x / y)
+                } else {
+                    Err(RuntimeErrorType::AttemptToDivideByZero())
+                }
+            },
         }
     }
 }
@@ -181,10 +189,10 @@ mod tests {
 
     #[test]
     fn test_operation() {
-        assert_eq!(Operation::Plus.calc(20, 5), 25);
-        assert_eq!(Operation::Minus.calc(20, 5), 15);
-        assert_eq!(Operation::Multiplication.calc(20, 5), 100);
-        assert_eq!(Operation::Division.calc(20, 5), 4);
+        assert_eq!(Operation::Plus.calc(20, 5).unwrap(), 25);
+        assert_eq!(Operation::Minus.calc(20, 5).unwrap(), 15);
+        assert_eq!(Operation::Multiplication.calc(20, 5).unwrap(), 100);
+        assert_eq!(Operation::Division.calc(20, 5).unwrap(), 4);
     }
 
     #[test]

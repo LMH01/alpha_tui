@@ -327,7 +327,7 @@ fn calc_accumulator_with_constant(
     value: &i32,
 ) -> Result<(), RuntimeErrorType> {
     let v = assert_accumulator_contains_value(runtime_args, a_idx)?;
-    runtime_args.accumulators.get_mut(*a_idx).unwrap().data = Some(operation.calc(v, *value));
+    runtime_args.accumulators.get_mut(*a_idx).unwrap().data = Some(operation.calc(v, *value)?);
     Ok(())
 }
 
@@ -344,7 +344,7 @@ fn calc_accumulator_with_accumulator(
 ) -> Result<(), RuntimeErrorType> {
     let a = assert_accumulator_contains_value(runtime_args, a_idx_a)?;
     let b = assert_accumulator_contains_value(runtime_args, a_idx_b)?;
-    runtime_args.accumulators.get_mut(*a_idx_a).unwrap().data = Some(operation.calc(a, b));
+    runtime_args.accumulators.get_mut(*a_idx_a).unwrap().data = Some(operation.calc(a, b)?);
     Ok(())
 }
 
@@ -364,7 +364,7 @@ fn calc_accumulator_with_accumulators(
     assert_accumulator_exists(runtime_args, a_idx_a)?;
     let a = assert_accumulator_contains_value(runtime_args, a_idx_b)?;
     let b = assert_accumulator_contains_value(runtime_args, a_idx_c)?;
-    runtime_args.accumulators.get_mut(*a_idx_a).unwrap().data = Some(operation.calc(a, b));
+    runtime_args.accumulators.get_mut(*a_idx_a).unwrap().data = Some(operation.calc(a, b)?);
     Ok(())
 }
 
@@ -381,7 +381,7 @@ fn calc_accumulator_with_memory_cell(
 ) -> Result<(), RuntimeErrorType> {
     let a = assert_accumulator_contains_value(runtime_args, a_idx)?;
     let b = assert_memory_cell_contains_value(runtime_args, label)?;
-    runtime_args.accumulators.get_mut(*a_idx).unwrap().data = Some(operation.calc(a, b));
+    runtime_args.accumulators.get_mut(*a_idx).unwrap().data = Some(operation.calc(a, b)?);
     Ok(())
 }
 
@@ -401,7 +401,7 @@ fn calc_accumulator_with_memory_cells(
     assert_accumulator_exists(runtime_args, a_idx)?;
     let a = assert_memory_cell_contains_value(runtime_args, label_a)?;
     let b = assert_memory_cell_contains_value(runtime_args, label_b)?;
-    runtime_args.accumulators.get_mut(*a_idx).unwrap().data = Some(operation.calc(a, b));
+    runtime_args.accumulators.get_mut(*a_idx).unwrap().data = Some(operation.calc(a, b)?);
     Ok(())
 }
 
@@ -420,7 +420,7 @@ fn calc_memory_cell_with_memory_cell_constant(
 ) -> Result<(), RuntimeErrorType> {
     assert_memory_cell_exists(runtime_args, label_a)?;
     let a = assert_memory_cell_contains_value(runtime_args, label_b)?;
-    runtime_args.memory_cells.get_mut(label_a).unwrap().data = Some(operation.calc(a, *value));
+    runtime_args.memory_cells.get_mut(label_a).unwrap().data = Some(operation.calc(a, *value)?);
     Ok(())
 }
 
@@ -440,7 +440,7 @@ fn calc_memory_cell_with_memory_cell_accumulator(
     assert_memory_cell_exists(runtime_args, label_a)?;
     let a = assert_memory_cell_contains_value(runtime_args, label_b)?;
     let b = assert_accumulator_contains_value(runtime_args, a_idx)?;
-    runtime_args.memory_cells.get_mut(label_a).unwrap().data = Some(operation.calc(a, b));
+    runtime_args.memory_cells.get_mut(label_a).unwrap().data = Some(operation.calc(a, b)?);
     Ok(())
 }
 
@@ -460,7 +460,7 @@ fn calc_memory_cell_with_memory_cells(
     assert_memory_cell_exists(runtime_args, label_a)?;
     let a = assert_memory_cell_contains_value(runtime_args, label_b)?;
     let b = assert_memory_cell_contains_value(runtime_args, label_c)?;
-    runtime_args.memory_cells.get_mut(label_a).unwrap().data = Some(operation.calc(a, b));
+    runtime_args.memory_cells.get_mut(label_a).unwrap().data = Some(operation.calc(a, b)?);
     Ok(())
 }
 

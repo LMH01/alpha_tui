@@ -90,6 +90,13 @@ pub enum RuntimeErrorType {
         help("Try to create the label before an instruction.\nExample: {0}: a0 := 5")
     )]
     LabelMissing(String),
+
+    #[error("Attempt to divide by zero")]
+    #[diagnostic(
+        code("runtime_error::attempt_to_divide_by_zero"),
+        help("Division by zero is undefined in mathematics")
+    )]
+    AttemptToDivideByZero(),
 }
 
 #[cfg(test)]
@@ -100,7 +107,7 @@ mod tests {
             builder::RuntimeBuilder,
             error_handling::{RuntimeBuildError, RuntimeErrorType},
             ControlFlow, RuntimeArgs,
-        },
+        }, base::Operation,
     };
 
     #[test]
@@ -222,6 +229,18 @@ mod tests {
         assert_eq!(
             Instruction::Goto("loop".to_string()).run(&mut ra, &mut cf),
             Err(RuntimeErrorType::LabelMissing("loop".to_string()))
+        );
+    }
+
+    #[test]
+    fn test_re_attempt_to_divide_by_zero() {
+        let mut ra = RuntimeArgs::new(2, vec![]);
+        ra.accumulators[0].data = Some(0);
+        ra.accumulators[1].data = Some(0);
+        let mut cf = ControlFlow::new();
+        assert_eq!(
+            Instruction::CalcAccumulatorWithAccumulator(Operation::Division, 0, 1).run(&mut ra, &mut cf),
+            Err(RuntimeErrorType::AttemptToDivideByZero())
         );
     }
 }
