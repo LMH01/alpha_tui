@@ -107,7 +107,19 @@ impl RuntimeBuilder {
         let mut instructions = Vec::new();
         for (index, instruction) in instructions_input.iter().enumerate() {
             // Remove comments
-            let instruction = instruction.split(&['#', '/'][..]).collect::<Vec<&str>>()[0];
+            let instruction = instruction
+                    .lines()
+                    .map(|line| {
+                        if let Some(index) = line.find("//") {
+                            &line[..index]
+                        } else if let Some(index) = line.find("#") {
+                            &line[..index]
+                        } else {
+                            line
+                        }
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n");
             // Check for labels
             let mut splits = instruction.split_whitespace().collect::<Vec<&str>>();
             if splits.is_empty() {
