@@ -36,20 +36,20 @@ pub enum InstructionParseError {
     )]
     InvalidExpression((usize, usize)),
     /// Indicates that no instruction was found that matches the input.
-    #[error("no match")]
+    #[error("unknown instruction")]
     #[diagnostic(
-        code("parse_instruction::no_match"),
+        code("parse_instruction::unknown_instruction"),
         url("https://github.com/LMH01/alpha_tui/blob/master/instructions.md"),
         help("Make sure that you use a supported instruction.")
     )]
-    NoMatch((usize, usize)),
+    UnknownInstruction((usize, usize)),
     /// Indicates that no instruction was found but gives a suggestion on what instruction might be meant.
-    #[error("no match")]
+    #[error("unknown instruction")]
     #[diagnostic(
-        code("parse_instruction::no_match_suggestion"),
+        code("parse_instruction::unknown_instruction_suggestion"),
         url("https://github.com/LMH01/alpha_tui/blob/master/instructions.md")
     )]
-    NoMatchSuggestion {
+    UnknownInstructionSuggestion {
         range: (usize, usize),
         #[help]
         help: String,
@@ -73,8 +73,8 @@ impl InstructionParseError {
             InstructionParseError::UnknownComparison(c) => *c,
             InstructionParseError::NotANumber(c) => *c,
             InstructionParseError::InvalidExpression(c) => *c,
-            InstructionParseError::NoMatch(c) => *c,
-            InstructionParseError::NoMatchSuggestion { range: c, help: _ } => *c,
+            InstructionParseError::UnknownInstruction(c) => *c,
+            InstructionParseError::UnknownInstructionSuggestion { range: c, help: _ } => *c,
             InstructionParseError::MissingExpression { range: c, help: _ } => *c,
         }
     }

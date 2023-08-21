@@ -93,7 +93,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
 
         // Check if := is present
         if parts[1] != ":=" {
-            return Err(InstructionParseError::NoMatch(part_range(parts, 1)));
+            return Err(InstructionParseError::UnknownInstruction(whole_range(parts)));
         }
 
         // Instructions where the first part is an accumulator
@@ -150,7 +150,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
                     }
                 }
 
-                return Err(InstructionParseError::NoMatchSuggestion {
+                return Err(InstructionParseError::UnknownInstructionSuggestion {
                     range: (0, parts.join(" ").len()),
                     help: suggestion!(parts[0], ":=", parts[0], parts[3], parts[4]),
                 });
@@ -180,7 +180,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
                 if parts.len() == 3 {
                     return Ok(Instruction::AssignAccumulatorValue(a_idx, no));
                 } else {
-                    return Err(InstructionParseError::NoMatch(whole_range(parts)));
+                    return Err(InstructionParseError::UnknownInstruction(whole_range(parts)));
                 }
             }
             return Err(InstructionParseError::InvalidExpression(part_range(
@@ -244,7 +244,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
             }
         }
 
-        Err(InstructionParseError::NoMatch(whole_range(parts)))
+        Err(InstructionParseError::UnknownInstruction(whole_range(parts)))
     }
 }
 
@@ -538,8 +538,9 @@ mod tests {
     }
 
     #[test]
-    fn test_no_match() {
-        assert_eq!(Instruction::try_from("a0 := 5 * 5"), Err(InstructionParseError::NoMatch((0, 10))));
-        assert_eq!(Instruction::try_from("xyz := 5"), Err(InstructionParseError::NoMatch((0, 7))));
+    fn test_unknown_instruction() {
+        assert_eq!(Instruction::try_from("a0 := 5 * 5"), Err(InstructionParseError::UnknownInstruction((0, 10))));
+        assert_eq!(Instruction::try_from("xyz := 5"), Err(InstructionParseError::UnknownInstruction((0, 7))));
+        assert_eq!(Instruction::try_from("xyz abf daf"), Err(InstructionParseError::UnknownInstruction((0, 10))));
     }
 }

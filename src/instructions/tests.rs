@@ -336,7 +336,7 @@ fn test_parse_calc_accumulator_with_constant() {
     );
     assert_eq!(
         Instruction::try_from("a1 := a2 + 20"),
-        Err(InstructionParseError::NoMatchSuggestion {
+        Err(InstructionParseError::UnknownInstructionSuggestion {
             range: (0, 13),
             help: "Did you mean: \"a1 := a1 + 20\" ?".to_string()
         })
@@ -445,7 +445,7 @@ fn test_parse_calc_accumulator_with_memory_cell() {
     );
     assert_eq!(
         Instruction::try_from("a1 := a2 * p(h1)"),
-        Err(InstructionParseError::NoMatchSuggestion {
+        Err(InstructionParseError::UnknownInstructionSuggestion {
             range: (0, 16),
             help: "Did you mean: \"a1 := a1 * p(h1)\" ?".to_string()
         })

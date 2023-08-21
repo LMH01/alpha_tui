@@ -131,8 +131,8 @@ impl RuntimeBuilder {
                     // For the line to be printed when more then one character is affected for some reason the range needs to be increased by one.
                     let end_range = match e {
                         InstructionParseError::InvalidExpression(_) => e.range().1-e.range().0+1,
-                        InstructionParseError::NoMatch(_) => e.range().1-e.range().0+1,
-                        InstructionParseError::NoMatchSuggestion { range: _, help: _ } => e.range().1-e.range().0+1,
+                        InstructionParseError::UnknownInstruction(_) => e.range().1-e.range().0+1,
+                        InstructionParseError::UnknownInstructionSuggestion { range: _, help: _ } => e.range().1-e.range().0+1,
                         InstructionParseError::NotANumber(_) => e.range().1-e.range().0,
                         InstructionParseError::UnknownComparison(_) => e.range().1-e.range().0,
                         InstructionParseError::UnknownOperation(_) => e.range().1-e.range().0,
