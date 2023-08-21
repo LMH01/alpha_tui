@@ -17,6 +17,7 @@ use crate::runtime::{error_handling::RuntimeError, Runtime, RuntimeArgs};
 struct StatefulInstructions {
     state: ListState,
     instructions: Vec<(usize, String)>,
+    last_index: i32,
 }
 
 impl StatefulInstructions {
@@ -28,11 +29,18 @@ impl StatefulInstructions {
         StatefulInstructions {
             state: ListState::default(),
             instructions: i,
+            last_index: -1,
         }
     }
 
     fn set(&mut self, index: usize) {
-        self.state.select(Some(index));
+        if index as i32 - self.last_index as i32 != 1 {
+            // line jump detected, only increase state by one
+            self.state.select(Some(self.last_index as usize + 1));
+        } else {
+            self.state.select(Some(index));
+        }
+        self.last_index = index as i32;
     }
 }
 
