@@ -36,16 +36,14 @@ fn main() -> Result<()> {
     let instructions = match read_file(&args.input) {
         Ok(i) => i,
         Err(e) => {
-            println!("Unable to read file [{}]: {}", args.input, e);
-            exit(-1);
+            return Err(miette!("Unable to read file [{}]: {}", args.input, e));
         }
     };
     println!("Building program");
     let mut rb = match RuntimeBuilder::from_args(&args) {
         Ok(rb) => rb,
         Err(e) => {
-            println!("Unable to create RuntimeBuilder, memory cells could not be loaded from file:\n{e}");
-            exit(-1);
+            return Err(miette!("Unable to create RuntimeBuilder, memory cells could not be loaded from file:\n{e}"));
         },
     };
     rb.build_instructions(&instructions.iter().map(|s| s.as_str()).collect(), &args.input)?;
