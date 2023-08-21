@@ -244,8 +244,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
             }
         }
 
-        let non_instruction = parts.join(" ");
-        Err(InstructionParseError::NoMatch((0, non_instruction.len())))
+        Err(InstructionParseError::NoMatch(whole_range(parts)))
     }
 }
 
@@ -541,5 +540,6 @@ mod tests {
     #[test]
     fn test_no_match() {
         assert_eq!(Instruction::try_from("a0 := 5 * 5"), Err(InstructionParseError::NoMatch((0, 10))));
+        assert_eq!(Instruction::try_from("xyz := 5"), Err(InstructionParseError::NoMatch((0, 7))));
     }
 }
