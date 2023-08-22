@@ -130,7 +130,7 @@ impl Operation {
                 }
             },
             Self::Div => {
-                if x != y {//TODO Fix
+                if y != 0 {
                     match x.checked_div(y) {
                         Some(v) => Ok(v),
                         None => Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("divide".to_string(), "Division".to_string()) })
