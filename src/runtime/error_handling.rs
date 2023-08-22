@@ -127,7 +127,7 @@ pub enum CalcError {
 #[cfg(test)]
 mod tests {
     use crate::{
-        instructions::Instruction,
+        instructions::{Instruction, TargetType, Value},
         runtime::{
             builder::RuntimeBuilder,
             error_handling::{RuntimeBuildError, RuntimeErrorType, CalcError},
@@ -138,7 +138,7 @@ mod tests {
     #[test]
     fn test_rbe_runtime_args_missing_error() {
         let mut rt = RuntimeBuilder::new();
-        rt.set_instructions(vec![Instruction::Push()]);
+        rt.set_instructions(vec![Instruction::Push]);
         assert_eq!(rt.build(), Err(RuntimeBuildError::RuntimeArgsMissing));
     }
 
@@ -162,10 +162,7 @@ mod tests {
     #[test]
     fn test_rbe_memory_cell_missing() {
         let mut rt = RuntimeBuilder::new_debug(&vec![]);
-        rt.set_instructions(vec![Instruction::AssignMemoryCellValue(
-            "h1".to_string(),
-            10,
-        )]);
+        rt.set_instructions(vec![Instruction::Assign(TargetType::MemoryCell("h1".to_string()), Value::Constant(10))]);
         assert_eq!(
             rt.build(),
             Err(RuntimeBuildError::MemoryCellMissing("h1".to_string()))
@@ -176,7 +173,7 @@ mod tests {
     fn test_rbe_accumulator_missing() {
         let mut rt = RuntimeBuilder::new();
         rt.set_runtime_args(RuntimeArgs::new_empty());
-        rt.set_instructions(vec![Instruction::AssignAccumulatorValue(0, 10)]);
+        rt.set_instructions(vec![Instruction::Assign(TargetType::Accumulator(0), Value::Constant(10))]);
         assert_eq!(
             rt.build(),
             Err(RuntimeBuildError::AccumulatorMissing("0".to_string()))
@@ -185,10 +182,10 @@ mod tests {
 
     #[test]
     fn test_re_accumulator_uninitialized() {
-        let mut ra = RuntimeArgs::new(1, vec!["a".to_string()]);
+        let mut ra = RuntimeArgs::new(1, vec!["h1".to_string()]);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0)
+            Instruction::Assign(TargetType::MemoryCell("h1".to_string()), Value::Accumulator(0))
                 .run(&mut ra, &mut cf),
             Err(RuntimeErrorType::AccumulatorUninitialized(0))
         );
@@ -196,10 +193,10 @@ mod tests {
 
     #[test]
     fn test_re_accumulator_does_not_exist() {
-        let mut ra = RuntimeArgs::new(0, vec!["a".to_string()]);
+        let mut ra = RuntimeArgs::new(0, vec!["h1".to_string()]);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0)
+            Instruction::Assign(TargetType::MemoryCell("h1".to_string()), Value::Accumulator(0))
                 .run(&mut ra, &mut cf),
             Err(RuntimeErrorType::AccumulatorDoesNotExist(0))
         );
@@ -210,7 +207,7 @@ mod tests {
         let mut ra = RuntimeArgs::new(1, vec!["a".to_string()]);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string())
+            Instruction::Assign(TargetType::Accumulator(0), Value::MemoryCell("a".to_string()))
                 .run(&mut ra, &mut cf),
             Err(RuntimeErrorType::MemoryCellUninitialized("a".to_string()))
         );
@@ -221,7 +218,7 @@ mod tests {
         let mut ra = RuntimeArgs::new(1, vec![]);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string())
+            Instruction::Assign(TargetType::Accumulator(0), Value::MemoryCell("a".to_string()))
                 .run(&mut ra, &mut cf),
             Err(RuntimeErrorType::MemoryCellDoesNotExist("a".to_string()))
         );
@@ -232,7 +229,7 @@ mod tests {
         let mut ra = RuntimeArgs::new(1, vec![]);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::Push().run(&mut ra, &mut cf),
+            Instruction::Push.run(&mut ra, &mut cf),
             Err(RuntimeErrorType::PushFail)
         );
     }
@@ -242,7 +239,7 @@ mod tests {
         let mut ra = RuntimeArgs::new(1, vec!["a".to_string()]);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::Pop().run(&mut ra, &mut cf),
+            Instruction::Pop.run(&mut ra, &mut cf),
             Err(RuntimeErrorType::PopFail)
         );
     }
@@ -264,7 +261,7 @@ mod tests {
         ra.accumulators[1].data = Some(0);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::CalcAccumulatorWithAccumulator(Operation::Div, 0, 1).run(&mut ra, &mut cf),
+            Instruction::Calc(TargetType::Accumulator(0), Value::Accumulator(0), Operation::Div, Value::Accumulator(1)).run(&mut ra, &mut cf),
             Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToDivideByZero() })
         );
     }
@@ -276,7 +273,7 @@ mod tests {
         ra.accumulators[1].data = Some(1);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::CalcAccumulatorWithAccumulator(Operation::Add, 0, 1).run(&mut ra, &mut cf),
+            Instruction::Calc(TargetType::Accumulator(0), Value::Accumulator(0), Operation::Add, Value::Accumulator(1)).run(&mut ra, &mut cf),
             Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("add".to_string(), "Addition".to_string()) })
         );
     }
@@ -288,7 +285,7 @@ mod tests {
         ra.accumulators[1].data = Some(1);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::CalcAccumulatorWithAccumulator(Operation::Sub, 0, 1).run(&mut ra, &mut cf),
+            Instruction::Calc(TargetType::Accumulator(0), Value::Accumulator(0), Operation::Sub, Value::Accumulator(1)).run(&mut ra, &mut cf),
             Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("subtract".to_string(), "Subtraction".to_string()) })
         );
     }
@@ -300,7 +297,7 @@ mod tests {
         ra.accumulators[1].data = Some(-1);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::CalcAccumulatorWithAccumulator(Operation::Div, 0, 1).run(&mut ra, &mut cf),
+            Instruction::Calc(TargetType::Accumulator(0), Value::Accumulator(0), Operation::Div, Value::Accumulator(1)).run(&mut ra, &mut cf),
             Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("divide".to_string(), "Division".to_string()) })
         );
     }
@@ -312,7 +309,7 @@ mod tests {
         ra.accumulators[1].data = Some(2);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::CalcAccumulatorWithAccumulator(Operation::Mul, 0, 1).run(&mut ra, &mut cf),
+            Instruction::Calc(TargetType::Accumulator(0), Value::Accumulator(0), Operation::Mul, Value::Accumulator(1)).run(&mut ra, &mut cf),
             Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("multiply".to_string(), "Multiplication".to_string()) })
         );
     }

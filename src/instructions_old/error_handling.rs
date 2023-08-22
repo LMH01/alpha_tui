@@ -114,5 +114,3 @@ pub struct BuildProgramError {
     #[diagnostic_source]
     pub reason: BuildProgramErrorTypes,
 }
-
-//TODO Add error tests

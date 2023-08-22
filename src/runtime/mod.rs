@@ -272,7 +272,7 @@ fn read_memory_cells_from_file(path: &str) -> Result<HashMap<String, MemoryCell>
 mod tests {
     use crate::{
         base::{Comparison, Operation},
-        instructions::Instruction,
+        instructions::{Instruction, Value, TargetType},
         runtime::{builder::RuntimeBuilder, error_handling::RuntimeBuildError},
     };
 
@@ -286,23 +286,8 @@ mod tests {
     #[test]
     fn test_label_missing() {
         test_label_instruction(Instruction::Goto("loop".to_string()), "loop");
-        test_label_instruction(
-            Instruction::GotoIfAccumulator(Comparison::Eq, "loop".to_string(), 0, 0),
-            "loop",
-        );
-        test_label_instruction(
-            Instruction::GotoIfConstant(Comparison::Eq, "loop".to_string(), 0, 0),
-            "loop",
-        );
-        test_label_instruction(
-            Instruction::GotoIfMemoryCell(
-                Comparison::Eq,
-                "loop".to_string(),
-                0,
-                "a".to_string(),
-            ),
-            "loop",
-        );
+        test_label_instruction(Instruction::JumpIf(Value::Accumulator(0), Comparison::Eq, Value::Accumulator(0), "loop".to_string()), "loop");
+        test_label_instruction(Instruction::JumpIf(Value::Accumulator(0), Comparison::Eq, Value::MemoryCell("h1".to_string()), "loop".to_string()), "loop");
     }
 
     fn test_label_instruction(instruction: Instruction, label: &str) {
@@ -322,58 +307,8 @@ mod tests {
 
     #[test]
     fn test_accumulator_missing() {
-        test_accumulator_instruction(Instruction::AssignAccumulatorValue(0, 1), vec![&0_usize]);
-        test_accumulator_instruction(
-            Instruction::AssignAccumulatorValueFromAccumulator(0, 1),
-            vec![&0_usize, &1_usize],
-        );
-        test_accumulator_instruction(
-            Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string()),
-            vec![&0_usize],
-        );
-        test_accumulator_instruction(Instruction::AssignAccumulatorValue(0, 1), vec![&0_usize]);
-        test_accumulator_instruction(
-            Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0),
-            vec![&0_usize],
-        );
-        test_accumulator_instruction(
-            Instruction::CalcAccumulatorWithAccumulator(Operation::Add, 0, 1),
-            vec![&0_usize, &1_usize],
-        );
-        test_accumulator_instruction(
-            Instruction::CalcAccumulatorWithAccumulators(Operation::Add, 0, 1, 2),
-            vec![&0_usize, &1_usize, &2_usize],
-        );
-        test_accumulator_instruction(
-            Instruction::CalcAccumulatorWithConstant(Operation::Add, 0, 0),
-            vec![&0_usize],
-        );
-        test_accumulator_instruction(
-            Instruction::CalcAccumulatorWithMemoryCell(Operation::Add, 0, "a".to_string()),
-            vec![&0_usize],
-        );
-        test_accumulator_instruction(
-            Instruction::CalcAccumulatorWithMemoryCells(
-                Operation::Add,
-                0,
-                "a".to_string(),
-                "b".to_string(),
-            ),
-            vec![&0_usize],
-        );
-        test_accumulator_instruction(
-            Instruction::CalcMemoryCellWithMemoryCellAccumulator(
-                Operation::Add,
-                "a".to_string(),
-                "b".to_string(),
-                0,
-            ),
-            vec![&0_usize],
-        );
-        test_accumulator_instruction(
-            Instruction::GotoIfAccumulator(Comparison::Eq, "loop".to_string(), 0, 0),
-            vec![&0_usize],
-        );
+        test_accumulator_instruction(Instruction::Assign(TargetType::Accumulator(0), Value::Accumulator(1)), vec![&0_usize, &1_usize]);
+        test_accumulator_instruction(Instruction::Calc(TargetType::Accumulator(0), Value::Accumulator(1), Operation::Add, Value::Accumulator(2)), vec![&0_usize, &1_usize, &2_usize]);
     }
 
     fn test_accumulator_instruction(instruction: Instruction, to_test: Vec<&usize>) {
@@ -382,8 +317,8 @@ mod tests {
         _ = rb.add_label("loop".to_string(), 0);
         // Test if ok works
         let mut runtime_args = RuntimeArgs::new_empty();
-        runtime_args.add_storage_cell("a");
-        runtime_args.add_storage_cell("b");
+        runtime_args.add_storage_cell("h1");
+        runtime_args.add_storage_cell("h2");
         for _ in &to_test {
             runtime_args.add_accumulator();
         }
@@ -394,8 +329,8 @@ mod tests {
         // Test if missing accumulators are detected
         for (_, s) in to_test.iter().enumerate() {
             let mut runtime_args = RuntimeArgs::new_empty();
-            runtime_args.add_storage_cell("a");
-            runtime_args.add_storage_cell("b");
+            runtime_args.add_storage_cell("h1");
+            runtime_args.add_storage_cell("h2");
             for _ in 0..(to_test.len() - *s - 1) {
                 runtime_args.add_accumulator();
             }
@@ -412,71 +347,8 @@ mod tests {
 
     #[test]
     fn test_memory_cell_missing() {
-        test_memory_cell_instruction(
-            Instruction::AssignAccumulatorValueFromMemoryCell(0, "a".to_string()),
-            vec!["a"],
-        );
-        test_memory_cell_instruction(
-            Instruction::AssignMemoryCellValue("a".to_string(), 0),
-            vec!["a"],
-        );
-        test_memory_cell_instruction(
-            Instruction::AssignMemoryCellValueFromAccumulator("a".to_string(), 0),
-            vec!["a"],
-        );
-        test_memory_cell_instruction(
-            Instruction::AssignMemoryCellValueFromMemoryCell("a".to_string(), "b".to_string()),
-            vec!["a", "b"],
-        );
-        test_memory_cell_instruction(
-            Instruction::CalcAccumulatorWithMemoryCell(Operation::Add, 0, "a".to_string()),
-            vec!["a"],
-        );
-        test_memory_cell_instruction(
-            Instruction::CalcAccumulatorWithMemoryCells(
-                Operation::Add,
-                0,
-                "a".to_string(),
-                "b".to_string(),
-            ),
-            vec!["a", "b"],
-        );
-        test_memory_cell_instruction(
-            Instruction::CalcMemoryCellWithMemoryCellAccumulator(
-                Operation::Add,
-                "a".to_string(),
-                "b".to_string(),
-                0,
-            ),
-            vec!["a", "b"],
-        );
-        test_memory_cell_instruction(
-            Instruction::CalcMemoryCellWithMemoryCellConstant(
-                Operation::Add,
-                "a".to_string(),
-                "b".to_string(),
-                0,
-            ),
-            vec!["a", "b"],
-        );
-        test_memory_cell_instruction(
-            Instruction::CalcMemoryCellWithMemoryCells(
-                Operation::Add,
-                "a".to_string(),
-                "b".to_string(),
-                "c".to_string(),
-            ),
-            vec!["a", "b", "c"],
-        );
-        test_memory_cell_instruction(
-            Instruction::GotoIfMemoryCell(
-                Comparison::Eq,
-                "loop".to_string(),
-                0,
-                "a".to_string(),
-            ),
-            vec!["a"],
-        );
+        test_memory_cell_instruction(Instruction::Assign(TargetType::MemoryCell("h1".to_string()), Value::MemoryCell("h2".to_string())), vec!["h1", "h2"]);
+        test_memory_cell_instruction(Instruction::Calc(TargetType::MemoryCell("h1".to_string()), Value::MemoryCell("h2".to_string()), Operation::Add, Value::MemoryCell("h3".to_string())), vec!["h1", "h2", "h3"]);
     }
 
     fn test_memory_cell_instruction(instruction: Instruction, to_test: Vec<&str>) {

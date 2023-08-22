@@ -5,7 +5,7 @@ use crate::{
     cli::Args,
     instructions::{
         error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
-        Instruction,
+        Instruction, TargetType, Value,
     },
 };
 
@@ -80,12 +80,8 @@ impl RuntimeBuilder {
         if let Err(e) = self.check_labels() {
             return Err(RuntimeBuildError::LabelUndefined(e));
         }
-        if let Err(e) = self.check_accumulators(self.add_missing) {
-            return Err(RuntimeBuildError::AccumulatorMissing(e));
-        }
-        if let Err(e) = self.check_memory_cells(self.add_missing) {
-            return Err(RuntimeBuildError::MemoryCellMissing(e));
-        }
+        // Check if all used accumulators and memory_cells exist
+        self.check_missing_vars(self.add_missing);
         Ok(Runtime {
             runtime_args: self.runtime_args.clone().unwrap(),
             instructions: self.instructions.clone().unwrap(),
@@ -140,7 +136,7 @@ impl RuntimeBuilder {
             let mut splits = instruction.split_whitespace().collect::<Vec<&str>>();
             if splits.is_empty() {
                 // Line is empty / line contains comment, add dummy instruction
-                instructions.push(Instruction::Sleep());
+                instructions.push(Instruction::Noop);
                 continue;
             }
             if splits[0].ends_with(':') {
@@ -248,13 +244,7 @@ impl RuntimeBuilder {
         for instruction in self.instructions.as_ref().unwrap() {
             match instruction {
                 Instruction::Goto(label) => check_label(&self.control_flow, label)?,
-                Instruction::GotoIfAccumulator(_, label, _, _) => {
-                    check_label(&self.control_flow, label)?
-                }
-                Instruction::GotoIfConstant(_, label, _, _) => {
-                    check_label(&self.control_flow, label)?
-                }
-                Instruction::GotoIfMemoryCell(_, label, _, _) => {
+                Instruction::JumpIf(_, _, _, label) => {
                     check_label(&self.control_flow, label)?
                 }
                 _ => (),
@@ -263,60 +253,24 @@ impl RuntimeBuilder {
         Ok(())
     }
 
-    /// Checks if all accumulators that are used in the instructions exist in the runtime args.
-    ///
-    /// If accumulator is missing, the id of the missing accumulator is returned.
-    ///
-    /// Panics if runtime_args is `None`.
-    fn check_accumulators(&mut self, add_missing: bool) -> Result<(), String> {
+    /// Checks if any accumulators or memory cells are missing in the runtime args that are used.
+    /// 
+    /// If something missing is found, a runtime build error is returned.
+    /// 
+    /// If add_missing is true, the missing accumulator/memory_cell is added with empty value to the runtime args instead of returning an error.
+    fn check_missing_vars(&mut self, add_missing: bool) -> Result<(), RuntimeBuildError> {
         if self.instructions.is_none() {
-            return Ok(());
+            return Ok(())
         }
         for instruction in self.instructions.as_ref().unwrap() {
             match instruction {
-                Instruction::AssignAccumulatorValue(id, _) => {
-                    check_accumulators(self.runtime_args.as_mut().unwrap(), id, add_missing)?
+                Instruction::Assign(target, source) => {
+                    target.check(self.runtime_args.as_mut().unwrap(), add_missing)?;
                 }
-                Instruction::AssignAccumulatorValueFromAccumulator(id_a, id_b) => {
-                    check_accumulators(self.runtime_args.as_mut().unwrap(), id_a, add_missing)?;
-                    check_accumulators(self.runtime_args.as_mut().unwrap(), id_b, add_missing)?;
-                }
-                Instruction::AssignAccumulatorValueFromMemoryCell(id, _) => {
-                    check_accumulators(self.runtime_args.as_mut().unwrap(), id, add_missing)?
-                }
-                Instruction::AssignMemoryCellValueFromAccumulator(_, id) => {
-                    check_accumulators(self.runtime_args.as_mut().unwrap(), id, add_missing)?
-                }
-                Instruction::CalcAccumulatorWithAccumulator(_, id_a, id_b) => {
-                    check_accumulators(self.runtime_args.as_mut().unwrap(), id_a, add_missing)?;
-                    check_accumulators(self.runtime_args.as_mut().unwrap(), id_b, add_missing)?;
-                }
-                Instruction::CalcAccumulatorWithAccumulators(_, id_a, id_b, id_c) => {
-                    check_accumulators(self.runtime_args.as_mut().unwrap(), id_a, add_missing)?;
-                    check_accumulators(self.runtime_args.as_mut().unwrap(), id_b, add_missing)?;
-                    check_accumulators(self.runtime_args.as_mut().unwrap(), id_c, add_missing)?;
-                }
-                Instruction::CalcAccumulatorWithConstant(_, id, _) => {
-                    check_accumulators(self.runtime_args.as_mut().unwrap(), id, add_missing)?
-                }
-                Instruction::CalcAccumulatorWithMemoryCell(_, id, _) => {
-                    check_accumulators(self.runtime_args.as_mut().unwrap(), id, add_missing)?
-                }
-                Instruction::CalcAccumulatorWithMemoryCells(_, id, _, _) => {
-                    check_accumulators(self.runtime_args.as_mut().unwrap(), id, add_missing)?
-                }
-                Instruction::CalcMemoryCellWithMemoryCellAccumulator(_, _, _, id) => {
-                    check_accumulators(self.runtime_args.as_mut().unwrap(), id, add_missing)?
-                }
-                Instruction::GotoIfAccumulator(_, _, id_a, id_b) => {
-                    check_accumulators(self.runtime_args.as_mut().unwrap(), id_a, add_missing)?;
-                    check_accumulators(self.runtime_args.as_mut().unwrap(), id_b, add_missing)?;
-                }
-                Instruction::GotoIfConstant(_, _, id_a, _) => {
-                    check_accumulators(self.runtime_args.as_mut().unwrap(), id_a, add_missing)?;
-                }
-                Instruction::GotoIfMemoryCell(_, _, id_a, _) => {
-                    check_accumulators(self.runtime_args.as_mut().unwrap(), id_a, add_missing)?;
+                Instruction::Calc(target, value_a, _, value_b) => {
+                    target.check(self.runtime_args.as_mut().unwrap(), add_missing)?;
+                    value_a.check(self.runtime_args.as_mut().unwrap(), add_missing)?;
+                    value_b.check(self.runtime_args.as_mut().unwrap(), add_missing)?;
                 }
                 _ => (),
             }
@@ -324,58 +278,6 @@ impl RuntimeBuilder {
         Ok(())
     }
 
-    /// Checks if all memory cells that are used in the instructions exist in the runtime args.
-    ///
-    /// If memory cell is missing, the name of the missing memory cell is returned.
-    ///
-    /// Panics if runtime_args is `None`.
-    fn check_memory_cells(&mut self, add_missing: bool) -> Result<(), String> {
-        if self.instructions.is_none() {
-            return Ok(());
-        }
-        for instruction in self.instructions.as_ref().unwrap() {
-            match instruction {
-                Instruction::AssignAccumulatorValueFromMemoryCell(_, name) => {
-                    check_memory_cell(self.runtime_args.as_mut().unwrap(), name, add_missing)?
-                }
-                Instruction::AssignMemoryCellValue(name, _) => {
-                    check_memory_cell(self.runtime_args.as_mut().unwrap(), name, add_missing)?
-                }
-                Instruction::AssignMemoryCellValueFromAccumulator(name, _) => {
-                    check_memory_cell(self.runtime_args.as_mut().unwrap(), name, add_missing)?
-                }
-                Instruction::AssignMemoryCellValueFromMemoryCell(name_a, name_b) => {
-                    check_memory_cell(self.runtime_args.as_mut().unwrap(), name_a, add_missing)?;
-                    check_memory_cell(self.runtime_args.as_mut().unwrap(), name_b, add_missing)?;
-                }
-                Instruction::CalcAccumulatorWithMemoryCell(_, _, name) => {
-                    check_memory_cell(self.runtime_args.as_mut().unwrap(), name, add_missing)?
-                }
-                Instruction::CalcAccumulatorWithMemoryCells(_, _, name_a, name_b) => {
-                    check_memory_cell(self.runtime_args.as_mut().unwrap(), name_a, add_missing)?;
-                    check_memory_cell(self.runtime_args.as_mut().unwrap(), name_b, add_missing)?;
-                }
-                Instruction::CalcMemoryCellWithMemoryCellConstant(_, name_a, name_b, _) => {
-                    check_memory_cell(self.runtime_args.as_mut().unwrap(), name_a, add_missing)?;
-                    check_memory_cell(self.runtime_args.as_mut().unwrap(), name_b, add_missing)?;
-                }
-                Instruction::CalcMemoryCellWithMemoryCellAccumulator(_, name_a, name_b, _) => {
-                    check_memory_cell(self.runtime_args.as_mut().unwrap(), name_a, add_missing)?;
-                    check_memory_cell(self.runtime_args.as_mut().unwrap(), name_b, add_missing)?;
-                }
-                Instruction::CalcMemoryCellWithMemoryCells(_, name_a, name_b, name_c) => {
-                    check_memory_cell(self.runtime_args.as_mut().unwrap(), name_a, add_missing)?;
-                    check_memory_cell(self.runtime_args.as_mut().unwrap(), name_b, add_missing)?;
-                    check_memory_cell(self.runtime_args.as_mut().unwrap(), name_c, add_missing)?;
-                }
-                Instruction::GotoIfMemoryCell(_, _, _, name) => {
-                    check_memory_cell(self.runtime_args.as_mut().unwrap(), name, add_missing)?
-                }
-                _ => (),
-            }
-        }
-        Ok(())
-    }
 }
 
 fn inject_end_labels(control_flow: &mut ControlFlow, last_instruction_index: &usize) {
@@ -403,16 +305,16 @@ fn check_label(control_flow: &ControlFlow, label: &str) -> Result<(), String> {
 /// Checks if accumulators with id exist.
 ///
 /// If `add_missing` is set, the accumulator is added with empty value instead of returning an error.
-fn check_accumulators(
+pub fn check_accumulator(
     runtime_args: &mut RuntimeArgs,
     id: &usize,
     add_missing: bool,
-) -> Result<(), String> {
+) -> Result<(), RuntimeBuildError> {
     if !runtime_args.exists_accumulator(id) {
         if add_missing {
             runtime_args.accumulators.push(Accumulator::new(*id));
         } else {
-            return Err(id.to_string());
+            return Err(RuntimeBuildError::AccumulatorMissing(id.to_string()));
         }
     }
     Ok(())
@@ -421,21 +323,60 @@ fn check_accumulators(
 /// Checks if the memory cell with name exists.
 ///
 /// If `add_missing` is set, the memory cell is added with empty value instead of returning an error.
-fn check_memory_cell(
+pub fn check_memory_cell(
     runtime_args: &mut RuntimeArgs,
     name: &str,
     add_missing: bool,
-) -> Result<(), String> {
+) -> Result<(), RuntimeBuildError> {
     if !runtime_args.memory_cells.contains_key(name) {
         if add_missing {
             runtime_args
                 .memory_cells
                 .insert(name.to_string(), MemoryCell::new(name));
         } else {
-            return Err(name.to_string());
+            return Err(RuntimeBuildError::MemoryCellMissing(name.to_string()));
         }
     }
     Ok(())
+}
+
+impl TargetType {
+    
+    /// Checks if this type is missing in runtime_args.
+    /// 
+    /// If add_missing is set, the type is added to runtime args instead of returning an error.
+    pub fn check(&self, runtime_args: &mut RuntimeArgs, add_missing: bool) -> Result<(), RuntimeBuildError> {
+        match self {
+            Self::Accumulator(index) => {
+                check_accumulator(runtime_args, index, add_missing)?
+            }
+            Self::MemoryCell(name) => {
+                check_memory_cell(runtime_args, name, add_missing)?
+            }
+        }
+        Ok(())
+    }
+
+}
+
+impl Value {
+
+    /// Checks if this type is missing in runtime_args.
+    /// 
+    /// If add_missing is set, the type is added to runtime args instead of returning an error.
+    pub fn check(&self, runtime_args: &mut RuntimeArgs, add_missing: bool) -> Result<(), RuntimeBuildError> {
+        match self {
+            Self::Accumulator(index) => {
+                check_accumulator(runtime_args, index, add_missing)?
+            }
+            Self::MemoryCell(name) => {
+                check_memory_cell(runtime_args, name, add_missing)?
+            }
+            _ => (),
+        }
+        Ok(())
+    }
+
 }
 
 #[cfg(test)]
