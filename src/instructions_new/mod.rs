@@ -15,6 +15,7 @@ enum Instruction {
     Assign(TargetType, Value),
     Calc(TargetType, Value, Operation, Value),
     Cmp(Value, Comparison, Value, String),
+    Goto(String),
     // more instructions to follow
 }
 
@@ -53,6 +54,8 @@ impl Instruction {
                     control_flow.next_instruction_index(label)?
                 }
             }
+            Self::Goto(label) => run_goto(control_flow, label)?,
+            
         }
         Ok(())
     }
@@ -88,6 +91,10 @@ impl Instruction {
     //}
 }
 
+fn run_goto(control_flow: &mut ControlFlow, label: &str) -> Result<(), RuntimeErrorType> {
+    control_flow.next_instruction_index(label)?;
+    Ok(())
+}
 
 #[derive(Debug, PartialEq)]
 enum TargetType {

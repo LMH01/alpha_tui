@@ -272,6 +272,29 @@ fn test_parse_cmp() {
     );
 }
 
+//Add run test for cmp
+
+#[test]
+fn test_parse_goto() {
+    assert_eq!(
+        Instruction::try_from("goto loop"),
+        Ok(Instruction::Goto("loop".to_string()))
+    );
+}
+
+#[test]
+fn test_run_goto() {
+    let mut args = setup_empty_runtime_args();
+    let mut control_flow = ControlFlow::new();
+    control_flow
+        .instruction_labels
+        .insert("loop".to_string(), 5);
+    Instruction::Goto("loop".to_string())
+        .run(&mut args, &mut control_flow)
+        .unwrap();
+    assert_eq!(control_flow.next_instruction_index, 5);
+}
+
 /// Sets up runtime args in a consistent way because the default implementation for memory cells and accumulators is configgurable.
 fn setup_runtime_args() -> RuntimeArgs {
     let mut args = RuntimeArgs::new_debug(TEST_MEMORY_CELL_LABELS);
@@ -285,5 +308,13 @@ fn setup_runtime_args() -> RuntimeArgs {
         Accumulator::new(1),
         Accumulator::new(2),
     ];
+    args
+}
+
+/// Sets up runtime args where no memory cells or accumulators are set.
+fn setup_empty_runtime_args() -> RuntimeArgs {
+    let mut args = RuntimeArgs::new_debug(TEST_MEMORY_CELL_LABELS);
+    args.accumulators = Vec::new();
+    args.memory_cells = HashMap::new();
     args
 }

@@ -34,6 +34,12 @@ impl TryFrom<&Vec<&str>> for Instruction {
             return Ok(Instruction::Cmp(value_a, cmp, value_b, parts[6].to_string()));
         }
 
+        // Check if instruction is goto
+        if parts[0] == "goto" {
+            check_expression_missing(parts, 1, Some("a label"))?;
+            return Ok(Instruction::Goto(parts[1].to_string()));
+        }
+
         let target = TargetType::try_from((parts[0], part_range(parts, 0)))?;
         let source_a = Value::try_from((parts[2], part_range(parts, 1)))?;
         if parts.len() == 3 {
