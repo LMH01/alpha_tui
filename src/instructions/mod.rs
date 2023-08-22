@@ -143,7 +143,7 @@ fn run_stack_op(runtime_args: &mut RuntimeArgs, op: &Operation) -> Result<(), Ru
         Some(a) => {
             match runtime_args.stack.pop() {
                 Some(b) => {
-                    runtime_args.stack.push(op.calc(a, b)?);
+                    runtime_args.stack.push(op.calc(b, a)?);
                     Ok(())
                 },
                 None => return Err(RuntimeErrorType::StackOpFail(*op))

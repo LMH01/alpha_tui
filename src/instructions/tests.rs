@@ -399,9 +399,9 @@ fn test_parse_stack_op() {
 fn run_stack_op(op: Operation, result: i32) {
     let mut args = setup_runtime_args();
     let mut control_flow = ControlFlow::new();
-    args.accumulators[0].data = Some(5);
-    Instruction::Push.run(&mut args, &mut control_flow).unwrap();
     args.accumulators[0].data = Some(10);
+    Instruction::Push.run(&mut args, &mut control_flow).unwrap();
+    args.accumulators[0].data = Some(5);
     Instruction::Push.run(&mut args, &mut control_flow).unwrap();
     Instruction::StackOp(op).run(&mut args, &mut control_flow).unwrap();
     assert_eq!(args.stack.pop(), Some(result));
