@@ -266,6 +266,7 @@ impl RuntimeBuilder {
             match instruction {
                 Instruction::Assign(target, source) => {
                     target.check(self.runtime_args.as_mut().unwrap(), add_missing)?;
+                    source.check(self.runtime_args.as_mut().unwrap(), add_missing)?;
                 }
                 Instruction::Calc(target, value_a, _, value_b) => {
                     target.check(self.runtime_args.as_mut().unwrap(), add_missing)?;
