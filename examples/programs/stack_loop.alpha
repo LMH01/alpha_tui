@@ -1,0 +1,13 @@
+p(a) := 8 // Configgure amount of times the loops should run
+a0 := 2
+p(b) := p(a)
+loop_a:
+push
+p(b) := p(b) - 1
+if p(b) > 0 then goto loop_a
+p(b) := p(a) - 1
+loop_b:
+stack*
+p(b) := p(b) - 1
+if p(b) > 0 then goto loop_b
+pop
