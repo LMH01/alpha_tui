@@ -19,6 +19,7 @@ mod base;
 mod cli;
 /// Supported instructions
 mod instructions;
+mod instructions_new;
 /// Program execution
 mod runtime;
 /// Terminal user interface
