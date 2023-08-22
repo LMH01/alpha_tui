@@ -1,4 +1,4 @@
-p(a) := 8 // Configgure amount of times the loops should run
+p(a) := 8 // Configure amount of times the loops should run
 a0 := 2
 p(b) := p(a)
 loop_a:
