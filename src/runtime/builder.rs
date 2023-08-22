@@ -152,6 +152,11 @@ impl RuntimeBuilder {
                         reason: BuildProgramErrorTypes::LabelDefinedMultipleTimes(label),
                     })?;
                 }
+                if splits.is_empty() {
+                    // line contains only label
+                    instructions.push(Instruction::Noop);
+                    continue;
+                }
             }
             //instructions.push(Instruction::try_from(&splits).wrap_err("when building instructions")?)
             //instructions.push(Instruction::try_from(&splits)?)
@@ -394,5 +399,11 @@ mod tests {
         ];
         let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
         assert!(rb.build_instructions(&instructions, "test").is_ok());
+    }
+
+    #[test]
+    fn test_only_label_line() {
+        let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
+        assert!(rb.build_instructions(&vec!["a0 := 5", "my_label:", "a1 := 5"], "").is_ok());
     }
 }
