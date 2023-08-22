@@ -50,12 +50,29 @@ impl TryFrom<&Vec<&str>> for Instruction {
             return Ok(Instruction::Pop);
         }
 
+        // At this point only instructions follow that require := at second position
+        if parts.len() < 2 {
+            return Err(InstructionParseError::MissingExpression { range: (parts[0].len(), parts[0].len()), help: "You might be missing ':='".to_string() });
+        }
+
+        if parts[1] != ":=" {
+            return Err(InstructionParseError::UnknownInstruction(
+                whole_range(parts),
+                parts.join(" "),
+            ));
+        }
+
         //TODO Add expression missing checks here
         let target = TargetType::try_from((parts[0], part_range(parts, 0)))?;
-        let source_a = Value::try_from((parts[2], part_range(parts, 1)))?;
+        if parts.len() == 2 {
+            return Err(InstructionParseError::MissingExpression { range: (part_range(parts, 1).1+1, part_range(parts, 1).1+1), help: "Try inserting an accumulator or a memory cell".to_string() });
+        }
+        let source_a = Value::try_from((parts[2], part_range(parts, 2)))?;
         if parts.len() == 3 {
             // instruction is of type a := b
             return Ok(Instruction::Assign(target, source_a));
+        } else if parts.len() == 4 {
+            return Err(InstructionParseError::MissingExpression { range:(part_range(parts, 3).1+1, part_range(parts, 3).1+1), help: "Try inserting an accumulator or a memory cell".to_string() });
         } else if parts.len() == 5 {
             // instruction is of type a := b op c
             let op = parse_operation(parts[3], part_range(parts, 3))?;

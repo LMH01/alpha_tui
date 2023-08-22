@@ -211,16 +211,10 @@ impl TryFrom<(&str, (usize, usize))> for TargetType {
     type Error = InstructionParseError;
 
     fn try_from(value: (&str, (usize, usize))) -> Result<Self, Self::Error> {
-        if let Ok(v) = parse_alpha(&value.0, value.1) {
-            return Ok(Self::Accumulator(v));
-        }
         if let Ok(v) = parse_memory_cell(&value.0, value.1) {
             return Ok(Self::MemoryCell(v));
         }
-        Err(InstructionParseError::InvalidExpression(
-            value.1,
-            value.0.to_string(),
-        ))
+        Ok(Self::Accumulator(parse_alpha(&value.0, value.1)?))
     }
 
 }
@@ -255,19 +249,13 @@ impl TryFrom<(&str, (usize, usize))> for Value {
     type Error = InstructionParseError;
 
     fn try_from(value: (&str, (usize, usize))) -> Result<Self, Self::Error> {
-        if let Ok(v) = parse_alpha(&value.0, value.1) {
-            return Ok(Self::Accumulator(v));
-        }
         if let Ok(v) = parse_memory_cell(&value.0, value.1) {
             return Ok(Self::MemoryCell(v));
         }
         if let Ok(v) = value.0.parse::<i32>() {
             return Ok(Self::Constant(v));
         }
-        Err(InstructionParseError::InvalidExpression(
-            value.1,
-            value.0.to_string(),
-        ))
+        Ok(Self::Accumulator(parse_alpha(&value.0, value.1)?))
     }
 }
 

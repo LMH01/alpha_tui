@@ -166,12 +166,7 @@ impl RuntimeBuilder {
                         }
                         InstructionParseError::UnknownInstruction(_, _) => {
                             e.range().1 - e.range().0 + 1
-                        }
-                        InstructionParseError::UnknownInstructionSuggestion {
-                            range: _,
-                            help: _,
-                            src: _,
-                        } => e.range().1 - e.range().0 + 1,
+                        },
                         InstructionParseError::NotANumber(_, _) => e.range().1 - e.range().0,
                         InstructionParseError::UnknownComparison(_, _) => e.range().1 - e.range().0,
                         InstructionParseError::UnknownOperation(_, _) => e.range().1 - e.range().0,
