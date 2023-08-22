@@ -267,7 +267,7 @@ fn test_parse_cmp() {
             Value::Accumulator(0),
             Comparison::NotEqual,
             Value::Accumulator(1),
-            "a".to_string()
+            "loop".to_string()
         ))
     );
 }

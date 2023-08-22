@@ -2,6 +2,8 @@ use crate::{base::{Operation, Comparison}, runtime::{RuntimeArgs, ControlFlow, e
 
 use self::parsing::{parse_memory_cell, parse_alpha};
 
+mod error_handling;
+
 /// Functions related to instruction parsing
 mod parsing;
 

@@ -8,67 +8,31 @@ impl TryFrom<&Vec<&str>> for Instruction {
     fn try_from(parts: &Vec<&str>) -> Result<Self, Self::Error> {
         // very basic implementation more checks, more parsing, better structure and safeguards need to be added when this is used
 
-        //if parts[0] == "if" {
-        //    check_expression_missing(parts, 1, Some("an accumulator"))?;
-        //    if !parts[1].starts_with('a') {
-        //        return Err(InstructionParseError::InvalidExpression(
-        //            part_range(parts, 1),
-        //            parts[1].to_string(),
-        //        ));
-        //    }
-        //    let a_idx = parse_alpha(parts[1], part_range(parts, 1))?;
-        //    check_expression_missing(parts, 2, Some("a comparison"))?;
-        //    let cmp = parse_comparison(parts[2], part_range(parts, 2))?;
-        //    check_expression_missing(parts, 3, None)?;
-        //    check_expression_missing(parts, 4, Some("then"))?;
-        //    if parts[4] != "then" {
-        //        return Err(InstructionParseError::InvalidExpression(
-        //            part_range(parts, 4),
-        //            parts[5].to_string(),
-        //        ));
-        //    }
-        //    check_expression_missing(parts, 5, Some("goto"))?;
-        //    if parts[5] != "goto" {
-        //        return Err(InstructionParseError::InvalidExpression(
-        //            part_range(parts, 5),
-        //            parts[5].to_string(),
-        //        ));
-        //    }
-        //    check_expression_missing(parts, 6, Some("a label"))?;
-        //    let a_idx_b = parse_alpha(parts[3], part_range(parts, 3));
-        //    let no = parse_number(parts[3], part_range(parts, 3));
-        //    let m_cell = parse_memory_cell(parts[3], part_range(parts, 3));
-        //    // Check if instruction is goto_if_accumulator
-        //    if let Ok(a_idx_b) = a_idx_b {
-        //        return Ok(Instruction::GotoIfAccumulator(
-        //            cmp,
-        //            parts[6].to_string(),
-        //            a_idx,
-        //            a_idx_b,
-        //        ));
-        //    } else if let Ok(no) = no {
-        //        // Check if instruction is goto_if_constant
-        //        return Ok(Instruction::GotoIfConstant(
-        //            cmp,
-        //            parts[6].to_string(),
-        //            a_idx,
-        //            no,
-        //        ));
-        //    } else if let Ok(m_cell) = m_cell {
-        //        // Check if instruction is goto_if_memory_cell
-        //        return Ok(Instruction::GotoIfMemoryCell(
-        //            cmp,
-        //            parts[6].to_string(),
-        //            a_idx,
-        //            m_cell,
-        //        ));
-        //    } else {
-        //        return Err(InstructionParseError::InvalidExpression(
-        //            part_range(parts, 3),
-        //            parts[3].to_string(),
-        //        ));
-        //    }
-        //}
+        // Check if instruction is comparison
+        if parts[0] == "if" {
+            check_expression_missing(parts, 1, Some("an accumulator"))?;
+            let value_a = Value::try_from((parts[1], part_range(parts, 1)))?;
+            check_expression_missing(parts, 2, Some("a comparison"))?;
+            let cmp = parse_comparison(parts[2], part_range(parts, 2))?;
+            check_expression_missing(parts, 3, None)?;
+            check_expression_missing(parts, 4, Some("then"))?;
+            if parts[4] != "then" {
+                return Err(InstructionParseError::InvalidExpression(
+                    part_range(parts, 4),
+                    parts[5].to_string(),
+                ));
+            }
+            check_expression_missing(parts, 5, Some("goto"))?;
+            if parts[5] != "goto" {
+                return Err(InstructionParseError::InvalidExpression(
+                    part_range(parts, 5),
+                    parts[5].to_string(),
+                ));
+            }
+            check_expression_missing(parts, 6, Some("a label"))?;
+            let value_b = Value::try_from((parts[3], part_range(parts, 3)))?;
+            return Ok(Instruction::Cmp(value_a, cmp, value_b, parts[6].to_string()));
+        }
 
         let target = TargetType::try_from((parts[0], part_range(parts, 0)))?;
         let source_a = Value::try_from((parts[2], part_range(parts, 1)))?;
