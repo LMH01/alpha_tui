@@ -10,6 +10,8 @@ pub mod error_handling;
 /// Functions related to instruction parsing
 mod parsing;
 
+mod new_backend;
+
 #[cfg(test)]
 mod tests;
 

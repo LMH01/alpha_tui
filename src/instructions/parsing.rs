@@ -299,7 +299,7 @@ macro_rules! suggestion {
 /// Tries to parse the index of the accumulator.
 ///
 /// `part_range` indicates the area that is affected.
-fn parse_alpha(s: &str, part_range: (usize, usize)) -> Result<usize, InstructionParseError> {
+pub fn parse_alpha(s: &str, part_range: (usize, usize)) -> Result<usize, InstructionParseError> {
     if !s.starts_with('a') && !s.is_empty() {
         return Err(InstructionParseError::InvalidExpression(
             part_range,
@@ -319,7 +319,7 @@ fn parse_alpha(s: &str, part_range: (usize, usize)) -> Result<usize, Instruction
 /// Tries to parse the operation.
 ///
 /// `part_range` indicates the area that is affected.
-fn parse_operation(
+pub fn parse_operation(
     s: &str,
     part_range: (usize, usize),
 ) -> Result<Operation, InstructionParseError> {
@@ -335,7 +335,7 @@ fn parse_operation(
 /// Tries to parse the comparison.
 ///
 /// `part_range` indicates the area that is affected.
-fn parse_comparison(
+pub fn parse_comparison(
     s: &str,
     part_range: (usize, usize),
 ) -> Result<Comparison, InstructionParseError> {
@@ -351,7 +351,7 @@ fn parse_comparison(
 /// Tries to parse a number.
 ///
 /// `part_range` indicates the area that is affected.
-fn parse_number(s: &str, part_range: (usize, usize)) -> Result<i32, InstructionParseError> {
+pub fn parse_number(s: &str, part_range: (usize, usize)) -> Result<i32, InstructionParseError> {
     match s.parse::<i32>() {
         Ok(x) => Ok(x),
         Err(_) => Err(InstructionParseError::NotANumber(part_range, s.to_string())),
@@ -362,7 +362,7 @@ fn parse_number(s: &str, part_range: (usize, usize)) -> Result<i32, InstructionP
 /// For that the content inside p() is taken.
 ///
 /// `part_range` indicates the area that is affected.
-fn parse_memory_cell(s: &str, part_range: (usize, usize)) -> Result<String, InstructionParseError> {
+pub fn parse_memory_cell(s: &str, part_range: (usize, usize)) -> Result<String, InstructionParseError> {
     if !s.starts_with("p(") {
         return Err(InstructionParseError::InvalidExpression(
             part_range,
@@ -389,7 +389,7 @@ fn parse_memory_cell(s: &str, part_range: (usize, usize)) -> Result<String, Inst
 ///
 /// `part_idx` specifies in what part the error occurs.
 #[allow(clippy::needless_range_loop)]
-fn part_range(parts: &[&str], part_idx: usize) -> (usize, usize) {
+pub fn part_range(parts: &[&str], part_idx: usize) -> (usize, usize) {
     let mut start_idx = 0;
     for (idx, part) in parts.iter().enumerate() {
         if idx == part_idx {
@@ -401,7 +401,7 @@ fn part_range(parts: &[&str], part_idx: usize) -> (usize, usize) {
 }
 
 /// Calculates a range over all parts
-fn whole_range(parts: &[&str]) -> (usize, usize) {
+pub fn whole_range(parts: &[&str]) -> (usize, usize) {
     (0, parts.join(" ").len() - 1)
 }
 
