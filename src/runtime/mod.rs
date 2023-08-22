@@ -324,7 +324,6 @@ mod tests {
         }
         rb.set_runtime_args(runtime_args);
         let build = rb.build();
-        println!("{:?}", build);
         assert!(build.is_ok());
         // Test if missing accumulators are detected
         for (_, s) in to_test.iter().enumerate() {

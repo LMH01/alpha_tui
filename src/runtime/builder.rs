@@ -81,7 +81,7 @@ impl RuntimeBuilder {
             return Err(RuntimeBuildError::LabelUndefined(e));
         }
         // Check if all used accumulators and memory_cells exist
-        self.check_missing_vars(self.add_missing);
+        self.check_missing_vars(self.add_missing)?;
         Ok(Runtime {
             runtime_args: self.runtime_args.clone().unwrap(),
             instructions: self.instructions.clone().unwrap(),

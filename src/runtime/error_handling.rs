@@ -171,7 +171,7 @@ mod tests {
 
     #[test]
     fn test_rbe_accumulator_missing() {
-        let mut rt = RuntimeBuilder::new();
+        let mut rt = RuntimeBuilder::new_debug(&vec![]);
         rt.set_runtime_args(RuntimeArgs::new_empty());
         rt.set_instructions(vec![Instruction::Assign(TargetType::Accumulator(0), Value::Constant(10))]);
         assert_eq!(

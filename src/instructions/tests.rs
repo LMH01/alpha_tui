@@ -406,8 +406,8 @@ fn test_example_program_1() {
         Instruction::Assign(TargetType::MemoryCell("y".to_string()), Value::Constant(3)),
         Instruction::Assign(TargetType::MemoryCell("z".to_string()), Value::Constant(2)),
         Instruction::Calc(TargetType::MemoryCell("h1".to_string()), Value::MemoryCell("a".to_string()), Operation::Mul, Value::MemoryCell("w".to_string())),
-        Instruction::Calc(TargetType::MemoryCell("h2".to_string()), Value::MemoryCell("b".to_string()), Operation::Mul, Value::MemoryCell("x".to_string())),
-        Instruction::Calc(TargetType::MemoryCell("h3".to_string()), Value::MemoryCell("a".to_string()), Operation::Mul, Value::MemoryCell("y".to_string())),
+        Instruction::Calc(TargetType::MemoryCell("h2".to_string()), Value::MemoryCell("b".to_string()), Operation::Mul, Value::MemoryCell("y".to_string())),
+        Instruction::Calc(TargetType::MemoryCell("h3".to_string()), Value::MemoryCell("a".to_string()), Operation::Mul, Value::MemoryCell("x".to_string())),
         Instruction::Calc(TargetType::MemoryCell("h4".to_string()), Value::MemoryCell("b".to_string()), Operation::Mul, Value::MemoryCell("z".to_string())),
         Instruction::Calc(TargetType::MemoryCell("a".to_string()), Value::MemoryCell("h1".to_string()), Operation::Add, Value::MemoryCell("h2".to_string())),
         Instruction::Calc(TargetType::MemoryCell("b".to_string()), Value::MemoryCell("h3".to_string()), Operation::Add, Value::MemoryCell("h4".to_string())),
@@ -419,7 +419,7 @@ fn test_example_program_1() {
         Instruction::Calc(TargetType::MemoryCell("d".to_string()), Value::MemoryCell("h3".to_string()), Operation::Add, Value::MemoryCell("h4".to_string())),
     ];
     let mut runtime_builder = RuntimeBuilder::new();
-    //runtime_builder.set_instructions(instructions);
+    runtime_builder.set_instructions(instructions);
     runtime_builder.set_runtime_args(runtime_args);
     let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
     runtime.run().unwrap();
@@ -560,7 +560,7 @@ fn test_example_program_2() {
         Instruction::JumpIf(Value::Accumulator(1), Comparison::Gt, Value::Constant(0), "loop".to_string())
     ];
     let mut runtime_builder = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
-    //runtime_builder.set_instructions(instructions);
+    runtime_builder.set_instructions(instructions);
     runtime_builder.add_label("loop".to_string(), 2).unwrap();
     let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
     runtime.run().unwrap();
