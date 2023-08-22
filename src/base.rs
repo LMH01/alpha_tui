@@ -105,6 +105,7 @@ pub enum Operation {
     Sub,
     Mul,
     Div,
+    Mod,
 }
 
 impl Operation {
@@ -129,10 +130,20 @@ impl Operation {
                 }
             },
             Self::Div => {
-                if x != y {
+                if x != y {//TODO Fix
                     match x.checked_div(y) {
                         Some(v) => Ok(v),
                         None => Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("divide".to_string(), "Division".to_string()) })
+                    }
+                } else {
+                    Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToDivideByZero() })
+                }
+            },
+            Self::Mod => {
+                if y != 0 {
+                    match x.checked_rem_euclid(y) {
+                        Some(v) => Ok(v),
+                        None => Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("mod".to_string(), "Modulo".to_string()) })
                     }
                 } else {
                     Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToDivideByZero() })
@@ -151,6 +162,7 @@ impl TryFrom<&str> for Operation {
             "-" => Ok(Operation::Sub),
             "*" => Ok(Operation::Mul),
             "/" => Ok(Operation::Div),
+            "%" => Ok(Operation::Mod),
             _ => Err(()),
         }
     }
@@ -212,6 +224,7 @@ mod tests {
         assert_eq!(Operation::Sub.calc(20, 5).unwrap(), 15);
         assert_eq!(Operation::Mul.calc(20, 5).unwrap(), 100);
         assert_eq!(Operation::Div.calc(20, 5).unwrap(), 4);
+        assert_eq!(Operation::Mod.calc(20, 5).unwrap(), 0)
     }
 
     #[test]
@@ -220,6 +233,7 @@ mod tests {
         assert_eq!(Operation::try_from("-"), Ok(Operation::Sub));
         assert_eq!(Operation::try_from("*"), Ok(Operation::Mul));
         assert_eq!(Operation::try_from("/"), Ok(Operation::Div));
+        assert_eq!(Operation::try_from("%"), Ok(Operation::Mod));
         assert_eq!(Operation::try_from("P"), Err(()));
     }
 }

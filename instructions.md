@@ -7,7 +7,7 @@ By jumping to the labels `END`, `ENDE`, `end` or `ende` you can end your program
 
 The following instructions are supported:
 
-Be $c\in\mathbb{Z};n,o,p\in\mathbb{N}|n\geq0:j,k,l\in\lbrace h_0,\ldots,h_n\rbrace;T\in\lbrace\alpha_n, \alpha_o, \alpha_p, \rho(j),\rho(k),\rho(l)\rbrace;S\in\lbrace T, c\rbrace;\textbf{op}\in\lbrace +,-,*,/\rbrace;\textbf{cmp}\in\lbrace <,\leq,=, \ne,\geq,>\rbrace;$
+Be $c\in\mathbb{Z};n,o,p\in\mathbb{N}|n\geq0:j,k,l\in\lbrace h_0,\ldots,h_n\rbrace;T\in\lbrace\alpha_n, \alpha_o, \alpha_p, \rho(j),\rho(k),\rho(l)\rbrace;S\in\lbrace T, c\rbrace;\textbf{op}\in\lbrace +,-,*,/,\%\rbrace;\textbf{cmp}\in\lbrace <,\leq,=, \ne,\geq,>\rbrace;$
 
 | Formal instruction | code example | explanation |
 | - | - | - |

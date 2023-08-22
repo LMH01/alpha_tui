@@ -303,7 +303,7 @@ mod tests {
     }
 
     #[test]
-    fn test_re_ce_attempt_to_overflow_mult() {
+    fn test_re_ce_attempt_to_overflow_mul() {
         let mut ra = RuntimeArgs::new(2, vec![]);
         ra.accumulators[0].data = Some(i32::MAX);
         ra.accumulators[1].data = Some(2);
@@ -313,4 +313,29 @@ mod tests {
             Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("multiply".to_string(), "Multiplication".to_string()) })
         );
     }
+
+    #[test]
+    fn test_re_ce_attempt_to_overflow_mod() {
+        let mut ra = RuntimeArgs::new(2, vec![]);
+        ra.accumulators[0].data = Some(i32::MIN);
+        ra.accumulators[1].data = Some(-1);
+        let mut cf = ControlFlow::new();
+        assert_eq!(
+            Instruction::Calc(TargetType::Accumulator(0), Value::Accumulator(0), Operation::Mod, Value::Accumulator(1)).run(&mut ra, &mut cf),
+            Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("mod".to_string(), "Modulo".to_string()) })
+        );
+    }
+
+    #[test]
+    fn test_re_ce_attempt_to_divide_by_zero_mod() {
+        let mut ra = RuntimeArgs::new(2, vec![]);
+        ra.accumulators[0].data = Some(10);
+        ra.accumulators[1].data = Some(0);
+        let mut cf = ControlFlow::new();
+        assert_eq!(
+            Instruction::Calc(TargetType::Accumulator(0), Value::Accumulator(0), Operation::Mod, Value::Accumulator(1)).run(&mut ra, &mut cf),
+            Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToDivideByZero() })
+        );
+    }
+
 }
