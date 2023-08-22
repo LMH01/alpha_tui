@@ -269,7 +269,7 @@ fn test_run_cmp() {
         .unwrap();
     Instruction::JumpIf(
         Value::Accumulator(0),
-        Comparison::Less,
+        Comparison::Lt,
         Value::Constant(40),
         "loop".to_string(),
     )
@@ -279,7 +279,7 @@ fn test_run_cmp() {
     control_flow.next_instruction_index = 0;
     Instruction::JumpIf(
         Value::Accumulator(0),
-        Comparison::Equal,
+        Comparison::Eq,
         Value::Constant(40),
         "loop".to_string(),
     )
@@ -288,7 +288,7 @@ fn test_run_cmp() {
     assert_eq!(control_flow.next_instruction_index, 0);
     assert!(Instruction::JumpIf(
         Value::Accumulator(0),
-        Comparison::Less,
+        Comparison::Lt,
         Value::Constant(40),
         "none".to_string()
     )
@@ -296,7 +296,7 @@ fn test_run_cmp() {
     .is_err());
     assert!(Instruction::JumpIf(
         Value::Accumulator(0),
-        Comparison::Equal,
+        Comparison::Eq,
         Value::Constant(40),
         "none".to_string()
     )
@@ -310,7 +310,7 @@ fn test_parse_cmp() {
         Instruction::try_from("if a0 != a1 then goto loop"),
         Ok(Instruction::JumpIf(
             Value::Accumulator(0),
-            Comparison::NotEqual,
+            Comparison::Neq,
             Value::Accumulator(1),
             "loop".to_string()
         ))
@@ -557,7 +557,7 @@ fn test_example_program_2() {
         Instruction::Calc(TargetType::Accumulator(0), Value::Accumulator(0), Operation::Mul, Value::Constant(2)),
         Instruction::Calc(TargetType::MemoryCell("a".to_string()), Value::MemoryCell("a".to_string()), Operation::Sub, Value::Constant(1)),
         Instruction::Assign(TargetType::Accumulator(1), Value::MemoryCell("a".to_string())),
-        Instruction::JumpIf(Value::Accumulator(1), Comparison::More, Value::Constant(0), "loop".to_string())
+        Instruction::JumpIf(Value::Accumulator(1), Comparison::Gt, Value::Constant(0), "loop".to_string())
     ];
     let mut runtime_builder = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
     //runtime_builder.set_instructions(instructions);

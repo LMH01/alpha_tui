@@ -57,24 +57,24 @@ impl Display for MemoryCell {
 /// Different ways of paring two values
 #[derive(Debug, PartialEq, Clone)]
 pub enum Comparison {
-    Less,
-    LessOrEqual,
-    Equal,
-    NotEqual,
-    MoreOrEqual,
-    More,
+    Lt,
+    Le,
+    Eq,
+    Neq,
+    Ge,
+    Gt,
 }
 
 impl Comparison {
     /// Compares two values with the selected method of comparison.
     pub fn cmp(&self, x: i32, y: i32) -> bool {
         match self {
-            Self::Less => x < y,
-            Self::LessOrEqual => x <= y,
-            Self::Equal => x == y,
-            Self::NotEqual => x != y,
-            Self::MoreOrEqual => x >= y,
-            Self::More => x > y,
+            Self::Lt => x < y,
+            Self::Le => x <= y,
+            Self::Eq => x == y,
+            Self::Neq => x != y,
+            Self::Ge => x >= y,
+            Self::Gt => x > y,
         }
     }
 }
@@ -83,16 +83,17 @@ impl TryFrom<&str> for Comparison {
     type Error = ();
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
+
         match value {
-            "<" => Ok(Self::Less),
-            "<=" => Ok(Self::LessOrEqual),
-            "=<" => Ok(Self::LessOrEqual),
-            "=" => Ok(Self::Equal),
-            "==" => Ok(Self::Equal),
-            "!=" => Ok(Self::NotEqual),
-            ">=" => Ok(Self::MoreOrEqual),
-            "=>" => Ok(Self::MoreOrEqual),
-            ">" => Ok(Self::More),
+            "<" => Ok(Self::Lt),
+            "<=" => Ok(Self::Le),
+            "=<" => Ok(Self::Le),
+            "=" => Ok(Self::Eq),
+            "==" => Ok(Self::Eq),
+            "!=" => Ok(Self::Neq),
+            ">=" => Ok(Self::Ge),
+            "=>" => Ok(Self::Ge),
+            ">" => Ok(Self::Gt),
             _ => Err(()),
         }
     }
@@ -181,28 +182,28 @@ mod tests {
 
     #[test]
     fn test_comparison() {
-        assert!(Comparison::Less.cmp(5, 10));
-        assert!(Comparison::LessOrEqual.cmp(5, 10));
-        assert!(Comparison::LessOrEqual.cmp(5, 5));
-        assert!(Comparison::Equal.cmp(5, 5));
-        assert!(Comparison::NotEqual.cmp(5, 6));
-        assert!(!Comparison::NotEqual.cmp(6, 6));
-        assert!(Comparison::MoreOrEqual.cmp(5, 5));
-        assert!(Comparison::MoreOrEqual.cmp(10, 5));
-        assert!(Comparison::More.cmp(10, 5));
+        assert!(Comparison::Lt.cmp(5, 10));
+        assert!(Comparison::Le.cmp(5, 10));
+        assert!(Comparison::Le.cmp(5, 5));
+        assert!(Comparison::Eq.cmp(5, 5));
+        assert!(Comparison::Neq.cmp(5, 6));
+        assert!(!Comparison::Neq.cmp(6, 6));
+        assert!(Comparison::Ge.cmp(5, 5));
+        assert!(Comparison::Ge.cmp(10, 5));
+        assert!(Comparison::Gt.cmp(10, 5));
     }
 
     #[test]
     fn test_comparison_try_from_str() {
-        assert_eq!(Comparison::try_from("<"), Ok(Comparison::Less));
-        assert_eq!(Comparison::try_from("<="), Ok(Comparison::LessOrEqual));
-        assert_eq!(Comparison::try_from("=<"), Ok(Comparison::LessOrEqual));
-        assert_eq!(Comparison::try_from("="), Ok(Comparison::Equal));
-        assert_eq!(Comparison::try_from("=="), Ok(Comparison::Equal));
-        assert_eq!(Comparison::try_from("!="), Ok(Comparison::NotEqual));
-        assert_eq!(Comparison::try_from(">="), Ok(Comparison::MoreOrEqual));
-        assert_eq!(Comparison::try_from("=>"), Ok(Comparison::MoreOrEqual));
-        assert_eq!(Comparison::try_from(">"), Ok(Comparison::More));
+        assert_eq!(Comparison::try_from("<"), Ok(Comparison::Lt));
+        assert_eq!(Comparison::try_from("<="), Ok(Comparison::Le));
+        assert_eq!(Comparison::try_from("=<"), Ok(Comparison::Le));
+        assert_eq!(Comparison::try_from("="), Ok(Comparison::Eq));
+        assert_eq!(Comparison::try_from("=="), Ok(Comparison::Eq));
+        assert_eq!(Comparison::try_from("!="), Ok(Comparison::Neq));
+        assert_eq!(Comparison::try_from(">="), Ok(Comparison::Ge));
+        assert_eq!(Comparison::try_from("=>"), Ok(Comparison::Ge));
+        assert_eq!(Comparison::try_from(">"), Ok(Comparison::Gt));
     }
 
     #[test]

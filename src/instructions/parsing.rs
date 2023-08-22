@@ -475,12 +475,12 @@ mod tests {
 
     #[test]
     fn test_parse_comparison() {
-        assert_eq!(parse_comparison("<", (0, 0)), Ok(Comparison::Less));
-        assert_eq!(parse_comparison("<=", (0, 1)), Ok(Comparison::LessOrEqual));
-        assert_eq!(parse_comparison("==", (0, 1)), Ok(Comparison::Equal));
-        assert_eq!(parse_comparison("!=", (0, 1)), Ok(Comparison::NotEqual));
-        assert_eq!(parse_comparison(">=", (0, 1)), Ok(Comparison::MoreOrEqual));
-        assert_eq!(parse_comparison(">", (0, 0)), Ok(Comparison::More));
+        assert_eq!(parse_comparison("<", (0, 0)), Ok(Comparison::Lt));
+        assert_eq!(parse_comparison("<=", (0, 1)), Ok(Comparison::Le));
+        assert_eq!(parse_comparison("==", (0, 1)), Ok(Comparison::Eq));
+        assert_eq!(parse_comparison("!=", (0, 1)), Ok(Comparison::Neq));
+        assert_eq!(parse_comparison(">=", (0, 1)), Ok(Comparison::Ge));
+        assert_eq!(parse_comparison(">", (0, 0)), Ok(Comparison::Gt));
         assert_eq!(
             parse_comparison("!x", (0, 1)),
             Err(InstructionParseError::UnknownComparison(

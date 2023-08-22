@@ -287,16 +287,16 @@ mod tests {
     fn test_label_missing() {
         test_label_instruction(Instruction::Goto("loop".to_string()), "loop");
         test_label_instruction(
-            Instruction::GotoIfAccumulator(Comparison::Equal, "loop".to_string(), 0, 0),
+            Instruction::GotoIfAccumulator(Comparison::Eq, "loop".to_string(), 0, 0),
             "loop",
         );
         test_label_instruction(
-            Instruction::GotoIfConstant(Comparison::Equal, "loop".to_string(), 0, 0),
+            Instruction::GotoIfConstant(Comparison::Eq, "loop".to_string(), 0, 0),
             "loop",
         );
         test_label_instruction(
             Instruction::GotoIfMemoryCell(
-                Comparison::Equal,
+                Comparison::Eq,
                 "loop".to_string(),
                 0,
                 "a".to_string(),
@@ -371,7 +371,7 @@ mod tests {
             vec![&0_usize],
         );
         test_accumulator_instruction(
-            Instruction::GotoIfAccumulator(Comparison::Equal, "loop".to_string(), 0, 0),
+            Instruction::GotoIfAccumulator(Comparison::Eq, "loop".to_string(), 0, 0),
             vec![&0_usize],
         );
     }
@@ -470,7 +470,7 @@ mod tests {
         );
         test_memory_cell_instruction(
             Instruction::GotoIfMemoryCell(
-                Comparison::Equal,
+                Comparison::Eq,
                 "loop".to_string(),
                 0,
                 "a".to_string(),

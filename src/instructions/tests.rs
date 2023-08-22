@@ -878,22 +878,22 @@ fn test_goto_if_accumulator() {
     Instruction::AssignAccumulatorValue(1, 30)
         .run(&mut args, &mut control_flow)
         .unwrap();
-    Instruction::GotoIfAccumulator(Comparison::Less, "loop".to_string(), 0, 1)
+    Instruction::GotoIfAccumulator(Comparison::Lt, "loop".to_string(), 0, 1)
         .run(&mut args, &mut control_flow)
         .unwrap();
     assert_eq!(control_flow.next_instruction_index, 20);
     control_flow.next_instruction_index = 0;
-    Instruction::GotoIfAccumulator(Comparison::Equal, "loop".to_string(), 0, 1)
+    Instruction::GotoIfAccumulator(Comparison::Eq, "loop".to_string(), 0, 1)
         .run(&mut args, &mut control_flow)
         .unwrap();
     assert_eq!(control_flow.next_instruction_index, 0);
     assert!(
-        Instruction::GotoIfAccumulator(Comparison::Less, "none".to_string(), 0, 1)
+        Instruction::GotoIfAccumulator(Comparison::Lt, "none".to_string(), 0, 1)
             .run(&mut args, &mut control_flow)
             .is_err()
     );
     assert!(
-        Instruction::GotoIfAccumulator(Comparison::Equal, "none".to_string(), 0, 1)
+        Instruction::GotoIfAccumulator(Comparison::Eq, "none".to_string(), 0, 1)
             .run(&mut args, &mut control_flow)
             .is_ok()
     );
@@ -904,7 +904,7 @@ fn test_parse_goto_if_accumulator() {
     assert_eq!(
         Instruction::try_from("if a0 <= a1 then goto loop"),
         Ok(Instruction::GotoIfAccumulator(
-            Comparison::LessOrEqual,
+            Comparison::Le,
             "loop".to_string(),
             0,
             1
@@ -929,22 +929,22 @@ fn test_goto_if_constant() {
     Instruction::AssignAccumulatorValue(0, 20)
         .run(&mut args, &mut control_flow)
         .unwrap();
-    Instruction::GotoIfConstant(Comparison::Less, "loop".to_string(), 0, 40)
+    Instruction::GotoIfConstant(Comparison::Lt, "loop".to_string(), 0, 40)
         .run(&mut args, &mut control_flow)
         .unwrap();
     assert_eq!(control_flow.next_instruction_index, 20);
     control_flow.next_instruction_index = 0;
-    Instruction::GotoIfConstant(Comparison::Equal, "loop".to_string(), 0, 40)
+    Instruction::GotoIfConstant(Comparison::Eq, "loop".to_string(), 0, 40)
         .run(&mut args, &mut control_flow)
         .unwrap();
     assert_eq!(control_flow.next_instruction_index, 0);
     assert!(
-        Instruction::GotoIfConstant(Comparison::Less, "none".to_string(), 0, 40)
+        Instruction::GotoIfConstant(Comparison::Lt, "none".to_string(), 0, 40)
             .run(&mut args, &mut control_flow)
             .is_err()
     );
     assert!(
-        Instruction::GotoIfConstant(Comparison::Equal, "none".to_string(), 0, 40)
+        Instruction::GotoIfConstant(Comparison::Eq, "none".to_string(), 0, 40)
             .run(&mut args, &mut control_flow)
             .is_ok()
     );
@@ -955,7 +955,7 @@ fn test_parse_goto_if_constant() {
     assert_eq!(
         Instruction::try_from("if a0 == 20 then goto loop"),
         Ok(Instruction::GotoIfConstant(
-            Comparison::Equal,
+            Comparison::Eq,
             "loop".to_string(),
             0,
             20
@@ -976,17 +976,17 @@ fn test_goto_if_memory_cell() {
     Instruction::AssignMemoryCellValue("a".to_string(), 50)
         .run(&mut args, &mut control_flow)
         .unwrap();
-    Instruction::GotoIfMemoryCell(Comparison::Less, "loop".to_string(), 0, "a".to_string())
+    Instruction::GotoIfMemoryCell(Comparison::Lt, "loop".to_string(), 0, "a".to_string())
         .run(&mut args, &mut control_flow)
         .unwrap();
     assert_eq!(control_flow.next_instruction_index, 20);
     control_flow.next_instruction_index = 0;
-    Instruction::GotoIfMemoryCell(Comparison::Equal, "loop".to_string(), 0, "a".to_string())
+    Instruction::GotoIfMemoryCell(Comparison::Eq, "loop".to_string(), 0, "a".to_string())
         .run(&mut args, &mut control_flow)
         .unwrap();
     assert_eq!(control_flow.next_instruction_index, 0);
     assert!(Instruction::GotoIfMemoryCell(
-        Comparison::Less,
+        Comparison::Lt,
         "none".to_string(),
         0,
         "a".to_string()
@@ -994,7 +994,7 @@ fn test_goto_if_memory_cell() {
     .run(&mut args, &mut control_flow)
     .is_err());
     assert!(Instruction::GotoIfMemoryCell(
-        Comparison::Equal,
+        Comparison::Eq,
         "none".to_string(),
         0,
         "a".to_string()
@@ -1008,7 +1008,7 @@ fn test_parse_goto_if_memory_cell() {
     assert_eq!(
         Instruction::try_from("if a0 == p(h1) then goto loop"),
         Ok(Instruction::GotoIfMemoryCell(
-            Comparison::Equal,
+            Comparison::Eq,
             "loop".to_string(),
             0,
             "h1".to_string()
@@ -1267,7 +1267,7 @@ fn test_example_program_2() {
             1,
         ),
         Instruction::AssignAccumulatorValueFromMemoryCell(1, "a".to_string()),
-        Instruction::GotoIfConstant(Comparison::More, "loop".to_string(), 1, 0),
+        Instruction::GotoIfConstant(Comparison::Gt, "loop".to_string(), 1, 0),
     ];
     let mut runtime_builder = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
     runtime_builder.set_instructions(instructions);
