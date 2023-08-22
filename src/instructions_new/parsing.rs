@@ -31,7 +31,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
             }
             check_expression_missing(parts, 6, Some("a label"))?;
             let value_b = Value::try_from((parts[3], part_range(parts, 3)))?;
-            return Ok(Instruction::Cmp(value_a, cmp, value_b, parts[6].to_string()));
+            return Ok(Instruction::JumpIf(value_a, cmp, value_b, parts[6].to_string()));
         }
 
         // Check if instruction is goto

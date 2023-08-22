@@ -257,13 +257,58 @@ fn test_run_calc_accumulator_with_accumulator_memory_cell() {
     assert_eq!(args.accumulators[0].data.unwrap(), 5);
 }
 
-//TODO Add tests for all other calc instruction combinations
+#[test]
+fn test_run_cmp() {
+    let mut args = setup_runtime_args();
+    let mut control_flow = ControlFlow::new();
+    control_flow
+        .instruction_labels
+        .insert("loop".to_string(), 20);
+    Instruction::Assign(TargetType::Accumulator(0), Value::Constant(20))
+        .run(&mut args, &mut control_flow)
+        .unwrap();
+    Instruction::JumpIf(
+        Value::Accumulator(0),
+        Comparison::Less,
+        Value::Constant(40),
+        "loop".to_string(),
+    )
+    .run(&mut args, &mut control_flow)
+    .unwrap();
+    assert_eq!(control_flow.next_instruction_index, 20);
+    control_flow.next_instruction_index = 0;
+    Instruction::JumpIf(
+        Value::Accumulator(0),
+        Comparison::Equal,
+        Value::Constant(40),
+        "loop".to_string(),
+    )
+    .run(&mut args, &mut control_flow)
+    .unwrap();
+    assert_eq!(control_flow.next_instruction_index, 0);
+    assert!(Instruction::JumpIf(
+        Value::Accumulator(0),
+        Comparison::Less,
+        Value::Constant(40),
+        "none".to_string()
+    )
+    .run(&mut args, &mut control_flow)
+    .is_err());
+    assert!(Instruction::JumpIf(
+        Value::Accumulator(0),
+        Comparison::Equal,
+        Value::Constant(40),
+        "none".to_string()
+    )
+    .run(&mut args, &mut control_flow)
+    .is_ok());
+}
 
 #[test]
 fn test_parse_cmp() {
     assert_eq!(
         Instruction::try_from("if a0 != a1 then goto loop"),
-        Ok(Instruction::Cmp(
+        Ok(Instruction::JumpIf(
             Value::Accumulator(0),
             Comparison::NotEqual,
             Value::Accumulator(1),

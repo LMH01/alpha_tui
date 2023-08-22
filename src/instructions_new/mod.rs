@@ -14,7 +14,7 @@ mod tests;
 enum Instruction {
     Assign(TargetType, Value),
     Calc(TargetType, Value, Operation, Value),
-    Cmp(Value, Comparison, Value, String),
+    JumpIf(Value, Comparison, Value, String),
     Goto(String),
     // more instructions to follow
 }
@@ -49,13 +49,13 @@ impl Instruction {
                         Some(op.calc(source_a.value(runtime_args), source_b.value(runtime_args))?)
                 }
             },
-            Self::Cmp(value_a, cmp, value_b, label) => {
+            Self::JumpIf(value_a, cmp, value_b, label) => {
                 if cmp.cmp(value_a.value(runtime_args), value_b.value(runtime_args)) {
                     control_flow.next_instruction_index(label)?
                 }
             }
             Self::Goto(label) => run_goto(control_flow, label)?,
-            
+
         }
         Ok(())
     }
