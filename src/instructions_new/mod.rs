@@ -16,6 +16,8 @@ enum Instruction {
     Calc(TargetType, Value, Operation, Value),
     JumpIf(Value, Comparison, Value, String),
     Goto(String),
+    Push,
+    Pop
     // more instructions to follow
 }
 
@@ -55,6 +57,8 @@ impl Instruction {
                 }
             }
             Self::Goto(label) => run_goto(control_flow, label)?,
+            Self::Push => run_push(runtime_args)?,
+            Self::Pop => run_pop(runtime_args)?,
 
         }
         Ok(())
@@ -94,6 +98,90 @@ impl Instruction {
 fn run_goto(control_flow: &mut ControlFlow, label: &str) -> Result<(), RuntimeErrorType> {
     control_flow.next_instruction_index(label)?;
     Ok(())
+}
+
+/// Causes runtime error if accumulator does not contain data.
+fn run_push(runtime_args: &mut RuntimeArgs) -> Result<(), RuntimeErrorType> {
+    assert_accumulator_exists(runtime_args, &0)?;
+    match runtime_args.accumulators[0].data {
+        Some(d) => runtime_args.stack.push(d),
+        None => return Err(RuntimeErrorType::PushFail),
+    }
+    Ok(())
+}
+
+/// Causes runtime error if stack does not contain data.
+fn run_pop(runtime_args: &mut RuntimeArgs) -> Result<(), RuntimeErrorType> {
+    assert_accumulator_exists(runtime_args, &0)?;
+    match runtime_args.stack.pop() {
+        Some(d) => runtime_args.accumulators[0].data = Some(d),
+        None => return Err(RuntimeErrorType::PopFail),
+    }
+    Ok(())
+}
+
+/// Tests if the accumulator with **index** exists.
+fn assert_accumulator_exists(
+    runtime_args: &mut RuntimeArgs,
+    index: &usize,
+) -> Result<(), RuntimeErrorType> {
+    if let Some(_value) = runtime_args.accumulators.get(*index) {
+        Ok(())
+    } else {
+        Err(RuntimeErrorType::AccumulatorDoesNotExist(*index))
+    }
+}
+
+/// Tests if the accumulator with **index** exists and contains a value.
+///
+/// Ok(i32) contains the accumulator value.
+///
+/// Err(String) contains error message.
+fn assert_accumulator_contains_value(
+    runtime_args: &mut RuntimeArgs,
+    index: &usize,
+) -> Result<i32, RuntimeErrorType> {
+    if let Some(value) = runtime_args.accumulators.get(*index) {
+        if value.data.is_some() {
+            Ok(runtime_args.accumulators.get(*index).unwrap().data.unwrap())
+        } else {
+            Err(RuntimeErrorType::AccumulatorUninitialized(*index))
+        }
+    } else {
+        Err(RuntimeErrorType::AccumulatorDoesNotExist(*index))
+    }
+}
+
+/// Tests if the memory cell with **label** exists.
+fn assert_memory_cell_exists(
+    runtime_args: &mut RuntimeArgs,
+    label: &str,
+) -> Result<(), RuntimeErrorType> {
+    if let Some(_value) = runtime_args.memory_cells.get(label) {
+        Ok(())
+    } else {
+        Err(RuntimeErrorType::MemoryCellDoesNotExist(label.to_string()))
+    }
+}
+
+/// Tests if the memory cell with **label** exists and contains a value.
+///
+/// Ok(i32) contains the memory cell value.
+///
+/// Err(String) contains error message.
+fn assert_memory_cell_contains_value(
+    runtime_args: &mut RuntimeArgs,
+    label: &str,
+) -> Result<i32, RuntimeErrorType> {
+    if let Some(value) = runtime_args.memory_cells.get(label) {
+        if value.data.is_some() {
+            Ok(runtime_args.memory_cells.get(label).unwrap().data.unwrap())
+        } else {
+            Err(RuntimeErrorType::MemoryCellUninitialized(label.to_string()))
+        }
+    } else {
+        Err(RuntimeErrorType::MemoryCellDoesNotExist(label.to_string()))
+    }
 }
 
 #[derive(Debug, PartialEq)]

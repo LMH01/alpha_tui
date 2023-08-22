@@ -39,7 +39,18 @@ impl TryFrom<&Vec<&str>> for Instruction {
             check_expression_missing(parts, 1, Some("a label"))?;
             return Ok(Instruction::Goto(parts[1].to_string()));
         }
+        
+        // Check if instruction is push
+        if parts[0] == "push" {
+            return Ok(Instruction::Push);
+        }
 
+        // Check if instruction is pop
+        if parts[0] == "pop" {
+            return Ok(Instruction::Pop);
+        }
+
+        //TODO Add expression missing checks here
         let target = TargetType::try_from((parts[0], part_range(parts, 0)))?;
         let source_a = Value::try_from((parts[2], part_range(parts, 1)))?;
         if parts.len() == 3 {

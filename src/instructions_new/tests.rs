@@ -340,6 +340,44 @@ fn test_run_goto() {
     assert_eq!(control_flow.next_instruction_index, 5);
 }
 
+#[test]
+fn test_stack() {
+    let mut args = setup_runtime_args();
+    let mut control_flow = ControlFlow::new();
+    Instruction::Assign(TargetType::Accumulator(0), Value::Constant(5))
+        .run(&mut args, &mut control_flow)
+        .unwrap();
+    Instruction::Push
+        .run(&mut args, &mut control_flow)
+        .unwrap();
+    Instruction::Assign(TargetType::Accumulator(0), Value::Constant(10))
+        .run(&mut args, &mut control_flow)
+        .unwrap();
+    Instruction::Push
+        .run(&mut args, &mut control_flow)
+        .unwrap();
+    assert_eq!(args.stack, vec![5, 10]);
+    Instruction::Pop
+        .run(&mut args, &mut control_flow)
+        .unwrap();
+    assert_eq!(args.accumulators[0].data.unwrap(), 10);
+    Instruction::Pop
+        .run(&mut args, &mut control_flow)
+        .unwrap();
+    assert_eq!(args.accumulators[0].data.unwrap(), 5);
+    assert_eq!(args.stack.len(), 0);
+}
+
+#[test]
+fn test_parse_push() {
+    assert_eq!(Instruction::try_from("push"), Ok(Instruction::Push));
+}
+
+#[test]
+fn test_parse_pop() {
+    assert_eq!(Instruction::try_from("pop"), Ok(Instruction::Pop));
+}
+
 /// Sets up runtime args in a consistent way because the default implementation for memory cells and accumulators is configgurable.
 fn setup_runtime_args() -> RuntimeArgs {
     let mut args = RuntimeArgs::new_debug(TEST_MEMORY_CELL_LABELS);
