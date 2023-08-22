@@ -20,9 +20,9 @@ pub enum Instruction {
     Goto(String),
     Push,
     Pop,
+    StackOp(Operation),
     /// Dummy instruction that does nothing, is inserted in empty lines
     Noop,
-    // more instructions to follow
 }
 
 impl Instruction {
@@ -38,8 +38,8 @@ impl Instruction {
             Self::Goto(label) => run_goto(control_flow, label)?,
             Self::Push => run_push(runtime_args)?,
             Self::Pop => run_pop(runtime_args)?,
+            Self::StackOp(op) => run_stack_op(runtime_args, op)?,
             Self::Noop => (),
-
         }
         Ok(())
     }
@@ -135,6 +135,22 @@ fn run_pop(runtime_args: &mut RuntimeArgs) -> Result<(), RuntimeErrorType> {
         None => return Err(RuntimeErrorType::PopFail),
     }
     Ok(())
+}
+
+/// Causes runtime error if stack does not contain two values.
+fn run_stack_op(runtime_args: &mut RuntimeArgs, op: &Operation) -> Result<(), RuntimeErrorType> {
+    match runtime_args.stack.pop() {
+        Some(a) => {
+            match runtime_args.stack.pop() {
+                Some(b) => {
+                    runtime_args.stack.push(op.calc(a, b)?);
+                    Ok(())
+                },
+                None => return Err(RuntimeErrorType::StackOpFail(*op))
+            }
+        },
+        None => Err(RuntimeErrorType::StackOpFail(*op)),
+    }
 }
 
 /// Tests if the accumulator with **index** exists.

@@ -50,6 +50,13 @@ impl TryFrom<&Vec<&str>> for Instruction {
             return Ok(Instruction::Pop);
         }
 
+        // Handle stack operations
+        if parts[0].starts_with("stack") && parts.len() == 1 {
+            let op_txt = parts[0].replace("stack", "");
+            let op = parse_operation(&op_txt, (5, 4+op_txt.len()))?;
+            return Ok(Instruction::StackOp(op));
+        }
+
         // At this point only instructions follow that require := at second position
         if parts.len() < 2 {
             return Err(InstructionParseError::MissingExpression { range: (parts[0].len(), parts[0].len()), help: "You might be missing ':='".to_string() });

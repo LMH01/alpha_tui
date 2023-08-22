@@ -99,7 +99,7 @@ impl TryFrom<&str> for Comparison {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Operation {
     Add,
     Sub,
@@ -149,6 +149,18 @@ impl Operation {
                     Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToDivideByZero() })
                 }
             },
+        }
+    }
+}
+
+impl Display for Operation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Add => write!(f, "+"),
+            Self::Sub => write!(f, "-"),
+            Self::Mul => write!(f, "*"),
+            Self::Div => write!(f, "/"),
+            Self::Mod => write!(f, "%"),
         }
     }
 }

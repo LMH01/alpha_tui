@@ -1,0 +1,21 @@
+p(a) := 10
+p(b) := 8
+p(c) := 5
+p(d) := 4
+p(e) := 1
+a0 := p(a)
+push
+a0 := p(b)
+push
+stack+
+a0 := p(c)
+push
+a0 := p(d)
+push
+a0 := p(e)
+push
+stack*
+stack-
+stack/
+pop
+p(x) := a0

@@ -108,6 +108,7 @@ mod tests {
     fn test_ipe_unknown_operation() {
         assert_eq!(Instruction::try_from("a0 := p(h1) x p(h1)"), Err(InstructionParseError::UnknownOperation((12, 12), "x".to_string())));
         assert_eq!(Instruction::try_from("a0 := a0 xxx p(h1)"), Err(InstructionParseError::UnknownOperation((9, 11), "xxx".to_string())));
+        assert_eq!(Instruction::try_from("stackxxx"), Err(InstructionParseError::UnknownOperation((5, 7), "xxx".to_string())));
     }
 
     #[test]
@@ -131,6 +132,7 @@ mod tests {
 
     #[test]
     fn test_ipe_unknown_instruction() {
+        assert_eq!(Instruction::try_from("stackxxx + p(h1)"), Err(InstructionParseError::UnknownInstruction((0, 15), "stackxxx + p(h1)".to_string())));
         assert_eq!(Instruction::try_from("a0 := p(h1) + p(h2) +"), Err(InstructionParseError::UnknownInstruction((0, 20), "a0 := p(h1) + p(h2) +".to_string())));
         assert_eq!(Instruction::try_from("a0 := p(h1) + p(h2) + p(h3)"), Err(InstructionParseError::UnknownInstruction((0, 26), "a0 := p(h1) + p(h2) + p(h3)".to_string())));
     }

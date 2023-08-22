@@ -379,6 +379,35 @@ fn test_parse_pop() {
 }
 
 #[test]
+fn test_run_stack_op() {
+    run_stack_op(Operation::Add, 15);
+    run_stack_op(Operation::Sub, 5);
+    run_stack_op(Operation::Mul, 50);
+    run_stack_op(Operation::Div, 2);
+    run_stack_op(Operation::Mod, 0);
+}
+
+#[test]
+fn test_parse_stack_op() {
+    assert_eq!(Instruction::try_from("stack+"), Ok(Instruction::StackOp(Operation::Add)));
+    assert_eq!(Instruction::try_from("stack-"), Ok(Instruction::StackOp(Operation::Sub)));
+    assert_eq!(Instruction::try_from("stack*"), Ok(Instruction::StackOp(Operation::Mul)));
+    assert_eq!(Instruction::try_from("stack/"), Ok(Instruction::StackOp(Operation::Div)));
+    assert_eq!(Instruction::try_from("stack%"), Ok(Instruction::StackOp(Operation::Mod)));
+}
+
+fn run_stack_op(op: Operation, result: i32) {
+    let mut args = setup_runtime_args();
+    let mut control_flow = ControlFlow::new();
+    args.accumulators[0].data = Some(5);
+    Instruction::Push.run(&mut args, &mut control_flow).unwrap();
+    args.accumulators[0].data = Some(10);
+    Instruction::Push.run(&mut args, &mut control_flow).unwrap();
+    Instruction::StackOp(op).run(&mut args, &mut control_flow).unwrap();
+    assert_eq!(args.stack.pop(), Some(result));
+}
+
+#[test]
 fn test_example_program_1() {
     let mut runtime_args = RuntimeArgs::new_debug(TEST_MEMORY_CELL_LABELS);
     for _i in 1..=4 {

@@ -1,6 +1,8 @@
 use miette::Diagnostic;
 use thiserror::Error;
 
+use crate::base::Operation;
+
 /// Errors that can occur when a runtime is constructed from a RuntimeBuilder.
 #[derive(Debug, PartialEq, Error, Diagnostic)]
 pub enum RuntimeBuildError {
@@ -83,6 +85,13 @@ pub enum RuntimeErrorType {
         help("Make sure to only use pop when you know that the stack contains at least one value")
     )]
     PopFail,
+
+    #[error("Attempt to perform operation '{0}' on stack while stack does not contain two values")]
+    #[diagnostic(
+        code("runtime_error::stack_op_fail"),
+        help("Make sure to only use a stack operation (stack{0}) when you know that the stack contains at least two values")
+    )]
+    StackOpFail(Operation),
 
     #[error("Attempt to jump to label '{0}' that does not exist")]
     #[diagnostic(
