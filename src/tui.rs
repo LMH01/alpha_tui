@@ -6,10 +6,11 @@ use ratatui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style, Stylize},
-    text::{Line, Span},
+    text::{Line, Span, Text},
     widgets::{Block, BorderType, Borders, Clear, List, ListItem, ListState, Paragraph, Tabs},
     Frame, Terminal,
 };
+use text_align::TextAlign;
 
 use crate::runtime::{error_handling::RuntimeError, Runtime, RuntimeArgs};
 
@@ -489,6 +490,9 @@ fn list_prev(list_state: &mut ListState, max_index: usize) {
 
 /// Draw the ui
 fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
+    // color config
+    let orange = Color::Rgb(220, 77, 1);
+
     let global_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Percentage(99), Constraint::Percentage(1)])
@@ -521,13 +525,16 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     // Code area
     let mut code_area = Block::default()
         .borders(Borders::ALL)
-        .title(app.filename.clone())
-        .title_alignment(Alignment::Center)
+        .title_alignment(Alignment::Left)
         .border_type(BorderType::Rounded);
     if let State::Errored(_) = app.state {
         code_area = code_area.border_style(Style::default().fg(Color::Red));
+    } else if let State::Breakpoints(_, _) = app.state {
+        code_area = code_area.border_style(Style::default().fg(orange))
+            .title("Breakpoint mode");
     } else {
-        code_area = code_area.border_style(Style::default().fg(Color::Green));
+        code_area = code_area.border_style(Style::default().fg(Color::Green))
+            .title(format!("File: {}", app.filename.clone()));
     }
 
     // Iterate through all elements in the `items` app and append some debug text to it.
@@ -545,9 +552,15 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let items = List::new(items)
         .block(code_area)
         .highlight_style(
-            Style::default()
-                .bg(Color::DarkGray)
-                .add_modifier(Modifier::BOLD),
+            if let State::Breakpoints(_, _) = app.state {
+                Style::default()
+                    .bg(orange)
+                    .add_modifier(Modifier::BOLD)
+            } else {
+                Style::default()
+                    .bg(Color::DarkGray)
+                    .add_modifier(Modifier::BOLD)
+            }
         )
         .highlight_symbol(">> ");
 
@@ -560,14 +573,15 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
             false => format!(" "),
             true => format!("*"),
         };
-        ListItem::new(v).style(Style::default())
+        ListItem::new(Text::styled(format!("{}", v).center_align(chunks[0].width.checked_sub(2).unwrap_or(0) as usize), Style::default().fg(orange)))
     }).collect();
 
-    let breakpoint_list = Block::default()
+    let mut breakpoint_list = Block::default()
         .borders(Borders::ALL)
-        .title("BPs")
+        .title("BPs").border_style(Style::default().fg(orange))
         .title_alignment(Alignment::Center)
         .border_type(BorderType::Rounded);
+
     let breakpoints = List::new(breakpoint_list_items).block(breakpoint_list);
     f.render_widget(breakpoints, chunks[0]);
 

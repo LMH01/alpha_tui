@@ -11,3 +11,4 @@ crossterm = "0.25"
 clap = { version = "4.3.23", features = ["derive", "color"] }
 thiserror = "1.0.47"
 miette = { version = "5.10.0", features = ["fancy"] }
+text_align = "0.3.1"
