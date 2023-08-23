@@ -103,7 +103,6 @@ pub struct BuildProgramError {
 mod tests {
     use crate::instructions::{Instruction, error_handling::InstructionParseError};
 
-
     #[test]
     fn test_ipe_unknown_operation() {
         assert_eq!(Instruction::try_from("a0 := p(h1) x p(h1)"), Err(InstructionParseError::UnknownOperation((12, 12), "x".to_string())));

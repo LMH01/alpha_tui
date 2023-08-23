@@ -1,7 +1,7 @@
 # Instructions
 
-To use these instructions in your program replace $\alpha$ with `a` and $\rho$ with `p`.
-Indices are written directly after `a` for example you can use `a0 := 5` to assign accumulator 0 the value `5`.
+You can replace $\alpha$ with `a` and $\rho$ with `p` when writing your program to make writing of the program easier.
+Indices are written directly after `a`/$\alpha$ for example you can use `a0 := 5` to assign accumulator 0 the value `5`.
 
 By jumping to the labels `END`, `ENDE`, `end` or `ende` you can end your program. Example: `goto END`
 

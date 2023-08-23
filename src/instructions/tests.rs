@@ -20,6 +20,13 @@ fn test_parse_assign_accumulator_from_constant() {
             Value::Constant(5)
         ))
     );
+    assert_eq!(
+        Instruction::try_from("α0 := 5"),
+        Ok(Instruction::Assign(
+            TargetType::Accumulator(0),
+            Value::Constant(5)
+        ))
+    );
 }
 
 #[test]
@@ -39,6 +46,17 @@ fn test_parse_assign_accumulator_from_accumulator() {
         Ok(Instruction::Assign(
             TargetType::Accumulator(0),
             Value::Accumulator(1)
+        ))
+    );
+}
+
+#[test]
+fn test_parse_assign_memory_cell_from_constant() {
+    assert_eq!(
+        Instruction::try_from("ρ(a) := 5"),
+        Ok(Instruction::Assign(
+            TargetType::MemoryCell("a".to_string()),
+            Value::Constant(5)
         ))
     );
 }

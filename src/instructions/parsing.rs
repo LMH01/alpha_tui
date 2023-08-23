@@ -106,13 +106,13 @@ impl TryFrom<&str> for Instruction {
 ///
 /// `part_range` indicates the area that is affected.
 pub fn parse_alpha(s: &str, part_range: (usize, usize)) -> Result<usize, InstructionParseError> {
-    if !s.starts_with('a') && !s.is_empty() {
+    if !s.starts_with('a') && !s.starts_with('α') && !s.is_empty() {
         return Err(InstructionParseError::InvalidExpression(
             part_range,
             s.to_string(),
         ));
     }
-    let input = s.replace('a', "");
+    let input = s.replace('a', "").replace("α", "");
     match input.parse::<usize>() {
         Ok(x) => Ok(x),
         Err(_) => Err(InstructionParseError::NotANumber(
@@ -179,7 +179,7 @@ fn parse_number(s: &str, part_range: (usize, usize)) -> Result<i32, InstructionP
 ///
 /// `part_range` indicates the area that is affected.
 pub fn parse_memory_cell(s: &str, part_range: (usize, usize)) -> Result<String, InstructionParseError> {
-    if !s.starts_with("p(") {
+    if !s.starts_with("p(") && !s.starts_with("ρ") {
         return Err(InstructionParseError::InvalidExpression(
             part_range,
             s.to_string(),
@@ -191,7 +191,7 @@ pub fn parse_memory_cell(s: &str, part_range: (usize, usize)) -> Result<String, 
             s.to_string(),
         ));
     }
-    let name = s.replace("p(", "").replace(')', "");
+    let name = s.replace("p(", "").replace("ρ(", "").replace(')', "");
     if name.is_empty() {
         return Err(InstructionParseError::InvalidExpression(
             part_range,
