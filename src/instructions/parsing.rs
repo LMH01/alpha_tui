@@ -41,12 +41,12 @@ impl TryFrom<&Vec<&str>> for Instruction {
         }
         
         // Check if instruction is push
-        if parts[0] == "push" {
+        if parts[0] == "push" && parts.len() == 1 {
             return Ok(Instruction::Push);
         }
 
         // Check if instruction is pop
-        if parts[0] == "pop" {
+        if parts[0] == "pop" && parts.len() == 1 {
             return Ok(Instruction::Pop);
         }
 
