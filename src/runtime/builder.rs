@@ -156,6 +156,12 @@ impl RuntimeBuilder {
                     .insert(label.clone(), index)
                     .is_some()
                 {
+                    // main label defined multiple times
+                    if label == "main" || label == "MAIN" {
+                        Err(BuildProgramError {
+                            reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes,
+                        })?;
+                    }
                     // label defined multiple times
                     Err(BuildProgramError {
                         reason: BuildProgramErrorTypes::LabelDefinedMultipleTimes(label),
