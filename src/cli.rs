@@ -47,4 +47,12 @@ pub struct Args {
         requires = "memory"
     )]
     pub disable_memory_detection: bool,
+    #[arg(
+        short,
+        long,
+        help = "Enable predetermined breakpoints",
+        long_help = "Enable predetermined breakpoints.\nThe supplied element specifies the line in which the breakpoint should be set.\nExample: -b 1,7,8",
+        value_delimiter = ','
+    )]
+    pub breakpoints: Option<Vec<usize>>,
 }

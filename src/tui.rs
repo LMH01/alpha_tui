@@ -24,10 +24,18 @@ struct StatefulInstructions {
 }
 
 impl StatefulInstructions {
-    fn new(instructions: Vec<String>) -> Self {
+    fn new(instructions: Vec<String>, set_breakpoints: Option<&Vec<usize>>) -> Self {
         let mut i = Vec::new();
         for (index, s) in instructions.iter().enumerate() {
-            i.push((index, s.clone(), false));
+            if let Some(v) = set_breakpoints {
+                if v.contains(&(index+1)) {
+                    i.push((index, s.clone(), true));
+                } else {
+                    i.push((index, s.clone(), false));
+                }
+            } else {
+                i.push((index, s.clone(), false));
+            }
         }
         StatefulInstructions {
             instruction_list_state: ListState::default(),
@@ -206,12 +214,12 @@ pub struct App {
 }
 
 impl App {
-    pub fn from_runtime(runtime: Runtime, filename: String, instructions: Vec<String>) -> App {
+    pub fn from_runtime(runtime: Runtime, filename: String, instructions: Vec<String>, set_breakpoints: Option<Vec<usize>>) -> App {
         let mlm = MemoryListsManager::new(runtime.runtime_args());
         Self {
             runtime,
             filename,
-            instructions: StatefulInstructions::new(instructions),
+            instructions: StatefulInstructions::new(instructions, set_breakpoints.as_ref()),
             keybind_hints: init_keybind_hints(),
             memory_lists_manager: mlm,
             state: State::Default,

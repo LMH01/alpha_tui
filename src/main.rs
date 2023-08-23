@@ -64,7 +64,7 @@ fn main() -> Result<()> {
     let mut terminal = Terminal::new(backend).unwrap();
 
     // create app
-    let mut app = App::from_runtime(rt, args.input, instructions);
+    let mut app = App::from_runtime(rt, args.input, instructions, args.breakpoints);
     let res = app.run(&mut terminal);
 
     // restore terminal
