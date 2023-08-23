@@ -1,0 +1,18 @@
+fac:  if α1 < 0 then goto erro 
+if α1 > 0 then goto rec 
+α2 := 1
+return 
+rec: α := α1 
+push 
+α1 := α1 - 1 
+call fac 
+pop 
+α2 :=  α * α2
+return
+
+erro: α2 := -1 
+return
+
+main: α1 := 6
+call fac
+return
