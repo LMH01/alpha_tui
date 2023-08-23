@@ -175,6 +175,7 @@ impl TryFrom<&str> for Operation {
             "*" => Ok(Operation::Mul),
             "/" => Ok(Operation::Div),
             "%" => Ok(Operation::Mod),
+            "÷" => Ok(Operation::Div),
             _ => Err(()),
         }
     }
@@ -245,6 +246,7 @@ mod tests {
         assert_eq!(Operation::try_from("-"), Ok(Operation::Sub));
         assert_eq!(Operation::try_from("*"), Ok(Operation::Mul));
         assert_eq!(Operation::try_from("/"), Ok(Operation::Div));
+        assert_eq!(Operation::try_from("÷"), Ok(Operation::Div));
         assert_eq!(Operation::try_from("%"), Ok(Operation::Mod));
         assert_eq!(Operation::try_from("P"), Err(()));
     }
