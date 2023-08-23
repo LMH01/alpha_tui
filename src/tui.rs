@@ -1,4 +1,4 @@
-use std::{collections::HashMap, thread, time::Duration};
+use std::{collections::HashMap, thread, time::Duration, ops::Deref};
 
 use crossterm::event::{self, Event, KeyCode};
 use miette::{IntoDiagnostic, Result};
@@ -14,6 +14,7 @@ use ratatui::{
 use crate::runtime::{error_handling::RuntimeError, Runtime, RuntimeArgs};
 
 /// Used to store the instructions and to remember what instruction should currently be highlighted.
+#[derive(Debug, Clone)]
 struct StatefulInstructions {
     instruction_list_state: ListState,
     breakpoint_list_state: ListState,
@@ -46,6 +47,12 @@ impl StatefulInstructions {
             self.instruction_list_state.select(Some(index as usize));
         }
         self.last_index = index as i32;
+    }
+}
+
+impl PartialEq for StatefulInstructions {
+    fn eq(&self, other: &Self) -> bool {
+        self.instructions == other.instructions && self.last_index == other.last_index && self.current_index == other.current_index
     }
 }
 
@@ -169,11 +176,13 @@ impl KeybindHint {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 enum State {
     Default,
     Running,
-    Breakpoints,
+    // 0 = state to restore to when breakpoint mode is exited
+    // 1 = state of list when breakpoint mode was entered
+    Breakpoints(Box<State>, StatefulInstructions),// state to restore to when breakpoint mode is exited
     Finished,
     Errored(RuntimeError),
 }
@@ -187,7 +196,7 @@ impl State {
             Self::Running => {
 
             },
-            Self::Breakpoints => {
+            Self::Breakpoints(s, i) => {
 
             }
             Self::Finished => {
@@ -234,6 +243,30 @@ impl App {
             terminal.draw(|f| ui(f, self)).into_diagnostic()?;
             if let Event::Key(key) = event::read().into_diagnostic()? {
                 match key.code {
+                    KeyCode::Up => {
+                        if let State::Breakpoints(s, i) = &self.state {
+                            list_prev(&mut self.instructions.instruction_list_state, self.instructions.instructions.len());
+                            list_prev(&mut self.instructions.breakpoint_list_state, self.instructions.instructions.len());
+                            //TODO See if it is a good idea to make the breakpoint list move too
+                        }
+                    },
+                    KeyCode::Down => {
+                        if let State::Breakpoints(s, i) = &self.state {
+                            list_next(&mut self.instructions.instruction_list_state, self.instructions.instructions.len());
+                            list_next(&mut self.instructions.breakpoint_list_state, self.instructions.instructions.len());
+                        }
+                    },
+                    KeyCode::Char('b') => {
+                        match &self.state {
+                            State::Breakpoints(s, i) => {
+                                self.instructions = i.deref().clone();
+                                self.state = s.deref().clone();
+                            }
+                            State::Default => self.start_breakpoint_mode(),
+                            State::Running => self.start_breakpoint_mode(),
+                            _ => (),
+                        }
+                    }
                     KeyCode::Char('q') => match &self.state {
                         State::Errored(e) => Err(e.clone())?,
                         _ => return Ok(()),
@@ -325,6 +358,18 @@ impl App {
             h.action = message;
         }
     }
+
+    fn start_breakpoint_mode(&mut self) {
+        let state = State::Breakpoints(Box::new(self.state.clone()), self.instructions.clone());
+        match self.state {
+            State::Running => (),
+            _ => {
+                self.instructions.breakpoint_list_state.select(Some(0));
+                self.instructions.instruction_list_state.select(Some(0));
+            }
+        }
+        self.state = state;
+    }
 }
 
 fn init_keybinds() -> HashMap<char, KeybindHint> {
@@ -336,6 +381,34 @@ fn init_keybinds() -> HashMap<char, KeybindHint> {
     map.insert('d', KeybindHint::new('d', "Dismiss message", false));
     map.insert('b', KeybindHint::new('b', "Enter breakpoint mode", true));
     map
+}
+
+fn list_next(list_state: &mut ListState, instruction_length: usize) {
+    let i = match list_state.selected() {
+        Some(i) => {
+            if i >= instruction_length - 1 {
+                0
+            } else {
+                i + 1
+            }
+        }
+        None => 0,
+    };
+    list_state.select(Some(i));
+}
+
+fn list_prev(list_state: &mut ListState, max_index: usize) {
+    let i = match list_state.selected() {
+        Some(i) => {
+            if i == 0 {
+                max_index - 1
+            } else {
+                i - 1
+            }
+        }
+        None => 0,
+    };
+    list_state.select(Some(i));
 }
 
 /// Draw the ui
