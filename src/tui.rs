@@ -183,8 +183,8 @@ enum State {
     Default,
     Running,
     // 0 = state to restore to when breakpoint mode is exited
-    // 1 = state of list when breakpoint mode was entered
-    Breakpoints(Box<State>, StatefulInstructions),
+    // 1 = index of instruction that was selected before breakpoint mode was started
+    Breakpoints(Box<State>, Option<usize>),
     // 0 = stores if the popup window is open
     Finished(bool),
     Errored(RuntimeError),
@@ -239,11 +239,21 @@ impl App {
                     KeyCode::Char('b') => {
                         match &self.state {
                             State::Breakpoints(s, i) => {
-                                self.instructions = i.deref().clone();
+                                self.instructions.instruction_list_state.select(*i);
                                 self.set_state(s.deref().clone());
                             }
                             State::Default => self.start_breakpoint_mode(),
                             State::Running => self.start_breakpoint_mode(),
+                            _ => (),
+                        }
+                    }
+                    KeyCode::Char('t') => {
+                        // toggle keybind
+                        match &self.state {
+                            State::Breakpoints(s, _) => {
+                                let val = self.instructions.instructions[self.instructions.instruction_list_state.selected().unwrap()].2;
+                                self.instructions.instructions[self.instructions.instruction_list_state.selected().unwrap()].2 = !val;
+                            },
                             _ => (),
                         }
                     }
@@ -330,7 +340,7 @@ impl App {
     }
 
     fn start_breakpoint_mode(&mut self) {
-        let state = State::Breakpoints(Box::new(self.state.clone()), self.instructions.clone());
+        let state = State::Breakpoints(Box::new(self.state.clone()), self.instructions.instruction_list_state.selected());
         match self.state {
             State::Running => (),
             _ => {
