@@ -266,8 +266,8 @@ mod tests {
     #[test]
     fn test_ce_me_attempt_to_divide_by_zero() {
         let mut ra = RuntimeArgs::new(2, vec![]);
-        ra.accumulators[0].data = Some(0);
-        ra.accumulators[1].data = Some(0);
+        ra.accumulators.get_mut(&0).unwrap().data = Some(0);
+        ra.accumulators.get_mut(&1).unwrap().data = Some(0);
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Calc(TargetType::Accumulator(0), Value::Accumulator(0), Operation::Div, Value::Accumulator(1)).run(&mut ra, &mut cf),
@@ -278,8 +278,8 @@ mod tests {
     #[test]
     fn test_re_ce_attempt_to_overflow_add() {
         let mut ra = RuntimeArgs::new(2, vec![]);
-        ra.accumulators[0].data = Some(i32::MAX);
-        ra.accumulators[1].data = Some(1);
+        ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MAX);
+        ra.accumulators.get_mut(&1).unwrap().data = Some(1);
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Calc(TargetType::Accumulator(0), Value::Accumulator(0), Operation::Add, Value::Accumulator(1)).run(&mut ra, &mut cf),
@@ -290,8 +290,8 @@ mod tests {
     #[test]
     fn test_re_ce_attempt_to_overflow_sub() {
         let mut ra = RuntimeArgs::new(2, vec![]);
-        ra.accumulators[0].data = Some(i32::MIN);
-        ra.accumulators[1].data = Some(1);
+        ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MIN);
+        ra.accumulators.get_mut(&1).unwrap().data = Some(1);
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Calc(TargetType::Accumulator(0), Value::Accumulator(0), Operation::Sub, Value::Accumulator(1)).run(&mut ra, &mut cf),
@@ -302,8 +302,8 @@ mod tests {
     #[test]
     fn test_re_ce_attempt_to_overflow_div() {
         let mut ra = RuntimeArgs::new(2, vec![]);
-        ra.accumulators[0].data = Some(i32::MIN);
-        ra.accumulators[1].data = Some(-1);
+        ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MIN);
+        ra.accumulators.get_mut(&1).unwrap().data = Some(-1);
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Calc(TargetType::Accumulator(0), Value::Accumulator(0), Operation::Div, Value::Accumulator(1)).run(&mut ra, &mut cf),
@@ -314,8 +314,8 @@ mod tests {
     #[test]
     fn test_re_ce_attempt_to_overflow_mul() {
         let mut ra = RuntimeArgs::new(2, vec![]);
-        ra.accumulators[0].data = Some(i32::MAX);
-        ra.accumulators[1].data = Some(2);
+        ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MAX);
+        ra.accumulators.get_mut(&1).unwrap().data = Some(2);
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Calc(TargetType::Accumulator(0), Value::Accumulator(0), Operation::Mul, Value::Accumulator(1)).run(&mut ra, &mut cf),
@@ -326,8 +326,8 @@ mod tests {
     #[test]
     fn test_re_ce_attempt_to_overflow_mod() {
         let mut ra = RuntimeArgs::new(2, vec![]);
-        ra.accumulators[0].data = Some(i32::MIN);
-        ra.accumulators[1].data = Some(-1);
+        ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MIN);
+        ra.accumulators.get_mut(&1).unwrap().data = Some(-1);
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Calc(TargetType::Accumulator(0), Value::Accumulator(0), Operation::Mod, Value::Accumulator(1)).run(&mut ra, &mut cf),
@@ -338,8 +338,8 @@ mod tests {
     #[test]
     fn test_re_ce_attempt_to_divide_by_zero_mod() {
         let mut ra = RuntimeArgs::new(2, vec![]);
-        ra.accumulators[0].data = Some(10);
-        ra.accumulators[1].data = Some(0);
+        ra.accumulators.get_mut(&0).unwrap().data = Some(10);
+        ra.accumulators.get_mut(&1).unwrap().data = Some(0);
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Calc(TargetType::Accumulator(0), Value::Accumulator(0), Operation::Mod, Value::Accumulator(1)).run(&mut ra, &mut cf),

@@ -85,7 +85,7 @@ fn run_assign(runtime_args: &mut RuntimeArgs, target: &TargetType, source: &Valu
     match target {
         TargetType::Accumulator(a) => {
             assert_accumulator_exists(runtime_args, a)?;
-            runtime_args.accumulators[*a].data = Some(source.value(runtime_args)?);
+            runtime_args.accumulators.get_mut(a).unwrap().data = Some(source.value(runtime_args)?);
         }
         TargetType::MemoryCell(a) => {
             assert_memory_cell_exists(runtime_args, a)?;
@@ -99,7 +99,7 @@ fn run_assign(runtime_args: &mut RuntimeArgs, target: &TargetType, source: &Valu
 fn run_calc(runtime_args: &mut RuntimeArgs, target: &TargetType, source_a: &Value, op: &Operation, source_b: &Value) -> Result<(), RuntimeErrorType> {
     match target {
         TargetType::Accumulator(a) => {
-            runtime_args.accumulators[*a].data =
+            runtime_args.accumulators.get_mut(a).unwrap().data =
                 Some(op.calc(source_a.value(runtime_args)?, source_b.value(runtime_args)?)?)
         }
         TargetType::MemoryCell(a) => {
@@ -125,7 +125,7 @@ fn run_goto(control_flow: &mut ControlFlow, label: &str) -> Result<(), RuntimeEr
 /// Causes runtime error if accumulator does not contain data.
 fn run_push(runtime_args: &mut RuntimeArgs) -> Result<(), RuntimeErrorType> {
     assert_accumulator_exists(runtime_args, &0)?;
-    match runtime_args.accumulators[0].data {
+    match runtime_args.accumulators[&0].data {
         Some(d) => runtime_args.stack.push(d),
         None => return Err(RuntimeErrorType::PushFail),
     }
@@ -136,7 +136,7 @@ fn run_push(runtime_args: &mut RuntimeArgs) -> Result<(), RuntimeErrorType> {
 fn run_pop(runtime_args: &mut RuntimeArgs) -> Result<(), RuntimeErrorType> {
     assert_accumulator_exists(runtime_args, &0)?;
     match runtime_args.stack.pop() {
-        Some(d) => runtime_args.accumulators[0].data = Some(d),
+        Some(d) => runtime_args.accumulators.get_mut(&0).unwrap().data = Some(d),
         None => return Err(RuntimeErrorType::PopFail),
     }
     Ok(())
@@ -177,7 +177,7 @@ fn assert_accumulator_exists(
     runtime_args: &mut RuntimeArgs,
     index: &usize,
 ) -> Result<(), RuntimeErrorType> {
-    if let Some(_value) = runtime_args.accumulators.get(*index) {
+    if let Some(_value) = runtime_args.accumulators.get(index) {
         Ok(())
     } else {
         Err(RuntimeErrorType::AccumulatorDoesNotExist(*index))
@@ -193,9 +193,9 @@ fn assert_accumulator_contains_value(
     runtime_args: &RuntimeArgs,
     index: &usize,
 ) -> Result<i32, RuntimeErrorType> {
-    if let Some(value) = runtime_args.accumulators.get(*index) {
+    if let Some(value) = runtime_args.accumulators.get(index) {
         if value.data.is_some() {
-            Ok(runtime_args.accumulators.get(*index).unwrap().data.unwrap())
+            Ok(runtime_args.accumulators.get(index).unwrap().data.unwrap())
         } else {
             Err(RuntimeErrorType::AccumulatorUninitialized(*index))
         }
@@ -268,7 +268,7 @@ impl Value {
             //TODO When I use this add checks to test if accumulator / memory_cell exists / contains data before accessing it
             Self::Accumulator(a) => {
                 assert_accumulator_contains_value(runtime_args, a)?;
-                Ok(runtime_args.accumulators[*a].data.unwrap())
+                Ok(runtime_args.accumulators.get(a).unwrap().data.unwrap())
             },
             Self::Constant(a) => Ok(*a),
             Self::MemoryCell(a) => {

@@ -43,7 +43,7 @@ fn test_run_assign_accumulator_from_constant() {
     Instruction::Assign(TargetType::Accumulator(0), Value::Constant(10))
         .run(&mut args, &mut control_flow)
         .unwrap();
-    assert_eq!(args.accumulators[0].data.unwrap(), 10);
+    assert_eq!(args.accumulators.get(&0).unwrap().data.unwrap(), 10);
 }
 
 #[test]
@@ -72,11 +72,11 @@ fn test_parse_assign_memory_cell_from_constant() {
 fn test_run_assign_accumulator_from_accumulator() {
     let mut args = setup_runtime_args();
     let mut control_flow = ControlFlow::new();
-    args.accumulators[1].data = Some(10);
+    args.accumulators.get_mut(&1).unwrap().data = Some(10);
     Instruction::Assign(TargetType::Accumulator(0), Value::Accumulator(1))
         .run(&mut args, &mut control_flow)
         .unwrap();
-    assert_eq!(args.accumulators[0].data.unwrap(), 10);
+    assert_eq!(args.accumulators.get(&0).unwrap().data.unwrap(), 10);
 }
 
 #[test]
@@ -101,7 +101,7 @@ fn test_run_assign_accumulator_from_memory_cell() {
     )
     .run(&mut args, &mut control_flow)
     .unwrap();
-    assert_eq!(args.accumulators[0].data.unwrap(), 10);
+    assert_eq!(args.accumulators.get(&0).unwrap().data.unwrap(), 10);
 }
 
 #[test]
@@ -131,7 +131,7 @@ fn test_run_calc_accumulator_with_memory_cells() {
     )
     .run(&mut args, &mut control_flow)
     .unwrap();
-    assert_eq!(args.accumulators[0].data.unwrap(), 100);
+    assert_eq!(args.accumulators.get(&0).unwrap().data.unwrap(), 100);
 }
 
 #[test]
@@ -160,7 +160,7 @@ fn test_run_calc_accumulator_with_memory_cell_constant() {
     )
     .run(&mut args, &mut control_flow)
     .unwrap();
-    assert_eq!(args.accumulators[0].data.unwrap(), 100);
+    assert_eq!(args.accumulators.get(&0).unwrap().data.unwrap(), 100);
 }
 
 #[test]
@@ -191,7 +191,7 @@ fn test_run_calc_accumulator_with_memory_cell_accumulator() {
     let mut args = setup_runtime_args();
     let mut control_flow = ControlFlow::new();
     args.memory_cells.get_mut("h1").unwrap().data = Some(10);
-    args.accumulators[1].data = Some(10);
+    args.accumulators.get_mut(&1).unwrap().data = Some(10);
     Instruction::Calc(
         TargetType::Accumulator(0),
         Value::MemoryCell("h1".to_string()),
@@ -200,7 +200,7 @@ fn test_run_calc_accumulator_with_memory_cell_accumulator() {
     )
     .run(&mut args, &mut control_flow)
     .unwrap();
-    assert_eq!(args.accumulators[0].data.unwrap(), 0);
+    assert_eq!(args.accumulators.get(&0).unwrap().data.unwrap(), 0);
 }
 
 #[test]
@@ -220,8 +220,8 @@ fn test_parse_calc_accumulator_with_accumulators() {
 fn test_run_calc_accumulator_with_accumulators() {
     let mut args = setup_runtime_args();
     let mut control_flow = ControlFlow::new();
-    args.accumulators[1].data = Some(10);
-    args.accumulators[2].data = Some(5);
+    args.accumulators.get_mut(&1).unwrap().data = Some(10);
+    args.accumulators.get_mut(&2).unwrap().data = Some(5);
     Instruction::Calc(
         TargetType::Accumulator(0),
         Value::Accumulator(1),
@@ -230,7 +230,7 @@ fn test_run_calc_accumulator_with_accumulators() {
     )
     .run(&mut args, &mut control_flow)
     .unwrap();
-    assert_eq!(args.accumulators[0].data.unwrap(), 2);
+    assert_eq!(args.accumulators.get(&0).unwrap().data.unwrap(), 2);
 }
 
 #[test]
@@ -250,7 +250,7 @@ fn test_parse_calc_accumulator_with_accumulator_constant() {
 fn test_run_calc_accumulator_with_accumulator_constant() {
     let mut args = setup_runtime_args();
     let mut control_flow = ControlFlow::new();
-    args.accumulators[1].data = Some(10);
+    args.accumulators.get_mut(&1).unwrap().data = Some(10);
     Instruction::Calc(
         TargetType::Accumulator(0),
         Value::Accumulator(1),
@@ -259,7 +259,7 @@ fn test_run_calc_accumulator_with_accumulator_constant() {
     )
     .run(&mut args, &mut control_flow)
     .unwrap();
-    assert_eq!(args.accumulators[0].data.unwrap(), 15);
+    assert_eq!(args.accumulators.get(&0).unwrap().data.unwrap(), 15);
 }
 
 #[test]
@@ -279,7 +279,7 @@ fn test_parse_calc_accumulator_with_accumulator_memory_cell() {
 fn test_run_calc_accumulator_with_accumulator_memory_cell() {
     let mut args = setup_runtime_args();
     let mut control_flow = ControlFlow::new();
-    args.accumulators[1].data = Some(10);
+    args.accumulators.get_mut(&1).unwrap().data = Some(10);
     args.memory_cells.get_mut("h1").unwrap().data = Some(5);
     Instruction::Calc(
         TargetType::Accumulator(0),
@@ -289,7 +289,7 @@ fn test_run_calc_accumulator_with_accumulator_memory_cell() {
     )
     .run(&mut args, &mut control_flow)
     .unwrap();
-    assert_eq!(args.accumulators[0].data.unwrap(), 5);
+    assert_eq!(args.accumulators.get(&0).unwrap().data.unwrap(), 5);
 }
 
 #[test]
@@ -395,11 +395,11 @@ fn test_stack() {
     Instruction::Pop
         .run(&mut args, &mut control_flow)
         .unwrap();
-    assert_eq!(args.accumulators[0].data.unwrap(), 10);
+    assert_eq!(args.accumulators.get(&0).unwrap().data.unwrap(), 10);
     Instruction::Pop
         .run(&mut args, &mut control_flow)
         .unwrap();
-    assert_eq!(args.accumulators[0].data.unwrap(), 5);
+    assert_eq!(args.accumulators.get(&0).unwrap().data.unwrap(), 5);
     assert_eq!(args.stack.len(), 0);
 }
 
@@ -434,9 +434,9 @@ fn test_parse_stack_op() {
 fn run_stack_op(op: Operation, result: i32) {
     let mut args = setup_runtime_args();
     let mut control_flow = ControlFlow::new();
-    args.accumulators[0].data = Some(10);
+    args.accumulators.get_mut(&0).unwrap().data = Some(10);
     Instruction::Push.run(&mut args, &mut control_flow).unwrap();
-    args.accumulators[0].data = Some(5);
+    args.accumulators.get_mut(&0).unwrap().data = Some(5);
     Instruction::Push.run(&mut args, &mut control_flow).unwrap();
     Instruction::StackOp(op).run(&mut args, &mut control_flow).unwrap();
     assert_eq!(args.stack.pop(), Some(result));
@@ -658,7 +658,7 @@ fn test_example_program_loop() {
     runtime_builder.add_label("loop".to_string(), 2).unwrap();
     let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
     runtime.run().unwrap();
-    assert_eq!(runtime.runtime_args().accumulators[0].data.unwrap(), 256);
+    assert_eq!(runtime.runtime_args().accumulators.get(&0).unwrap().data.unwrap(), 256);
 }
 
 #[test]
@@ -676,7 +676,7 @@ fn test_example_program_loop_text_parsing() {
     assert!(res.is_ok());
     let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
     runtime.run().unwrap();
-    assert_eq!(runtime.runtime_args().accumulators[0].data.unwrap(), 256);
+    assert_eq!(runtime.runtime_args().accumulators.get(&0).unwrap().data.unwrap(), 256);
 }
 
 #[test]
@@ -698,7 +698,7 @@ fn test_example_program_functions() {
     assert!(res.is_ok());
     let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
     runtime.run().unwrap();
-    assert_eq!(runtime.runtime_args().accumulators[0].data.unwrap(), 50);
+    assert_eq!(runtime.runtime_args().accumulators.get(&0).unwrap().data.unwrap(), 50);
 }
 
 /// Sets up runtime args in a consistent way because the default implementation for memory cells and accumulators is configgurable.
@@ -709,18 +709,17 @@ fn setup_runtime_args() -> RuntimeArgs {
         .insert("h1".to_string(), MemoryCell::new("a"));
     args.memory_cells
         .insert("h2".to_string(), MemoryCell::new("b"));
-    args.accumulators = vec![
-        Accumulator::new(0),
-        Accumulator::new(1),
-        Accumulator::new(2),
-    ];
+    args.accumulators = HashMap::new();
+    args.accumulators.insert(0, Accumulator::new(0));
+    args.accumulators.insert(1, Accumulator::new(1));
+    args.accumulators.insert(2, Accumulator::new(2));
     args
 }
 
 /// Sets up runtime args where no memory cells or accumulators are set.
 fn setup_empty_runtime_args() -> RuntimeArgs {
     let mut args = RuntimeArgs::new_debug(TEST_MEMORY_CELL_LABELS);
-    args.accumulators = Vec::new();
+    args.accumulators = HashMap::new();
     args.memory_cells = HashMap::new();
     args
 }

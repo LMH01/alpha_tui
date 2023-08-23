@@ -76,7 +76,7 @@ impl MemoryListsManager {
     fn new(runtime_args: &RuntimeArgs) -> Self {
         let mut accumulators = HashMap::new();
         for acc in &runtime_args.accumulators {
-            accumulators.insert(acc.id, (format!("{}", acc), false));
+            accumulators.insert(*acc.0, (format!("{}", acc.1), false));
         }
         //accumulators.sort_by(|a, b| a.0.cmp(&b.0));
         let mut memory_cells = HashMap::new();
@@ -96,8 +96,8 @@ impl MemoryListsManager {
     fn update(&mut self, runtime_args: &RuntimeArgs) {
         // Update accumulators
         for acc in &runtime_args.accumulators {
-            let a = self.accumulators.get_mut(&acc.id).unwrap();
-            let update = format!("{}", acc);
+            let a = self.accumulators.get_mut(&acc.0).unwrap();
+            let update = format!("{}", acc.1);
             if update == *a.0 {
                 a.1 = false;
             } else {

@@ -331,7 +331,7 @@ pub fn check_accumulator(
 ) -> Result<(), RuntimeBuildError> {
     if !runtime_args.exists_accumulator(id) {
         if add_missing {
-            runtime_args.accumulators.push(Accumulator::new(*id));
+            runtime_args.accumulators.insert(*id, Accumulator::new(*id));
         } else {
             return Err(RuntimeBuildError::AccumulatorMissing(id.to_string()));
         }
@@ -423,5 +423,21 @@ mod tests {
     fn test_only_label_line() {
         let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
         assert!(rb.build_instructions(&vec!["a0 := 5", "my_label:", "a1 := 5"], "").is_ok());
+    }
+
+    #[test]
+    fn test_accumulator_auto_add_working() {
+        let instructions = vec![
+            "a1 := a2 + a3",
+        ];
+        let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
+        assert!(rb.build_instructions(&instructions, "test").is_ok());
+        let rt = rb.build();
+        assert!(rt.is_ok());
+        let rt = rt.unwrap();
+        assert!(rt.runtime_args.accumulators.contains_key(&1));
+        assert!(rt.runtime_args.accumulators.contains_key(&2));
+        assert!(rt.runtime_args.accumulators.contains_key(&3));
+        assert!(!rt.runtime_args.accumulators.contains_key(&4));
     }
 }

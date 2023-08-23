@@ -128,7 +128,7 @@ impl ControlFlow {
 #[derive(Debug, Clone, PartialEq)]
 pub struct RuntimeArgs {
     /// Current values stored in accumulators
-    pub accumulators: Vec<Accumulator>,
+    pub accumulators: HashMap<usize, Accumulator>,
     /// All registers that are used to store data
     pub memory_cells: HashMap<String, MemoryCell>,
     /// The stack of the runner
@@ -144,11 +144,11 @@ impl<'a> RuntimeArgs {
             match read_memory_cells_from_file(path) {
                 Ok(memory_cells) => {
                     let accumulators = match args.accumulators {
-                        None => Vec::new(),
+                        None => HashMap::new(),
                         Some(v) => {
-                            let mut accumulators = Vec::new();
+                            let mut accumulators = HashMap::new();
                             for i in 0..v {
-                                accumulators.push(Accumulator::new(i as usize));
+                                accumulators.insert(i as usize, Accumulator::new(i as usize));
                             }
                             accumulators
                         }
@@ -177,16 +177,16 @@ impl<'a> RuntimeArgs {
     #[allow(dead_code)]
     pub fn new_empty() -> Self {
         Self {
-            accumulators: Vec::new(),
+            accumulators: HashMap::new(),
             memory_cells: HashMap::new(),
             stack: Vec::new(),
         }
     }
 
     fn new(acc: usize, m_cells: Vec<String>) -> Self {
-        let mut accumulators = Vec::new();
+        let mut accumulators = HashMap::new();
         for i in 0..acc {
-            accumulators.push(Accumulator::new(i));
+            accumulators.insert(i, Accumulator::new(i));
         }
         let mut memory_cells: HashMap<String, MemoryCell> = HashMap::new();
         for i in m_cells {
@@ -213,13 +213,13 @@ impl<'a> RuntimeArgs {
     #[allow(dead_code)]
     pub fn add_accumulator(&mut self) {
         let id = self.accumulators.len();
-        self.accumulators.push(Accumulator::new(id));
+        self.accumulators.insert(id, Accumulator::new(id));
     }
 
     /// Checks if the accumulator with id exists.
     pub fn exists_accumulator(&self, id: &usize) -> bool {
         for acc in &self.accumulators {
-            if acc.id == *id {
+            if acc.0 == id {
                 return true;
             }
         }
@@ -229,7 +229,7 @@ impl<'a> RuntimeArgs {
     /// Resets all values back to None.
     pub fn reset(&mut self) {
         for acc in self.accumulators.iter_mut() {
-            acc.data = None;
+            acc.1.data = None;
         }
         for cell in self.memory_cells.iter_mut() {
             cell.1.data = None;
