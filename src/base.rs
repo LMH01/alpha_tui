@@ -87,12 +87,15 @@ impl TryFrom<&str> for Comparison {
         match value {
             "<" => Ok(Self::Lt),
             "<=" => Ok(Self::Le),
+            "≤" => Ok(Self::Le),
             "=<" => Ok(Self::Le),
             "=" => Ok(Self::Eq),
             "==" => Ok(Self::Eq),
             "!=" => Ok(Self::Neq),
+            "≠" => Ok(Self::Neq),
             ">=" => Ok(Self::Ge),
             "=>" => Ok(Self::Ge),
+            "≥" => Ok(Self::Ge),
             ">" => Ok(Self::Gt),
             _ => Err(()),
         }
@@ -224,11 +227,14 @@ mod tests {
         assert_eq!(Comparison::try_from("<"), Ok(Comparison::Lt));
         assert_eq!(Comparison::try_from("<="), Ok(Comparison::Le));
         assert_eq!(Comparison::try_from("=<"), Ok(Comparison::Le));
+        assert_eq!(Comparison::try_from("≤"), Ok(Comparison::Le));
         assert_eq!(Comparison::try_from("="), Ok(Comparison::Eq));
         assert_eq!(Comparison::try_from("=="), Ok(Comparison::Eq));
         assert_eq!(Comparison::try_from("!="), Ok(Comparison::Neq));
+        assert_eq!(Comparison::try_from("≠"), Ok(Comparison::Neq));
         assert_eq!(Comparison::try_from(">="), Ok(Comparison::Ge));
         assert_eq!(Comparison::try_from("=>"), Ok(Comparison::Ge));
+        assert_eq!(Comparison::try_from("≥"), Ok(Comparison::Ge));
         assert_eq!(Comparison::try_from(">"), Ok(Comparison::Gt));
     }
 
