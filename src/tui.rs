@@ -220,6 +220,9 @@ impl App {
                     }
                     KeyCode::Char('r') => {
                         if !self.finished && self.errored.is_none() {
+                            if !self.running {
+                                self.instructions.set((self.runtime.current_instruction_index() as i32));
+                            }
                             self.running = true;
                             self.set_keybind_message('r', "Run next instruction".to_string());
                             let res = self.runtime.step();

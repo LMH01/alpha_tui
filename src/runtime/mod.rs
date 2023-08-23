@@ -82,6 +82,7 @@ pub struct ControlFlow {
     pub instruction_labels: HashMap<String, usize>,
     /// Stores the index of the next instruction after a function returns
     pub call_stack: Vec<usize>,
+    initial_instruction: usize,
 }
 
 impl ControlFlow {
@@ -90,6 +91,7 @@ impl ControlFlow {
             next_instruction_index: 0,
             instruction_labels: HashMap::new(),
             call_stack: Vec::new(),
+            initial_instruction: 0,
         }
     }
 
@@ -104,6 +106,10 @@ impl ControlFlow {
         }
     }
 
+    pub fn set_initial_instruction(&mut self, initial_instruction: usize) {
+        self.initial_instruction = initial_instruction;
+    }
+
     /// Resets the `next_instruction_index` to 0 and clears the `instruction_labels` map.
     pub fn reset(&mut self) {
         self.next_instruction_index = 0;
@@ -113,7 +119,7 @@ impl ControlFlow {
 
     /// Only resets the `next_instruction_index` to 0.
     pub fn reset_soft(&mut self) {
-        self.next_instruction_index = 0;
+        self.next_instruction_index = self.initial_instruction;
     }
 }
 

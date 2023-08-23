@@ -85,9 +85,11 @@ impl RuntimeBuilder {
         // Check if main label is set and update instruction pointer if found
         if let Some(i) = self.control_flow.instruction_labels.get("main") {
             self.control_flow.next_instruction_index = *i;
+            self.control_flow.initial_instruction = *i;
         }
         if let Some(i) = self.control_flow.instruction_labels.get("MAIN") {
             self.control_flow.next_instruction_index = *i;
+            self.control_flow.initial_instruction = *i;
         }
         Ok(Runtime {
             runtime_args: self.runtime_args.clone().unwrap(),
