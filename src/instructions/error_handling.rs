@@ -88,9 +88,26 @@ pub enum BuildProgramErrorTypes {
         help("Make sure that you define the label only once")
     )]
     LabelDefinedMultipleTimes(String),
+
+    #[error("you have defined at least two main labels 'main' and 'MAIN'")]
+    #[diagnostic(
+        code("build_program::main_definition_error"),
+        help("Make sure that you define at most one main label, either 'main' or 'MAIN'")
+    )]
+    MainLabelDefinedMultipleTimes,
 }
 
-#[derive(Debug, Diagnostic, Error)]
+impl PartialEq for BuildProgramErrorTypes {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::ParseError { src: l_src, bad_bit: l_bad_bit, reason: l_reason }, Self::ParseError { src: r_src, bad_bit: r_bad_bit, reason: r_reason }) => l_src.name() == r_src.name() && l_bad_bit == r_bad_bit && l_reason == r_reason,
+            (Self::LabelDefinedMultipleTimes(l0), Self::LabelDefinedMultipleTimes(r0)) => l0 == r0,
+            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+        }
+    }
+}
+
+#[derive(Debug, Diagnostic, Error, PartialEq)]
 #[error("when building program")]
 #[diagnostic(code("build_program_error"))]
 pub struct BuildProgramError {
@@ -101,7 +118,14 @@ pub struct BuildProgramError {
 //TODO Add error tests
 #[cfg(test)]
 mod tests {
-    use crate::instructions::{Instruction, error_handling::InstructionParseError};
+    use crate::{instructions::{Instruction, error_handling::{InstructionParseError, BuildProgramError, BuildProgramErrorTypes}}, runtime::builder::RuntimeBuilder};
+
+    #[test]
+    fn test_bpe_main_label_defined_multiple_times() {
+        let mut rb = RuntimeBuilder::new_debug(&vec!["a", "b"]);
+        let instructions_input = vec!["main:", "", "MAIN:"];
+        assert_eq!(rb.build_instructions(&instructions_input, "test"), Err(BuildProgramError {reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes}))
+    }
 
     #[test]
     fn test_ipe_unknown_operation() {

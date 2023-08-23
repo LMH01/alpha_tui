@@ -123,7 +123,7 @@ impl RuntimeBuilder {
         &mut self,
         instructions_input: &Vec<&str>,
         file_name: &str,
-    ) -> Result<()> {
+    ) -> Result<(), BuildProgramError> {
         self.control_flow.reset();
         let mut instructions = Vec::new();
         for (index, instruction) in instructions_input.iter().enumerate() {
@@ -206,6 +206,9 @@ impl RuntimeBuilder {
                     //})?
                 }
             }
+        }
+        if self.control_flow.instruction_labels.contains_key("main") && self.control_flow.instruction_labels.contains_key("MAIN") {
+            return Err(BuildProgramError { reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes })
         }
         self.instructions = Some(instructions);
         Ok(())
