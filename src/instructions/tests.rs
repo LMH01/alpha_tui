@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
-    instructions::{Instruction, TargetType, Value},
+    instructions::{Instruction, TargetType, Value, parsing::parse_comparison},
     runtime::{ControlFlow, RuntimeArgs, builder::RuntimeBuilder},
 };
 

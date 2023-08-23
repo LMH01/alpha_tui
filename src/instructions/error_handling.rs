@@ -107,6 +107,7 @@ mod tests {
     #[test]
     fn test_ipe_unknown_operation() {
         assert_eq!(Instruction::try_from("a0 := p(h1) x p(h1)"), Err(InstructionParseError::UnknownOperation((12, 12), "x".to_string())));
+        assert_eq!(Instruction::try_from("a0 := p(h1) ö p(h1)"), Err(InstructionParseError::UnknownOperation((12, 14), "ö".to_string())));
         assert_eq!(Instruction::try_from("a0 := a0 xxx p(h1)"), Err(InstructionParseError::UnknownOperation((9, 11), "xxx".to_string())));
         assert_eq!(Instruction::try_from("stackxxx"), Err(InstructionParseError::UnknownOperation((5, 7), "xxx".to_string())));
     }
@@ -114,6 +115,7 @@ mod tests {
     #[test]
     fn test_ipe_unknown_comparison() {
         assert_eq!(Instruction::try_from("if a0 x a0 then goto loop"), Err(InstructionParseError::UnknownComparison((6, 6), "x".to_string())));
+        assert_eq!(Instruction::try_from("if a0 ö a0 then goto loop"), Err(InstructionParseError::UnknownComparison((6, 8), "ö".to_string())));
         assert_eq!(Instruction::try_from("if p(h1) xxx 5 then goto loop"), Err(InstructionParseError::UnknownComparison((9, 11), "xxx".to_string())));
     }
 

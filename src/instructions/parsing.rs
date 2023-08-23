@@ -131,10 +131,15 @@ pub fn parse_operation(
 ) -> Result<Operation, InstructionParseError> {
     match Operation::try_from(s) {
         Ok(s) => Ok(s),
-        Err(_) => Err(InstructionParseError::UnknownOperation(
-            part_range,
-            s.to_string(),
-        )),
+        Err(_) => {
+            if !s.is_ascii() {
+                return Err(InstructionParseError::UnknownOperation((part_range.0, part_range.1+1), s.to_string()))
+            }
+            Err(InstructionParseError::UnknownOperation(
+                part_range,
+                s.to_string(),
+            ))
+        },
     }
 }
 
@@ -147,10 +152,15 @@ pub fn parse_comparison(
 ) -> Result<Comparison, InstructionParseError> {
     match Comparison::try_from(s) {
         Ok(s) => Ok(s),
-        Err(_) => Err(InstructionParseError::UnknownComparison(
-            part_range,
-            s.to_string(),
-        )),
+        Err(_) => {
+            if !s.is_ascii() {
+                return Err(InstructionParseError::UnknownComparison((part_range.0, part_range.1+1), s.to_string()))
+            }
+            Err(InstructionParseError::UnknownComparison(
+                part_range,
+                s.to_string(),
+            ))
+        },
     }
 }
 
