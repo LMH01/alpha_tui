@@ -275,18 +275,16 @@ impl App {
                                 self.instructions.current_index = self.runtime.current_instruction_index() as i32;
                             }
                             self.set_state(State::Running);
-                            let res = self.runtime.step();
-                            if let Err(e) = res {
-                                self.set_state(State::Errored(e));
-                            }
-                            self.instructions.current_index = self.runtime.current_instruction_index() as i32;
-                            self.instructions.set_last(self.instructions.current_index -1);
-                            if self.runtime.finished() {
-                                match self.state {
-                                    State::Errored(_) => (),
-                                    _ => {
-                                        self.set_state(State::Finished(true));
-                                    },
+                            self.step();
+                        }
+                    }
+                    KeyCode::Char('n') => {
+                        // run to the next breakpoint
+                        if self.state == State::Running {
+                            self.step();
+                            while !self.instructions.instructions[self.instructions.instruction_list_state.selected().unwrap()].2 {
+                                if self.step() {
+                                    break;
                                 }
                             }
                         }
@@ -320,6 +318,25 @@ impl App {
             )]))
         }
         spans
+    }
+
+    fn step(&mut self) -> bool {
+        let res = self.runtime.step();//TODO Move the two similar parts of this and the above function into a new function
+        if let Err(e) = res {
+            self.set_state(State::Errored(e));
+        }
+        self.instructions.current_index = self.runtime.current_instruction_index() as i32;
+        self.instructions.set_last(self.instructions.current_index -1);
+        if self.runtime.finished() {
+            match self.state {
+                State::Errored(_) => (),
+                _ => {
+                    self.set_state(State::Finished(true));
+                },
+            }
+            return true
+        }
+        false
     }
 
     /// Set whether the keybind hint should be shown or not.
@@ -375,6 +392,7 @@ impl App {
                 self.set_keybind_hint('b', true);
                 self.set_keybind_hint('r', true);
                 self.set_keybind_hint('s', true);
+                self.set_keybind_hint('n', true);
                 self.set_keybind_message('r', "Run next instruction");
             },
             State::Breakpoints(s, i) => {
@@ -410,7 +428,7 @@ fn init_keybind_hints() -> HashMap<char, KeybindHint> {
     let mut map = HashMap::new();
     map.insert('q', KeybindHint::new(0, 'q', "Quit", true));
     map.insert('s', KeybindHint::new(1, 's', "Reset", false));
-    map.insert('n', KeybindHint::new(2, 'n', "Next instruction", false));
+    map.insert('n', KeybindHint::new(2, 'n', "Next breakpoint", false));
     map.insert('r', KeybindHint::new(6, 'r', "Run", true));
     map.insert('d', KeybindHint::new(7, 'd', "Dismiss message", false));
     map.insert('b', KeybindHint::new(8, 'b', "Enter breakpoint mode", true));
