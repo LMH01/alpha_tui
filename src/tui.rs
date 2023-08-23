@@ -176,6 +176,7 @@ pub struct App {
     /// Manages accumulators, memory_cells and stack in the ui.
     memory_lists_manager: MemoryListsManager,
     finished: bool,
+    finished_popup: bool,
     running: bool,
     errored: Option<RuntimeError>,
 }
@@ -190,6 +191,7 @@ impl App {
             keybind_hints: init_keybinds(),
             memory_lists_manager: mlm,
             finished: false,
+            finished_popup: false,
             running: false,
             errored: None,
         }
@@ -210,6 +212,7 @@ impl App {
                             self.finished = false;
                             self.running = false;
                             self.set_keybind_hint('s', false);
+                            self.set_keybind_hint('d', false);
                             self.set_keybind_hint('r', true);
                             self.set_keybind_message('r', "Run".to_string());
                             self.instructions.set(0);
@@ -229,9 +232,18 @@ impl App {
                                 .set(self.runtime.current_instruction_index());
                             if self.runtime.finished() && self.errored.is_none() {
                                 self.finished = true;
+                                self.finished_popup = true;
                                 self.set_keybind_hint('s', true);
                                 self.set_keybind_hint('r', false);
+                                self.set_keybind_hint('d', true);
                             }
+                        }
+                    }
+                    KeyCode::Char('d') => {
+                        // dismiss execution finished popup
+                        if self.finished {
+                            self.finished_popup = false;
+                            self.set_keybind_hint('d', false);
                         }
                     }
                     _ => (),
@@ -278,6 +290,7 @@ fn init_keybinds() -> HashMap<char, KeybindHint> {
     map.insert('r', KeybindHint::new('r', "Run", true));
     map.insert('n', KeybindHint::new('n', "Next instruction", false));
     map.insert('s', KeybindHint::new('s', "Reset", false));
+    map.insert('d', KeybindHint::new('d', "Dismiss message", false));
     map
 }
 
@@ -376,13 +389,13 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     f.render_widget(stack_list, chunks[2]);
 
     // Popup if execution has finished
-    if app.finished {
+    if app.finished_popup {
         let block = Block::default()
             .title("Execution finished!")
             .borders(Borders::ALL)
             .border_style(Style::default().fg(Color::Green));
         let area = centered_rect(60, 20, f.size());
-        let text = Paragraph::new("Press [q] to exit.\nPress [s] to reset to start.").block(block);
+        let text = Paragraph::new("Press [q] to exit.\nPress [s] to reset to start.\nPress [d] to dismiss this message.").block(block);
         f.render_widget(Clear, area); //this clears out the background
         f.render_widget(text, area);
     }
