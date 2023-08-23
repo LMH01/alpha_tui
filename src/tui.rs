@@ -141,7 +141,9 @@ impl MemoryListsManager {
 
     /// Returns the stack items as list
     fn stack_list(&self) -> Vec<ListItem<'static>> {
-        self.stack.clone()
+        let mut list = self.stack.clone();
+        list.reverse();
+        list
     }
 }
 
