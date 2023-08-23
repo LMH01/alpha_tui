@@ -473,7 +473,7 @@ fn test_parse_return() {
 }
 
 #[test]
-fn test_example_program_1() {
+fn test_example_program_memory_cells() {
     let mut runtime_args = RuntimeArgs::new_debug(TEST_MEMORY_CELL_LABELS);
     for _i in 1..=4 {
         runtime_args.add_accumulator();
@@ -560,7 +560,7 @@ fn test_example_program_1() {
 }
 
 #[test]
-fn test_example_program_1_text_parsing() {
+fn test_example_program_memory_cells_text_parsing() {
     let mut runtime_args = RuntimeArgs::new_debug(TEST_MEMORY_CELL_LABELS);
     for _i in 1..=4 {
         runtime_args.add_accumulator();
@@ -644,7 +644,7 @@ fn test_example_program_1_text_parsing() {
 }
 
 #[test]
-fn test_example_program_2() {
+fn test_example_program_loop() {
     let instructions = vec![
         Instruction::Assign(TargetType::Accumulator(0), Value::Constant(1)),
         Instruction::Assign(TargetType::MemoryCell("a".to_string()), Value::Constant(8)),
@@ -662,7 +662,7 @@ fn test_example_program_2() {
 }
 
 #[test]
-fn test_example_program_2_text_parsing() {
+fn test_example_program_loop_text_parsing() {
     let mut instructions = Vec::new();
     instructions.push("a0 := 1");
     instructions.push("p(a) := 8");
@@ -677,6 +677,28 @@ fn test_example_program_2_text_parsing() {
     let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
     runtime.run().unwrap();
     assert_eq!(runtime.runtime_args().accumulators[0].data.unwrap(), 256);
+}
+
+#[test]
+fn test_example_program_functions() {
+    let mut instructions = Vec::new();
+    instructions.push("func:");
+    instructions.push("p(a) := 5");
+    instructions.push("p(b) := 10");
+    instructions.push("p(c) := p(a) * p(b)");
+    instructions.push("return");
+    instructions.push("");
+    instructions.push("main:");
+    instructions.push("call func");
+    instructions.push("a := p(c)");
+    instructions.push("return");
+    let mut runtime_builder = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
+    let res = runtime_builder.build_instructions(&instructions, "test");
+    println!("{:?}", res);
+    assert!(res.is_ok());
+    let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
+    runtime.run().unwrap();
+    assert_eq!(runtime.runtime_args().accumulators[0].data.unwrap(), 50);
 }
 
 /// Sets up runtime args in a consistent way because the default implementation for memory cells and accumulators is configgurable.

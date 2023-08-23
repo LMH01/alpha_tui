@@ -5,6 +5,8 @@ Indices are written directly after `a`/$\alpha$, however you don't need an indic
 
 By jumping to the labels `END`, `ENDE`, `end` or `ende` you can end your program. Example: `goto END`
 
+You can define a custom start point for your program with the labels `main` and `MAIN`.
+
 The following instructions are supported:
 
 Be $c\in\mathbb{Z};n,o,p\in\mathbb{N}|n\geq0:j,k,l\in\lbrace h_0,\ldots,h_n\rbrace;T\in\lbrace\alpha_n, \alpha_o, \alpha_p, \rho(j),\rho(k),\rho(l)\rbrace;S\in\lbrace T, c\rbrace;\textbf{op}\in\lbrace +,-,*,/,\%\rbrace;\textbf{cmp}\in\lbrace <,\leq,=, \ne,\geq,>\rbrace;$
