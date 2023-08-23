@@ -182,8 +182,9 @@ enum State {
     Running,
     // 0 = state to restore to when breakpoint mode is exited
     // 1 = state of list when breakpoint mode was entered
-    Breakpoints(Box<State>, StatefulInstructions),// state to restore to when breakpoint mode is exited
-    Finished,
+    Breakpoints(Box<State>, StatefulInstructions),
+    // 0 = stores if the popup window is open
+    Finished(bool),
     Errored(RuntimeError),
 }
 
@@ -199,7 +200,7 @@ impl State {
             Self::Breakpoints(s, i) => {
 
             }
-            Self::Finished => {
+            Self::Finished(b) => {
                 
             }
             Self::Errored(e) => {
@@ -220,7 +221,6 @@ pub struct App {
     keybind_hints: HashMap<char, KeybindHint>,
     /// Manages accumulators, memory_cells and stack in the ui.
     memory_lists_manager: MemoryListsManager,
-    finished_popup: bool,
     state: State,
 }
 
@@ -233,7 +233,6 @@ impl App {
             instructions: StatefulInstructions::new(instructions),
             keybind_hints: init_keybinds(),
             memory_lists_manager: mlm,
-            finished_popup: false,
             state: State::Default,
         }
     }
@@ -272,15 +271,17 @@ impl App {
                         _ => return Ok(()),
                     },
                     KeyCode::Char('s') => {
-                        if self.state == State::Finished {
-                            self.runtime.reset();
-                            self.finished_popup = false;
-                            self.set_keybind_hint('s', false);
-                            self.set_keybind_hint('d', false);
-                            self.set_keybind_hint('r', true);
-                            self.set_keybind_message('r', "Run".to_string());
-                            self.instructions.set_last(-1);
-                            self.state = State::Default;
+                        match self.state {
+                            State::Finished(_) => {
+                                self.runtime.reset();
+                                self.set_keybind_hint('s', false);
+                                self.set_keybind_hint('d', false);
+                                self.set_keybind_hint('r', true);
+                                self.set_keybind_message('r', "Run".to_string());
+                                self.instructions.set_last(-1);
+                                self.state = State::Default;
+                            }
+                            _ => (),
                         }
                     }
                     KeyCode::Char('r') => {
@@ -304,8 +305,7 @@ impl App {
                                 match self.state {
                                     State::Errored(_) => (),
                                     _ => {
-                                        self.state =State::Finished;
-                                        self.finished_popup = true;
+                                        self.state =State::Finished(true);
                                         self.set_keybind_hint('s', true);
                                         self.set_keybind_hint('r', false);
                                         self.set_keybind_hint('d', true);
@@ -316,8 +316,8 @@ impl App {
                     }
                     KeyCode::Char('d') => {
                         // dismiss execution finished popup
-                        if self.state == State::Finished {
-                            self.finished_popup = false;
+                        if self.state == State::Finished(true) {
+                            self.state = State::Finished(false);
                             self.set_keybind_hint('d', false);
                         }
                     }
@@ -524,7 +524,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     f.render_widget(stack_list, chunks[3]);
 
     // Popup if execution has finished
-    if app.finished_popup {
+    if app.state == State::Finished(true) {
         let block = Block::default()
             .title("Execution finished!")
             .borders(Borders::ALL)
