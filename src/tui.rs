@@ -161,14 +161,16 @@ impl MemoryListsManager {
 
 /// Used organize hints to keybinds
 struct KeybindHint {
+    rank: usize,
     key: char,
     action: String,
     enabled: bool,
 }
 
 impl KeybindHint {
-    fn new(key: char, action: &str, enabled: bool) -> Self {
+    fn new(rank: usize, key: char, action: &str, enabled: bool) -> Self {
         Self {
+            rank,
             key,
             action: action.to_string(),
             enabled,
@@ -299,7 +301,9 @@ impl App {
 
     fn active_keybind_hints(&self) -> Vec<Line> {
         let mut spans = Vec::new();
-        for v in self.keybind_hints.values() {
+        let mut hints: Vec<&KeybindHint> = self.keybind_hints.values().collect();
+        hints.sort_by(|a, b| a.rank.cmp(&b.rank));
+        for v in hints {
             if !v.enabled {
                 continue;
             }
@@ -308,7 +312,6 @@ impl App {
                 Style::default(),
             )]))
         }
-        spans.sort_by(|a, b| a.spans[0].content.cmp(&b.spans[0].content));
         spans
     }
 
@@ -363,6 +366,8 @@ impl App {
                 self.set_keybind_hint('b', true);
                 self.set_keybind_hint('↑', true);
                 self.set_keybind_hint('↓', true);
+                self.set_keybind_hint('t', true);
+                self.set_keybind_message('t', "Toggle breakpoint");
                 self.set_keybind_message('b', "Exit breakpoint mode");
             }
             State::Finished(b) => {
@@ -387,14 +392,15 @@ impl App {
 
 fn init_keybind_hints() -> HashMap<char, KeybindHint> {
     let mut map = HashMap::new();
-    map.insert('q', KeybindHint::new('q', "Quit", true));
-    map.insert('r', KeybindHint::new('r', "Run", true));
-    map.insert('n', KeybindHint::new('n', "Next instruction", false));
-    map.insert('s', KeybindHint::new('s', "Reset", false));
-    map.insert('d', KeybindHint::new('d', "Dismiss message", false));
-    map.insert('b', KeybindHint::new('b', "Enter breakpoint mode", true));
-    map.insert('↑', KeybindHint::new('↑', "Move up", false));
-    map.insert('↓', KeybindHint::new('↓', "Move down", false));
+    map.insert('q', KeybindHint::new(0, 'q', "Quit", true));
+    map.insert('r', KeybindHint::new(1, 'r', "Run", true));
+    map.insert('n', KeybindHint::new(1, 'n', "Next instruction", false));
+    map.insert('s', KeybindHint::new(6, 's', "Reset", false));
+    map.insert('d', KeybindHint::new(7, 'd', "Dismiss message", false));
+    map.insert('b', KeybindHint::new(8, 'b', "Enter breakpoint mode", true));
+    map.insert('t', KeybindHint::new(9, 't', "Toggle breakpoint", false));
+    map.insert('↑', KeybindHint::new(10, '↑', "Up", false));
+    map.insert('↓', KeybindHint::new(11, '↓', "Down", false));
     map
 }
 
