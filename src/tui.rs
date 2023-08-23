@@ -18,6 +18,7 @@ struct StatefulInstructions {
     state: ListState,
     instructions: Vec<(usize, String)>,
     last_index: i32,
+    current_index: i32,
 }
 
 impl StatefulInstructions {
@@ -30,10 +31,12 @@ impl StatefulInstructions {
             state: ListState::default(),
             instructions: i,
             last_index: -1,
+            current_index: -1,
         }
     }
 
-    fn set(&mut self, index: i32) {
+    /// Used to set the line that should be highlighted
+    fn set_last(&mut self, index: i32) {
         if index as i32 - self.last_index as i32 != 1 {
             // line jump detected, only increase state by one
             self.state.select(Some((self.last_index +1 ) as usize));
@@ -215,13 +218,14 @@ impl App {
                             self.set_keybind_hint('d', false);
                             self.set_keybind_hint('r', true);
                             self.set_keybind_message('r', "Run".to_string());
-                            self.instructions.set(-1);
+                            self.instructions.set_last(-1);
                         }
                     }
                     KeyCode::Char('r') => {
                         if !self.finished && self.errored.is_none() {
                             if !self.running {
-                                self.instructions.set((self.runtime.current_instruction_index() as i32));
+                                self.instructions.set_last(self.runtime.current_instruction_index() as i32 -1);
+                                self.instructions.current_index = self.runtime.current_instruction_index() as i32;
                             }
                             self.running = true;
                             self.set_keybind_message('r', "Run next instruction".to_string());
@@ -231,8 +235,10 @@ impl App {
                                 self.errored = Some(e);
                                 self.set_keybind_hint('r', false);
                             }
-                            self.instructions
-                                .set(self.runtime.current_instruction_index() as i32);
+                            self.instructions.current_index = self.runtime.current_instruction_index() as i32;
+                            self.instructions.set_last(self.instructions.current_index -1);
+                            //self.instructions
+                            //    .set(self.runtime.current_instruction_index() as i32);
                             if self.runtime.finished() && self.errored.is_none() {
                                 self.finished = true;
                                 self.finished_popup = true;

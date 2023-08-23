@@ -54,7 +54,7 @@ impl Runtime {
 
     /// Returns the index of the current instruction
     pub fn current_instruction_index(&self) -> usize {
-        self.control_flow.next_instruction_index - 1
+        self.control_flow.next_instruction_index
     }
 
     /// Returns reference to **runtime_args**.
