@@ -188,28 +188,6 @@ enum State {
     Errored(RuntimeError),
 }
 
-impl State {
-    fn update_keybind_hints(&self) {
-        match self {
-            Self::Default => {//TODO Move all keybind set instructions to here
-
-            },
-            Self::Running => {
-
-            },
-            Self::Breakpoints(s, i) => {
-
-            }
-            Self::Finished(b) => {
-                
-            }
-            Self::Errored(e) => {
-
-            }
-        }
-    }
-}
-
 /// App holds the state of the application
 pub struct App {
     runtime: Runtime,
@@ -221,6 +199,7 @@ pub struct App {
     keybind_hints: HashMap<char, KeybindHint>,
     /// Manages accumulators, memory_cells and stack in the ui.
     memory_lists_manager: MemoryListsManager,
+    // Don't set state directly, use set_state() to also update keybind hints
     state: State,
 }
 
@@ -231,7 +210,7 @@ impl App {
             runtime,
             filename,
             instructions: StatefulInstructions::new(instructions),
-            keybind_hints: init_keybinds(),
+            keybind_hints: init_keybind_hints(),
             memory_lists_manager: mlm,
             state: State::Default,
         }
@@ -259,7 +238,7 @@ impl App {
                         match &self.state {
                             State::Breakpoints(s, i) => {
                                 self.instructions = i.deref().clone();
-                                self.state = s.deref().clone();
+                                self.set_state(s.deref().clone());
                             }
                             State::Default => self.start_breakpoint_mode(),
                             State::Running => self.start_breakpoint_mode(),
@@ -274,12 +253,8 @@ impl App {
                         match self.state {
                             State::Finished(_) => {
                                 self.runtime.reset();
-                                self.set_keybind_hint('s', false);
-                                self.set_keybind_hint('d', false);
-                                self.set_keybind_hint('r', true);
-                                self.set_keybind_message('r', "Run".to_string());
                                 self.instructions.set_last(-1);
-                                self.state = State::Default;
+                                self.set_state(State::Default);
                             }
                             _ => (),
                         }
@@ -290,25 +265,18 @@ impl App {
                                 self.instructions.set_last(self.runtime.current_instruction_index() as i32 -1);
                                 self.instructions.current_index = self.runtime.current_instruction_index() as i32;
                             }
-                            self.state = State::Running;
-                            self.set_keybind_message('r', "Run next instruction".to_string());
+                            self.set_state(State::Running);
                             let res = self.runtime.step();
                             if let Err(e) = res {
-                                self.state = State::Errored(e);
-                                self.set_keybind_hint('r', false);
+                                self.set_state(State::Errored(e));
                             }
                             self.instructions.current_index = self.runtime.current_instruction_index() as i32;
                             self.instructions.set_last(self.instructions.current_index -1);
-                            //self.instructions
-                            //    .set(self.runtime.current_instruction_index() as i32);
                             if self.runtime.finished() {
                                 match self.state {
                                     State::Errored(_) => (),
                                     _ => {
-                                        self.state =State::Finished(true);
-                                        self.set_keybind_hint('s', true);
-                                        self.set_keybind_hint('r', false);
-                                        self.set_keybind_hint('d', true);
+                                        self.set_state(State::Finished(true));
                                     },
                                 }
                             }
@@ -317,8 +285,7 @@ impl App {
                     KeyCode::Char('d') => {
                         // dismiss execution finished popup
                         if self.state == State::Finished(true) {
-                            self.state = State::Finished(false);
-                            self.set_keybind_hint('d', false);
+                            self.set_state(State::Finished(false));
                         }
                     }
                     _ => (),
@@ -327,7 +294,6 @@ impl App {
             self.memory_lists_manager
                 .update(self.runtime.runtime_args());
             thread::sleep(Duration::from_millis(30));
-            self.state.update_keybind_hints();
         }
     }
 
@@ -342,6 +308,7 @@ impl App {
                 Style::default(),
             )]))
         }
+        spans.sort_by(|a, b| a.spans[0].content.cmp(&b.spans[0].content));
         spans
     }
 
@@ -353,9 +320,9 @@ impl App {
     }
 
     /// Sets the message for the keybind.
-    fn set_keybind_message(&mut self, key: char, message: String) {
+    fn set_keybind_message(&mut self, key: char, message: &str) {
         if let Some(h) = self.keybind_hints.get_mut(&key) {
-            h.action = message;
+            h.action = message.to_string();
         }
     }
 
@@ -368,11 +335,57 @@ impl App {
                 self.instructions.instruction_list_state.select(Some(0));
             }
         }
+        self.set_state(state);
+    }
+
+    // Sets a new state and updates keybind hints
+    fn set_state(&mut self, state: State) {
         self.state = state;
+        self.update_keybind_hints()
+    }
+
+    fn update_keybind_hints(&mut self) {
+        self.reset_keybind_hints();
+        match &self.state {
+            State::Default => {//TODO Move all keybind set instructions to here
+                self.set_keybind_hint('q', true);
+                self.set_keybind_hint('r', true);
+                self.set_keybind_hint('b', true);
+            },
+            State::Running => {
+                self.set_keybind_hint('q', true);
+                self.set_keybind_hint('b', true);
+                self.set_keybind_hint('r', true);
+                self.set_keybind_message('r', "Run next instruction");
+            },
+            State::Breakpoints(s, i) => {
+                self.set_keybind_hint('q', true);
+                self.set_keybind_hint('b', true);
+                self.set_keybind_hint('↑', true);
+                self.set_keybind_hint('↓', true);
+                self.set_keybind_message('b', "Exit breakpoint mode");
+            }
+            State::Finished(b) => {
+                self.set_keybind_hint('d', *b);
+                self.set_keybind_hint('q', true);
+                self.set_keybind_hint('s', true); 
+            }
+            State::Errored(e) => {
+                self.set_keybind_hint('q', true);
+            }
+        }
+    }
+
+    // sets all keybind hints to disabled
+    fn reset_keybind_hints(&mut self) {
+        for hint in self.keybind_hints.iter_mut() {
+            hint.1.enabled = false;
+        }
+        self.set_keybind_message('b', "Enter breakpoint mode");
     }
 }
 
-fn init_keybinds() -> HashMap<char, KeybindHint> {
+fn init_keybind_hints() -> HashMap<char, KeybindHint> {
     let mut map = HashMap::new();
     map.insert('q', KeybindHint::new('q', "Quit", true));
     map.insert('r', KeybindHint::new('r', "Run", true));
@@ -380,6 +393,8 @@ fn init_keybinds() -> HashMap<char, KeybindHint> {
     map.insert('s', KeybindHint::new('s', "Reset", false));
     map.insert('d', KeybindHint::new('d', "Dismiss message", false));
     map.insert('b', KeybindHint::new('b', "Enter breakpoint mode", true));
+    map.insert('↑', KeybindHint::new('↑', "Move up", false));
+    map.insert('↓', KeybindHint::new('↓', "Move down", false));
     map
 }
 
@@ -431,6 +446,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         )
         .split(global_chunks[0]);
 
+    // Key hints
     let key_hints = Tabs::new(app.active_keybind_hints())
         .block(Block::default().borders(Borders::NONE))
         .style(Style::default().fg(Color::Cyan));
