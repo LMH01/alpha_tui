@@ -50,6 +50,16 @@ impl TryFrom<&Vec<&str>> for Instruction {
             return Ok(Instruction::Pop);
         }
 
+        // Check if instruction is call
+        if parts[0] == "call" && parts.len() == 2 {
+            return Ok(Instruction::Call(parts[1].to_string()));
+        }
+
+        // Check if instruction is return
+        if parts[0] == "return" && parts.len() == 1 {
+            return Ok(Instruction::Return);
+        }
+
         // Handle stack operations
         if parts[0].starts_with("stack") && parts.len() == 1 {
             let op_txt = parts[0].replace("stack", "");

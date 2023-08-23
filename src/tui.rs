@@ -33,12 +33,12 @@ impl StatefulInstructions {
         }
     }
 
-    fn set(&mut self, index: usize) {
+    fn set(&mut self, index: i32) {
         if index as i32 - self.last_index as i32 != 1 {
             // line jump detected, only increase state by one
-            self.state.select(Some(self.last_index as usize + 1));
+            self.state.select(Some((self.last_index +1 ) as usize));
         } else {
-            self.state.select(Some(index));
+            self.state.select(Some(index as usize));
         }
         self.last_index = index as i32;
     }
@@ -215,7 +215,7 @@ impl App {
                             self.set_keybind_hint('d', false);
                             self.set_keybind_hint('r', true);
                             self.set_keybind_message('r', "Run".to_string());
-                            self.instructions.set(0);
+                            self.instructions.set(-1);
                         }
                     }
                     KeyCode::Char('r') => {
@@ -229,7 +229,7 @@ impl App {
                                 self.set_keybind_hint('r', false);
                             }
                             self.instructions
-                                .set(self.runtime.current_instruction_index());
+                                .set(self.runtime.current_instruction_index() as i32);
                             if self.runtime.finished() && self.errored.is_none() {
                                 self.finished = true;
                                 self.finished_popup = true;

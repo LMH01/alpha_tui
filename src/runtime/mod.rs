@@ -80,6 +80,8 @@ pub struct ControlFlow {
     ///
     /// Value = index of the instruction in the instructions vector
     pub instruction_labels: HashMap<String, usize>,
+    /// Stores the index of the next instruction after a function returns
+    pub call_stack: Vec<usize>,
 }
 
 impl ControlFlow {
@@ -87,6 +89,7 @@ impl ControlFlow {
         Self {
             next_instruction_index: 0,
             instruction_labels: HashMap::new(),
+            call_stack: Vec::new(),
         }
     }
 
@@ -105,6 +108,7 @@ impl ControlFlow {
     pub fn reset(&mut self) {
         self.next_instruction_index = 0;
         self.instruction_labels.clear();
+        self.call_stack.clear();
     }
 
     /// Only resets the `next_instruction_index` to 0.

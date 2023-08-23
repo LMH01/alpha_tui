@@ -136,6 +136,8 @@ mod tests {
         assert_eq!(Instruction::try_from("stackxxx + p(h1)"), Err(InstructionParseError::UnknownInstruction((0, 15), "stackxxx + p(h1)".to_string())));
         assert_eq!(Instruction::try_from("a0 := p(h1) + p(h2) +"), Err(InstructionParseError::UnknownInstruction((0, 20), "a0 := p(h1) + p(h2) +".to_string())));
         assert_eq!(Instruction::try_from("a0 := p(h1) + p(h2) + p(h3)"), Err(InstructionParseError::UnknownInstruction((0, 26), "a0 := p(h1) + p(h2) + p(h3)".to_string())));
+        assert_eq!(Instruction::try_from("return xyz"), Err(InstructionParseError::UnknownInstruction((0, 9), "return xyz".to_string())));
+        assert_eq!(Instruction::try_from("call xxx yz"), Err(InstructionParseError::UnknownInstruction((0, 10), "call xxx yz".to_string())));
     }
 
     #[test]

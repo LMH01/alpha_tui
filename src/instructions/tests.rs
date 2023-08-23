@@ -443,6 +443,36 @@ fn run_stack_op(op: Operation, result: i32) {
 }
 
 #[test]
+fn test_run_call() {
+    let mut args = setup_runtime_args();
+    let mut control_flow = ControlFlow::new();
+    control_flow.instruction_labels.insert("function".to_string(), 10);
+    Instruction::Call("function".to_string()).run(&mut args, &mut control_flow).unwrap();
+    assert_eq!(control_flow.next_instruction_index, 10);
+    assert_eq!(control_flow.call_stack.pop(), Some(0));
+}
+
+#[test]
+fn test_parse_call() {
+    assert_eq!(Instruction::try_from("call function"), Ok(Instruction::Call("function".to_string())));
+}
+
+#[test]
+fn test_run_return() {
+    let mut args = setup_runtime_args();
+    let mut control_flow = ControlFlow::new();
+    control_flow.instruction_labels.insert("function".to_string(), 10);
+    Instruction::Call("function".to_string()).run(&mut args, &mut control_flow).unwrap();
+    Instruction::Return.run(&mut args, &mut control_flow).unwrap();
+    assert_eq!(control_flow.next_instruction_index, 0);
+}
+
+#[test]
+fn test_parse_return() {
+    assert_eq!(Instruction::try_from("return"), Ok(Instruction::Return));
+}
+
+#[test]
 fn test_example_program_1() {
     let mut runtime_args = RuntimeArgs::new_debug(TEST_MEMORY_CELL_LABELS);
     for _i in 1..=4 {

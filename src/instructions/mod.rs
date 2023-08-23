@@ -21,6 +21,9 @@ pub enum Instruction {
     Push,
     Pop,
     StackOp(Operation),
+    Call(String),
+    Return,
+
     /// Dummy instruction that does nothing, is inserted in empty lines
     Noop,
 }
@@ -39,6 +42,8 @@ impl Instruction {
             Self::Push => run_push(runtime_args)?,
             Self::Pop => run_pop(runtime_args)?,
             Self::StackOp(op) => run_stack_op(runtime_args, op)?,
+            Self::Call(label) => run_call(control_flow, label)?,
+            Self::Return => run_return(control_flow)?,
             Self::Noop => (),
         }
         Ok(())
@@ -151,6 +156,20 @@ fn run_stack_op(runtime_args: &mut RuntimeArgs, op: &Operation) -> Result<(), Ru
         },
         None => Err(RuntimeErrorType::StackOpFail(*op)),
     }
+}
+
+fn run_call(control_flow: &mut ControlFlow, label: &str) -> Result<(), RuntimeErrorType> {
+    control_flow.call_stack.push(control_flow.next_instruction_index);
+    control_flow.next_instruction_index(label)?;
+    Ok(())
+}
+
+fn run_return(control_flow: &mut ControlFlow) -> Result<(), RuntimeErrorType> {
+    match control_flow.call_stack.pop() {
+        Some(i) => control_flow.next_instruction_index = i,
+        None => run_goto(control_flow, "END")?,
+    }
+    Ok(())
 }
 
 /// Tests if the accumulator with **index** exists.

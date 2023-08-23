@@ -13,11 +13,13 @@ Be $c\in\mathbb{Z};n,o,p\in\mathbb{N}|n\geq0:j,k,l\in\lbrace h_0,\ldots,h_n\rbra
 | - | - | - |
 |$T := S $| a0 := p(h1) | |
 |$T := S\space\textbf{OP}\space S$ |p(h1) := a0 + 5 | |
-|if $S\space\textbf{cmp}\space S$ then goto label| if a0 == a1 then goto loop | |
-|goto label | goto loop | if the comparison succeeds the next instruction pointer is updated to the instruction at label|
+|if $S\space\textbf{cmp}\space S$ then goto label| if a0 == a1 then goto loop | if the comparison succeeds the next instruction p ointer is updated to the instruction at label |
+|goto label | goto loop | the next instruction pointer is updated to the instruction at label|
 |stack $\textbf{OP}$ | stack+ | uses the top most values to calculate a new value which is then pushed onto the stack, note that the top most value is the right part of the calculation|
 |push | push | pushes the current value of $\alpha_0$/a0 on the stack |
 |pop | pop | pops the top value of the stack into $\alpha_0$/a0 |
+|call label | call function | the next instruction pointer is updated to the instruction and a return address is set |
+|return | return| returns from the current function to the point where the instruction was called, if return is called inside the main function/without previous function being called, the program exits|
 
 ## Examples
 

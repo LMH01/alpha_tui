@@ -96,7 +96,7 @@ pub enum RuntimeErrorType {
     #[error("Attempt to jump to label '{0}' that does not exist")]
     #[diagnostic(
         code("runtime_error::label_missing"),
-        help("Try to create the label before an instruction.\nExample: {0}: a0 := 5")
+        help("Try to create the label.\nExample: '{0}: a0 := 5' or '{0}:'")
     )]
     LabelMissing(String),
 
