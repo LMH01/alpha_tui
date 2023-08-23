@@ -43,7 +43,7 @@ When the last instruction was executed the following window is displayed. You ca
 
 ### Breakpoints
 
-By pressing `[b]` you can enter breakpoint mode in which you can use the arrow keys and `[t]` to set
+By pressing `[b]` you can enter breakpoint mode in which you can use the arrow keys (for ease of use `[w]` and `[s]` are also supported) and `[t]` to set
 breakpoints throughout your program. A `*` to the left of the line indicates that the line contains a breakpoint.
 
 ### Error handling

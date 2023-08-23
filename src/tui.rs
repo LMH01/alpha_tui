@@ -261,10 +261,23 @@ impl App {
                         State::Errored(e) => Err(e.clone())?,
                         _ => return Ok(()),
                     },
+                    KeyCode::Char('w') => {
+                        match self.state {
+                            State::Breakpoints(_, _) => {
+                                list_prev(&mut self.instructions.instruction_list_state, self.instructions.instructions.len());
+                                list_prev(&mut self.instructions.breakpoint_list_state, self.instructions.instructions.len());
+                            }
+                            _ => (),
+                        }
+                    }
                     KeyCode::Char('s') => {
                         match self.state {
                             State::Finished(_) => self.reset(),
                             State::Running => self.reset(),
+                            State::Breakpoints(_, _) => {
+                                list_next(&mut self.instructions.instruction_list_state, self.instructions.instructions.len());
+                                list_next(&mut self.instructions.breakpoint_list_state, self.instructions.instructions.len());
+                            }
                             _ => (),
                         }
                     }
