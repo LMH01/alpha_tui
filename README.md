@@ -50,3 +50,4 @@ or this: ![Miette error handling](media/miette_error_2.png)
 ## Future ideas
 
 - [ ] Add support for breakpoints
+- [ ] Make instruction list scroll down to make 3 instructions before the current one always displayed
