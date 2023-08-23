@@ -51,3 +51,4 @@ or this: ![Miette error handling](media/miette_error_2.png)
 
 - [ ] Add support for breakpoints
 - [ ] Make instruction list scroll down to make 3 instructions before the current one always displayed
+    - ratatui currently does not provide a simple solution for this
