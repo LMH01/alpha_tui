@@ -21,6 +21,13 @@ fn test_parse_assign_accumulator_from_constant() {
         ))
     );
     assert_eq!(
+        Instruction::try_from("a := 5"),
+        Ok(Instruction::Assign(
+            TargetType::Accumulator(0),
+            Value::Constant(5)
+        ))
+    );
+    assert_eq!(
         Instruction::try_from("α0 := 5"),
         Ok(Instruction::Assign(
             TargetType::Accumulator(0),
@@ -160,6 +167,16 @@ fn test_run_calc_accumulator_with_memory_cell_constant() {
 fn test_parse_calc_accumulator_with_memory_cell_accumulator() {
     assert_eq!(
         Instruction::try_from("a0 := p(h1) - a0"),
+        Ok(Instruction::Calc(
+            TargetType::Accumulator(0),
+            Value::MemoryCell("h1".to_string()),
+            Operation::Sub,
+            Value::Accumulator(0)
+        ))
+    );
+    
+    assert_eq!(
+        Instruction::try_from("a := p(h1) - a"),
         Ok(Instruction::Calc(
             TargetType::Accumulator(0),
             Value::MemoryCell("h1".to_string()),

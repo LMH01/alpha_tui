@@ -113,8 +113,13 @@ pub fn parse_alpha(s: &str, part_range: (usize, usize)) -> Result<usize, Instruc
         ));
     }
     let input = s.replace('a', "").replace("α", "");
+    if input.is_empty() {// if no index is supplied default to accumulator 0
+        return Ok(0)
+    }
     match input.parse::<usize>() {
-        Ok(x) => Ok(x),
+        Ok(x) => {
+            Ok(x)
+        },
         Err(_) => Err(InstructionParseError::NotANumber(
             (part_range.0 + 1, part_range.1),
             input,
