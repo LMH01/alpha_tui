@@ -214,6 +214,7 @@ impl App {
                             self.runtime.reset();
                             self.finished = false;
                             self.running = false;
+                            self.finished_popup = false;
                             self.set_keybind_hint('s', false);
                             self.set_keybind_hint('d', false);
                             self.set_keybind_hint('r', true);
