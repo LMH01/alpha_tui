@@ -5,7 +5,7 @@ use miette::{IntoDiagnostic, Result};
 use ratatui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
+    style::{Color, Modifier, Style, Stylize},
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, Clear, List, ListItem, ListState, Paragraph, Tabs},
     Frame, Terminal,
@@ -15,8 +15,9 @@ use crate::runtime::{error_handling::RuntimeError, Runtime, RuntimeArgs};
 
 /// Used to store the instructions and to remember what instruction should currently be highlighted.
 struct StatefulInstructions {
-    state: ListState,
-    instructions: Vec<(usize, String)>,
+    instruction_list_state: ListState,
+    breakpoint_list_state: ListState,
+    instructions: Vec<(usize, String, bool)>, // third argument specifies if a breakpoint is set for this line
     last_index: i32,
     current_index: i32,
 }
@@ -25,10 +26,11 @@ impl StatefulInstructions {
     fn new(instructions: Vec<String>) -> Self {
         let mut i = Vec::new();
         for (index, s) in instructions.iter().enumerate() {
-            i.push((index, s.clone()));
+            i.push((index, s.clone(), false));
         }
         StatefulInstructions {
-            state: ListState::default(),
+            instruction_list_state: ListState::default(),
+            breakpoint_list_state: ListState::default(),
             instructions: i,
             last_index: -1,
             current_index: -1,
@@ -39,9 +41,9 @@ impl StatefulInstructions {
     fn set_last(&mut self, index: i32) {
         if index as i32 - self.last_index as i32 != 1 {
             // line jump detected, only increase state by one
-            self.state.select(Some((self.last_index +1 ) as usize));
+            self.instruction_list_state.select(Some((self.last_index +1 ) as usize));
         } else {
-            self.state.select(Some(index as usize));
+            self.instruction_list_state.select(Some(index as usize));
         }
         self.last_index = index as i32;
     }
@@ -167,6 +169,37 @@ impl KeybindHint {
     }
 }
 
+#[derive(Debug, PartialEq)]
+enum State {
+    Default,
+    Running,
+    Breakpoints,
+    Finished,
+    Errored(RuntimeError),
+}
+
+impl State {
+    fn update_keybind_hints(&self) {
+        match self {
+            Self::Default => {//TODO Move all keybind set instructions to here
+
+            },
+            Self::Running => {
+
+            },
+            Self::Breakpoints => {
+
+            }
+            Self::Finished => {
+                
+            }
+            Self::Errored(e) => {
+
+            }
+        }
+    }
+}
+
 /// App holds the state of the application
 pub struct App {
     runtime: Runtime,
@@ -178,10 +211,8 @@ pub struct App {
     keybind_hints: HashMap<char, KeybindHint>,
     /// Manages accumulators, memory_cells and stack in the ui.
     memory_lists_manager: MemoryListsManager,
-    finished: bool,
     finished_popup: bool,
-    running: bool,
-    errored: Option<RuntimeError>,
+    state: State,
 }
 
 impl App {
@@ -193,10 +224,8 @@ impl App {
             instructions: StatefulInstructions::new(instructions),
             keybind_hints: init_keybinds(),
             memory_lists_manager: mlm,
-            finished: false,
             finished_popup: false,
-            running: false,
-            errored: None,
+            state: State::Default,
         }
     }
 
@@ -205,53 +234,56 @@ impl App {
             terminal.draw(|f| ui(f, self)).into_diagnostic()?;
             if let Event::Key(key) = event::read().into_diagnostic()? {
                 match key.code {
-                    KeyCode::Char('q') => match self.errored.as_ref() {
-                        None => return Ok(()),
-                        Some(e) => Err(e.clone())?,
+                    KeyCode::Char('q') => match &self.state {
+                        State::Errored(e) => Err(e.clone())?,
+                        _ => return Ok(()),
                     },
                     KeyCode::Char('s') => {
-                        if self.finished {
+                        if self.state == State::Finished {
                             self.runtime.reset();
-                            self.finished = false;
-                            self.running = false;
                             self.finished_popup = false;
                             self.set_keybind_hint('s', false);
                             self.set_keybind_hint('d', false);
                             self.set_keybind_hint('r', true);
                             self.set_keybind_message('r', "Run".to_string());
                             self.instructions.set_last(-1);
+                            self.state = State::Default;
                         }
                     }
                     KeyCode::Char('r') => {
-                        if !self.finished && self.errored.is_none() {
-                            if !self.running {
+                        if self.state == State::Default || self.state == State::Running {
+                            if self.state != State::Running {
                                 self.instructions.set_last(self.runtime.current_instruction_index() as i32 -1);
                                 self.instructions.current_index = self.runtime.current_instruction_index() as i32;
                             }
-                            self.running = true;
+                            self.state = State::Running;
                             self.set_keybind_message('r', "Run next instruction".to_string());
                             let res = self.runtime.step();
                             if let Err(e) = res {
-                                self.running = false;
-                                self.errored = Some(e);
+                                self.state = State::Errored(e);
                                 self.set_keybind_hint('r', false);
                             }
                             self.instructions.current_index = self.runtime.current_instruction_index() as i32;
                             self.instructions.set_last(self.instructions.current_index -1);
                             //self.instructions
                             //    .set(self.runtime.current_instruction_index() as i32);
-                            if self.runtime.finished() && self.errored.is_none() {
-                                self.finished = true;
-                                self.finished_popup = true;
-                                self.set_keybind_hint('s', true);
-                                self.set_keybind_hint('r', false);
-                                self.set_keybind_hint('d', true);
+                            if self.runtime.finished() {
+                                match self.state {
+                                    State::Errored(_) => (),
+                                    _ => {
+                                        self.state =State::Finished;
+                                        self.finished_popup = true;
+                                        self.set_keybind_hint('s', true);
+                                        self.set_keybind_hint('r', false);
+                                        self.set_keybind_hint('d', true);
+                                    },
+                                }
                             }
                         }
                     }
                     KeyCode::Char('d') => {
                         // dismiss execution finished popup
-                        if self.finished {
+                        if self.state == State::Finished {
                             self.finished_popup = false;
                             self.set_keybind_hint('d', false);
                         }
@@ -262,6 +294,7 @@ impl App {
             self.memory_lists_manager
                 .update(self.runtime.runtime_args());
             thread::sleep(Duration::from_millis(30));
+            self.state.update_keybind_hints();
         }
     }
 
@@ -301,6 +334,7 @@ fn init_keybinds() -> HashMap<char, KeybindHint> {
     map.insert('n', KeybindHint::new('n', "Next instruction", false));
     map.insert('s', KeybindHint::new('s', "Reset", false));
     map.insert('d', KeybindHint::new('d', "Dismiss message", false));
+    map.insert('b', KeybindHint::new('b', "Enter breakpoint mode", true));
     map
 }
 
@@ -315,7 +349,8 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .direction(Direction::Horizontal)
         .constraints(
             [
-                Constraint::Percentage(70),
+                Constraint::Percentage(5),
+                Constraint::Percentage(65),
                 Constraint::Percentage(20),
                 Constraint::Percentage(10),
             ]
@@ -331,7 +366,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let right_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
-        .split(chunks[1]);
+        .split(chunks[2]);
 
     // Code area
     let mut code_area = Block::default()
@@ -339,7 +374,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .title(app.filename.clone())
         .title_alignment(Alignment::Center)
         .border_type(BorderType::Rounded);
-    if app.errored.is_some() {
+    if let State::Errored(_) = app.state {
         code_area = code_area.border_style(Style::default().fg(Color::Red));
     } else {
         code_area = code_area.border_style(Style::default().fg(Color::Green));
@@ -367,7 +402,24 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .highlight_symbol(">> ");
 
     // We can now render the item list
-    f.render_stateful_widget(items, chunks[0], &mut app.instructions.state);
+    f.render_stateful_widget(items, chunks[1], &mut app.instructions.instruction_list_state);
+
+    // Breakpoint list
+    let breakpoint_list_items: Vec<ListItem> = app.instructions.instructions.iter().map(|f| {
+        let v = match f.2 {
+            false => format!(" "),
+            true => format!("*"),
+        };
+        ListItem::new(v).style(Style::default())
+    }).collect();
+
+    let breakpoint_list = Block::default()
+        .borders(Borders::ALL)
+        .title("BPs")
+        .title_alignment(Alignment::Center)
+        .border_type(BorderType::Rounded);
+    let breakpoints = List::new(breakpoint_list_items).block(breakpoint_list);
+    f.render_widget(breakpoints, chunks[0]);
 
     // Accumulator block
     let accumulator = Block::default()
@@ -396,7 +448,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .title_alignment(Alignment::Center)
         .border_type(BorderType::Rounded);
     let stack_list = List::new(app.memory_lists_manager.stack_list()).block(stack);
-    f.render_widget(stack_list, chunks[2]);
+    f.render_widget(stack_list, chunks[3]);
 
     // Popup if execution has finished
     if app.finished_popup {
@@ -411,7 +463,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     }
 
     // Popup if runtime error
-    if app.errored.is_some() {
+    if let State::Errored(e) = &app.state {
         let block = Block::default()
             .title("Runtime error!")
             .borders(Borders::ALL)
@@ -419,7 +471,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         let area = centered_rect(60, 30, f.size());
         let text = Paragraph::new(format!(
             "Execution can not continue due to the following problem:\n{}\n\nPress [q] to exit.",
-            app.errored.as_ref().unwrap().reason
+            e.reason
         ))
         .block(block);
         f.render_widget(Clear, area); //this clears out the background

@@ -34,7 +34,7 @@ pub enum AddLabelError {
     IndexOutOfBounds,
 }
 
-#[derive(Debug, Error, Diagnostic, Clone)]
+#[derive(Debug, Error, Diagnostic, Clone, PartialEq)]
 #[error("runtime error in line {line_number}")]
 pub struct RuntimeError {
     #[diagnostic_source]
