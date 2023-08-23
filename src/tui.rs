@@ -263,11 +263,8 @@ impl App {
                     },
                     KeyCode::Char('s') => {
                         match self.state {
-                            State::Finished(_) => {
-                                self.runtime.reset();
-                                self.instructions.set_last(-1);
-                                self.set_state(State::Default);
-                            }
+                            State::Finished(_) => self.reset(),
+                            State::Running => self.reset(),
                             _ => (),
                         }
                     }
@@ -351,6 +348,13 @@ impl App {
         self.set_state(state);
     }
 
+    fn reset(&mut self) {
+        self.runtime.reset();
+        self.instructions.set_last(-1);
+        self.instructions.instruction_list_state.select(None);
+        self.set_state(State::Default);
+    }
+
     // Sets a new state and updates keybind hints
     fn set_state(&mut self, state: State) {
         self.state = state;
@@ -362,13 +366,15 @@ impl App {
         match &self.state {
             State::Default => {//TODO Move all keybind set instructions to here
                 self.set_keybind_hint('q', true);
-                self.set_keybind_hint('r', true);
                 self.set_keybind_hint('b', true);
+                self.set_keybind_hint('r', true);
+                self.set_keybind_message('r', "Run");
             },
             State::Running => {
                 self.set_keybind_hint('q', true);
                 self.set_keybind_hint('b', true);
                 self.set_keybind_hint('r', true);
+                self.set_keybind_hint('s', true);
                 self.set_keybind_message('r', "Run next instruction");
             },
             State::Breakpoints(s, i) => {
@@ -403,9 +409,9 @@ impl App {
 fn init_keybind_hints() -> HashMap<char, KeybindHint> {
     let mut map = HashMap::new();
     map.insert('q', KeybindHint::new(0, 'q', "Quit", true));
-    map.insert('r', KeybindHint::new(1, 'r', "Run", true));
-    map.insert('n', KeybindHint::new(1, 'n', "Next instruction", false));
-    map.insert('s', KeybindHint::new(6, 's', "Reset", false));
+    map.insert('s', KeybindHint::new(1, 's', "Reset", false));
+    map.insert('n', KeybindHint::new(2, 'n', "Next instruction", false));
+    map.insert('r', KeybindHint::new(6, 'r', "Run", true));
     map.insert('d', KeybindHint::new(7, 'd', "Dismiss message", false));
     map.insert('b', KeybindHint::new(8, 'b', "Enter breakpoint mode", true));
     map.insert('t', KeybindHint::new(9, 't', "Toggle breakpoint", false));

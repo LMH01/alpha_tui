@@ -67,6 +67,7 @@ impl Runtime {
         self.control_flow.reset_soft();
         self.runtime_args.reset();
     }
+    
 }
 
 /// Used to control what instruction should be executed next.
@@ -117,9 +118,10 @@ impl ControlFlow {
         self.call_stack.clear();
     }
 
-    /// Only resets the `next_instruction_index` to 0.
+    /// Resets the `next_instruction_index` to 0 and clears the call stack.
     pub fn reset_soft(&mut self) {
         self.next_instruction_index = self.initial_instruction;
+        self.call_stack.clear();
     }
 }
 
