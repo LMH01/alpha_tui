@@ -1,21 +1,27 @@
-p(a) := 10
-p(b) := 8
-p(c) := 5
-p(d) := 4
-p(e) := 1
-a0 := p(a)
+init: ρ(x) := 0
+ρ(a) := 10
+ρ(b) := 8
+ρ(c) := 5
+ρ(d) := 4
+ρ(e) := 1
+return
+
+main: call init 
+α := ρ(a)
 push
-a0 := p(b)
+α := ρ(b)
 push
 stack+
-a0 := p(c)
+α := ρ(c)
 push
-a0 := p(d)
+α := ρ(d)
 push
-a0 := p(e)
+α := ρ(e)
 push
-stack*
+stack×
 stack-
-stack/
+stack÷
 pop
-p(x) := a0
+ρ(x) := α
+
+return
