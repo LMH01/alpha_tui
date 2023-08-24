@@ -71,6 +71,11 @@ impl Runtime {
         self.control_flow.reset_soft();
         self.runtime_args.reset();
     }
+
+    /// Returns the index of the instruction that is executed first
+    pub fn initial_instruction_index(&self) -> usize {
+        self.control_flow.initial_instruction
+    }
 }
 
 /// Used to control what instruction should be executed next.

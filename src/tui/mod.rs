@@ -120,7 +120,7 @@ impl App {
                         if self.state == State::Default || self.state == State::Running {
                             if self.state != State::Running {
                                 self.instruction_list_states
-                                    .set_start(self.runtime.current_instruction_index() as i32);
+                                    .set_start(self.runtime.next_instruction_index() as i32);
                             }
                             self.set_state(State::Running);
                             self.step();
@@ -175,7 +175,7 @@ impl App {
             self.set_state(State::Errored(e));
         }
         self.instruction_list_states
-            .set(self.runtime.current_instruction_index() as i32);
+            .set(self.runtime.next_instruction_index() as i32);
         if self.runtime.finished() {
             match self.state {
                 State::Errored(_) => (),
@@ -210,7 +210,9 @@ impl App {
         match self.state {
             State::Running => (),
             _ => {
-                self.instruction_list_states.set(0);
+                //self.instruction_list_states.set(self.runtime.next_instruction_index() as i32);
+                self.instruction_list_states
+                    .force_set(self.runtime.initial_instruction_index());
             }
         }
         self.set_state(state);

@@ -65,6 +65,14 @@ impl InstructionListStates {
         self.last_index = current_instruction_idx - 1;
     }
 
+    /// Used to force the highlight of a specific line.
+    ///
+    /// Should only be used for visuals if the line is known that should be highlighted.
+    pub fn force_set(&mut self, highlight_index: usize) {
+        self.instruction_list_state.select(Some(highlight_index));
+        self.breakpoint_list_state.select(Some(highlight_index));
+    }
+
     pub fn deselect(&mut self) {
         self.instruction_list_state.select(None);
         self.breakpoint_list_state.select(None);
