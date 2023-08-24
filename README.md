@@ -57,7 +57,9 @@ Exit breakpoint mode by pressing the `[b]` key again. Press `[n]` when in run mo
 
 Such error could look like this ![Miette error handling](media/miette_error.png)
 
-or this: ![Miette error handling](media/miette_error_2.png)
+or this: 
+
+![Miette error handling](media/miette_error_2.png)
 
 ## Future ideas
 
