@@ -14,58 +14,9 @@ use text_align::TextAlign;
 
 use crate::runtime::{error_handling::RuntimeError, Runtime, RuntimeArgs};
 
-/// Used to store the instructions and to remember what instruction should currently be highlighted.
-#[derive(Debug, Clone)]
-struct StatefulInstructions {
-    instruction_list_state: ListState,
-    breakpoint_list_state: ListState,
-    instructions: Vec<(usize, String, bool)>, // third argument specifies if a breakpoint is set for this line
-    last_index: i32,
-    current_index: i32,
-}
+use self::state::InstructionListStates;
 
-impl StatefulInstructions {
-    fn new(instructions: Vec<String>, set_breakpoints: Option<&Vec<usize>>) -> Self {
-        let mut i = Vec::new();
-        for (index, s) in instructions.iter().enumerate() {
-            if let Some(v) = set_breakpoints {
-                if v.contains(&(index+1)) {
-                    i.push((index, s.clone(), true));
-                } else {
-                    i.push((index, s.clone(), false));
-                }
-            } else {
-                i.push((index, s.clone(), false));
-            }
-        }
-        StatefulInstructions {
-            instruction_list_state: ListState::default(),
-            breakpoint_list_state: ListState::default(),
-            instructions: i,
-            last_index: -1,
-            current_index: -1,
-        }
-    }
-
-    /// Used to set the line that should be highlighted
-    fn set_last(&mut self, index: i32) {
-        if index as i32 - self.last_index as i32 != 1 {
-            // line jump detected, only increase state by one
-            self.instruction_list_state.select(Some((self.last_index +1 ) as usize));
-            self.breakpoint_list_state.select(Some((self.last_index +1 ) as usize));
-        } else {
-            self.instruction_list_state.select(Some(index as usize));
-            self.breakpoint_list_state.select(Some(index as usize));
-        }
-        self.last_index = index as i32;
-    }
-}
-
-impl PartialEq for StatefulInstructions {
-    fn eq(&self, other: &Self) -> bool {
-        self.instructions == other.instructions && self.last_index == other.last_index && self.current_index == other.current_index
-    }
-}
+mod state;
 
 /// Used to update and set the lists for accumulators, memory cells and stack.
 struct MemoryListsManager {
@@ -207,7 +158,7 @@ pub struct App {
     /// Filename of the file that contains the code
     filename: String,
     /// The code that is compiled and run
-    instructions: StatefulInstructions,
+    instruction_list_states: InstructionListStates,
     /// List of keybind hints displayed at the bottom of the terminal
     keybind_hints: HashMap<char, KeybindHint>,
     /// Manages accumulators, memory_cells and stack in the ui.
@@ -222,7 +173,7 @@ impl App {
         Self {
             runtime,
             filename,
-            instructions: StatefulInstructions::new(instructions, set_breakpoints.as_ref()),
+            instruction_list_states: InstructionListStates::new(instructions, set_breakpoints.as_ref()),
             keybind_hints: init_keybind_hints(),
             memory_lists_manager: mlm,
             state: State::Default,
@@ -236,21 +187,19 @@ impl App {
                 match key.code {
                     KeyCode::Up => {
                         if let State::Breakpoints(s, i) = &self.state {
-                            list_prev(&mut self.instructions.instruction_list_state, self.instructions.instructions.len());
-                            list_prev(&mut self.instructions.breakpoint_list_state, self.instructions.instructions.len());
+                            self.instruction_list_states.set_prev_visual();
                             //TODO See if it is a good idea to make the breakpoint list move too
                         }
                     },
                     KeyCode::Down => {
                         if let State::Breakpoints(s, i) = &self.state {
-                            list_next(&mut self.instructions.instruction_list_state, self.instructions.instructions.len());
-                            list_next(&mut self.instructions.breakpoint_list_state, self.instructions.instructions.len());
+                            self.instruction_list_states.set_next_visual();
                         }
                     },
                     KeyCode::Char('b') => {
                         match &self.state {
                             State::Breakpoints(s, i) => {
-                                self.instructions.instruction_list_state.select(*i);
+                                self.instruction_list_states.set_instruction_list_state(*i);
                                 self.set_state(s.deref().clone());
                             }
                             State::Default => self.start_breakpoint_mode(),
@@ -262,8 +211,7 @@ impl App {
                         // toggle keybind
                         match &self.state {
                             State::Breakpoints(s, _) => {
-                                let val = self.instructions.instructions[self.instructions.instruction_list_state.selected().unwrap()].2;
-                                self.instructions.instructions[self.instructions.instruction_list_state.selected().unwrap()].2 = !val;
+                                self.instruction_list_states.toggle_breakpoint()
                             },
                             _ => (),
                         }
@@ -275,8 +223,7 @@ impl App {
                     KeyCode::Char('w') => {
                         match self.state {
                             State::Breakpoints(_, _) => {
-                                list_prev(&mut self.instructions.instruction_list_state, self.instructions.instructions.len());
-                                list_prev(&mut self.instructions.breakpoint_list_state, self.instructions.instructions.len());
+                                self.instruction_list_states.set_prev_visual();
                             }
                             _ => (),
                         }
@@ -286,8 +233,7 @@ impl App {
                             State::Finished(_) => self.reset(),
                             State::Running => self.reset(),
                             State::Breakpoints(_, _) => {
-                                list_next(&mut self.instructions.instruction_list_state, self.instructions.instructions.len());
-                                list_next(&mut self.instructions.breakpoint_list_state, self.instructions.instructions.len());
+                                self.instruction_list_states.set_next_visual();
                             }
                             _ => (),
                         }
@@ -295,8 +241,7 @@ impl App {
                     KeyCode::Char('r') => {
                         if self.state == State::Default || self.state == State::Running {
                             if self.state != State::Running {
-                                self.instructions.set_last(self.runtime.current_instruction_index() as i32 -1);
-                                self.instructions.current_index = self.runtime.current_instruction_index() as i32;
+                                self.instruction_list_states.set_start(self.runtime.current_instruction_index() as i32);
                             }
                             self.set_state(State::Running);
                             self.step();
@@ -306,7 +251,7 @@ impl App {
                         // run to the next breakpoint
                         if self.state == State::Running {
                             self.step();
-                            while !self.instructions.instructions[self.instructions.instruction_list_state.selected().unwrap()].2 {
+                            while !self.instruction_list_states.is_breakpoint() {
                                 if self.step() {
                                     break;
                                 }
@@ -349,8 +294,7 @@ impl App {
         if let Err(e) = res {
             self.set_state(State::Errored(e));
         }
-        self.instructions.current_index = self.runtime.current_instruction_index() as i32;
-        self.instructions.set_last(self.instructions.current_index -1);
+        self.instruction_list_states.set(self.runtime.current_instruction_index() as i32);
         if self.runtime.finished() {
             match self.state {
                 State::Errored(_) => (),
@@ -378,12 +322,11 @@ impl App {
     }
 
     fn start_breakpoint_mode(&mut self) {
-        let state = State::Breakpoints(Box::new(self.state.clone()), self.instructions.instruction_list_state.selected());
+        let state = State::Breakpoints(Box::new(self.state.clone()), self.instruction_list_states.selected_line());
         match self.state {
             State::Running => (),
             _ => {
-                self.instructions.breakpoint_list_state.select(Some(0));
-                self.instructions.instruction_list_state.select(Some(0));
+                self.instruction_list_states.set(0);
             }
         }
         self.set_state(state);
@@ -391,8 +334,8 @@ impl App {
 
     fn reset(&mut self) {
         self.runtime.reset();
-        self.instructions.set_last(-1);
-        self.instructions.instruction_list_state.select(None);
+        self.instruction_list_states.set(-1);
+        self.instruction_list_states.deselect();
         self.set_state(State::Default);
     }
 
@@ -462,34 +405,6 @@ fn init_keybind_hints() -> HashMap<char, KeybindHint> {
     map
 }
 
-fn list_next(list_state: &mut ListState, instruction_length: usize) {
-    let i = match list_state.selected() {
-        Some(i) => {
-            if i >= instruction_length - 1 {
-                0
-            } else {
-                i + 1
-            }
-        }
-        None => 0,
-    };
-    list_state.select(Some(i));
-}
-
-fn list_prev(list_state: &mut ListState, max_index: usize) {
-    let i = match list_state.selected() {
-        Some(i) => {
-            if i == 0 {
-                max_index - 1
-            } else {
-                i - 1
-            }
-        }
-        None => 0,
-    };
-    list_state.select(Some(i));
-}
-
 /// Draw the ui
 fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     // color config
@@ -541,8 +456,8 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
 
     // Iterate through all elements in the `items` app and append some debug text to it.
     let items: Vec<ListItem> = app
-        .instructions
-        .instructions
+        .instruction_list_states
+        .instructions()
         .iter()
         .map(|i| {
             let content = vec![Line::from(Span::raw(format!("{:2}: {}", i.0 + 1, i.1)))];
@@ -567,7 +482,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .highlight_symbol(">> ");
 
     // We can now render the item list
-    f.render_stateful_widget(items, chunks[1], &mut app.instructions.instruction_list_state);
+    f.render_stateful_widget(items, chunks[1], &mut app.instruction_list_states.instruction_list_state_mut());
 
     // Breakpoint list
     let breakpoint_area = Block::default()
@@ -577,7 +492,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .border_type(BorderType::Rounded);
 
     // Create the items for the list
-    let breakpoint_list_items: Vec<ListItem> = app.instructions.instructions.iter().map(|f| {
+    let breakpoint_list_items: Vec<ListItem> = app.instruction_list_states.instructions().iter().map(|f| {
         let v = match f.2 {
             false => format!(" "),
             true => format!("*"),
@@ -588,7 +503,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     // Create the list itself
     let breakpoints = List::new(breakpoint_list_items).block(breakpoint_area);
 
-    f.render_stateful_widget(breakpoints, chunks[0], &mut app.instructions.breakpoint_list_state);
+    f.render_stateful_widget(breakpoints, chunks[0], &mut app.instruction_list_states.breakpoint_list_state_mut());
     //f.render_widget(breakpoints, chunks[0]);
 
     // Accumulator block
