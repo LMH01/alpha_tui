@@ -5,9 +5,14 @@ use super::{App, State};
 
 /// Draw the ui
 pub fn draw_ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
+
     // color config
-    let breakpoint_accent_color = Color::Rgb(220, 77, 1);
+    let breakpoint_accent_color = Color::Blue;
     let error_color = Color::Red;
+    let code_area_default_color = Color::Green;
+    let key_hints_color = Color::Cyan;
+    let current_instruction_highlight_color = Color::DarkGray;
+    let execution_finished_popup_color = Color::Green;
 
     let global_chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -30,7 +35,7 @@ pub fn draw_ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     // Key hints
     let key_hints = Tabs::new(app.active_keybind_hints())
         .block(Block::default().borders(Borders::NONE))
-        .style(Style::default().fg(Color::Cyan));
+        .style(Style::default().fg(key_hints_color));
     f.render_widget(key_hints, global_chunks[1]);
 
     let right_chunks = Layout::default()
@@ -44,12 +49,12 @@ pub fn draw_ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .title_alignment(Alignment::Left)
         .border_type(BorderType::Rounded);
     if let State::Errored(_) = app.state {
-        code_area = code_area.border_style(Style::default().fg(Color::Red));
+        code_area = code_area.border_style(Style::default().fg(error_color));
     } else if let State::Breakpoints(_, _) = app.state {
         code_area = code_area.border_style(Style::default().fg(breakpoint_accent_color))
             .title("Breakpoint mode");
     } else {
-        code_area = code_area.border_style(Style::default().fg(Color::Green))
+        code_area = code_area.border_style(Style::default().fg(code_area_default_color))
             .title(format!("File: {}", app.filename.clone()));
     }
 
@@ -73,7 +78,7 @@ pub fn draw_ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
                     .add_modifier(Modifier::BOLD)
             } else {
                 Style::default()
-                    .bg(Color::DarkGray)
+                    .bg(current_instruction_highlight_color)
                     .add_modifier(Modifier::BOLD)
             }
         )
@@ -138,7 +143,7 @@ pub fn draw_ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         let block = Block::default()
             .title("Execution finished!")
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(Color::Green));
+            .border_style(Style::default().fg(execution_finished_popup_color));
         let area = centered_rect(60, 20, f.size());
         let text = Paragraph::new("Press [q] to exit.\nPress [s] to reset to start.\nPress [d] to dismiss this message.").block(block);
         f.render_widget(Clear, area); //this clears out the background
@@ -150,7 +155,7 @@ pub fn draw_ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         let block = Block::default()
             .title("Runtime error!")
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(Color::Red));
+            .border_style(Style::default().fg(error_color));
         let area = centered_rect(60, 30, f.size());
         let text = Paragraph::new(format!(
             "Execution can not continue due to the following problem:\n{}\n\nPress [q] to exit.",
