@@ -52,8 +52,10 @@ impl StatefulInstructions {
         if index as i32 - self.last_index as i32 != 1 {
             // line jump detected, only increase state by one
             self.instruction_list_state.select(Some((self.last_index +1 ) as usize));
+            self.breakpoint_list_state.select(Some((self.last_index +1 ) as usize));
         } else {
             self.instruction_list_state.select(Some(index as usize));
+            self.breakpoint_list_state.select(Some(index as usize));
         }
         self.last_index = index as i32;
     }
@@ -568,6 +570,13 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     f.render_stateful_widget(items, chunks[1], &mut app.instructions.instruction_list_state);
 
     // Breakpoint list
+    let breakpoint_area = Block::default()
+        .borders(Borders::ALL)
+        .title("BPs").border_style(Style::default().fg(orange))
+        .title_alignment(Alignment::Center)
+        .border_type(BorderType::Rounded);
+
+    // Create the items for the list
     let breakpoint_list_items: Vec<ListItem> = app.instructions.instructions.iter().map(|f| {
         let v = match f.2 {
             false => format!(" "),
@@ -575,15 +584,12 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         };
         ListItem::new(Text::styled(format!("{}", v).center_align(chunks[0].width.checked_sub(2).unwrap_or(0) as usize), Style::default().fg(orange)))
     }).collect();
+ 
+    // Create the list itself
+    let breakpoints = List::new(breakpoint_list_items).block(breakpoint_area);
 
-    let mut breakpoint_list = Block::default()
-        .borders(Borders::ALL)
-        .title("BPs").border_style(Style::default().fg(orange))
-        .title_alignment(Alignment::Center)
-        .border_type(BorderType::Rounded);
-
-    let breakpoints = List::new(breakpoint_list_items).block(breakpoint_list);
-    f.render_widget(breakpoints, chunks[0]);
+    f.render_stateful_widget(breakpoints, chunks[0], &mut app.instructions.breakpoint_list_state);
+    //f.render_widget(breakpoints, chunks[0]);
 
     // Accumulator block
     let accumulator = Block::default()
