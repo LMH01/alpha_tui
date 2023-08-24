@@ -1,4 +1,8 @@
-use ratatui::widgets::ListState;
+use std::collections::HashMap;
+
+use ratatui::{widgets::{ListState, ListItem}, style::{Color, Style}};
+
+use crate::runtime::RuntimeArgs;
 
 
 /// Used to store the instructions and to remember what instruction should currently be highlighted.
@@ -136,4 +140,108 @@ fn list_prev(list_state: &mut ListState, max_index: usize) {
         None => 0,
     };
     list_state.select(Some(i));
+}
+
+/// Used to update and set the lists for accumulators, memory cells and stack.
+pub struct MemoryListsManager {
+    accumulators: HashMap<usize, (String, bool)>,
+    memory_cells: HashMap<String, (String, bool)>,
+    stack: Vec<ListItem<'static>>,
+}
+
+impl MemoryListsManager {
+    
+    /// Creates a new MemoryListsManager with the current values of the runtime arguments.
+    pub fn new(runtime_args: &RuntimeArgs) -> Self {
+        let mut accumulators = HashMap::new();
+        for acc in &runtime_args.accumulators {
+            accumulators.insert(*acc.0, (format!("{}", acc.1), false));
+        }
+        //accumulators.sort_by(|a, b| a.0.cmp(&b.0));
+        let mut memory_cells = HashMap::new();
+        for cell in &runtime_args.memory_cells {
+            memory_cells.insert(cell.1.label.clone(), (format!("{}", cell.1), false));
+        }
+        Self {
+            accumulators,
+            memory_cells,
+            stack: Vec::new(),
+        }
+    }
+
+    /// Updates the lists values.
+    /// The old values are compared against the new values, if a value has changed the background color
+    /// of that list item is changed.
+    pub fn update(&mut self, runtime_args: &RuntimeArgs) {
+        // Update accumulators
+        for acc in &runtime_args.accumulators {
+            let a = self.accumulators.get_mut(&acc.0).unwrap();
+            let update = format!("{}", acc.1);
+            if update == *a.0 {
+                a.1 = false;
+            } else {
+                *a = (update, true);
+            }
+        }
+        // Update memory_cells
+        for acc in &runtime_args.memory_cells {
+            let a = self.memory_cells.get_mut(&acc.1.label).unwrap();
+            let update = format!("{}", acc.1);
+            if update == *a.0 {
+                a.1 = false;
+            } else {
+                *a = (update, true);
+            }
+        }
+        // Update stack
+        let stack_changed = self.stack.len() != runtime_args.stack.len();
+        let mut new_stack: Vec<ListItem<'_>> = runtime_args
+            .stack
+            .iter()
+            .map(|f| ListItem::new(f.to_string()))
+            .collect();
+        if stack_changed && !new_stack.is_empty() {
+            let last_stack = new_stack
+                .pop()
+                .unwrap()
+                .style(Style::default().bg(Color::DarkGray));
+            new_stack.push(last_stack);
+        }
+        self.stack = new_stack;
+    }
+
+    /// Returns the current accumulators as list
+    pub fn accumulator_list(&self) -> Vec<ListItem<'static>> {
+        let mut list = Vec::new();
+        for acc in &self.accumulators {
+            let mut item = ListItem::new(acc.1 .0.clone());
+            if acc.1 .1 {
+                item = item.style(Style::default().bg(Color::DarkGray));
+            }
+            list.push((item, acc.0));
+        }
+        list.sort_by(|a, b| a.1.cmp(b.1));
+        list.iter().map(|f| f.0.clone()).collect()
+    }
+
+    /// Returns the current memory cells as list
+    pub fn memory_cell_list(&self) -> Vec<ListItem<'static>> {
+        let mut list = Vec::new();
+        for cell in &self.memory_cells {
+            let mut item = ListItem::new(cell.1 .0.clone());
+            if cell.1 .1 {
+                item = item.style(Style::default().bg(Color::DarkGray));
+            }
+            list.push((item, cell.0))
+        }
+        list.sort_by(|a, b| a.1.cmp(b.1));
+        list.iter().map(|f| f.0.clone()).collect()
+    }
+
+    /// Returns the stack items as list
+    pub fn stack_list(&self) -> Vec<ListItem<'static>> {
+        let mut list = self.stack.clone();
+        list.reverse();
+        list
+    }
 }
