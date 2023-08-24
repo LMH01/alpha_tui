@@ -268,7 +268,7 @@ impl RuntimeBuilder {
         for instruction in self.instructions.as_ref().unwrap() {
             match instruction {
                 Instruction::Goto(label) | Instruction::JumpIf(_, _, _, label) => {
-                    check_label(&self.control_flow, label)?
+                    check_label(&self.control_flow, label)?;
                 }
                 _ => (),
             };
