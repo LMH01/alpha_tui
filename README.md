@@ -2,14 +2,14 @@
 
 This is my attempt at writing a compiler for the Alpha-Notation used in my Systemnahe Informatik lecture at university.
 
-Programs are read in and then compiled, a terminal ui is then opened where you can run the program line by line.
+Programs are read in and then compiled, a terminal ui is then opened where you can run the program line by line or by using breakpoints.
 
 ## Getting started
 
 1. Download the [newest release]() specific for your system
 2. Extract the .zip file 
 3. Create a program by using the text editor of your choice or try an example program located in [examples/programs](examples/programs). The examples might help you write your program.
-4. Run `alpha_tui` by opening a terminal in the folder and then typing `alpha_tui -i FILENAME`
+4. Run `alpha_tui` by opening a terminal in the folder and then typing `alpha_tui -i FILENAME`, for an example program this command could look like this: `alpha_tui -i examples/programs/faculty.alpha`
 5. The terminal ui will open where you can run the program line by line by using the `[r]` key
 
 ### Compile from source
@@ -37,14 +37,19 @@ The interface is written using the [ratatui](https://github.com/ratatui-org/rata
 
 When a program is opened it can look like this: ![Program loaded example](media/gui_program_loaded.png)
 
-Press `[r]` to run the next instruction. Values that have changed and the line that was run last are highlighted.  This can look like this: ![Program running example](media/gui_program_running.png)
+Press `[r]` to begin to run the program, subsequent instructions can also be run with `[r]`. Values that have changed and the line that was run last are highlighted.  This can look like this: ![Program running example](media/gui_program_running.png)
 
 When the last instruction was executed the following window is displayed. You can restart by pressing `[s]` or exit the program by pressing `[q]`. ![Program finished example](media/gui_program_finished.png)
 
 ### Breakpoints
 
-By pressing `[b]` you can enter breakpoint mode in which you can use the arrow keys (for ease of use `[w]` and `[s]` are also supported) and `[t]` to set
-breakpoints throughout your program. A `*` to the left of the line indicates that the line contains a breakpoint.
+Breakpoints can be set to run all lines of code up until the line in which the breakpoint is set.
+
+Press `[b]` to enter breakpoint mode, it could look like this:![Breakpoint mode](media/gui_breakpoint_mode.png)
+
+Navigate by using the `arrow keys`, for ease of `[w]` and `[s]` are also supported. To `set` or `remove` a breakpoint in the selected line press the `[t]` key: ![Breakpoint set](media/gui_breakpoint_set.png)
+
+Exit breakpoint mode by pressing the `[b]` key again. Press `[n]` when in run mode to make the program run automatically to the next breakpoint (note how the values to the right have been updated): ![Next breakpoint](media/gui_breakpoint_mode_run.png)
 
 ### Error handling
 
@@ -56,6 +61,7 @@ or this: ![Miette error handling](media/miette_error_2.png)
 
 ## Future ideas
 
-- [ ] Add support for breakpoints
 - [ ] Make instruction list scroll down to make 3 instructions before the current one always displayed
     - ratatui currently does not provide a simple solution for this
+- [ ] Add command line parameter that allows a program to be run where the content of a specific accumulator or memory cell is compared against a defined value that is provided when the program is launched. Alpha_tui will exit with 0 if the resulting value is equal to the provided value. This will make it possible to automate tests for alpha notation programs.
+- [ ] Move backend (internal runtime environment) into own project which makes it possible to write new programs without the need to copy the backend of this program
