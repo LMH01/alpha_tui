@@ -9,31 +9,44 @@ impl TryFrom<&Vec<&str>> for Instruction {
     type Error = InstructionParseError;
 
     fn try_from(parts: &Vec<&str>) -> Result<Self, Self::Error> {
-        // very basic implementation more checks, more parsing, better structure and safeguards need to be added when this is used
+        
+        // Remove ; from end of line;
+        let parts: Vec<String> = parts.iter().map(|s| {
+            match s.chars().last() {
+                Some(c) => {
+                    if c == ';' {
+                        s.split(';').collect::<String>()
+                    } else {
+                        (*s).to_string()
+                    }
+                }
+                None => (*s).to_string(),
+            }
+        }).collect();
 
         // Check if instruction is comparison
         if parts[0] == "if" {
-            check_expression_missing(parts, 1, Some("an accumulator"))?;
-            let value_a = Value::try_from((parts[1], part_range(parts, 1)))?;
-            check_expression_missing(parts, 2, Some("a comparison"))?;
-            let cmp = parse_comparison(parts[2], part_range(parts, 2))?;
-            check_expression_missing(parts, 3, None)?;
-            check_expression_missing(parts, 4, Some("then"))?;
+            check_expression_missing(&parts, 1, Some("an accumulator"))?;
+            let value_a = Value::try_from((&parts[1], part_range(&parts, 1)))?;
+            check_expression_missing(&parts, 2, Some("a comparison"))?;
+            let cmp = parse_comparison(&parts[2], part_range(&parts, 2))?;
+            check_expression_missing(&parts, 3, None)?;
+            check_expression_missing(&parts, 4, Some("then"))?;
             if parts[4] != "then" {
                 return Err(InstructionParseError::InvalidExpression(
-                    part_range(parts, 4),
+                    part_range(&parts, 4),
                     parts[5].to_string(),
                 ));
             }
-            check_expression_missing(parts, 5, Some("goto"))?;
+            check_expression_missing(&parts, 5, Some("goto"))?;
             if parts[5] != "goto" {
                 return Err(InstructionParseError::InvalidExpression(
-                    part_range(parts, 5),
+                    part_range(&parts, 5),
                     parts[5].to_string(),
                 ));
             }
-            check_expression_missing(parts, 6, Some("a label"))?;
-            let value_b = Value::try_from((parts[3], part_range(parts, 3)))?;
+            check_expression_missing(&parts, 6, Some("a label"))?;
+            let value_b = Value::try_from((&parts[3], part_range(&parts, 3)))?;
             return Ok(Instruction::JumpIf(
                 value_a,
                 cmp,
@@ -44,7 +57,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
 
         // Check if instruction is goto
         if parts[0] == "goto" {
-            check_expression_missing(parts, 1, Some("a label"))?;
+            check_expression_missing(&parts, 1, Some("a label"))?;
             return Ok(Instruction::Goto(parts[1].to_string()));
         }
 
@@ -85,36 +98,36 @@ impl TryFrom<&Vec<&str>> for Instruction {
 
         if parts[1] != ":=" {
             return Err(InstructionParseError::UnknownInstruction(
-                whole_range(parts),
+                whole_range(&parts),
                 parts.join(" "),
             ));
         }
 
         //TODO Add expression missing checks here
-        let target = TargetType::try_from((parts[0], part_range(parts, 0)))?;
+        let target = TargetType::try_from((&parts[0], part_range(&parts, 0)))?;
         if parts.len() == 2 {
             return Err(InstructionParseError::MissingExpression {
-                range: (part_range(parts, 1).1 + 1, part_range(parts, 1).1 + 1),
+                range: (part_range(&parts, 1).1 + 1, part_range(&parts, 1).1 + 1),
                 help: "Try inserting an accumulator or a memory cell".to_string(),
             });
         }
-        let source_a = Value::try_from((parts[2], part_range(parts, 2)))?;
+        let source_a = Value::try_from((&parts[2], part_range(&parts, 2)))?;
         if parts.len() == 3 {
             // instruction is of type a := b
             return Ok(Instruction::Assign(target, source_a));
         } else if parts.len() == 4 {
             return Err(InstructionParseError::MissingExpression {
-                range: (part_range(parts, 3).1 + 1, part_range(parts, 3).1 + 1),
+                range: (part_range(&parts, 3).1 + 1, part_range(&parts, 3).1 + 1),
                 help: "Try inserting an accumulator or a memory cell".to_string(),
             });
         } else if parts.len() == 5 {
             // instruction is of type a := b op c
-            let op = parse_operation(parts[3], part_range(parts, 3))?;
-            let source_b = Value::try_from((parts[4], part_range(parts, 4)))?;
+            let op = parse_operation(&parts[3], part_range(&parts, 3))?;
+            let source_b = Value::try_from((&parts[4], part_range(&parts, 4)))?;
             return Ok(Instruction::Calc(target, source_a, op, source_b));
         }
         Err(InstructionParseError::UnknownInstruction(
-            whole_range(parts),
+            whole_range(&parts),
             parts.join(" "),
         ))
     }
@@ -233,7 +246,7 @@ pub fn parse_memory_cell(
 ///
 /// `part_idx` specifies in what part the error occurs.
 #[allow(clippy::needless_range_loop)]
-pub fn part_range(parts: &[&str], part_idx: usize) -> (usize, usize) {
+pub fn part_range(parts: &[String], part_idx: usize) -> (usize, usize) {
     let mut start_idx = 0;
     for (idx, part) in parts.iter().enumerate() {
         if idx == part_idx {
@@ -245,13 +258,13 @@ pub fn part_range(parts: &[&str], part_idx: usize) -> (usize, usize) {
 }
 
 /// Calculates a range over all parts
-pub fn whole_range(parts: &[&str]) -> (usize, usize) {
+pub fn whole_range(parts: &[String]) -> (usize, usize) {
     (0, parts.join(" ").len() - 1)
 }
 
 /// Returns error when the input vector does only contain `number` of elements.
 fn check_expression_missing(
-    parts: &[&str],
+    parts: &Vec<String>,
     number: usize,
     suggestion: Option<&str>,
 ) -> Result<(), InstructionParseError> {

@@ -134,11 +134,11 @@ impl RuntimeBuilder {
                 .lines()
                 .map(|line| {
                     if let Some(index) = line.find("//") {
-                        &line[..index]
+                        line[..index].trim()
                     } else if let Some(index) = line.find('#') {
-                        &line[..index]
+                        line[..index].trim()
                     } else {
-                        line
+                        line.trim()
                     }
                 })
                 .collect::<Vec<_>>()
@@ -414,6 +414,18 @@ mod tests {
             "p(h1) := a0 # Set memory cell h1 to 4",
             "a0 := a1 # Just some stuff",
             "a1 := a2 // Just some more stuff",
+        ];
+        let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
+        assert!(rb.build_instructions(&instructions, "test").is_ok());
+    }
+
+    #[test]
+    fn test_instruction_building_with_semicolons() {
+        let instructions = vec![
+            "a0 := 4; // Set alpha to 4",
+            "p(h1) := a0; # Set memory cell h1 to 4",
+            "a0 := a1; # Just some stuff",
+            "a1 := a2; // Just some more stuff",
         ];
         let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
         assert!(rb.build_instructions(&instructions, "test").is_ok());

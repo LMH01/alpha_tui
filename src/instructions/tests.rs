@@ -495,6 +495,15 @@ fn test_parse_return() {
 }
 
 #[test]
+fn test_parsing_with_semicolon() {
+    assert_eq!(Instruction::try_from("return;"), Ok(Instruction::Return));
+    assert_eq!(Instruction::try_from("a := 5;"), Ok(Instruction::Assign(TargetType::Accumulator(0), Value::Constant(5))));
+    assert_eq!(Instruction::try_from("a := 5 * 5;"), Ok(Instruction::Calc(TargetType::Accumulator(0), Value::Constant(5), Operation::Mul, Value::Constant(5))));
+    assert_eq!(Instruction::try_from("call label;"), Ok(Instruction::Call("label".to_string())));
+    assert_eq!(Instruction::try_from("goto label;"), Ok(Instruction::Goto("label".to_string())));
+}
+
+#[test]
 fn test_example_program_memory_cells() {
     let mut runtime_args = RuntimeArgs::new_debug(TEST_MEMORY_CELL_LABELS);
     for _i in 1..=4 {

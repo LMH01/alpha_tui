@@ -265,10 +265,10 @@ pub enum TargetType {
     MemoryCell(String),
 }
 
-impl TryFrom<(&str, (usize, usize))> for TargetType {
+impl TryFrom<(&String, (usize, usize))> for TargetType {
     type Error = InstructionParseError;
 
-    fn try_from(value: (&str, (usize, usize))) -> Result<Self, Self::Error> {
+    fn try_from(value: (&String, (usize, usize))) -> Result<Self, Self::Error> {
         if let Ok(v) = parse_memory_cell(value.0, value.1) {
             return Ok(Self::MemoryCell(v));
         }
@@ -300,10 +300,10 @@ impl Value {
     }
 }
 
-impl TryFrom<(&str, (usize, usize))> for Value {
+impl TryFrom<(&String, (usize, usize))> for Value {
     type Error = InstructionParseError;
 
-    fn try_from(value: (&str, (usize, usize))) -> Result<Self, Self::Error> {
+    fn try_from(value: (&String, (usize, usize))) -> Result<Self, Self::Error> {
         if let Ok(v) = parse_memory_cell(value.0, value.1) {
             return Ok(Self::MemoryCell(v));
         }
@@ -318,6 +318,6 @@ impl TryFrom<(String, (usize, usize))> for Value {
     type Error = InstructionParseError;
 
     fn try_from(value: (String, (usize, usize))) -> Result<Self, Self::Error> {
-        Self::try_from((value.0.as_str(), value.1))
+        Self::try_from((&value.0, value.1))
     }
 }
