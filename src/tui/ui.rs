@@ -111,7 +111,11 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .instructions()
         .iter()
         .map(|f| {
-            let v = if f.2 {"*".to_string()} else { " ".to_string() };
+            let v = if f.2 {
+                "*".to_string()
+            } else {
+                " ".to_string()
+            };
             ListItem::new(Text::styled(
                 v.center_align(chunks[0].width.saturating_sub(2) as usize),
                 Style::default().fg(breakpoint_accent_color),

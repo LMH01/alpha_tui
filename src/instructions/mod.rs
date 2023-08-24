@@ -3,10 +3,7 @@ use miette::Result;
 use crate::{
     base::{Comparison, Operation},
     instructions::error_handling::InstructionParseError,
-    runtime::{
-        error_handling::{RuntimeErrorType},
-        ControlFlow, RuntimeArgs,
-    },
+    runtime::{error_handling::RuntimeErrorType, ControlFlow, RuntimeArgs},
 };
 
 use self::parsing::{parse_alpha, parse_memory_cell};

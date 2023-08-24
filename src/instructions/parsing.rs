@@ -160,7 +160,9 @@ pub fn parse_operation(
     s: &str,
     part_range: (usize, usize),
 ) -> Result<Operation, InstructionParseError> {
-        if let Ok(s) = Operation::try_from(s) { Ok(s) } else {
+    if let Ok(s) = Operation::try_from(s) {
+        Ok(s)
+    } else {
         if !s.is_ascii() {
             return Err(InstructionParseError::UnknownOperation(
                 (part_range.0, part_range.1 + 1),
@@ -171,7 +173,7 @@ pub fn parse_operation(
             part_range,
             s.to_string(),
         ))
-     }
+    }
 }
 
 /// Tries to parse the comparison.
@@ -181,7 +183,9 @@ pub fn parse_comparison(
     s: &str,
     part_range: (usize, usize),
 ) -> Result<Comparison, InstructionParseError> {
-        if let Ok(s) = Comparison::try_from(s) { Ok(s) } else {
+    if let Ok(s) = Comparison::try_from(s) {
+        Ok(s)
+    } else {
         if !s.is_ascii() {
             return Err(InstructionParseError::UnknownComparison(
                 (part_range.0, part_range.1 + 1),
@@ -192,7 +196,7 @@ pub fn parse_comparison(
             part_range,
             s.to_string(),
         ))
-     }
+    }
 }
 
 /// Parses the name of a memory cell.

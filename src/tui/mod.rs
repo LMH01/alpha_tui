@@ -5,7 +5,8 @@ use miette::{IntoDiagnostic, Result};
 use ratatui::{
     backend::Backend,
     style::Style,
-    text::{Line, Span}, Terminal,
+    text::{Line, Span},
+    Terminal,
 };
 
 use crate::runtime::{error_handling::RuntimeError, Runtime};
@@ -94,15 +95,19 @@ impl App {
                         State::Default | State::Running => self.start_breakpoint_mode(),
                         _ => (),
                     },
-                    KeyCode::Char('t') => if let State::Breakpoints(_, _) = &self.state {
-                        self.instruction_list_states.toggle_breakpoint();
+                    KeyCode::Char('t') => {
+                        if let State::Breakpoints(_, _) = &self.state {
+                            self.instruction_list_states.toggle_breakpoint();
+                        }
                     }
                     KeyCode::Char('q') => match &self.state {
                         State::Errored(e) => Err(e.clone())?,
                         _ => return Ok(()),
                     },
-                    KeyCode::Char('w') => if let State::Breakpoints(_, _) = self.state {
-                        self.instruction_list_states.set_prev_visual();
+                    KeyCode::Char('w') => {
+                        if let State::Breakpoints(_, _) = self.state {
+                            self.instruction_list_states.set_prev_visual();
+                        }
                     }
                     KeyCode::Char('s') => match self.state {
                         State::Running | State::Finished(_) => self.reset(),

@@ -44,7 +44,7 @@ impl InstructionListStates {
     /// Selects the line in which the program starts
     pub fn set_start(&mut self, current_instruction_index: i32) {
         self.set(current_instruction_index);
-        self.current_index = current_instruction_index-1;
+        self.current_index = current_instruction_index - 1;
     }
 
     /// Used to set the line that should be highlighted
@@ -58,11 +58,11 @@ impl InstructionListStates {
         } else {
             // line jump detected, only increase state by one
             self.instruction_list_state
-                .select(Some((self.last_index +1) as usize));
+                .select(Some((self.last_index + 1) as usize));
             self.breakpoint_list_state
-                .select(Some((self.last_index +1) as usize));
+                .select(Some((self.last_index + 1) as usize));
         }
-        self.last_index = current_instruction_idx-1;
+        self.last_index = current_instruction_idx - 1;
     }
 
     pub fn deselect(&mut self) {
@@ -165,7 +165,6 @@ pub struct MemoryListsManager {
 }
 
 impl MemoryListsManager {
-
     /// Creates a new `MemoryListsManager` with the current values of the runtime arguments.
     pub fn new(runtime_args: &RuntimeArgs) -> Self {
         let mut accumulators = HashMap::new();
