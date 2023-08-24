@@ -9,10 +9,10 @@ impl TryFrom<&Vec<&str>> for Instruction {
     type Error = InstructionParseError;
 
     fn try_from(parts: &Vec<&str>) -> Result<Self, Self::Error> {
-        
         // Remove ; from end of line;
-        let parts: Vec<String> = parts.iter().map(|s| {
-            match s.chars().last() {
+        let parts: Vec<String> = parts
+            .iter()
+            .map(|s| match s.chars().last() {
                 Some(c) => {
                     if c == ';' {
                         s.split(';').collect::<String>()
@@ -21,8 +21,8 @@ impl TryFrom<&Vec<&str>> for Instruction {
                     }
                 }
                 None => (*s).to_string(),
-            }
-        }).collect();
+            })
+            .collect();
 
         // Check if instruction is comparison
         if parts[0] == "if" {
