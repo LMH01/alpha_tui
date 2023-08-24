@@ -48,8 +48,8 @@ impl InstructionListStates {
 
     /// Used to set the line that should be highlighted
     pub fn set(&mut self, current_instruction_idx: i32) {
-        self.current_index = current_instruction_idx - 1 as i32;
-        if current_instruction_idx as i32 - self.last_index as i32 != 1 {
+        self.current_index = current_instruction_idx - 1_i32;
+        if current_instruction_idx - self.last_index != 1 {
             // line jump detected, only increase state by one
             self.instruction_list_state
                 .select(Some((self.last_index + 1) as usize));
@@ -61,7 +61,7 @@ impl InstructionListStates {
             self.breakpoint_list_state
                 .select(Some(current_instruction_idx as usize));
         }
-        self.last_index = current_instruction_idx as i32;
+        self.last_index = current_instruction_idx;
     }
 
     pub fn deselect(&mut self) {
@@ -188,7 +188,7 @@ impl MemoryListsManager {
     pub fn update(&mut self, runtime_args: &RuntimeArgs) {
         // Update accumulators
         for acc in &runtime_args.accumulators {
-            let a = self.accumulators.get_mut(&acc.0).unwrap();
+            let a = self.accumulators.get_mut(acc.0).unwrap();
             let update = format!("{}", acc.1);
             if update == *a.0 {
                 a.1 = false;

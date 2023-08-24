@@ -153,13 +153,13 @@ mod tests {
     #[test]
     fn test_rbe_instructions_missing_error() {
         let mut rt = RuntimeBuilder::new();
-        rt.set_runtime_args(RuntimeArgs::new_debug(&vec![""]));
+        rt.set_runtime_args(RuntimeArgs::new_debug(&[""]));
         assert_eq!(rt.build(), Err(RuntimeBuildError::InstructionsMissing));
     }
 
     #[test]
     fn test_rbe_label_undefined_error() {
-        let mut rt = RuntimeBuilder::new_debug(&vec![]);
+        let mut rt = RuntimeBuilder::new_debug(&[]);
         rt.set_instructions(vec![Instruction::Goto("loop".to_string())]);
         assert_eq!(
             rt.build(),
@@ -169,7 +169,7 @@ mod tests {
 
     #[test]
     fn test_rbe_memory_cell_missing() {
-        let mut rt = RuntimeBuilder::new_debug(&vec![]);
+        let mut rt = RuntimeBuilder::new_debug(&[]);
         rt.set_instructions(vec![Instruction::Assign(
             TargetType::MemoryCell("h1".to_string()),
             Value::Constant(10),
@@ -182,7 +182,7 @@ mod tests {
 
     #[test]
     fn test_rbe_accumulator_missing() {
-        let mut rt = RuntimeBuilder::new_debug(&vec![]);
+        let mut rt = RuntimeBuilder::new_debug(&[]);
         rt.set_runtime_args(RuntimeArgs::new_empty());
         rt.set_instructions(vec![Instruction::Assign(
             TargetType::Accumulator(0),

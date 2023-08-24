@@ -93,7 +93,7 @@ pub fn draw_ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     f.render_stateful_widget(
         items,
         chunks[1],
-        &mut app.instruction_list_states.instruction_list_state_mut(),
+        app.instruction_list_states.instruction_list_state_mut(),
     );
 
     // Breakpoint list
@@ -111,11 +111,11 @@ pub fn draw_ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .iter()
         .map(|f| {
             let v = match f.2 {
-                false => format!(" "),
-                true => format!("*"),
+                false => " ".to_string(),
+                true => "*".to_string(),
             };
             ListItem::new(Text::styled(
-                format!("{}", v).center_align(chunks[0].width.checked_sub(2).unwrap_or(0) as usize),
+                v.center_align(chunks[0].width.saturating_sub(2) as usize),
                 Style::default().fg(breakpoint_accent_color),
             ))
         })
@@ -127,7 +127,7 @@ pub fn draw_ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     f.render_stateful_widget(
         breakpoints,
         chunks[0],
-        &mut app.instruction_list_states.breakpoint_list_state_mut(),
+        app.instruction_list_states.breakpoint_list_state_mut(),
     );
     //f.render_widget(breakpoints, chunks[0]);
 

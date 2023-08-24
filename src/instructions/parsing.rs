@@ -139,7 +139,7 @@ pub fn parse_alpha(s: &str, part_range: (usize, usize)) -> Result<usize, Instruc
             s.to_string(),
         ));
     }
-    let input = s.replace('a', "").replace("α", "");
+    let input = s.replace(['a', 'α'], "");
     if input.is_empty() {
         // if no index is supplied default to accumulator 0
         return Ok(0);
@@ -219,7 +219,7 @@ pub fn parse_memory_cell(
     s: &str,
     part_range: (usize, usize),
 ) -> Result<String, InstructionParseError> {
-    if !s.starts_with("p(") && !s.starts_with("ρ") {
+    if !s.starts_with("p(") && !s.starts_with('ρ') {
         return Err(InstructionParseError::InvalidExpression(
             part_range,
             s.to_string(),

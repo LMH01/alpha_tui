@@ -4,14 +4,11 @@ use crossterm::event::{self, Event, KeyCode};
 use miette::{IntoDiagnostic, Result};
 use ratatui::{
     backend::Backend,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style, Stylize},
-    text::{Line, Span, Text},
-    widgets::{Block, BorderType, Borders, Clear, List, ListItem, ListState, Paragraph, Tabs},
-    Frame, Terminal,
+    style::{Style, Stylize},
+    text::{Line, Span}, Terminal,
 };
 
-use crate::runtime::{error_handling::RuntimeError, Runtime, RuntimeArgs};
+use crate::runtime::{error_handling::RuntimeError, Runtime};
 
 use self::{
     content::{InstructionListStates, MemoryListsManager},
@@ -77,13 +74,13 @@ impl App {
             if let Event::Key(key) = event::read().into_diagnostic()? {
                 match key.code {
                     KeyCode::Up => {
-                        if let State::Breakpoints(s, i) = &self.state {
+                        if let State::Breakpoints(_s, _i) = &self.state {
                             self.instruction_list_states.set_prev_visual();
                             //TODO See if it is a good idea to make the breakpoint list move too
                         }
                     }
                     KeyCode::Down => {
-                        if let State::Breakpoints(s, i) = &self.state {
+                        if let State::Breakpoints(_s, _i) = &self.state {
                             self.instruction_list_states.set_next_visual();
                         }
                     }
@@ -99,7 +96,7 @@ impl App {
                     KeyCode::Char('t') => {
                         // toggle keybind
                         match &self.state {
-                            State::Breakpoints(s, _) => {
+                            State::Breakpoints(_s, _) => {
                                 self.instruction_list_states.toggle_breakpoint()
                             }
                             _ => (),
@@ -253,7 +250,7 @@ impl App {
                 self.set_keybind_hint('n', true);
                 self.set_keybind_message('r', "Run next instruction");
             }
-            State::Breakpoints(s, i) => {
+            State::Breakpoints(_s, _i) => {
                 self.set_keybind_hint('q', true);
                 self.set_keybind_hint('b', true);
                 self.set_keybind_hint('↑', true);
@@ -267,7 +264,7 @@ impl App {
                 self.set_keybind_hint('q', true);
                 self.set_keybind_hint('s', true);
             }
-            State::Errored(e) => {
+            State::Errored(_e) => {
                 self.set_keybind_hint('q', true);
             }
         }

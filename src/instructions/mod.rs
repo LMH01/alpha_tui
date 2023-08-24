@@ -4,8 +4,7 @@ use crate::{
     base::{Comparison, Operation},
     instructions::error_handling::InstructionParseError,
     runtime::{
-        builder::{check_accumulator, check_memory_cell},
-        error_handling::{RuntimeBuildError, RuntimeErrorType},
+        error_handling::{RuntimeErrorType},
         ControlFlow, RuntimeArgs,
     },
 };
@@ -177,7 +176,7 @@ fn run_stack_op(runtime_args: &mut RuntimeArgs, op: &Operation) -> Result<(), Ru
                 runtime_args.stack.push(op.calc(b, a)?);
                 Ok(())
             }
-            None => return Err(RuntimeErrorType::StackOpFail(*op)),
+            None => Err(RuntimeErrorType::StackOpFail(*op)),
         },
         None => Err(RuntimeErrorType::StackOpFail(*op)),
     }
@@ -273,10 +272,10 @@ impl TryFrom<(&str, (usize, usize))> for TargetType {
     type Error = InstructionParseError;
 
     fn try_from(value: (&str, (usize, usize))) -> Result<Self, Self::Error> {
-        if let Ok(v) = parse_memory_cell(&value.0, value.1) {
+        if let Ok(v) = parse_memory_cell(value.0, value.1) {
             return Ok(Self::MemoryCell(v));
         }
-        Ok(Self::Accumulator(parse_alpha(&value.0, value.1)?))
+        Ok(Self::Accumulator(parse_alpha(value.0, value.1)?))
     }
 }
 
@@ -308,13 +307,13 @@ impl TryFrom<(&str, (usize, usize))> for Value {
     type Error = InstructionParseError;
 
     fn try_from(value: (&str, (usize, usize))) -> Result<Self, Self::Error> {
-        if let Ok(v) = parse_memory_cell(&value.0, value.1) {
+        if let Ok(v) = parse_memory_cell(value.0, value.1) {
             return Ok(Self::MemoryCell(v));
         }
         if let Ok(v) = value.0.parse::<i32>() {
             return Ok(Self::Constant(v));
         }
-        Ok(Self::Accumulator(parse_alpha(&value.0, value.1)?))
+        Ok(Self::Accumulator(parse_alpha(value.0, value.1)?))
     }
 }
 

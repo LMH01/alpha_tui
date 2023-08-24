@@ -139,7 +139,7 @@ mod tests {
 
     #[test]
     fn test_bpe_main_label_defined_multiple_times() {
-        let mut rb = RuntimeBuilder::new_debug(&vec!["a", "b"]);
+        let mut rb = RuntimeBuilder::new_debug(&["a", "b"]);
         let instructions_input = vec!["main:", "", "MAIN:"];
         assert_eq!(
             rb.build_instructions(&instructions_input, "test"),
@@ -158,7 +158,7 @@ mod tests {
 
     #[test]
     fn test_bpe_label_definined_multiple_times() {
-        let mut rb = RuntimeBuilder::new_debug(&vec!["a", "b"]);
+        let mut rb = RuntimeBuilder::new_debug(&["a", "b"]);
         let instructions_input = vec!["loop:", "", "loop:"];
         assert_eq!(
             rb.build_instructions(&instructions_input, "test"),

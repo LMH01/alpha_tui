@@ -133,7 +133,7 @@ impl RuntimeBuilder {
                 .map(|line| {
                     if let Some(index) = line.find("//") {
                         &line[..index]
-                    } else if let Some(index) = line.find("#") {
+                    } else if let Some(index) = line.find('#') {
                         &line[..index]
                     } else {
                         line

@@ -2,12 +2,12 @@ use std::collections::HashMap;
 
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
-    instructions::{parsing::parse_comparison, Instruction, TargetType, Value},
+    instructions::{Instruction, TargetType, Value},
     runtime::{builder::RuntimeBuilder, ControlFlow, RuntimeArgs},
 };
 
 /// Used to set the available memory cells during testing.
-const TEST_MEMORY_CELL_LABELS: &'static [&'static str] = &[
+const TEST_MEMORY_CELL_LABELS: &[&str] = &[
     "a", "b", "c", "d", "e", "f", "w", "x", "y", "z", "h1", "h2", "h3", "h4",
 ];
 
