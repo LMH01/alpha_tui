@@ -55,6 +55,7 @@ pub enum InstructionParseError {
     },
 }
 
+#[allow(clippy::match_same_arms)]
 impl InstructionParseError {
     pub fn range(&self) -> (usize, usize) {
         match self {
@@ -97,6 +98,7 @@ pub enum BuildProgramErrorTypes {
     MainLabelDefinedMultipleTimes,
 }
 
+#[allow(clippy::match_same_arms)]
 impl PartialEq for BuildProgramErrorTypes {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {

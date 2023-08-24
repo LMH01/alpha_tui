@@ -4,7 +4,7 @@ use crossterm::event::{self, Event, KeyCode};
 use miette::{IntoDiagnostic, Result};
 use ratatui::{
     backend::Backend,
-    style::{Style, Stylize},
+    style::Style,
     text::{Line, Span}, Terminal,
 };
 
@@ -12,7 +12,7 @@ use crate::runtime::{error_handling::RuntimeError, Runtime};
 
 use self::{
     content::{InstructionListStates, MemoryListsManager},
-    ui::draw_ui,
+    ui::draw,
 };
 
 /// Content used to fill the tui elements
@@ -47,12 +47,14 @@ pub struct App {
     state: State,
 }
 
+#[allow(clippy::cast_possible_wrap)]
+#[allow(clippy::cast_possible_truncation)]
 impl App {
     pub fn from_runtime(
         runtime: Runtime,
         filename: String,
-        instructions: Vec<String>,
-        set_breakpoints: Option<Vec<usize>>,
+        instructions: &[String],
+        set_breakpoints: &Option<Vec<usize>>,
     ) -> App {
         let mlm = MemoryListsManager::new(runtime.runtime_args());
         Self {
@@ -70,7 +72,7 @@ impl App {
 
     pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<()> {
         loop {
-            terminal.draw(|f| draw_ui(f, self)).into_diagnostic()?;
+            terminal.draw(|f| draw(f, self)).into_diagnostic()?;
             if let Event::Key(key) = event::read().into_diagnostic()? {
                 match key.code {
                     KeyCode::Up => {
@@ -89,32 +91,21 @@ impl App {
                             self.instruction_list_states.set_instruction_list_state(*i);
                             self.set_state(s.deref().clone());
                         }
-                        State::Default => self.start_breakpoint_mode(),
-                        State::Running => self.start_breakpoint_mode(),
+                        State::Default | State::Running => self.start_breakpoint_mode(),
                         _ => (),
                     },
-                    KeyCode::Char('t') => {
-                        // toggle keybind
-                        match &self.state {
-                            State::Breakpoints(_s, _) => {
-                                self.instruction_list_states.toggle_breakpoint()
-                            }
-                            _ => (),
-                        }
+                    KeyCode::Char('t') => if let State::Breakpoints(_, _) = &self.state {
+                        self.instruction_list_states.toggle_breakpoint();
                     }
                     KeyCode::Char('q') => match &self.state {
                         State::Errored(e) => Err(e.clone())?,
                         _ => return Ok(()),
                     },
-                    KeyCode::Char('w') => match self.state {
-                        State::Breakpoints(_, _) => {
-                            self.instruction_list_states.set_prev_visual();
-                        }
-                        _ => (),
-                    },
+                    KeyCode::Char('w') => if let State::Breakpoints(_, _) = self.state {
+                        self.instruction_list_states.set_prev_visual();
+                    }
                     KeyCode::Char('s') => match self.state {
-                        State::Finished(_) => self.reset(),
-                        State::Running => self.reset(),
+                        State::Running | State::Finished(_) => self.reset(),
                         State::Breakpoints(_, _) => {
                             self.instruction_list_states.set_next_visual();
                         }
@@ -167,7 +158,7 @@ impl App {
             spans.push(Line::from(vec![Span::styled(
                 format!("{} [{}]", v.action, v.key),
                 Style::default(),
-            )]))
+            )]));
         }
         spans
     }
@@ -230,7 +221,7 @@ impl App {
     // Sets a new state and updates keybind hints
     fn set_state(&mut self, state: State) {
         self.state = state;
-        self.update_keybind_hints()
+        self.update_keybind_hints();
     }
 
     fn update_keybind_hints(&mut self) {
@@ -272,7 +263,7 @@ impl App {
 
     // sets all keybind hints to disabled
     fn reset_keybind_hints(&mut self) {
-        for hint in self.keybind_hints.iter_mut() {
+        for hint in &mut self.keybind_hints {
             hint.1.enabled = false;
         }
         self.set_keybind_message('b', "Enter breakpoint mode");

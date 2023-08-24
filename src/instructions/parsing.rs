@@ -160,21 +160,18 @@ pub fn parse_operation(
     s: &str,
     part_range: (usize, usize),
 ) -> Result<Operation, InstructionParseError> {
-    match Operation::try_from(s) {
-        Ok(s) => Ok(s),
-        Err(_) => {
-            if !s.is_ascii() {
-                return Err(InstructionParseError::UnknownOperation(
-                    (part_range.0, part_range.1 + 1),
-                    s.to_string(),
-                ));
-            }
-            Err(InstructionParseError::UnknownOperation(
-                part_range,
+        if let Ok(s) = Operation::try_from(s) { Ok(s) } else {
+        if !s.is_ascii() {
+            return Err(InstructionParseError::UnknownOperation(
+                (part_range.0, part_range.1 + 1),
                 s.to_string(),
-            ))
+            ));
         }
-    }
+        Err(InstructionParseError::UnknownOperation(
+            part_range,
+            s.to_string(),
+        ))
+     }
 }
 
 /// Tries to parse the comparison.
@@ -184,31 +181,18 @@ pub fn parse_comparison(
     s: &str,
     part_range: (usize, usize),
 ) -> Result<Comparison, InstructionParseError> {
-    match Comparison::try_from(s) {
-        Ok(s) => Ok(s),
-        Err(_) => {
-            if !s.is_ascii() {
-                return Err(InstructionParseError::UnknownComparison(
-                    (part_range.0, part_range.1 + 1),
-                    s.to_string(),
-                ));
-            }
-            Err(InstructionParseError::UnknownComparison(
-                part_range,
+        if let Ok(s) = Comparison::try_from(s) { Ok(s) } else {
+        if !s.is_ascii() {
+            return Err(InstructionParseError::UnknownComparison(
+                (part_range.0, part_range.1 + 1),
                 s.to_string(),
-            ))
+            ));
         }
-    }
-}
-
-/// Tries to parse a number.
-///
-/// `part_range` indicates the area that is affected.
-fn parse_number(s: &str, part_range: (usize, usize)) -> Result<i32, InstructionParseError> {
-    match s.parse::<i32>() {
-        Ok(x) => Ok(x),
-        Err(_) => Err(InstructionParseError::NotANumber(part_range, s.to_string())),
-    }
+        Err(InstructionParseError::UnknownComparison(
+            part_range,
+            s.to_string(),
+        ))
+     }
 }
 
 /// Parses the name of a memory cell.
@@ -271,7 +255,7 @@ fn check_expression_missing(
         let pos = parts.join(" ").len();
         let base_help = "Make sure that you use a supported instruction.".to_string();
         let help = match suggestion {
-            Some(s) => format!("{}\nMaybe you are missing: {}", base_help, s),
+            Some(s) => format!("{base_help}\nMaybe you are missing: {s}"),
             None => base_help,
         };
         return Err(InstructionParseError::MissingExpression {

@@ -61,7 +61,7 @@ impl Runtime {
         self.control_flow.next_instruction_index
     }
 
-    /// Returns reference to **runtime_args**.
+    /// Returns reference to **`runtime_args`**.
     pub fn runtime_args(&self) -> &RuntimeArgs {
         &self.runtime_args
     }
@@ -99,7 +99,7 @@ impl ControlFlow {
         }
     }
 
-    /// Updates **next_instruction_index** if **label** is contained in **instruction_labels**,
+    /// Updates **`next_instruction_index`** if **label** is contained in **`instruction_labels`**,
     /// otherwise returns an error.
     pub fn next_instruction_index(&mut self, label: &str) -> Result<(), RuntimeErrorType> {
         if let Some(index) = self.instruction_labels.get(label) {
@@ -108,10 +108,6 @@ impl ControlFlow {
         } else {
             Err(RuntimeErrorType::LabelMissing(label.to_string()))
         }
-    }
-
-    pub fn set_initial_instruction(&mut self, initial_instruction: usize) {
-        self.initial_instruction = initial_instruction;
     }
 
     /// Resets the `next_instruction_index` to 0 and clears the `instruction_labels` map.
@@ -129,6 +125,7 @@ impl ControlFlow {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[allow(clippy::module_name_repetitions)]
 pub struct RuntimeArgs {
     /// Current values stored in accumulators
     pub accumulators: HashMap<usize, Accumulator>,
@@ -174,7 +171,7 @@ impl<'a> RuntimeArgs {
     }
 
     pub fn new_debug(memory_cells: &'a [&'static str]) -> Self {
-        Self::new(4, memory_cells.iter().map(|f| f.to_string()).collect())
+        Self::new(4, memory_cells.iter().map(|f| (*f).to_string()).collect())
     }
 
     #[allow(dead_code)]
@@ -203,7 +200,7 @@ impl<'a> RuntimeArgs {
     }
 
     /// Creates a new memory cell with label **label** if it does not already exist
-    /// and adds it to the **memory_cells* hashmap.
+    /// and adds it to the **`memory_cells`* hashmap.
     #[allow(dead_code)]
     pub fn add_storage_cell(&mut self, label: &str) {
         if !self.memory_cells.contains_key(label) {
@@ -220,9 +217,9 @@ impl<'a> RuntimeArgs {
     }
 
     /// Checks if the accumulator with id exists.
-    pub fn exists_accumulator(&self, id: &usize) -> bool {
+    pub fn exists_accumulator(&self, id: usize) -> bool {
         for acc in &self.accumulators {
-            if acc.0 == id {
+            if acc.0 == &id {
                 return true;
             }
         }
@@ -231,10 +228,10 @@ impl<'a> RuntimeArgs {
 
     /// Resets all values back to None.
     pub fn reset(&mut self) {
-        for acc in self.accumulators.iter_mut() {
+        for acc in &mut self.accumulators {
             acc.1.data = None;
         }
-        for cell in self.memory_cells.iter_mut() {
+        for cell in &mut self.memory_cells {
             cell.1.data = None;
         }
         self.stack = Vec::new();

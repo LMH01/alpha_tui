@@ -3,6 +3,7 @@ use std::fmt::Display;
 use crate::runtime::error_handling::{CalcError, RuntimeErrorType};
 
 /// A single accumulator, represents "Akkumulator/Alpha" from SysInf lecture.
+#[allow(clippy::doc_markdown)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct Accumulator {
     /// Used to identify accumulator
@@ -29,6 +30,7 @@ impl Display for Accumulator {
 
 /// Representation of a single memory cell.
 /// The term memory cell is equal to "Speicherzelle" in the SysInf lecture.
+#[allow(clippy::doc_markdown)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct MemoryCell {
     pub label: String,
@@ -85,16 +87,10 @@ impl TryFrom<&str> for Comparison {
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
             "<" => Ok(Self::Lt),
-            "<=" => Ok(Self::Le),
-            "≤" => Ok(Self::Le),
-            "=<" => Ok(Self::Le),
-            "=" => Ok(Self::Eq),
-            "==" => Ok(Self::Eq),
-            "!=" => Ok(Self::Neq),
-            "≠" => Ok(Self::Neq),
-            ">=" => Ok(Self::Ge),
-            "=>" => Ok(Self::Ge),
-            "≥" => Ok(Self::Ge),
+            "<=" | "=<" | "≤" => Ok(Self::Le),
+            "=" | "==" => Ok(Self::Eq),
+            "!=" | "≠" => Ok(Self::Neq),
+            ">=" | "=>" | "≥" => Ok(Self::Ge),
             ">" => Ok(Self::Gt),
             _ => Err(()),
         }
@@ -111,7 +107,7 @@ pub enum Operation {
 }
 
 impl Operation {
-    pub fn calc(&self, x: i32, y: i32) -> Result<i32, RuntimeErrorType> {
+    pub fn calc(self, x: i32, y: i32) -> Result<i32, RuntimeErrorType> {
         match self {
             Self::Add => match x.checked_add(y) {
                 Some(v) => Ok(v),
@@ -138,7 +134,11 @@ impl Operation {
                 }),
             },
             Self::Div => {
-                if y != 0 {
+                if y == 0 {
+                    Err(RuntimeErrorType::IllegalCalculation {
+                        cause: CalcError::AttemptToDivideByZero(),
+                    })
+                } else {
                     match x.checked_div(y) {
                         Some(v) => Ok(v),
                         None => Err(RuntimeErrorType::IllegalCalculation {
@@ -148,14 +148,14 @@ impl Operation {
                             ),
                         }),
                     }
-                } else {
-                    Err(RuntimeErrorType::IllegalCalculation {
-                        cause: CalcError::AttemptToDivideByZero(),
-                    })
                 }
             }
             Self::Mod => {
-                if y != 0 {
+                if y == 0 {
+                    Err(RuntimeErrorType::IllegalCalculation {
+                        cause: CalcError::AttemptToDivideByZero(),
+                    })
+                } else {
                     match x.checked_rem_euclid(y) {
                         Some(v) => Ok(v),
                         None => Err(RuntimeErrorType::IllegalCalculation {
@@ -165,10 +165,6 @@ impl Operation {
                             ),
                         }),
                     }
-                } else {
-                    Err(RuntimeErrorType::IllegalCalculation {
-                        cause: CalcError::AttemptToDivideByZero(),
-                    })
                 }
             }
         }
@@ -194,10 +190,8 @@ impl TryFrom<&str> for Operation {
         match value {
             "+" => Ok(Operation::Add),
             "-" => Ok(Operation::Sub),
-            "*" => Ok(Operation::Mul),
-            "×" => Ok(Operation::Mul),
-            "/" => Ok(Operation::Div),
-            "÷" => Ok(Operation::Div),
+            "*" | "×" => Ok(Operation::Mul),
+            "/" | "÷" => Ok(Operation::Div),
             "%" => Ok(Operation::Mod),
             _ => Err(()),
         }

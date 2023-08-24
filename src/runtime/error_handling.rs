@@ -3,7 +3,7 @@ use thiserror::Error;
 
 use crate::base::Operation;
 
-/// Errors that can occur when a runtime is constructed from a RuntimeBuilder.
+/// Errors that can occur when a runtime is constructed from a `RuntimeBuilder`.
 #[derive(Debug, PartialEq, Error, Diagnostic)]
 pub enum RuntimeBuildError {
     #[error("runtime arguments missing")]

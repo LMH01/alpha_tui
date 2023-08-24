@@ -17,8 +17,9 @@ pub struct InstructionListStates {
     current_index: i32,
 }
 
+#[allow(clippy::cast_sign_loss)]
 impl InstructionListStates {
-    pub fn new(instructions: Vec<String>, set_breakpoints: Option<&Vec<usize>>) -> Self {
+    pub fn new(instructions: &[String], set_breakpoints: Option<&Vec<usize>>) -> Self {
         let mut i = Vec::new();
         for (index, s) in instructions.iter().enumerate() {
             if let Some(v) = set_breakpoints {
@@ -49,17 +50,17 @@ impl InstructionListStates {
     /// Used to set the line that should be highlighted
     pub fn set(&mut self, current_instruction_idx: i32) {
         self.current_index = current_instruction_idx - 1_i32;
-        if current_instruction_idx - self.last_index != 1 {
+        if current_instruction_idx - self.last_index == 1 {
+            self.instruction_list_state
+                .select(Some(current_instruction_idx as usize));
+            self.breakpoint_list_state
+                .select(Some(current_instruction_idx as usize));
+        } else {
             // line jump detected, only increase state by one
             self.instruction_list_state
                 .select(Some((self.last_index + 1) as usize));
             self.breakpoint_list_state
                 .select(Some((self.last_index + 1) as usize));
-        } else {
-            self.instruction_list_state
-                .select(Some(current_instruction_idx as usize));
-            self.breakpoint_list_state
-                .select(Some(current_instruction_idx as usize));
         }
         self.last_index = current_instruction_idx;
     }
@@ -164,7 +165,8 @@ pub struct MemoryListsManager {
 }
 
 impl MemoryListsManager {
-    /// Creates a new MemoryListsManager with the current values of the runtime arguments.
+
+    /// Creates a new `MemoryListsManager` with the current values of the runtime arguments.
     pub fn new(runtime_args: &RuntimeArgs) -> Self {
         let mut accumulators = HashMap::new();
         for acc in &runtime_args.accumulators {
@@ -245,7 +247,7 @@ impl MemoryListsManager {
             if cell.1 .1 {
                 item = item.style(Style::default().bg(Color::DarkGray));
             }
-            list.push((item, cell.0))
+            list.push((item, cell.0));
         }
         list.sort_by(|a, b| a.1.cmp(b.1));
         list.iter().map(|f| f.0.clone()).collect()

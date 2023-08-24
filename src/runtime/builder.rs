@@ -19,6 +19,7 @@ use super::{
 /// This runtime can be configured to only allow a selected amount of accumulators and memory cells.
 /// When a runtime is build from this builder compatibility checks are performed.
 #[derive(Debug)]
+#[allow(clippy::module_name_repetitions)]
 pub struct RuntimeBuilder {
     runtime_args: Option<RuntimeArgs>,
     instructions: Option<Vec<Instruction>>,
@@ -75,7 +76,7 @@ impl RuntimeBuilder {
         // Inject end labels to give option to end program by using goto END
         inject_end_labels(
             &mut self.control_flow,
-            &self.instructions.as_ref().unwrap().len(),
+            self.instructions.as_ref().unwrap().len(),
         );
         if let Err(e) = self.check_labels() {
             return Err(RuntimeBuildError::LabelUndefined(e));
@@ -119,6 +120,7 @@ impl RuntimeBuilder {
     ///
     /// If an instruction could not be parsed, an error is returned containing the reason.
     #[allow(clippy::ptr_arg)]
+    #[allow(clippy::match_same_arms)]
     pub fn build_instructions(
         &mut self,
         instructions_input: &Vec<&str>,
@@ -208,7 +210,7 @@ impl RuntimeBuilder {
                             ),
                             reason: e,
                         },
-                    })?
+                    })?;
                     //})?
                 }
             }
@@ -226,7 +228,7 @@ impl RuntimeBuilder {
 
     /// Sets the instructions to the provided instructions.
     ///
-    /// If loops and labels are used, they have to be set manually by using [RuntimeBuilder::add_label](#add_label).
+    /// If loops and labels are used, they have to be set manually by using [`RuntimeBuilder::add_label`](#add_label).
     #[allow(dead_code)]
     pub fn set_instructions(&mut self, instructions: Vec<Instruction>) {
         self.instructions = Some(instructions);
@@ -234,7 +236,7 @@ impl RuntimeBuilder {
 
     /// Adds label to instruction labels.
     ///
-    /// Errors when **instruction_index** is out of bounds.
+    /// Errors when **`instruction_index`** is out of bounds.
     ///
     /// Note: Make sure that you start counting at 0 and not 1!
     #[allow(dead_code)]
@@ -265,8 +267,7 @@ impl RuntimeBuilder {
         }
         for instruction in self.instructions.as_ref().unwrap() {
             match instruction {
-                Instruction::Goto(label) => check_label(&self.control_flow, label)?,
-                Instruction::JumpIf(_, _, _, label) => check_label(&self.control_flow, label)?,
+                Instruction::Goto(label) | Instruction::JumpIf(_, _, _, label) => check_label(&self.control_flow, label)?,
                 _ => (),
             };
         }
@@ -277,7 +278,7 @@ impl RuntimeBuilder {
     ///
     /// If something missing is found, a runtime build error is returned.
     ///
-    /// If add_missing is true, the missing accumulator/memory_cell is added with empty value to the runtime args instead of returning an error.
+    /// If `add_missing` is true, the missing `accumulator/memory_cell` is added with empty value to the runtime args instead of returning an error.
     fn check_missing_vars(&mut self, add_missing: bool) -> Result<(), RuntimeBuildError> {
         if self.instructions.is_none() {
             return Ok(());
@@ -300,19 +301,19 @@ impl RuntimeBuilder {
     }
 }
 
-fn inject_end_labels(control_flow: &mut ControlFlow, last_instruction_index: &usize) {
+fn inject_end_labels(control_flow: &mut ControlFlow, last_instruction_index: usize) {
     control_flow
         .instruction_labels
-        .insert("END".to_string(), *last_instruction_index);
+        .insert("END".to_string(), last_instruction_index);
     control_flow
         .instruction_labels
-        .insert("ENDE".to_string(), *last_instruction_index);
+        .insert("ENDE".to_string(), last_instruction_index);
     control_flow
         .instruction_labels
-        .insert("end".to_string(), *last_instruction_index);
+        .insert("end".to_string(), last_instruction_index);
     control_flow
         .instruction_labels
-        .insert("ende".to_string(), *last_instruction_index);
+        .insert("ende".to_string(), last_instruction_index);
 }
 
 fn check_label(control_flow: &ControlFlow, label: &str) -> Result<(), String> {
@@ -327,12 +328,12 @@ fn check_label(control_flow: &ControlFlow, label: &str) -> Result<(), String> {
 /// If `add_missing` is set, the accumulator is added with empty value instead of returning an error.
 pub fn check_accumulator(
     runtime_args: &mut RuntimeArgs,
-    id: &usize,
+    id: usize,
     add_missing: bool,
 ) -> Result<(), RuntimeBuildError> {
     if !runtime_args.exists_accumulator(id) {
         if add_missing {
-            runtime_args.accumulators.insert(*id, Accumulator::new(*id));
+            runtime_args.accumulators.insert(id, Accumulator::new(id));
         } else {
             return Err(RuntimeBuildError::AccumulatorMissing(id.to_string()));
         }
@@ -361,16 +362,16 @@ pub fn check_memory_cell(
 }
 
 impl TargetType {
-    /// Checks if this type is missing in runtime_args.
+    /// Checks if this type is missing in `runtime_args`.
     ///
-    /// If add_missing is set, the type is added to runtime args instead of returning an error.
+    /// If `add_missing` is set, the type is added to runtime args instead of returning an error.
     pub fn check(
         &self,
         runtime_args: &mut RuntimeArgs,
         add_missing: bool,
     ) -> Result<(), RuntimeBuildError> {
         match self {
-            Self::Accumulator(index) => check_accumulator(runtime_args, index, add_missing)?,
+            Self::Accumulator(index) => check_accumulator(runtime_args, *index, add_missing)?,
             Self::MemoryCell(name) => check_memory_cell(runtime_args, name, add_missing)?,
         }
         Ok(())
@@ -378,18 +379,18 @@ impl TargetType {
 }
 
 impl Value {
-    /// Checks if this type is missing in runtime_args.
+    /// Checks if this type is missing in `runtime_args`.
     ///
-    /// If add_missing is set, the type is added to runtime args instead of returning an error.
+    /// If `add_missing` is set, the type is added to runtime args instead of returning an error.
     pub fn check(
         &self,
         runtime_args: &mut RuntimeArgs,
         add_missing: bool,
     ) -> Result<(), RuntimeBuildError> {
         match self {
-            Self::Accumulator(index) => check_accumulator(runtime_args, index, add_missing)?,
+            Self::Accumulator(index) => check_accumulator(runtime_args, *index, add_missing)?,
             Self::MemoryCell(name) => check_memory_cell(runtime_args, name, add_missing)?,
-            _ => (),
+            Self::Constant(_) => (),
         }
         Ok(())
     }

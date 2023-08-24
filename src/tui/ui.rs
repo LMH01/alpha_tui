@@ -10,7 +10,8 @@ use text_align::TextAlign;
 use super::{App, State};
 
 /// Draw the ui
-pub fn draw_ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
+#[allow(clippy::too_many_lines)]
+pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     // color config
     let breakpoint_accent_color = Color::Blue;
     let error_color = Color::Red;
@@ -110,10 +111,7 @@ pub fn draw_ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .instructions()
         .iter()
         .map(|f| {
-            let v = match f.2 {
-                false => " ".to_string(),
-                true => "*".to_string(),
-            };
+            let v = if f.2 {"*".to_string()} else { " ".to_string() };
             ListItem::new(Text::styled(
                 v.center_align(chunks[0].width.saturating_sub(2) as usize),
                 Style::default().fg(breakpoint_accent_color),

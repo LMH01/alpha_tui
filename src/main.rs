@@ -46,7 +46,7 @@ fn main() -> Result<()> {
         }
     };
     rb.build_instructions(
-        &instructions.iter().map(|s| s.as_str()).collect(),
+        &instructions.iter().map(String::as_str).collect(),
         &args.input,
     )?;
 
@@ -64,7 +64,7 @@ fn main() -> Result<()> {
     let mut terminal = Terminal::new(backend).unwrap();
 
     // create app
-    let mut app = App::from_runtime(rt, args.input, instructions, args.breakpoints);
+    let mut app = App::from_runtime(rt, args.input, &instructions, &args.breakpoints);
     let res = app.run(&mut terminal);
 
     // restore terminal
