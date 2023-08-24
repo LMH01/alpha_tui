@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 
 use ratatui::{
-    style::{Color, Style},
+    style::Style,
     widgets::{ListItem, ListState},
 };
 
 use crate::runtime::RuntimeArgs;
+
+use super::LIST_ITEM_HIGHLIGHT_COLOR;
 
 /// Used to store the instructions and to remember what instruction should currently be highlighted.
 #[derive(Debug, Clone)]
@@ -226,7 +228,7 @@ impl MemoryListsManager {
             let last_stack = new_stack
                 .pop()
                 .unwrap()
-                .style(Style::default().bg(Color::DarkGray));
+                .style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
             new_stack.push(last_stack);
         }
         self.stack = new_stack;
@@ -238,7 +240,7 @@ impl MemoryListsManager {
         for acc in &self.accumulators {
             let mut item = ListItem::new(acc.1 .0.clone());
             if acc.1 .1 {
-                item = item.style(Style::default().bg(Color::DarkGray));
+                item = item.style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
             }
             list.push((item, acc.0));
         }
@@ -252,7 +254,7 @@ impl MemoryListsManager {
         for cell in &self.memory_cells {
             let mut item = ListItem::new(cell.1 .0.clone());
             if cell.1 .1 {
-                item = item.style(Style::default().bg(Color::DarkGray));
+                item = item.style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
             }
             list.push((item, cell.0));
         }

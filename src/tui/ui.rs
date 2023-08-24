@@ -1,24 +1,17 @@
 use ratatui::{
     prelude::{Alignment, Backend, Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     text::{Line, Span, Text},
     widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph, Tabs},
     Frame,
 };
 use text_align::TextAlign;
 
-use super::{App, State};
+use super::{App, State, KEY_HINTS_COLOR, ERROR_COLOR, BREAKPOINT_ACCENT_COLOR, CODE_AREA_DEFAULT_COLOR, LIST_ITEM_HIGHLIGHT_COLOR, EXECUTION_FINISHED_POPUP_COLOR};
 
 /// Draw the ui
 #[allow(clippy::too_many_lines)]
 pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
-    // color config
-    let breakpoint_accent_color = Color::Blue;
-    let error_color = Color::Red;
-    let code_area_default_color = Color::Green;
-    let key_hints_color = Color::Cyan;
-    let current_instruction_highlight_color = Color::DarkGray;
-    let execution_finished_popup_color = Color::Green;
 
     let global_chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -41,7 +34,7 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     // Key hints
     let key_hints = Tabs::new(app.active_keybind_hints())
         .block(Block::default().borders(Borders::NONE))
-        .style(Style::default().fg(key_hints_color));
+        .style(Style::default().fg(KEY_HINTS_COLOR));
     f.render_widget(key_hints, global_chunks[1]);
 
     let right_chunks = Layout::default()
@@ -55,14 +48,14 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .title_alignment(Alignment::Left)
         .border_type(BorderType::Rounded);
     if let State::Errored(_) = app.state {
-        code_area = code_area.border_style(Style::default().fg(error_color));
+        code_area = code_area.border_style(Style::default().fg(ERROR_COLOR));
     } else if let State::Breakpoints(_, _) = app.state {
         code_area = code_area
-            .border_style(Style::default().fg(breakpoint_accent_color))
+            .border_style(Style::default().fg(BREAKPOINT_ACCENT_COLOR))
             .title("Breakpoint mode");
     } else {
         code_area = code_area
-            .border_style(Style::default().fg(code_area_default_color))
+            .border_style(Style::default().fg(CODE_AREA_DEFAULT_COLOR))
             .title(format!("File: {}", app.filename.clone()));
     }
 
@@ -81,11 +74,11 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .block(code_area)
         .highlight_style(if let State::Breakpoints(_, _) = app.state {
             Style::default()
-                .bg(breakpoint_accent_color)
+                .bg(BREAKPOINT_ACCENT_COLOR)
                 .add_modifier(Modifier::BOLD)
         } else {
             Style::default()
-                .bg(current_instruction_highlight_color)
+                .bg(LIST_ITEM_HIGHLIGHT_COLOR)
                 .add_modifier(Modifier::BOLD)
         })
         .highlight_symbol(">> ");
@@ -101,7 +94,7 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let breakpoint_area = Block::default()
         .borders(Borders::ALL)
         .title("BPs")
-        .border_style(Style::default().fg(breakpoint_accent_color))
+        .border_style(Style::default().fg(BREAKPOINT_ACCENT_COLOR))
         .title_alignment(Alignment::Center)
         .border_type(BorderType::Rounded);
 
@@ -118,7 +111,7 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
             };
             ListItem::new(Text::styled(
                 v.center_align(chunks[0].width.saturating_sub(2) as usize),
-                Style::default().fg(breakpoint_accent_color),
+                Style::default().fg(BREAKPOINT_ACCENT_COLOR),
             ))
         })
         .collect();
@@ -167,7 +160,7 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         let block = Block::default()
             .title("Execution finished!")
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(execution_finished_popup_color));
+            .border_style(Style::default().fg(EXECUTION_FINISHED_POPUP_COLOR));
         let area = centered_rect(60, 20, f.size());
         let text = Paragraph::new(
             "Press [q] to exit.\nPress [s] to reset to start.\nPress [d] to dismiss this message.",
@@ -182,7 +175,7 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         let block = Block::default()
             .title("Runtime error!")
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(error_color));
+            .border_style(Style::default().fg(ERROR_COLOR));
         let area = centered_rect(60, 30, f.size());
         let text = Paragraph::new(format!(
             "Execution can not continue due to the following problem:\n{}\n\nPress [q] to exit.",

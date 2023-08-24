@@ -4,7 +4,7 @@ use crossterm::event::{self, Event, KeyCode};
 use miette::{IntoDiagnostic, Result};
 use ratatui::{
     backend::Backend,
-    style::Style,
+    style::{Style, Color},
     text::{Line, Span},
     Terminal,
 };
@@ -20,6 +20,14 @@ use self::{
 mod content;
 /// Drawing of the ui
 mod ui;
+
+// color config
+const BREAKPOINT_ACCENT_COLOR: Color = Color::Magenta;
+const ERROR_COLOR: Color = Color::Red;
+const CODE_AREA_DEFAULT_COLOR: Color = Color::Green;
+const KEY_HINTS_COLOR: Color = Color::LightBlue;
+const LIST_ITEM_HIGHLIGHT_COLOR: Color = Color::Rgb(98, 114, 164);
+const EXECUTION_FINISHED_POPUP_COLOR: Color = Color::Green;
 
 #[derive(Debug, PartialEq, Clone)]
 enum State {
