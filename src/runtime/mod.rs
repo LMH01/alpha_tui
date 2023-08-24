@@ -33,7 +33,7 @@ impl Runtime {
     }
 
     /// Runs the next instruction only.
-    /// 
+    ///
     /// Returns true when no instruction was run because the last instruction was already run.
     pub fn step(&mut self) -> Result<bool, RuntimeError> {
         let current_instruction = self.control_flow.next_instruction_index;
@@ -71,7 +71,6 @@ impl Runtime {
         self.control_flow.reset_soft();
         self.runtime_args.reset();
     }
-    
 }
 
 /// Used to control what instruction should be executed next.
@@ -288,7 +287,7 @@ fn read_memory_cells_from_file(path: &str) -> Result<HashMap<String, MemoryCell>
 mod tests {
     use crate::{
         base::{Comparison, Operation},
-        instructions::{Instruction, Value, TargetType},
+        instructions::{Instruction, TargetType, Value},
         runtime::{builder::RuntimeBuilder, error_handling::RuntimeBuildError},
     };
 
@@ -302,8 +301,24 @@ mod tests {
     #[test]
     fn test_label_missing() {
         test_label_instruction(Instruction::Goto("loop".to_string()), "loop");
-        test_label_instruction(Instruction::JumpIf(Value::Accumulator(0), Comparison::Eq, Value::Accumulator(0), "loop".to_string()), "loop");
-        test_label_instruction(Instruction::JumpIf(Value::Accumulator(0), Comparison::Eq, Value::MemoryCell("h1".to_string()), "loop".to_string()), "loop");
+        test_label_instruction(
+            Instruction::JumpIf(
+                Value::Accumulator(0),
+                Comparison::Eq,
+                Value::Accumulator(0),
+                "loop".to_string(),
+            ),
+            "loop",
+        );
+        test_label_instruction(
+            Instruction::JumpIf(
+                Value::Accumulator(0),
+                Comparison::Eq,
+                Value::MemoryCell("h1".to_string()),
+                "loop".to_string(),
+            ),
+            "loop",
+        );
     }
 
     fn test_label_instruction(instruction: Instruction, label: &str) {
@@ -323,8 +338,19 @@ mod tests {
 
     #[test]
     fn test_accumulator_missing() {
-        test_accumulator_instruction(Instruction::Assign(TargetType::Accumulator(0), Value::Accumulator(1)), vec![&0_usize, &1_usize]);
-        test_accumulator_instruction(Instruction::Calc(TargetType::Accumulator(0), Value::Accumulator(1), Operation::Add, Value::Accumulator(2)), vec![&0_usize, &1_usize, &2_usize]);
+        test_accumulator_instruction(
+            Instruction::Assign(TargetType::Accumulator(0), Value::Accumulator(1)),
+            vec![&0_usize, &1_usize],
+        );
+        test_accumulator_instruction(
+            Instruction::Calc(
+                TargetType::Accumulator(0),
+                Value::Accumulator(1),
+                Operation::Add,
+                Value::Accumulator(2),
+            ),
+            vec![&0_usize, &1_usize, &2_usize],
+        );
     }
 
     fn test_accumulator_instruction(instruction: Instruction, to_test: Vec<&usize>) {
@@ -362,8 +388,22 @@ mod tests {
 
     #[test]
     fn test_memory_cell_missing() {
-        test_memory_cell_instruction(Instruction::Assign(TargetType::MemoryCell("h1".to_string()), Value::MemoryCell("h2".to_string())), vec!["h1", "h2"]);
-        test_memory_cell_instruction(Instruction::Calc(TargetType::MemoryCell("h1".to_string()), Value::MemoryCell("h2".to_string()), Operation::Add, Value::MemoryCell("h3".to_string())), vec!["h1", "h2", "h3"]);
+        test_memory_cell_instruction(
+            Instruction::Assign(
+                TargetType::MemoryCell("h1".to_string()),
+                Value::MemoryCell("h2".to_string()),
+            ),
+            vec!["h1", "h2"],
+        );
+        test_memory_cell_instruction(
+            Instruction::Calc(
+                TargetType::MemoryCell("h1".to_string()),
+                Value::MemoryCell("h2".to_string()),
+                Operation::Add,
+                Value::MemoryCell("h3".to_string()),
+            ),
+            vec!["h1", "h2", "h3"],
+        );
     }
 
     fn test_memory_cell_instruction(instruction: Instruction, to_test: Vec<&str>) {

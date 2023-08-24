@@ -1,11 +1,16 @@
-use ratatui::{prelude::{Backend, Layout, Direction, Constraint, Alignment, Rect}, Frame, style::{Color, Style, Modifier}, widgets::{Tabs, Block, Borders, BorderType, ListItem, List, Paragraph, Clear}, text::{Line, Span, Text}};
+use ratatui::{
+    prelude::{Alignment, Backend, Constraint, Direction, Layout, Rect},
+    style::{Color, Modifier, Style},
+    text::{Line, Span, Text},
+    widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph, Tabs},
+    Frame,
+};
 use text_align::TextAlign;
 
 use super::{App, State};
 
 /// Draw the ui
 pub fn draw_ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
-
     // color config
     let breakpoint_accent_color = Color::Blue;
     let error_color = Color::Red;
@@ -51,10 +56,12 @@ pub fn draw_ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     if let State::Errored(_) = app.state {
         code_area = code_area.border_style(Style::default().fg(error_color));
     } else if let State::Breakpoints(_, _) = app.state {
-        code_area = code_area.border_style(Style::default().fg(breakpoint_accent_color))
+        code_area = code_area
+            .border_style(Style::default().fg(breakpoint_accent_color))
             .title("Breakpoint mode");
     } else {
-        code_area = code_area.border_style(Style::default().fg(code_area_default_color))
+        code_area = code_area
+            .border_style(Style::default().fg(code_area_default_color))
             .title(format!("File: {}", app.filename.clone()));
     }
 
@@ -71,42 +78,57 @@ pub fn draw_ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     // Create a List from all instructions and highlight current instruction
     let items = List::new(code_area_items)
         .block(code_area)
-        .highlight_style(
-            if let State::Breakpoints(_, _) = app.state {
-                Style::default()
-                    .bg(breakpoint_accent_color)
-                    .add_modifier(Modifier::BOLD)
-            } else {
-                Style::default()
-                    .bg(current_instruction_highlight_color)
-                    .add_modifier(Modifier::BOLD)
-            }
-        )
+        .highlight_style(if let State::Breakpoints(_, _) = app.state {
+            Style::default()
+                .bg(breakpoint_accent_color)
+                .add_modifier(Modifier::BOLD)
+        } else {
+            Style::default()
+                .bg(current_instruction_highlight_color)
+                .add_modifier(Modifier::BOLD)
+        })
         .highlight_symbol(">> ");
 
     // We can now render the item list
-    f.render_stateful_widget(items, chunks[1], &mut app.instruction_list_states.instruction_list_state_mut());
+    f.render_stateful_widget(
+        items,
+        chunks[1],
+        &mut app.instruction_list_states.instruction_list_state_mut(),
+    );
 
     // Breakpoint list
     let breakpoint_area = Block::default()
         .borders(Borders::ALL)
-        .title("BPs").border_style(Style::default().fg(breakpoint_accent_color))
+        .title("BPs")
+        .border_style(Style::default().fg(breakpoint_accent_color))
         .title_alignment(Alignment::Center)
         .border_type(BorderType::Rounded);
 
     // Create the items for the list
-    let breakpoint_list_items: Vec<ListItem> = app.instruction_list_states.instructions().iter().map(|f| {
-        let v = match f.2 {
-            false => format!(" "),
-            true => format!("*"),
-        };
-        ListItem::new(Text::styled(format!("{}", v).center_align(chunks[0].width.checked_sub(2).unwrap_or(0) as usize), Style::default().fg(breakpoint_accent_color)))
-    }).collect();
- 
+    let breakpoint_list_items: Vec<ListItem> = app
+        .instruction_list_states
+        .instructions()
+        .iter()
+        .map(|f| {
+            let v = match f.2 {
+                false => format!(" "),
+                true => format!("*"),
+            };
+            ListItem::new(Text::styled(
+                format!("{}", v).center_align(chunks[0].width.checked_sub(2).unwrap_or(0) as usize),
+                Style::default().fg(breakpoint_accent_color),
+            ))
+        })
+        .collect();
+
     // Create the list itself
     let breakpoints = List::new(breakpoint_list_items).block(breakpoint_area);
 
-    f.render_stateful_widget(breakpoints, chunks[0], &mut app.instruction_list_states.breakpoint_list_state_mut());
+    f.render_stateful_widget(
+        breakpoints,
+        chunks[0],
+        &mut app.instruction_list_states.breakpoint_list_state_mut(),
+    );
     //f.render_widget(breakpoints, chunks[0]);
 
     // Accumulator block
@@ -145,7 +167,10 @@ pub fn draw_ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
             .borders(Borders::ALL)
             .border_style(Style::default().fg(execution_finished_popup_color));
         let area = centered_rect(60, 20, f.size());
-        let text = Paragraph::new("Press [q] to exit.\nPress [s] to reset to start.\nPress [d] to dismiss this message.").block(block);
+        let text = Paragraph::new(
+            "Press [q] to exit.\nPress [s] to reset to start.\nPress [d] to dismiss this message.",
+        )
+        .block(block);
         f.render_widget(Clear, area); //this clears out the background
         f.render_widget(text, area);
     }

@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
-    instructions::{Instruction, TargetType, Value, parsing::parse_comparison},
-    runtime::{ControlFlow, RuntimeArgs, builder::RuntimeBuilder},
+    instructions::{parsing::parse_comparison, Instruction, TargetType, Value},
+    runtime::{builder::RuntimeBuilder, ControlFlow, RuntimeArgs},
 };
 
 /// Used to set the available memory cells during testing.
@@ -174,7 +174,7 @@ fn test_parse_calc_accumulator_with_memory_cell_accumulator() {
             Value::Accumulator(0)
         ))
     );
-    
+
     assert_eq!(
         Instruction::try_from("a := p(h1) - a"),
         Ok(Instruction::Calc(
@@ -382,23 +382,15 @@ fn test_stack() {
     Instruction::Assign(TargetType::Accumulator(0), Value::Constant(5))
         .run(&mut args, &mut control_flow)
         .unwrap();
-    Instruction::Push
-        .run(&mut args, &mut control_flow)
-        .unwrap();
+    Instruction::Push.run(&mut args, &mut control_flow).unwrap();
     Instruction::Assign(TargetType::Accumulator(0), Value::Constant(10))
         .run(&mut args, &mut control_flow)
         .unwrap();
-    Instruction::Push
-        .run(&mut args, &mut control_flow)
-        .unwrap();
+    Instruction::Push.run(&mut args, &mut control_flow).unwrap();
     assert_eq!(args.stack, vec![5, 10]);
-    Instruction::Pop
-        .run(&mut args, &mut control_flow)
-        .unwrap();
+    Instruction::Pop.run(&mut args, &mut control_flow).unwrap();
     assert_eq!(args.accumulators.get(&0).unwrap().data.unwrap(), 10);
-    Instruction::Pop
-        .run(&mut args, &mut control_flow)
-        .unwrap();
+    Instruction::Pop.run(&mut args, &mut control_flow).unwrap();
     assert_eq!(args.accumulators.get(&0).unwrap().data.unwrap(), 5);
     assert_eq!(args.stack.len(), 0);
 }
@@ -424,11 +416,26 @@ fn test_run_stack_op() {
 
 #[test]
 fn test_parse_stack_op() {
-    assert_eq!(Instruction::try_from("stack+"), Ok(Instruction::StackOp(Operation::Add)));
-    assert_eq!(Instruction::try_from("stack-"), Ok(Instruction::StackOp(Operation::Sub)));
-    assert_eq!(Instruction::try_from("stack*"), Ok(Instruction::StackOp(Operation::Mul)));
-    assert_eq!(Instruction::try_from("stack/"), Ok(Instruction::StackOp(Operation::Div)));
-    assert_eq!(Instruction::try_from("stack%"), Ok(Instruction::StackOp(Operation::Mod)));
+    assert_eq!(
+        Instruction::try_from("stack+"),
+        Ok(Instruction::StackOp(Operation::Add))
+    );
+    assert_eq!(
+        Instruction::try_from("stack-"),
+        Ok(Instruction::StackOp(Operation::Sub))
+    );
+    assert_eq!(
+        Instruction::try_from("stack*"),
+        Ok(Instruction::StackOp(Operation::Mul))
+    );
+    assert_eq!(
+        Instruction::try_from("stack/"),
+        Ok(Instruction::StackOp(Operation::Div))
+    );
+    assert_eq!(
+        Instruction::try_from("stack%"),
+        Ok(Instruction::StackOp(Operation::Mod))
+    );
 }
 
 fn run_stack_op(op: Operation, result: i32) {
@@ -438,7 +445,9 @@ fn run_stack_op(op: Operation, result: i32) {
     Instruction::Push.run(&mut args, &mut control_flow).unwrap();
     args.accumulators.get_mut(&0).unwrap().data = Some(5);
     Instruction::Push.run(&mut args, &mut control_flow).unwrap();
-    Instruction::StackOp(op).run(&mut args, &mut control_flow).unwrap();
+    Instruction::StackOp(op)
+        .run(&mut args, &mut control_flow)
+        .unwrap();
     assert_eq!(args.stack.pop(), Some(result));
 }
 
@@ -446,24 +455,37 @@ fn run_stack_op(op: Operation, result: i32) {
 fn test_run_call() {
     let mut args = setup_runtime_args();
     let mut control_flow = ControlFlow::new();
-    control_flow.instruction_labels.insert("function".to_string(), 10);
-    Instruction::Call("function".to_string()).run(&mut args, &mut control_flow).unwrap();
+    control_flow
+        .instruction_labels
+        .insert("function".to_string(), 10);
+    Instruction::Call("function".to_string())
+        .run(&mut args, &mut control_flow)
+        .unwrap();
     assert_eq!(control_flow.next_instruction_index, 10);
     assert_eq!(control_flow.call_stack.pop(), Some(0));
 }
 
 #[test]
 fn test_parse_call() {
-    assert_eq!(Instruction::try_from("call function"), Ok(Instruction::Call("function".to_string())));
+    assert_eq!(
+        Instruction::try_from("call function"),
+        Ok(Instruction::Call("function".to_string()))
+    );
 }
 
 #[test]
 fn test_run_return() {
     let mut args = setup_runtime_args();
     let mut control_flow = ControlFlow::new();
-    control_flow.instruction_labels.insert("function".to_string(), 10);
-    Instruction::Call("function".to_string()).run(&mut args, &mut control_flow).unwrap();
-    Instruction::Return.run(&mut args, &mut control_flow).unwrap();
+    control_flow
+        .instruction_labels
+        .insert("function".to_string(), 10);
+    Instruction::Call("function".to_string())
+        .run(&mut args, &mut control_flow)
+        .unwrap();
+    Instruction::Return
+        .run(&mut args, &mut control_flow)
+        .unwrap();
     assert_eq!(control_flow.next_instruction_index, 0);
 }
 
@@ -499,18 +521,78 @@ fn test_example_program_memory_cells() {
         Instruction::Assign(TargetType::MemoryCell("x".to_string()), Value::Constant(8)),
         Instruction::Assign(TargetType::MemoryCell("y".to_string()), Value::Constant(3)),
         Instruction::Assign(TargetType::MemoryCell("z".to_string()), Value::Constant(2)),
-        Instruction::Calc(TargetType::MemoryCell("h1".to_string()), Value::MemoryCell("a".to_string()), Operation::Mul, Value::MemoryCell("w".to_string())),
-        Instruction::Calc(TargetType::MemoryCell("h2".to_string()), Value::MemoryCell("b".to_string()), Operation::Mul, Value::MemoryCell("y".to_string())),
-        Instruction::Calc(TargetType::MemoryCell("h3".to_string()), Value::MemoryCell("a".to_string()), Operation::Mul, Value::MemoryCell("x".to_string())),
-        Instruction::Calc(TargetType::MemoryCell("h4".to_string()), Value::MemoryCell("b".to_string()), Operation::Mul, Value::MemoryCell("z".to_string())),
-        Instruction::Calc(TargetType::MemoryCell("a".to_string()), Value::MemoryCell("h1".to_string()), Operation::Add, Value::MemoryCell("h2".to_string())),
-        Instruction::Calc(TargetType::MemoryCell("b".to_string()), Value::MemoryCell("h3".to_string()), Operation::Add, Value::MemoryCell("h4".to_string())),
-        Instruction::Calc(TargetType::MemoryCell("h1".to_string()), Value::MemoryCell("c".to_string()), Operation::Mul, Value::MemoryCell("w".to_string())),
-        Instruction::Calc(TargetType::MemoryCell("h2".to_string()), Value::MemoryCell("d".to_string()), Operation::Mul, Value::MemoryCell("y".to_string())),
-        Instruction::Calc(TargetType::MemoryCell("h3".to_string()), Value::MemoryCell("c".to_string()), Operation::Mul, Value::MemoryCell("x".to_string())),
-        Instruction::Calc(TargetType::MemoryCell("h4".to_string()), Value::MemoryCell("d".to_string()), Operation::Mul, Value::MemoryCell("z".to_string())),
-        Instruction::Calc(TargetType::MemoryCell("c".to_string()), Value::MemoryCell("h1".to_string()), Operation::Add, Value::MemoryCell("h2".to_string())),
-        Instruction::Calc(TargetType::MemoryCell("d".to_string()), Value::MemoryCell("h3".to_string()), Operation::Add, Value::MemoryCell("h4".to_string())),
+        Instruction::Calc(
+            TargetType::MemoryCell("h1".to_string()),
+            Value::MemoryCell("a".to_string()),
+            Operation::Mul,
+            Value::MemoryCell("w".to_string()),
+        ),
+        Instruction::Calc(
+            TargetType::MemoryCell("h2".to_string()),
+            Value::MemoryCell("b".to_string()),
+            Operation::Mul,
+            Value::MemoryCell("y".to_string()),
+        ),
+        Instruction::Calc(
+            TargetType::MemoryCell("h3".to_string()),
+            Value::MemoryCell("a".to_string()),
+            Operation::Mul,
+            Value::MemoryCell("x".to_string()),
+        ),
+        Instruction::Calc(
+            TargetType::MemoryCell("h4".to_string()),
+            Value::MemoryCell("b".to_string()),
+            Operation::Mul,
+            Value::MemoryCell("z".to_string()),
+        ),
+        Instruction::Calc(
+            TargetType::MemoryCell("a".to_string()),
+            Value::MemoryCell("h1".to_string()),
+            Operation::Add,
+            Value::MemoryCell("h2".to_string()),
+        ),
+        Instruction::Calc(
+            TargetType::MemoryCell("b".to_string()),
+            Value::MemoryCell("h3".to_string()),
+            Operation::Add,
+            Value::MemoryCell("h4".to_string()),
+        ),
+        Instruction::Calc(
+            TargetType::MemoryCell("h1".to_string()),
+            Value::MemoryCell("c".to_string()),
+            Operation::Mul,
+            Value::MemoryCell("w".to_string()),
+        ),
+        Instruction::Calc(
+            TargetType::MemoryCell("h2".to_string()),
+            Value::MemoryCell("d".to_string()),
+            Operation::Mul,
+            Value::MemoryCell("y".to_string()),
+        ),
+        Instruction::Calc(
+            TargetType::MemoryCell("h3".to_string()),
+            Value::MemoryCell("c".to_string()),
+            Operation::Mul,
+            Value::MemoryCell("x".to_string()),
+        ),
+        Instruction::Calc(
+            TargetType::MemoryCell("h4".to_string()),
+            Value::MemoryCell("d".to_string()),
+            Operation::Mul,
+            Value::MemoryCell("z".to_string()),
+        ),
+        Instruction::Calc(
+            TargetType::MemoryCell("c".to_string()),
+            Value::MemoryCell("h1".to_string()),
+            Operation::Add,
+            Value::MemoryCell("h2".to_string()),
+        ),
+        Instruction::Calc(
+            TargetType::MemoryCell("d".to_string()),
+            Value::MemoryCell("h3".to_string()),
+            Operation::Add,
+            Value::MemoryCell("h4".to_string()),
+        ),
     ];
     let mut runtime_builder = RuntimeBuilder::new();
     runtime_builder.set_instructions(instructions);
@@ -648,17 +730,44 @@ fn test_example_program_loop() {
     let instructions = vec![
         Instruction::Assign(TargetType::Accumulator(0), Value::Constant(1)),
         Instruction::Assign(TargetType::MemoryCell("a".to_string()), Value::Constant(8)),
-        Instruction::Calc(TargetType::Accumulator(0), Value::Accumulator(0), Operation::Mul, Value::Constant(2)),
-        Instruction::Calc(TargetType::MemoryCell("a".to_string()), Value::MemoryCell("a".to_string()), Operation::Sub, Value::Constant(1)),
-        Instruction::Assign(TargetType::Accumulator(1), Value::MemoryCell("a".to_string())),
-        Instruction::JumpIf(Value::Accumulator(1), Comparison::Gt, Value::Constant(0), "loop".to_string())
+        Instruction::Calc(
+            TargetType::Accumulator(0),
+            Value::Accumulator(0),
+            Operation::Mul,
+            Value::Constant(2),
+        ),
+        Instruction::Calc(
+            TargetType::MemoryCell("a".to_string()),
+            Value::MemoryCell("a".to_string()),
+            Operation::Sub,
+            Value::Constant(1),
+        ),
+        Instruction::Assign(
+            TargetType::Accumulator(1),
+            Value::MemoryCell("a".to_string()),
+        ),
+        Instruction::JumpIf(
+            Value::Accumulator(1),
+            Comparison::Gt,
+            Value::Constant(0),
+            "loop".to_string(),
+        ),
     ];
     let mut runtime_builder = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
     runtime_builder.set_instructions(instructions);
     runtime_builder.add_label("loop".to_string(), 2).unwrap();
     let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
     runtime.run().unwrap();
-    assert_eq!(runtime.runtime_args().accumulators.get(&0).unwrap().data.unwrap(), 256);
+    assert_eq!(
+        runtime
+            .runtime_args()
+            .accumulators
+            .get(&0)
+            .unwrap()
+            .data
+            .unwrap(),
+        256
+    );
 }
 
 #[test]
@@ -676,7 +785,16 @@ fn test_example_program_loop_text_parsing() {
     assert!(res.is_ok());
     let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
     runtime.run().unwrap();
-    assert_eq!(runtime.runtime_args().accumulators.get(&0).unwrap().data.unwrap(), 256);
+    assert_eq!(
+        runtime
+            .runtime_args()
+            .accumulators
+            .get(&0)
+            .unwrap()
+            .data
+            .unwrap(),
+        256
+    );
 }
 
 #[test]
@@ -698,7 +816,16 @@ fn test_example_program_functions() {
     assert!(res.is_ok());
     let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
     runtime.run().unwrap();
-    assert_eq!(runtime.runtime_args().accumulators.get(&0).unwrap().data.unwrap(), 50);
+    assert_eq!(
+        runtime
+            .runtime_args()
+            .accumulators
+            .get(&0)
+            .unwrap()
+            .data
+            .unwrap(),
+        50
+    );
 }
 
 /// Sets up runtime args in a consistent way because the default implementation for memory cells and accumulators is configgurable.

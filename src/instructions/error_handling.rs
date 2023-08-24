@@ -100,7 +100,18 @@ pub enum BuildProgramErrorTypes {
 impl PartialEq for BuildProgramErrorTypes {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Self::ParseError { src: l_src, bad_bit: l_bad_bit, reason: l_reason }, Self::ParseError { src: r_src, bad_bit: r_bad_bit, reason: r_reason }) => l_src.name() == r_src.name() && l_bad_bit == r_bad_bit && l_reason == r_reason,
+            (
+                Self::ParseError {
+                    src: l_src,
+                    bad_bit: l_bad_bit,
+                    reason: l_reason,
+                },
+                Self::ParseError {
+                    src: r_src,
+                    bad_bit: r_bad_bit,
+                    reason: r_reason,
+                },
+            ) => l_src.name() == r_src.name() && l_bad_bit == r_bad_bit && l_reason == r_reason,
             (Self::LabelDefinedMultipleTimes(l0), Self::LabelDefinedMultipleTimes(r0)) => l0 == r0,
             _ => core::mem::discriminant(self) == core::mem::discriminant(other),
         }
@@ -118,68 +129,221 @@ pub struct BuildProgramError {
 //TODO Add error tests
 #[cfg(test)]
 mod tests {
-    use crate::{instructions::{Instruction, error_handling::{InstructionParseError, BuildProgramError, BuildProgramErrorTypes}}, runtime::builder::RuntimeBuilder};
+    use crate::{
+        instructions::{
+            error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
+            Instruction,
+        },
+        runtime::builder::RuntimeBuilder,
+    };
 
     #[test]
     fn test_bpe_main_label_defined_multiple_times() {
         let mut rb = RuntimeBuilder::new_debug(&vec!["a", "b"]);
         let instructions_input = vec!["main:", "", "MAIN:"];
-        assert_eq!(rb.build_instructions(&instructions_input, "test"), Err(BuildProgramError {reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes}));
+        assert_eq!(
+            rb.build_instructions(&instructions_input, "test"),
+            Err(BuildProgramError {
+                reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes
+            })
+        );
         let instructions_input = vec!["main:", "", "main:"];
-        assert_eq!(rb.build_instructions(&instructions_input, "test"), Err(BuildProgramError {reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes}))
+        assert_eq!(
+            rb.build_instructions(&instructions_input, "test"),
+            Err(BuildProgramError {
+                reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes
+            })
+        )
     }
 
     #[test]
     fn test_bpe_label_definined_multiple_times() {
         let mut rb = RuntimeBuilder::new_debug(&vec!["a", "b"]);
         let instructions_input = vec!["loop:", "", "loop:"];
-        assert_eq!(rb.build_instructions(&instructions_input, "test"), Err(BuildProgramError {reason: BuildProgramErrorTypes::LabelDefinedMultipleTimes("loop".to_string())}))
+        assert_eq!(
+            rb.build_instructions(&instructions_input, "test"),
+            Err(BuildProgramError {
+                reason: BuildProgramErrorTypes::LabelDefinedMultipleTimes("loop".to_string())
+            })
+        )
     }
 
     #[test]
     fn test_ipe_unknown_operation() {
-        assert_eq!(Instruction::try_from("a0 := p(h1) x p(h1)"), Err(InstructionParseError::UnknownOperation((12, 12), "x".to_string())));
-        assert_eq!(Instruction::try_from("a0 := p(h1) ö p(h1)"), Err(InstructionParseError::UnknownOperation((12, 14), "ö".to_string())));
-        assert_eq!(Instruction::try_from("a0 := a0 xxx p(h1)"), Err(InstructionParseError::UnknownOperation((9, 11), "xxx".to_string())));
-        assert_eq!(Instruction::try_from("stackxxx"), Err(InstructionParseError::UnknownOperation((5, 7), "xxx".to_string())));
+        assert_eq!(
+            Instruction::try_from("a0 := p(h1) x p(h1)"),
+            Err(InstructionParseError::UnknownOperation(
+                (12, 12),
+                "x".to_string()
+            ))
+        );
+        assert_eq!(
+            Instruction::try_from("a0 := p(h1) ö p(h1)"),
+            Err(InstructionParseError::UnknownOperation(
+                (12, 14),
+                "ö".to_string()
+            ))
+        );
+        assert_eq!(
+            Instruction::try_from("a0 := a0 xxx p(h1)"),
+            Err(InstructionParseError::UnknownOperation(
+                (9, 11),
+                "xxx".to_string()
+            ))
+        );
+        assert_eq!(
+            Instruction::try_from("stackxxx"),
+            Err(InstructionParseError::UnknownOperation(
+                (5, 7),
+                "xxx".to_string()
+            ))
+        );
     }
 
     #[test]
     fn test_ipe_unknown_comparison() {
-        assert_eq!(Instruction::try_from("if a0 x a0 then goto loop"), Err(InstructionParseError::UnknownComparison((6, 6), "x".to_string())));
-        assert_eq!(Instruction::try_from("if a0 ö a0 then goto loop"), Err(InstructionParseError::UnknownComparison((6, 8), "ö".to_string())));
-        assert_eq!(Instruction::try_from("if p(h1) xxx 5 then goto loop"), Err(InstructionParseError::UnknownComparison((9, 11), "xxx".to_string())));
+        assert_eq!(
+            Instruction::try_from("if a0 x a0 then goto loop"),
+            Err(InstructionParseError::UnknownComparison(
+                (6, 6),
+                "x".to_string()
+            ))
+        );
+        assert_eq!(
+            Instruction::try_from("if a0 ö a0 then goto loop"),
+            Err(InstructionParseError::UnknownComparison(
+                (6, 8),
+                "ö".to_string()
+            ))
+        );
+        assert_eq!(
+            Instruction::try_from("if p(h1) xxx 5 then goto loop"),
+            Err(InstructionParseError::UnknownComparison(
+                (9, 11),
+                "xxx".to_string()
+            ))
+        );
     }
 
     #[test]
     fn test_ipe_not_a_number() {
-        assert_eq!(Instruction::try_from("if axx != a0 then goto loop"), Err(InstructionParseError::NotANumber((4, 5), "xx".to_string())));
-        assert_eq!(Instruction::try_from("if a0 != axx then goto loop"), Err(InstructionParseError::NotANumber((10, 11), "xx".to_string())));
-        assert_eq!(Instruction::try_from("axx := p(a)"), Err(InstructionParseError::NotANumber((1, 2), "xx".to_string())));
+        assert_eq!(
+            Instruction::try_from("if axx != a0 then goto loop"),
+            Err(InstructionParseError::NotANumber((4, 5), "xx".to_string()))
+        );
+        assert_eq!(
+            Instruction::try_from("if a0 != axx then goto loop"),
+            Err(InstructionParseError::NotANumber(
+                (10, 11),
+                "xx".to_string()
+            ))
+        );
+        assert_eq!(
+            Instruction::try_from("axx := p(a)"),
+            Err(InstructionParseError::NotANumber((1, 2), "xx".to_string()))
+        );
     }
 
     #[test]
     fn test_ipe_invalid_expression() {
-        assert_eq!(Instruction::try_from("xxx := xxx"), Err(InstructionParseError::InvalidExpression((0, 2), "xxx".to_string())));
-        assert_eq!(Instruction::try_from("p(h1) := xxx"), Err(InstructionParseError::InvalidExpression((9, 11), "xxx".to_string())));
+        assert_eq!(
+            Instruction::try_from("xxx := xxx"),
+            Err(InstructionParseError::InvalidExpression(
+                (0, 2),
+                "xxx".to_string()
+            ))
+        );
+        assert_eq!(
+            Instruction::try_from("p(h1) := xxx"),
+            Err(InstructionParseError::InvalidExpression(
+                (9, 11),
+                "xxx".to_string()
+            ))
+        );
     }
 
     #[test]
     fn test_ipe_unknown_instruction() {
-        assert_eq!(Instruction::try_from("stackxxx + p(h1)"), Err(InstructionParseError::UnknownInstruction((0, 15), "stackxxx + p(h1)".to_string())));
-        assert_eq!(Instruction::try_from("a0 := p(h1) + p(h2) +"), Err(InstructionParseError::UnknownInstruction((0, 20), "a0 := p(h1) + p(h2) +".to_string())));
-        assert_eq!(Instruction::try_from("a0 := p(h1) + p(h2) + p(h3)"), Err(InstructionParseError::UnknownInstruction((0, 26), "a0 := p(h1) + p(h2) + p(h3)".to_string())));
-        assert_eq!(Instruction::try_from("return xyz"), Err(InstructionParseError::UnknownInstruction((0, 9), "return xyz".to_string())));
-        assert_eq!(Instruction::try_from("call xxx yz"), Err(InstructionParseError::UnknownInstruction((0, 10), "call xxx yz".to_string())));
-        assert_eq!(Instruction::try_from("push xxx"), Err(InstructionParseError::UnknownInstruction((0, 7), "push xxx".to_string())));
-        assert_eq!(Instruction::try_from("pop xxx"), Err(InstructionParseError::UnknownInstruction((0, 6), "pop xxx".to_string())));
+        assert_eq!(
+            Instruction::try_from("stackxxx + p(h1)"),
+            Err(InstructionParseError::UnknownInstruction(
+                (0, 15),
+                "stackxxx + p(h1)".to_string()
+            ))
+        );
+        assert_eq!(
+            Instruction::try_from("a0 := p(h1) + p(h2) +"),
+            Err(InstructionParseError::UnknownInstruction(
+                (0, 20),
+                "a0 := p(h1) + p(h2) +".to_string()
+            ))
+        );
+        assert_eq!(
+            Instruction::try_from("a0 := p(h1) + p(h2) + p(h3)"),
+            Err(InstructionParseError::UnknownInstruction(
+                (0, 26),
+                "a0 := p(h1) + p(h2) + p(h3)".to_string()
+            ))
+        );
+        assert_eq!(
+            Instruction::try_from("return xyz"),
+            Err(InstructionParseError::UnknownInstruction(
+                (0, 9),
+                "return xyz".to_string()
+            ))
+        );
+        assert_eq!(
+            Instruction::try_from("call xxx yz"),
+            Err(InstructionParseError::UnknownInstruction(
+                (0, 10),
+                "call xxx yz".to_string()
+            ))
+        );
+        assert_eq!(
+            Instruction::try_from("push xxx"),
+            Err(InstructionParseError::UnknownInstruction(
+                (0, 7),
+                "push xxx".to_string()
+            ))
+        );
+        assert_eq!(
+            Instruction::try_from("pop xxx"),
+            Err(InstructionParseError::UnknownInstruction(
+                (0, 6),
+                "pop xxx".to_string()
+            ))
+        );
     }
 
     #[test]
     fn test_ipe_missing_expression() {
-        assert_eq!(Instruction::try_from("xxx"), Err(InstructionParseError::MissingExpression{range: (3, 3), help: "You might be missing ':='".to_string()}));
-        assert_eq!(Instruction::try_from("a0"), Err(InstructionParseError::MissingExpression{range: (2, 2), help: "You might be missing ':='".to_string()}));
-        assert_eq!(Instruction::try_from("a0 :="), Err(InstructionParseError::MissingExpression{range: (5, 5), help: "Try inserting an accumulator or a memory cell".to_string()}));
-        assert_eq!(Instruction::try_from("a0 := p(h1) +"), Err(InstructionParseError::MissingExpression{range: (13, 13), help: "Try inserting an accumulator or a memory cell".to_string()}));
+        assert_eq!(
+            Instruction::try_from("xxx"),
+            Err(InstructionParseError::MissingExpression {
+                range: (3, 3),
+                help: "You might be missing ':='".to_string()
+            })
+        );
+        assert_eq!(
+            Instruction::try_from("a0"),
+            Err(InstructionParseError::MissingExpression {
+                range: (2, 2),
+                help: "You might be missing ':='".to_string()
+            })
+        );
+        assert_eq!(
+            Instruction::try_from("a0 :="),
+            Err(InstructionParseError::MissingExpression {
+                range: (5, 5),
+                help: "Try inserting an accumulator or a memory cell".to_string()
+            })
+        );
+        assert_eq!(
+            Instruction::try_from("a0 := p(h1) +"),
+            Err(InstructionParseError::MissingExpression {
+                range: (13, 13),
+                help: "Try inserting an accumulator or a memory cell".to_string()
+            })
+        );
     }
 }

@@ -1,8 +1,16 @@
 use miette::Result;
 
-use crate::{base::{Operation, Comparison}, runtime::{RuntimeArgs, ControlFlow, error_handling::{RuntimeErrorType, RuntimeBuildError}, builder::{check_accumulator, check_memory_cell}}, instructions::error_handling::InstructionParseError};
+use crate::{
+    base::{Comparison, Operation},
+    instructions::error_handling::InstructionParseError,
+    runtime::{
+        builder::{check_accumulator, check_memory_cell},
+        error_handling::{RuntimeBuildError, RuntimeErrorType},
+        ControlFlow, RuntimeArgs,
+    },
+};
 
-use self::parsing::{parse_memory_cell, parse_alpha};
+use self::parsing::{parse_alpha, parse_memory_cell};
 
 pub mod error_handling;
 
@@ -36,8 +44,12 @@ impl Instruction {
     ) -> Result<(), RuntimeErrorType> {
         match self {
             Self::Assign(target, source) => run_assign(runtime_args, target, source)?,
-            Self::Calc(target, source_a, op, source_b) => run_calc(runtime_args, target, source_a, op, source_b)?,
-            Self::JumpIf(value_a, cmp, value_b, label) => run_jump_if(runtime_args, control_flow, value_a, cmp, value_b, label)?,
+            Self::Calc(target, source_a, op, source_b) => {
+                run_calc(runtime_args, target, source_a, op, source_b)?
+            }
+            Self::JumpIf(value_a, cmp, value_b, label) => {
+                run_jump_if(runtime_args, control_flow, value_a, cmp, value_b, label)?
+            }
             Self::Goto(label) => run_goto(control_flow, label)?,
             Self::Push => run_push(runtime_args)?,
             Self::Pop => run_pop(runtime_args)?,
@@ -80,8 +92,11 @@ impl Instruction {
     //}
 }
 
-
-fn run_assign(runtime_args: &mut RuntimeArgs, target: &TargetType, source: &Value) -> Result<(), RuntimeErrorType> {
+fn run_assign(
+    runtime_args: &mut RuntimeArgs,
+    target: &TargetType,
+    source: &Value,
+) -> Result<(), RuntimeErrorType> {
     match target {
         TargetType::Accumulator(a) => {
             assert_accumulator_exists(runtime_args, a)?;
@@ -89,14 +104,19 @@ fn run_assign(runtime_args: &mut RuntimeArgs, target: &TargetType, source: &Valu
         }
         TargetType::MemoryCell(a) => {
             assert_memory_cell_exists(runtime_args, a)?;
-            runtime_args.memory_cells.get_mut(a).unwrap().data =
-                Some(source.value(runtime_args)?);
+            runtime_args.memory_cells.get_mut(a).unwrap().data = Some(source.value(runtime_args)?);
         }
     }
     Ok(())
 }
 
-fn run_calc(runtime_args: &mut RuntimeArgs, target: &TargetType, source_a: &Value, op: &Operation, source_b: &Value) -> Result<(), RuntimeErrorType> {
+fn run_calc(
+    runtime_args: &mut RuntimeArgs,
+    target: &TargetType,
+    source_a: &Value,
+    op: &Operation,
+    source_b: &Value,
+) -> Result<(), RuntimeErrorType> {
     match target {
         TargetType::Accumulator(a) => {
             runtime_args.accumulators.get_mut(a).unwrap().data =
@@ -110,7 +130,14 @@ fn run_calc(runtime_args: &mut RuntimeArgs, target: &TargetType, source_a: &Valu
     Ok(())
 }
 
-fn run_jump_if(runtime_args: &mut RuntimeArgs, control_flow: &mut ControlFlow, value_a: &Value, cmp: &Comparison, value_b: &Value, label: &str) -> Result<(), RuntimeErrorType> {
+fn run_jump_if(
+    runtime_args: &mut RuntimeArgs,
+    control_flow: &mut ControlFlow,
+    value_a: &Value,
+    cmp: &Comparison,
+    value_b: &Value,
+    label: &str,
+) -> Result<(), RuntimeErrorType> {
     if cmp.cmp(value_a.value(runtime_args)?, value_b.value(runtime_args)?) {
         control_flow.next_instruction_index(label)?
     }
@@ -145,21 +172,21 @@ fn run_pop(runtime_args: &mut RuntimeArgs) -> Result<(), RuntimeErrorType> {
 /// Causes runtime error if stack does not contain two values.
 fn run_stack_op(runtime_args: &mut RuntimeArgs, op: &Operation) -> Result<(), RuntimeErrorType> {
     match runtime_args.stack.pop() {
-        Some(a) => {
-            match runtime_args.stack.pop() {
-                Some(b) => {
-                    runtime_args.stack.push(op.calc(b, a)?);
-                    Ok(())
-                },
-                None => return Err(RuntimeErrorType::StackOpFail(*op))
+        Some(a) => match runtime_args.stack.pop() {
+            Some(b) => {
+                runtime_args.stack.push(op.calc(b, a)?);
+                Ok(())
             }
+            None => return Err(RuntimeErrorType::StackOpFail(*op)),
         },
         None => Err(RuntimeErrorType::StackOpFail(*op)),
     }
 }
 
 fn run_call(control_flow: &mut ControlFlow, label: &str) -> Result<(), RuntimeErrorType> {
-    control_flow.call_stack.push(control_flow.next_instruction_index);
+    control_flow
+        .call_stack
+        .push(control_flow.next_instruction_index);
     control_flow.next_instruction_index(label)?;
     Ok(())
 }
@@ -251,7 +278,6 @@ impl TryFrom<(&str, (usize, usize))> for TargetType {
         }
         Ok(Self::Accumulator(parse_alpha(&value.0, value.1)?))
     }
-
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -262,22 +288,20 @@ pub enum Value {
 }
 
 impl Value {
-
     fn value(&self, runtime_args: &RuntimeArgs) -> Result<i32, RuntimeErrorType> {
         match self {
             //TODO When I use this add checks to test if accumulator / memory_cell exists / contains data before accessing it
             Self::Accumulator(a) => {
                 assert_accumulator_contains_value(runtime_args, a)?;
                 Ok(runtime_args.accumulators.get(a).unwrap().data.unwrap())
-            },
+            }
             Self::Constant(a) => Ok(*a),
             Self::MemoryCell(a) => {
                 assert_memory_cell_contains_value(runtime_args, a)?;
                 Ok(runtime_args.memory_cells.get(a).unwrap().data.unwrap())
-            },
+            }
         }
     }
-    
 }
 
 impl TryFrom<(&str, (usize, usize))> for Value {

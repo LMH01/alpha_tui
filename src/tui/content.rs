@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 
-use ratatui::{widgets::{ListState, ListItem}, style::{Color, Style}};
+use ratatui::{
+    style::{Color, Style},
+    widgets::{ListItem, ListState},
+};
 
 use crate::runtime::RuntimeArgs;
-
 
 /// Used to store the instructions and to remember what instruction should currently be highlighted.
 #[derive(Debug, Clone)]
@@ -20,7 +22,7 @@ impl InstructionListStates {
         let mut i = Vec::new();
         for (index, s) in instructions.iter().enumerate() {
             if let Some(v) = set_breakpoints {
-                if v.contains(&(index+1)) {
+                if v.contains(&(index + 1)) {
                     i.push((index, s.clone(), true));
                 } else {
                     i.push((index, s.clone(), false));
@@ -40,7 +42,7 @@ impl InstructionListStates {
 
     /// Selects the line in which the program starts
     pub fn set_start(&mut self, current_instruction_index: i32) {
-        self.set(current_instruction_index -1);
+        self.set(current_instruction_index - 1);
         self.current_index = current_instruction_index;
     }
 
@@ -49,11 +51,15 @@ impl InstructionListStates {
         self.current_index = current_instruction_idx - 1 as i32;
         if current_instruction_idx as i32 - self.last_index as i32 != 1 {
             // line jump detected, only increase state by one
-            self.instruction_list_state.select(Some((self.last_index +1 ) as usize));
-            self.breakpoint_list_state.select(Some((self.last_index +1 ) as usize));
+            self.instruction_list_state
+                .select(Some((self.last_index + 1) as usize));
+            self.breakpoint_list_state
+                .select(Some((self.last_index + 1) as usize));
         } else {
-            self.instruction_list_state.select(Some(current_instruction_idx as usize));
-            self.breakpoint_list_state.select(Some(current_instruction_idx as usize));
+            self.instruction_list_state
+                .select(Some(current_instruction_idx as usize));
+            self.breakpoint_list_state
+                .select(Some(current_instruction_idx as usize));
         }
         self.last_index = current_instruction_idx as i32;
     }
@@ -94,7 +100,7 @@ impl InstructionListStates {
             };
         }
         false
-       // self.instructions[self.instruction_list_state.selected().unwrap()].2
+        // self.instructions[self.instruction_list_state.selected().unwrap()].2
     }
 
     pub fn selected_line(&self) -> Option<usize> {
@@ -112,12 +118,13 @@ impl InstructionListStates {
     pub fn breakpoint_list_state_mut(&mut self) -> &mut ListState {
         &mut self.breakpoint_list_state
     }
-
 }
 
 impl PartialEq for InstructionListStates {
     fn eq(&self, other: &Self) -> bool {
-        self.instructions == other.instructions && self.last_index == other.last_index && self.current_index == other.current_index
+        self.instructions == other.instructions
+            && self.last_index == other.last_index
+            && self.current_index == other.current_index
     }
 }
 
@@ -157,7 +164,6 @@ pub struct MemoryListsManager {
 }
 
 impl MemoryListsManager {
-    
     /// Creates a new MemoryListsManager with the current values of the runtime arguments.
     pub fn new(runtime_args: &RuntimeArgs) -> Self {
         let mut accumulators = HashMap::new();

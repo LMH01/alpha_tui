@@ -1,4 +1,4 @@
-use std::{collections::HashMap, thread, time::Duration, ops::Deref};
+use std::{collections::HashMap, ops::Deref, thread, time::Duration};
 
 use crossterm::event::{self, Event, KeyCode};
 use miette::{IntoDiagnostic, Result};
@@ -13,7 +13,10 @@ use ratatui::{
 
 use crate::runtime::{error_handling::RuntimeError, Runtime, RuntimeArgs};
 
-use self::{content::{InstructionListStates, MemoryListsManager}, ui::draw_ui};
+use self::{
+    content::{InstructionListStates, MemoryListsManager},
+    ui::draw_ui,
+};
 
 /// Content used to fill the tui elements
 mod content;
@@ -48,12 +51,20 @@ pub struct App {
 }
 
 impl App {
-    pub fn from_runtime(runtime: Runtime, filename: String, instructions: Vec<String>, set_breakpoints: Option<Vec<usize>>) -> App {
+    pub fn from_runtime(
+        runtime: Runtime,
+        filename: String,
+        instructions: Vec<String>,
+        set_breakpoints: Option<Vec<usize>>,
+    ) -> App {
         let mlm = MemoryListsManager::new(runtime.runtime_args());
         Self {
             runtime,
             filename,
-            instruction_list_states: InstructionListStates::new(instructions, set_breakpoints.as_ref()),
+            instruction_list_states: InstructionListStates::new(
+                instructions,
+                set_breakpoints.as_ref(),
+            ),
             keybind_hints: init_keybind_hints(),
             memory_lists_manager: mlm,
             state: State::Default,
@@ -70,29 +81,27 @@ impl App {
                             self.instruction_list_states.set_prev_visual();
                             //TODO See if it is a good idea to make the breakpoint list move too
                         }
-                    },
+                    }
                     KeyCode::Down => {
                         if let State::Breakpoints(s, i) = &self.state {
                             self.instruction_list_states.set_next_visual();
                         }
-                    },
-                    KeyCode::Char('b') => {
-                        match &self.state {
-                            State::Breakpoints(s, i) => {
-                                self.instruction_list_states.set_instruction_list_state(*i);
-                                self.set_state(s.deref().clone());
-                            }
-                            State::Default => self.start_breakpoint_mode(),
-                            State::Running => self.start_breakpoint_mode(),
-                            _ => (),
-                        }
                     }
+                    KeyCode::Char('b') => match &self.state {
+                        State::Breakpoints(s, i) => {
+                            self.instruction_list_states.set_instruction_list_state(*i);
+                            self.set_state(s.deref().clone());
+                        }
+                        State::Default => self.start_breakpoint_mode(),
+                        State::Running => self.start_breakpoint_mode(),
+                        _ => (),
+                    },
                     KeyCode::Char('t') => {
                         // toggle keybind
                         match &self.state {
                             State::Breakpoints(s, _) => {
                                 self.instruction_list_states.toggle_breakpoint()
-                            },
+                            }
                             _ => (),
                         }
                     }
@@ -100,28 +109,25 @@ impl App {
                         State::Errored(e) => Err(e.clone())?,
                         _ => return Ok(()),
                     },
-                    KeyCode::Char('w') => {
-                        match self.state {
-                            State::Breakpoints(_, _) => {
-                                self.instruction_list_states.set_prev_visual();
-                            }
-                            _ => (),
+                    KeyCode::Char('w') => match self.state {
+                        State::Breakpoints(_, _) => {
+                            self.instruction_list_states.set_prev_visual();
                         }
-                    }
-                    KeyCode::Char('s') => {
-                        match self.state {
-                            State::Finished(_) => self.reset(),
-                            State::Running => self.reset(),
-                            State::Breakpoints(_, _) => {
-                                self.instruction_list_states.set_next_visual();
-                            }
-                            _ => (),
+                        _ => (),
+                    },
+                    KeyCode::Char('s') => match self.state {
+                        State::Finished(_) => self.reset(),
+                        State::Running => self.reset(),
+                        State::Breakpoints(_, _) => {
+                            self.instruction_list_states.set_next_visual();
                         }
-                    }
+                        _ => (),
+                    },
                     KeyCode::Char('r') => {
                         if self.state == State::Default || self.state == State::Running {
                             if self.state != State::Running {
-                                self.instruction_list_states.set_start(self.runtime.current_instruction_index() as i32);
+                                self.instruction_list_states
+                                    .set_start(self.runtime.current_instruction_index() as i32);
                             }
                             self.set_state(State::Running);
                             self.step();
@@ -171,19 +177,20 @@ impl App {
 
     /// returns true when the execution finished in this step
     fn step(&mut self) -> bool {
-        let res = self.runtime.step();//TODO Move the two similar parts of this and the above function into a new function
+        let res = self.runtime.step(); //TODO Move the two similar parts of this and the above function into a new function
         if let Err(e) = res {
             self.set_state(State::Errored(e));
         }
-        self.instruction_list_states.set(self.runtime.current_instruction_index() as i32);
+        self.instruction_list_states
+            .set(self.runtime.current_instruction_index() as i32);
         if self.runtime.finished() {
             match self.state {
                 State::Errored(_) => (),
                 _ => {
                     self.set_state(State::Finished(true));
-                },
+                }
             }
-            return true
+            return true;
         }
         false
     }
@@ -203,7 +210,10 @@ impl App {
     }
 
     fn start_breakpoint_mode(&mut self) {
-        let state = State::Breakpoints(Box::new(self.state.clone()), self.instruction_list_states.selected_line());
+        let state = State::Breakpoints(
+            Box::new(self.state.clone()),
+            self.instruction_list_states.selected_line(),
+        );
         match self.state {
             State::Running => (),
             _ => {
@@ -234,7 +244,7 @@ impl App {
                 self.set_keybind_hint('b', true);
                 self.set_keybind_hint('r', true);
                 self.set_keybind_message('r', "Run");
-            },
+            }
             State::Running => {
                 self.set_keybind_hint('q', true);
                 self.set_keybind_hint('b', true);
@@ -242,7 +252,7 @@ impl App {
                 self.set_keybind_hint('s', true);
                 self.set_keybind_hint('n', true);
                 self.set_keybind_message('r', "Run next instruction");
-            },
+            }
             State::Breakpoints(s, i) => {
                 self.set_keybind_hint('q', true);
                 self.set_keybind_hint('b', true);
@@ -255,7 +265,7 @@ impl App {
             State::Finished(b) => {
                 self.set_keybind_hint('d', *b);
                 self.set_keybind_hint('q', true);
-                self.set_keybind_hint('s', true); 
+                self.set_keybind_hint('s', true);
             }
             State::Errored(e) => {
                 self.set_keybind_hint('q', true);

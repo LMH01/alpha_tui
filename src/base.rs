@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::runtime::error_handling::{RuntimeErrorType, CalcError};
+use crate::runtime::error_handling::{CalcError, RuntimeErrorType};
 
 /// A single accumulator, represents "Akkumulator/Alpha" from SysInf lecture.
 #[derive(Debug, Clone, PartialEq)]
@@ -83,7 +83,6 @@ impl TryFrom<&str> for Comparison {
     type Error = ();
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-
         match value {
             "<" => Ok(Self::Lt),
             "<=" => Ok(Self::Le),
@@ -114,44 +113,64 @@ pub enum Operation {
 impl Operation {
     pub fn calc(&self, x: i32, y: i32) -> Result<i32, RuntimeErrorType> {
         match self {
-            Self::Add => {
-                match x.checked_add(y) {
-                    Some(v) => Ok(v),
-                    None => Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("add".to_string(), "Addition".to_string()) })
-                }
+            Self::Add => match x.checked_add(y) {
+                Some(v) => Ok(v),
+                None => Err(RuntimeErrorType::IllegalCalculation {
+                    cause: CalcError::AttemptToOverflow("add".to_string(), "Addition".to_string()),
+                }),
             },
-            Self::Sub => {
-                match x.checked_sub(y) {
-                    Some(v) => Ok(v),
-                    None => Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("subtract".to_string(), "Subtraction".to_string()) })
-                }
+            Self::Sub => match x.checked_sub(y) {
+                Some(v) => Ok(v),
+                None => Err(RuntimeErrorType::IllegalCalculation {
+                    cause: CalcError::AttemptToOverflow(
+                        "subtract".to_string(),
+                        "Subtraction".to_string(),
+                    ),
+                }),
             },
-            Self::Mul => {
-                match x.checked_mul(y) {
-                    Some(v) => Ok(v),
-                    None => Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("multiply".to_string(), "Multiplication".to_string()) })
-                }
+            Self::Mul => match x.checked_mul(y) {
+                Some(v) => Ok(v),
+                None => Err(RuntimeErrorType::IllegalCalculation {
+                    cause: CalcError::AttemptToOverflow(
+                        "multiply".to_string(),
+                        "Multiplication".to_string(),
+                    ),
+                }),
             },
             Self::Div => {
                 if y != 0 {
                     match x.checked_div(y) {
                         Some(v) => Ok(v),
-                        None => Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("divide".to_string(), "Division".to_string()) })
+                        None => Err(RuntimeErrorType::IllegalCalculation {
+                            cause: CalcError::AttemptToOverflow(
+                                "divide".to_string(),
+                                "Division".to_string(),
+                            ),
+                        }),
                     }
                 } else {
-                    Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToDivideByZero() })
+                    Err(RuntimeErrorType::IllegalCalculation {
+                        cause: CalcError::AttemptToDivideByZero(),
+                    })
                 }
-            },
+            }
             Self::Mod => {
                 if y != 0 {
                     match x.checked_rem_euclid(y) {
                         Some(v) => Ok(v),
-                        None => Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToOverflow("mod".to_string(), "Modulo".to_string()) })
+                        None => Err(RuntimeErrorType::IllegalCalculation {
+                            cause: CalcError::AttemptToOverflow(
+                                "mod".to_string(),
+                                "Modulo".to_string(),
+                            ),
+                        }),
                     }
                 } else {
-                    Err(RuntimeErrorType::IllegalCalculation { cause: CalcError::AttemptToDivideByZero() })
+                    Err(RuntimeErrorType::IllegalCalculation {
+                        cause: CalcError::AttemptToDivideByZero(),
+                    })
                 }
-            },
+            }
         }
     }
 }

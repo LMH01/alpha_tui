@@ -186,7 +186,7 @@ impl RuntimeBuilder {
                         }
                         InstructionParseError::UnknownInstruction(_, _) => {
                             e.range().1 - e.range().0 + 1
-                        },
+                        }
                         InstructionParseError::NotANumber(_, _) => e.range().1 - e.range().0,
                         InstructionParseError::UnknownComparison(_, _) => e.range().1 - e.range().0,
                         InstructionParseError::UnknownOperation(_, _) => e.range().1 - e.range().0,
@@ -213,8 +213,12 @@ impl RuntimeBuilder {
                 }
             }
         }
-        if self.control_flow.instruction_labels.contains_key("main") && self.control_flow.instruction_labels.contains_key("MAIN") {
-            return Err(BuildProgramError { reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes })
+        if self.control_flow.instruction_labels.contains_key("main")
+            && self.control_flow.instruction_labels.contains_key("MAIN")
+        {
+            return Err(BuildProgramError {
+                reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes,
+            });
         }
         self.instructions = Some(instructions);
         Ok(())
@@ -262,9 +266,7 @@ impl RuntimeBuilder {
         for instruction in self.instructions.as_ref().unwrap() {
             match instruction {
                 Instruction::Goto(label) => check_label(&self.control_flow, label)?,
-                Instruction::JumpIf(_, _, _, label) => {
-                    check_label(&self.control_flow, label)?
-                }
+                Instruction::JumpIf(_, _, _, label) => check_label(&self.control_flow, label)?,
                 _ => (),
             };
         }
@@ -272,13 +274,13 @@ impl RuntimeBuilder {
     }
 
     /// Checks if any accumulators or memory cells are missing in the runtime args that are used.
-    /// 
+    ///
     /// If something missing is found, a runtime build error is returned.
-    /// 
+    ///
     /// If add_missing is true, the missing accumulator/memory_cell is added with empty value to the runtime args instead of returning an error.
     fn check_missing_vars(&mut self, add_missing: bool) -> Result<(), RuntimeBuildError> {
         if self.instructions.is_none() {
-            return Ok(())
+            return Ok(());
         }
         for instruction in self.instructions.as_ref().unwrap() {
             match instruction {
@@ -296,7 +298,6 @@ impl RuntimeBuilder {
         }
         Ok(())
     }
-
 }
 
 fn inject_end_labels(control_flow: &mut ControlFlow, last_instruction_index: &usize) {
@@ -360,42 +361,38 @@ pub fn check_memory_cell(
 }
 
 impl TargetType {
-    
     /// Checks if this type is missing in runtime_args.
-    /// 
+    ///
     /// If add_missing is set, the type is added to runtime args instead of returning an error.
-    pub fn check(&self, runtime_args: &mut RuntimeArgs, add_missing: bool) -> Result<(), RuntimeBuildError> {
+    pub fn check(
+        &self,
+        runtime_args: &mut RuntimeArgs,
+        add_missing: bool,
+    ) -> Result<(), RuntimeBuildError> {
         match self {
-            Self::Accumulator(index) => {
-                check_accumulator(runtime_args, index, add_missing)?
-            }
-            Self::MemoryCell(name) => {
-                check_memory_cell(runtime_args, name, add_missing)?
-            }
+            Self::Accumulator(index) => check_accumulator(runtime_args, index, add_missing)?,
+            Self::MemoryCell(name) => check_memory_cell(runtime_args, name, add_missing)?,
         }
         Ok(())
     }
-
 }
 
 impl Value {
-
     /// Checks if this type is missing in runtime_args.
-    /// 
+    ///
     /// If add_missing is set, the type is added to runtime args instead of returning an error.
-    pub fn check(&self, runtime_args: &mut RuntimeArgs, add_missing: bool) -> Result<(), RuntimeBuildError> {
+    pub fn check(
+        &self,
+        runtime_args: &mut RuntimeArgs,
+        add_missing: bool,
+    ) -> Result<(), RuntimeBuildError> {
         match self {
-            Self::Accumulator(index) => {
-                check_accumulator(runtime_args, index, add_missing)?
-            }
-            Self::MemoryCell(name) => {
-                check_memory_cell(runtime_args, name, add_missing)?
-            }
+            Self::Accumulator(index) => check_accumulator(runtime_args, index, add_missing)?,
+            Self::MemoryCell(name) => check_memory_cell(runtime_args, name, add_missing)?,
             _ => (),
         }
         Ok(())
     }
-
 }
 
 #[cfg(test)]
@@ -422,14 +419,14 @@ mod tests {
     #[test]
     fn test_only_label_line() {
         let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
-        assert!(rb.build_instructions(&vec!["a0 := 5", "my_label:", "a1 := 5"], "").is_ok());
+        assert!(rb
+            .build_instructions(&vec!["a0 := 5", "my_label:", "a1 := 5"], "")
+            .is_ok());
     }
 
     #[test]
     fn test_accumulator_auto_add_working() {
-        let instructions = vec![
-            "a1 := a2 + a3",
-        ];
+        let instructions = vec!["a1 := a2 + a3"];
         let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
         assert!(rb.build_instructions(&instructions, "test").is_ok());
         let rt = rb.build();
