@@ -169,6 +169,7 @@ impl App {
         spans
     }
 
+    /// returns true when the execution finished in this step
     fn step(&mut self) -> bool {
         let res = self.runtime.step();//TODO Move the two similar parts of this and the above function into a new function
         if let Err(e) = res {

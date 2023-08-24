@@ -25,26 +25,30 @@ pub struct Runtime {
 impl Runtime {
     /// Runs the complete program.
     #[allow(dead_code)]
-    pub fn run(&mut self) -> Result<(), RuntimeError> {
+    pub fn run(&mut self) -> Result<bool, RuntimeError> {
         while self.control_flow.next_instruction_index < self.instructions.len() {
             self.step()?;
         }
-        Ok(())
+        Ok(true)
     }
 
     /// Runs the next instruction only.
-    pub fn step(&mut self) -> Result<(), RuntimeError> {
+    /// 
+    /// Returns true when no instruction was run because the last instruction was already run.
+    pub fn step(&mut self) -> Result<bool, RuntimeError> {
         let current_instruction = self.control_flow.next_instruction_index;
         self.control_flow.next_instruction_index += 1;
-        if let Err(e) = self.instructions[current_instruction]
-            .run(&mut self.runtime_args, &mut self.control_flow)
-        {
-            return Err(RuntimeError {
-                reason: e,
-                line_number: current_instruction + 1,
-            })?;
+        if let Some(i) = self.instructions.get(current_instruction) {
+            if let Err(e) = i.run(&mut self.runtime_args, &mut self.control_flow) {
+                return Err(RuntimeError {
+                    reason: e,
+                    line_number: current_instruction + 1,
+                })?;
+            }
+        } else {
+            return Ok(true);
         }
-        Ok(())
+        Ok(false)
     }
 
     /// Returns true when the execution is finished,

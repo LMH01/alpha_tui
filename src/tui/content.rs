@@ -87,7 +87,14 @@ impl InstructionListStates {
 
     /// Checks if the current line contains a breakpoint
     pub fn is_breakpoint(&self) -> bool {
-        self.instructions[self.instruction_list_state.selected().unwrap()].2
+        if let Some(idx) = self.instruction_list_state.selected() {
+            match self.instructions.get(idx) {
+                Some(i) => return i.2,
+                None => return false,
+            };
+        }
+        false
+       // self.instructions[self.instruction_list_state.selected().unwrap()].2
     }
 
     pub fn selected_line(&self) -> Option<usize> {
