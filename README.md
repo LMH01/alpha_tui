@@ -4,6 +4,8 @@ This is my attempt at writing a compiler for the Alpha-Notation used in my Syste
 
 Programs are read in and then compiled, a terminal ui is then opened where you can run the program line by line or by using breakpoints.
 
+Pull requests and bug reports are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for further details.
+
 ## Getting started
 
 1. Download the [newest release]() specific for your system
@@ -67,3 +69,5 @@ or this:
     - ratatui currently does not provide a simple solution for this
 - [ ] Add command line parameter that allows a program to be run where the content of a specific accumulator or memory cell is compared against a defined value that is provided when the program is launched. Alpha_tui will exit with 0 if the resulting value is equal to the provided value. This will make it possible to automate tests for alpha notation programs.
 - [ ] Move backend (internal runtime environment) into own project which makes it possible to write new programs without the need to copy the backend of this program
+- [ ] Text editor inside the program to write new alpha notation programs
+    - This would however come with a drawback, the nice error messages could probably not be shown inside the tui.
