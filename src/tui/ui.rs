@@ -7,12 +7,14 @@ use ratatui::{
 };
 use text_align::TextAlign;
 
-use super::{App, State, KEY_HINTS_COLOR, ERROR_COLOR, BREAKPOINT_ACCENT_COLOR, CODE_AREA_DEFAULT_COLOR, LIST_ITEM_HIGHLIGHT_COLOR, EXECUTION_FINISHED_POPUP_COLOR};
+use super::{
+    App, State, BREAKPOINT_ACCENT_COLOR, CODE_AREA_DEFAULT_COLOR, ERROR_COLOR,
+    EXECUTION_FINISHED_POPUP_COLOR, KEY_HINTS_COLOR, LIST_ITEM_HIGHLIGHT_COLOR,
+};
 
 /// Draw the ui
 #[allow(clippy::too_many_lines)]
 pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
-
     let global_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Percentage(99), Constraint::Percentage(1)])

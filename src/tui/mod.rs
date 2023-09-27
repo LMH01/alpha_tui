@@ -4,7 +4,7 @@ use crossterm::event::{self, Event, KeyCode};
 use miette::{IntoDiagnostic, Result};
 use ratatui::{
     backend::Backend,
-    style::{Style, Color},
+    style::{Color, Style},
     text::{Line, Span},
     Terminal,
 };
