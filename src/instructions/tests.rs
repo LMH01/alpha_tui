@@ -436,6 +436,26 @@ fn test_parse_stack_op() {
         Instruction::try_from("stack%"),
         Ok(Instruction::StackOp(Operation::Mod))
     );
+    assert_eq!(
+        Instruction::try_from("stack +"),
+        Ok(Instruction::StackOp(Operation::Add))
+    );
+    assert_eq!(
+        Instruction::try_from("stack -"),
+        Ok(Instruction::StackOp(Operation::Sub))
+    );
+    assert_eq!(
+        Instruction::try_from("stack *"),
+        Ok(Instruction::StackOp(Operation::Mul))
+    );
+    assert_eq!(
+        Instruction::try_from("stack /"),
+        Ok(Instruction::StackOp(Operation::Div))
+    );
+    assert_eq!(
+        Instruction::try_from("stack %"),
+        Ok(Instruction::StackOp(Operation::Mod))
+    );
 }
 
 fn run_stack_op(op: Operation, result: i32) {

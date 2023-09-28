@@ -82,10 +82,17 @@ impl TryFrom<&Vec<&str>> for Instruction {
         }
 
         // Handle stack operations
-        if parts[0].starts_with("stack") && parts.len() == 1 {
-            let op_txt = parts[0].replace("stack", "");
-            let op = parse_operation(&op_txt, (5, 4 + op_txt.len()))?;
-            return Ok(Instruction::StackOp(op));
+        if parts[0].starts_with("stack") {
+            match parts.len() {
+                1 => {
+                    let op_txt = parts[0].replace("stack", "");
+                    return Ok(Instruction::StackOp(parse_operation(&op_txt, (5, 4 + op_txt.len()))?));
+                },
+                2 => {
+                    return Ok(Instruction::StackOp(parse_operation(&parts[1], (6, 5 + parts[1].len()))?));
+                },
+                _ => return Err(InstructionParseError::UnknownInstruction(whole_range(&parts), parts.join(" "))),
+            };
         }
 
         // At this point only instructions follow that require := at second position
