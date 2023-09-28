@@ -115,6 +115,19 @@ impl ControlFlow {
         }
     }
 
+    /// Updates the call stack with the instruction index from which the function was called
+    /// and sets the next instruction index.
+    /// Returns StackOverflowError when call stack exceeds size of i16::max elements (= the maximum size is ~2MB).
+    pub fn call_function(&mut self, label: &str) -> Result<(), RuntimeErrorType> {
+        self.call_stack
+            .push(self.next_instruction_index);
+        if self.call_stack.len() > i16::MAX as usize {
+            return Err(RuntimeErrorType::StackOverflowError)
+        }
+        self.next_instruction_index(label)?;
+        Ok(())
+    }
+
     /// Resets the `next_instruction_index` to 0 and clears the `instruction_labels` map.
     pub fn reset(&mut self) {
         self.next_instruction_index = 0;

@@ -93,6 +93,13 @@ pub enum RuntimeErrorType {
     )]
     StackOpFail(Operation),
 
+    #[error("Stack Overflow")]
+    #[diagnostic(
+        code("runtime_error::stack_overflow_error"),
+        help("This error is usually caused by an infinite recursion. Make sure that all of your recursive functions return properly.")
+    )]
+    StackOverflowError,
+
     #[error("Attempt to jump to label '{0}' that does not exist")]
     #[diagnostic(
         code("runtime_error::label_missing"),
@@ -267,6 +274,20 @@ mod tests {
         assert_eq!(
             Instruction::Pop.run(&mut ra, &mut cf),
             Err(RuntimeErrorType::PopFail)
+        );
+    }
+
+    #[test]
+    fn test_re_stack_overflow() {
+        let ra = RuntimeArgs::new(1, vec!["a".to_string()]);
+        let mut rb = RuntimeBuilder::new();
+        rb.set_runtime_args(ra);
+        let instructions = vec!["loop: call loop"];
+        rb.build_instructions(&instructions, "test").unwrap();
+        let mut rt = rb.build().unwrap();
+        assert_eq!(
+            rt.run().unwrap_err().reason,
+            RuntimeErrorType::StackOverflowError
         );
     }
 

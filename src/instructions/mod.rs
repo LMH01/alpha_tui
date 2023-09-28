@@ -180,11 +180,7 @@ fn run_stack_op(runtime_args: &mut RuntimeArgs, op: Operation) -> Result<(), Run
 }
 
 fn run_call(control_flow: &mut ControlFlow, label: &str) -> Result<(), RuntimeErrorType> {
-    control_flow
-        .call_stack
-        .push(control_flow.next_instruction_index);
-    control_flow.next_instruction_index(label)?;
-    Ok(())
+    control_flow.call_function(label)
 }
 
 fn run_return(control_flow: &mut ControlFlow) -> Result<(), RuntimeErrorType> {
