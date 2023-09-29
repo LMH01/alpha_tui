@@ -37,10 +37,14 @@ pub fn pretty_format_instructions(instructions: &[String]) -> Vec<String> {
         }
         if parts[0].ends_with(":") {
             // label detected
-            if max_label_length < parts[0].len() {
-                max_label_length = parts[0].len();
+            if max_label_length < parts[0].chars().count() {
+                max_label_length = parts[0].chars().count();
             }
             parts.remove(0);
+        }
+        // check if line contained only label and skip because parts is now empty
+        if parts.is_empty() {
+            continue;
         }
 
         // count length of instruction
@@ -56,37 +60,59 @@ pub fn pretty_format_instructions(instructions: &[String]) -> Vec<String> {
     // apply spacing
     let mut pretty_instructions = Vec::new();
     for instruction in instructions {
-        let mut pretty_instruction = String::new();
+        let mut label: Option<String> = None;
+        let instruction_txt: String;
+        let comment: Option<String>;
+        const SPACING: usize = 2;
 
-        // Check for labels
-        let mut parts = instruction.split_whitespace().collect::<Vec<&str>>();
-        if parts.is_empty() {
+        // Check if instruction is empty string
+        if instruction.is_empty() {
             pretty_instructions.push(String::new());
             continue;
         }
+
+        // Check for labels
+        let mut parts = instruction.split_whitespace().collect::<Vec<&str>>();
         if parts[0].ends_with(":") {
             // label detected
-            let label = parts.remove(0);
-            let padding = " ".repeat(max_label_length - label.len());
-            pretty_instruction.push_str(&format!("{}{} ", label, padding));
-        } else {
-            pretty_instruction.push_str(&format!("{} ", " ".repeat(max_label_length)));
+            label = Some(parts.remove(0).trim().to_string());
         }
 
+        // Detect comment
         let without_label = parts.join(" ");
-        let comment = get_comment(&without_label);
-        let instruction = match get_comment(&without_label) {
-            Some(c) => without_label.replace(&c, ""),
+        comment = get_comment(&without_label);
+
+        // Detect instruction
+        // remove comment from instruction line, if comment exists
+        instruction_txt = match comment {
+            Some(ref c) => without_label.replace(c, "").trim().to_string(),
             None => without_label,
         };
 
-        // instruction printing
-        let padding = " ".repeat(max_instruction_length - instruction.len());
-        pretty_instruction.push_str(&format!("{}{}", instruction, padding));
-
-        // comment printing
-        if let Some(c) = comment {
-            pretty_instruction.push_str(&format!(" {}", c));
+        // Create pretty instruction from gathered parts
+        let mut pretty_instruction = String::new();
+        // label
+        match label.clone() {
+            Some(l) => pretty_instruction.push_str(&format!(
+                "{}{}",
+                l,
+                &" ".repeat(max_label_length - l.chars().count() + SPACING)
+            )),
+            None => pretty_instruction.push_str(&" ".repeat(max_label_length + SPACING)),
+        }
+        // instruction
+        pretty_instruction.push_str(&format!(
+            "{}{}",
+            instruction_txt,
+            " ".repeat(max_instruction_length - instruction_txt.chars().count() + SPACING)
+        ));
+        // comment
+        match comment {
+            Some(ref c) => pretty_instruction.push_str(&format!("{}", c)),
+            None => {
+                pretty_instruction.push_str(&" ".repeat(max_instruction_length + SPACING));
+                pretty_instruction = pretty_instruction.trim_end().to_string();
+            },
         }
 
         pretty_instructions.push(pretty_instruction);
@@ -136,10 +162,50 @@ pub fn get_comment(instruction: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::{remove_comment, get_comment};
+    use crate::utils::{get_comment, remove_comment};
 
+    use super::pretty_format_instructions;
+
+    #[test]
     fn test_pretty_format_instructions() {
-        let instructions = vec!["", ""];
+        let instructions = vec![
+            "p(a) := 8 // Configure amount of times the loops should run".to_string(),
+            "a0 := 2".to_string(),
+            "p(b) := p(a)".to_string(),
+            "loop_a:".to_string(),
+            "push".to_string(),
+            "p(b) := p(b) - 1".to_string(),
+            "if p(b) > 0 then goto loop_a".to_string(),
+            "p(b) := p(a) - 1".to_string(),
+            "loop_b:".to_string(),
+            "stack*".to_string(),
+            "p(b) := p(b) - 1".to_string(),
+            "if p(b) > 0 then goto loop_b".to_string(),
+            "pop".to_string(),
+        ];
+        let formatted_instructions = vec![
+            "         p(a) := 8                     // Configure amount of times the loops should run".to_string(),
+            "         a0 := 2".to_string(),
+            "         p(b) := p(a)".to_string(),                              
+            "loop_a:".to_string(),                              
+            "         push".to_string(),                              
+            "         p(b) := p(b) - 1".to_string(),                              
+            "         if p(b) > 0 then goto loop_a".to_string(),                              
+            "         p(b) := p(a) - 1".to_string(),                              
+            "loop_b:".to_string(),                              
+            "         stack*".to_string(),                              
+            "         p(b) := p(b) - 1".to_string(),                              
+            "         if p(b) > 0 then goto loop_b".to_string(),                              
+            "         pop".to_string()
+        ];
+        let pretty_instructions = pretty_format_instructions(&instructions);
+        for (idx, i) in pretty_instructions.iter().enumerate() {
+            assert_eq!(pretty_instructions[idx], formatted_instructions[idx]);
+        }
+        assert_eq!(
+            pretty_format_instructions(&instructions),
+            formatted_instructions
+        );
     }
 
     #[test]
