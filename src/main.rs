@@ -11,7 +11,7 @@ use crossterm::{
 use miette::{miette, Context, IntoDiagnostic, Result};
 use utils::read_file;
 
-use crate::{runtime::builder::RuntimeBuilder, tui::App};
+use crate::{runtime::builder::RuntimeBuilder, tui::App, utils::pretty_format_instructions};
 
 /// Contains all required data types used to run programs
 mod base;
@@ -62,6 +62,10 @@ fn main() -> Result<()> {
     let stdout = io::stdout();
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend).unwrap();
+
+    // format instructions pretty if cli flag is set
+
+    let instructions = pretty_format_instructions(&instructions);
 
     // create app
     let mut app = App::from_runtime(rt, args.input, &instructions, &args.breakpoints);

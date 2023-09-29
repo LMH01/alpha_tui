@@ -61,18 +61,8 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
             .title(format!("File: {}", app.filename.clone()));
     }
 
-    let code_area_items: Vec<ListItem> = app
-        .instruction_list_states
-        .instructions()
-        .iter()
-        .map(|i| {
-            let content = vec![Line::from(Span::raw(format!("{:2}: {}", i.0 + 1, i.1)))];
-            ListItem::new(content).style(Style::default())
-        })
-        .collect();
-
     // Create a List from all instructions and highlight current instruction
-    let items = List::new(code_area_items)
+    let items = List::new(app.instruction_list_states.as_list_items())
         .block(code_area)
         .highlight_style(if let State::Breakpoints(_, _) = app.state {
             Style::default()

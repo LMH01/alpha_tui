@@ -62,7 +62,7 @@ impl App {
     pub fn from_runtime(
         runtime: Runtime,
         filename: String,
-        instructions: &[String],
+        instructions: &[String], // The content of this array is purely cosmetical, it is just used to print the instructions inside the ui
         set_breakpoints: &Option<Vec<usize>>,
     ) -> App {
         let mlm = MemoryListsManager::new(runtime.runtime_args());
@@ -71,7 +71,7 @@ impl App {
             filename,
             instruction_list_states: InstructionListStates::new(
                 instructions,
-                set_breakpoints.as_ref(),
+                set_breakpoints.as_ref()
             ),
             keybind_hints: init_keybind_hints(),
             memory_lists_manager: mlm,
