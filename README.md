@@ -8,7 +8,7 @@ Pull requests and bug reports are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md
 
 ## Getting started
 
-1. Download the [newest release]() specific for your system
+1. Download the [newest release](https://github.com/lmh01/alpha_tui/releases/latest) specific for your system
 2. Extract the .zip file 
 3. Create a program by using the text editor of your choice or try an example program located in [examples/programs](examples/programs). The examples might help you write your program.
 4. Run `alpha_tui` by opening a terminal in the folder and then typing `alpha_tui -i FILENAME`, for an example program this command could look like this: `alpha_tui -i examples/programs/faculty.alpha`
