@@ -31,7 +31,6 @@ pub fn write_file(contet: &Vec<String>, path: &str) -> Result<()> {
 
     let mut writer = LineWriter::new(file);
     for line in contet {
-        println!("{}", line);
         writer.write_all(line.as_bytes()).into_diagnostic()?;
         writer.write_all("\n".as_bytes()).into_diagnostic()?;
     }
