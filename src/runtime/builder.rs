@@ -6,7 +6,7 @@ use crate::{
     instructions::{
         error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
         Instruction, TargetType, Value,
-    },
+    }, utils::remove_comment,
 };
 
 use super::{
@@ -130,19 +130,7 @@ impl RuntimeBuilder {
         let mut instructions = Vec::new();
         for (index, instruction) in instructions_input.iter().enumerate() {
             // Remove comments
-            let instruction = instruction
-                .lines()
-                .map(|line| {
-                    if let Some(index) = line.find("//") {
-                        line[..index].trim()
-                    } else if let Some(index) = line.find('#') {
-                        line[..index].trim()
-                    } else {
-                        line.trim()
-                    }
-                })
-                .collect::<Vec<_>>()
-                .join("\n");
+            let instruction = remove_comment(instruction);
             // Check for labels
             let mut splits = instruction.split_whitespace().collect::<Vec<&str>>();
             if splits.is_empty() {

@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use ratatui::{
     style::Style,
+    text::{Line, Span},
     widgets::{ListItem, ListState},
 };
 
@@ -14,13 +15,15 @@ use super::LIST_ITEM_HIGHLIGHT_COLOR;
 pub struct InstructionListStates {
     instruction_list_state: ListState,
     breakpoint_list_state: ListState,
-    instructions: Vec<(usize, String, bool)>, // third argument specifies if a breakpoint is set for this line
+    instructions: Vec<(usize, String, bool)>, // index, line content, is a breakpoint present
     last_index: i32,
     current_index: i32,
 }
 
 #[allow(clippy::cast_sign_loss)]
 impl InstructionListStates {
+    
+    /// Creates new InstructionListStates which hold the current state of the instruction list.
     pub fn new(instructions: &[String], set_breakpoints: Option<&Vec<usize>>) -> Self {
         let mut i = Vec::new();
         for (index, s) in instructions.iter().enumerate() {
@@ -41,6 +44,19 @@ impl InstructionListStates {
             last_index: -1,
             current_index: -1,
         }
+    }
+
+    /// Returns the instruction states as a vector of list items to be printed in the ui.
+    pub fn as_list_items(&self) -> Vec<ListItem<'static>> {
+        let items = self
+            .instructions()
+            .iter()
+            .map(|i| {
+                let content = vec![Line::from(Span::raw(format!("{:2}: {}", i.0 + 1, i.1)))];
+                ListItem::new(content).style(Style::default())
+            })
+            .collect();
+        items
     }
 
     /// Selects the line in which the program starts

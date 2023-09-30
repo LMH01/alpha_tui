@@ -40,19 +40,33 @@ pub struct Args {
     )]
     pub memory_cell_file: Option<String>,
     #[arg(
-        short,
         long,
-        help = "Set to disable accumulator and memory_cell detection",
+        help = "Disable accumulator and memory_cell detection",
         long_help = "Set to disable accumulator and memory_cell detection.\nIf disabled, accumulators and memory cells won't be read from program,\ninstead they have to be specified using \"--accumulators\" and \"--memory-cells\" or \"--memory-cell-file\"",
         requires = "memory"
     )]
     pub disable_memory_detection: bool,
     #[arg(
-        short,
         long,
+        short,
         help = "Enable predetermined breakpoints",
         long_help = "Enable predetermined breakpoints.\nThe supplied element specifies the line in which the breakpoint should be set.\nExample: -b 1,7,8",
         value_delimiter = ','
     )]
     pub breakpoints: Option<Vec<usize>>,
+    #[arg(
+        short,
+        long,
+        help = "Disable alignment of labels, instructions and comments",
+        long_help = "Per default labels, instructions and comments are aligned in columns to make reading easier, this can be disabled by setting this flag."
+    )]
+    pub disable_alignment: bool,
+    #[arg(
+        short,
+        long,
+        help = "Write the changed program file alignment to file",
+        long_help = "Write the changed program file alignment for better readability to the source file.",
+        conflicts_with = "disable_pretty_print",
+    )]
+    pub write_alignment: bool
 }
