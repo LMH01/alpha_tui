@@ -66,7 +66,7 @@ pub struct Args {
         long,
         help = "Write the changed program file alignment to file",
         long_help = "Write the changed program file alignment for better readability to the source file.",
-        conflicts_with = "disable_pretty_print",
+        conflicts_with = "disable_alignment",
     )]
     pub write_alignment: bool
 }
