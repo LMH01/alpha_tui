@@ -50,6 +50,12 @@ fn main() -> Result<()> {
         &args.input,
     )?;
 
+    // format instructions pretty if cli flag is set
+    let instructions = match args.disable_pretty_print {
+        false => pretty_format_instructions(&instructions),
+        true => instructions,
+    };
+
     println!("Building runtime");
     let rt = rb.build().wrap_err("while building runtime")?;
 
@@ -62,10 +68,6 @@ fn main() -> Result<()> {
     let stdout = io::stdout();
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend).unwrap();
-
-    // format instructions pretty if cli flag is set
-
-    let instructions = pretty_format_instructions(&instructions);
 
     // create app
     let mut app = App::from_runtime(rt, args.input, &instructions, &args.breakpoints);
