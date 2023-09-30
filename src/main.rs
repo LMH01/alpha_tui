@@ -11,7 +11,7 @@ use crossterm::{
 use miette::{miette, Context, IntoDiagnostic, Result};
 use utils::read_file;
 
-use crate::{runtime::builder::RuntimeBuilder, tui::App, utils::pretty_format_instructions};
+use crate::{runtime::builder::RuntimeBuilder, tui::App, utils::{pretty_format_instructions, write_file}};
 
 /// Contains all required data types used to run programs
 mod base;
@@ -58,6 +58,12 @@ fn main() -> Result<()> {
 
     println!("Building runtime");
     let rt = rb.build().wrap_err("while building runtime")?;
+
+    // write new formatting to file if enabled
+    if args.write_alignment {
+        println!("Writing alignment to source file");
+        write_file(&instructions, &args.input)?;
+    }
 
     // tui
     // setup terminal

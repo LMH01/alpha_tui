@@ -1,7 +1,9 @@
 use std::{
-    fs::File,
-    io::{BufRead, BufReader},
+    fs::{File, remove_file},
+    io::{BufRead, BufReader, BufWriter, Write, LineWriter},
 };
+
+use miette::{Result, IntoDiagnostic};
 
 /// Reads a file into a string vector.
 ///
@@ -21,6 +23,20 @@ pub fn read_file(path: &str) -> Result<Vec<String>, String> {
         }
     }
     Ok(content)
+}
+
+pub fn write_file(contet: &Vec<String>, path: &str) -> Result<()> {
+    remove_file(path).into_diagnostic()?;
+    let file = File::create(path).into_diagnostic()?;
+
+    let mut writer = LineWriter::new(file);
+    for line in contet {
+        println!("{}", line);
+        writer.write_all(line.as_bytes()).into_diagnostic()?;
+        writer.write_all("\n".as_bytes()).into_diagnostic()?;
+    }
+    writer.flush().into_diagnostic()?;
+    Ok(())
 }
 
 pub fn pretty_format_instructions(instructions: &[String]) -> Vec<String> {

@@ -57,8 +57,16 @@ pub struct Args {
     #[arg(
         short,
         long,
-        help = "Disable alignment of labels, instructions and comments.",
+        help = "Disable alignment of labels, instructions and comments",
         long_help = "Per default labels, instructions and comments are aligned in columns to make reading easier, this can be disabled by setting this flag."
     )]
     pub disable_pretty_print: bool,
+    #[arg(
+        short,
+        long,
+        help = "Write the changed program file alignment to file",
+        long_help = "Write the changed program file alignment for better readability to the source file.",
+        conflicts_with = "disable_pretty_print",
+    )]
+    pub write_alignment: bool
 }
