@@ -51,7 +51,7 @@ fn main() -> Result<()> {
     )?;
 
     // format instructions pretty if cli flag is set
-    let instructions = match args.disable_pretty_print {
+    let instructions = match args.disable_alignment {
         false => pretty_format_instructions(&instructions),
         true => instructions,
     };

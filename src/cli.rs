@@ -60,7 +60,7 @@ pub struct Args {
         help = "Disable alignment of labels, instructions and comments",
         long_help = "Per default labels, instructions and comments are aligned in columns to make reading easier, this can be disabled by setting this flag."
     )]
-    pub disable_pretty_print: bool,
+    pub disable_alignment: bool,
     #[arg(
         short,
         long,
