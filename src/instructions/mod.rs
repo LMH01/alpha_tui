@@ -1,3 +1,5 @@
+use std::panic::Location;
+
 use miette::Result;
 
 use crate::{
@@ -102,6 +104,9 @@ fn run_assign(
             assert_memory_cell_exists(runtime_args, a)?;
             runtime_args.memory_cells.get_mut(a).unwrap().data = Some(source.value(runtime_args)?);
         }
+        TargetType::IndexMemoryCell(location) => {
+            todo!()
+        }
     }
     Ok(())
 }
@@ -121,6 +126,9 @@ fn run_calc(
         TargetType::MemoryCell(a) => {
             runtime_args.memory_cells.get_mut(a).unwrap().data =
                 Some(op.calc(source_a.value(runtime_args)?, source_b.value(runtime_args)?)?);
+        }
+        TargetType::IndexMemoryCell(location) => {
+            todo!()
         }
     }
     Ok(())
@@ -255,10 +263,20 @@ fn assert_memory_cell_contains_value(
     }
 }
 
+/// Specifies the location where the index memory cell should look for the value of the index of the index memory cell
+#[derive(Debug, PartialEq, Clone)]
+pub enum IndexMemoryCellValueLocation {
+    /// Indicates that the index is found where the value of the index memory cell is stored
+    Index(usize),
+    /// Contains the name or index of a memory cell where the index of this index memory cell should be searched in
+    MemoryCell(String),
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum TargetType {
     Accumulator(usize),
     MemoryCell(String),
+    IndexMemoryCell(IndexMemoryCellValueLocation),
 }
 
 impl TryFrom<(&String, (usize, usize))> for TargetType {

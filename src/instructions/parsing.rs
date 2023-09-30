@@ -3,7 +3,7 @@ use crate::{
     instructions::error_handling::InstructionParseError,
 };
 
-use super::{Instruction, TargetType, Value};
+use super::{Instruction, TargetType, Value, IndexMemoryCellValueLocation};
 
 impl TryFrom<&Vec<&str>> for Instruction {
     type Error = InstructionParseError;
@@ -247,6 +247,29 @@ pub fn parse_memory_cell(
         ));
     }
     Ok(name)
+}
+
+pub fn parse_index_memory_cell(s: &str, part_range: (usize, usize)) -> Result<IndexMemoryCellValueLocation, InstructionParseError> {
+    if !s.starts_with("p(") && !s.starts_with("ρ(") {
+        return Err(InstructionParseError::InvalidExpression(
+            part_range,
+            s.to_string(),
+        ));
+    }
+    if !s.ends_with(')') {
+        return Err(InstructionParseError::InvalidExpression(
+            (part_range.0, part_range.1),
+            s.to_string(),
+        ));
+    }
+    let location = s.replace("p(", "").replace("ρ(", "").replace(')', "");
+    if let Ok(idx) = location.parse::<usize>() {
+        return Ok(IndexMemoryCellValueLocation::Index(idx));
+    }
+    if let Ok(name) = parse_memory_cell(&location, part_range) {
+        return Ok(IndexMemoryCellValueLocation::MemoryCell(name));
+    }
+    Err(InstructionParseError::InvalidExpression(part_range, s.to_string()))
 }
 
 /// Calculates the character index range of a part.
