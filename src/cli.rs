@@ -20,7 +20,7 @@ pub struct Args {
         short,
         long,
         help = "Number of available accumulators",
-        long_help = "Number of available accumulators.\nIf the value is too large it can happen that accumulators are not displayed in the gui.",
+        long_help = "Number of available accumulators.\nIf the value is too large it can happen that accumulators are not displayed in the tui.",
         required_if_eq("disable_memory_detection", "true")
     )]
     pub accumulators: Option<u8>,
@@ -28,7 +28,7 @@ pub struct Args {
         short,
         long,
         help = "Number of available memory cells",
-        long_help = "Number of available memory cells.\nIf a large number of memory cells is specified, it can happen that some are not displayed in the gui.\nExample: -a a,b,c,d",
+        long_help = "Number of available memory cells.\nIf a large number of memory cells is specified, it can happen that some are not displayed in the tui.\nExample: -a a,b,c,d",
         value_delimiter = ','
     )]
     pub memory_cells: Option<Vec<String>>,
