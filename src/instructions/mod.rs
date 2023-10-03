@@ -265,18 +265,26 @@ fn assert_memory_cell_contains_value(
 
 /// Specifies the location where the index memory cell should look for the value of the index of the index memory cell
 #[derive(Debug, PartialEq, Clone)]
-pub enum IndexMemoryCellValueLocation {
-    /// Indicates that the index is found where the value of the index memory cell is stored
-    Index(usize),
-    /// Contains the name or index of a memory cell where the index of this index memory cell should be searched in
+pub enum IndexMemoryCellIndexType {
+    /// Indicates that this index memory cell uses a direct index to access data.
+    /// 
+    /// E.g. p(1)
+    Direct(usize),
+    /// Indicates that this index memory cell searches for the index in the location of memory cell with name String.
+    /// 
+    /// E.g. p(p(h1)), String would be h1.
     MemoryCell(String),
+    /// Indicates that this index memory cell searches for the index in the location of the index memory cell with usize.
+    /// 
+    /// E.g. p(p(1)), usize would be 1.
+    Index(usize),
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum TargetType {
     Accumulator(usize),
     MemoryCell(String),
-    IndexMemoryCell(IndexMemoryCellValueLocation),
+    IndexMemoryCell(IndexMemoryCellIndexType),
 }
 
 impl TryFrom<(&String, (usize, usize))> for TargetType {
