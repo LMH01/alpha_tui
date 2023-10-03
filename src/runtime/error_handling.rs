@@ -72,6 +72,13 @@ pub enum RuntimeErrorType {
     )]
     MemoryCellDoesNotExist(String),
 
+    #[error("Attempt to use value of index memory cell with index '{0}' while value is not initialized")]
+    #[diagnostic(
+        code("runtime_error::index_memory_cell_uninitialized"),
+        help("Try assigning a value before accessing it.\nExample p({0}) := 5")
+    )]
+    IndexMemoryCellUninitialized(usize),
+
     #[error("Attempt to push value of a0 onto stack while a0 is not initialized")]
     #[diagnostic(
         code("runtime_error::push_fail"),
@@ -119,6 +126,13 @@ pub enum RuntimeErrorType {
         #[diagnostic_source]
         cause: CalcError,
     },
+
+    #[error("Attempt to access index memory cell with negative index, '{0}'")]
+    #[diagnostic(
+        code("runtime_error::index_memory_cell_negative_index"),
+        help("Make sure that the value with which you try to access the index memory cell is positive")
+    )]
+    IndexMemoryCellNegativeIndex(i32),
 }
 
 #[derive(Debug, Clone, PartialEq, Error, Diagnostic)]

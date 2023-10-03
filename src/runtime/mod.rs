@@ -149,6 +149,9 @@ pub struct RuntimeArgs {
     pub accumulators: HashMap<usize, Accumulator>,
     /// All registers that are used to store data
     pub memory_cells: HashMap<String, MemoryCell>,
+    /// All index registers that are used to store data,
+    /// key is the index, value is the value of that register
+    pub index_memory_cells: HashMap<usize, i32>,
     /// The stack of the runner
     pub stack: Vec<i32>,
 }
@@ -174,6 +177,7 @@ impl<'a> RuntimeArgs {
                     return Ok(Self {
                         accumulators,
                         memory_cells,
+                        index_memory_cells: HashMap::new(),
                         stack: Vec::new(),
                     });
                 }
@@ -197,6 +201,7 @@ impl<'a> RuntimeArgs {
         Self {
             accumulators: HashMap::new(),
             memory_cells: HashMap::new(),
+            index_memory_cells: HashMap::new(),
             stack: Vec::new(),
         }
     }
@@ -213,6 +218,7 @@ impl<'a> RuntimeArgs {
         Self {
             accumulators,
             memory_cells,
+            index_memory_cells: HashMap::new(),
             stack: Vec::new(),
         }
     }

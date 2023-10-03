@@ -102,8 +102,26 @@ fn run_assign(
             assert_memory_cell_exists(runtime_args, a)?;
             runtime_args.memory_cells.get_mut(a).unwrap().data = Some(source.value(runtime_args)?);
         }
-        TargetType::IndexMemoryCell(location) => {
-            todo!()
+        TargetType::IndexMemoryCell(t) => {
+            match t {
+                IndexMemoryCellIndexType::Direct(idx) => {
+                    runtime_args.index_memory_cells.insert(*idx, source.value(runtime_args)?);
+                },
+                IndexMemoryCellIndexType::MemoryCell(name) => {
+                    let idx = assert_memory_cell_contains_value(runtime_args, &name)?;
+                    if idx.is_negative() {
+                        return Err(RuntimeErrorType::IndexMemoryCellNegativeIndex(idx))
+                    }
+                    runtime_args.index_memory_cells.insert(idx as usize, source.value(runtime_args)?);
+                },
+                IndexMemoryCellIndexType::Index(idx) => {
+                    let idx = assert_index_memory_cell_contains_value(runtime_args, *idx)?;
+                    if idx.is_negative() {
+                        return Err(RuntimeErrorType::IndexMemoryCellNegativeIndex(idx))
+                    }
+                    runtime_args.index_memory_cells.insert(idx as usize, source.value(runtime_args)?);
+                }
+            }
         }
     }
     Ok(())
@@ -258,6 +276,14 @@ fn assert_memory_cell_contains_value(
         }
     } else {
         Err(RuntimeErrorType::MemoryCellDoesNotExist(label.to_string()))
+    }
+}
+
+fn assert_index_memory_cell_contains_value(runtime_args: &RuntimeArgs, index: usize) -> Result<i32, RuntimeErrorType> {
+    if let Some(value) = runtime_args.index_memory_cells.get(&index) {
+        Ok(*value)
+    } else {
+        Err(RuntimeErrorType::IndexMemoryCellUninitialized(index))
     }
 }
 
