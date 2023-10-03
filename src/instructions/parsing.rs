@@ -221,6 +221,8 @@ pub fn parse_comparison(
 
 /// Parses the name of a memory cell.
 /// For that the content inside p() is taken.
+/// The name of the memory cell is only allowed to contain the letters A-Z and a-z.
+/// The numbers 0-9 are also allowed, if at least one letter is included.
 ///
 /// `part_range` indicates the area that is affected.
 pub fn parse_memory_cell(
@@ -246,6 +248,9 @@ pub fn parse_memory_cell(
             s.to_string(),
         ));
     }
+    if !name.chars().any(|c| matches!(c, 'a'..='z')) {
+        return Err(InstructionParseError::InvalidExpression((part_range.0+2, part_range.1-2), name));
+    }
     Ok(name)
 }
 
@@ -262,7 +267,9 @@ pub fn parse_index_memory_cell(s: &str, part_range: (usize, usize)) -> Result<In
             s.to_string(),
         ));
     }
-    let location = s.replace("p(", "").replace("ρ(", "").replace(')', "");
+    // At this point we know that the string starts with p( and ends with ), we can remove these indicators to get the inner value
+    let location = s.chars().skip(2).take(s.chars().count()-1-2).collect::<String>();
+    //let location = s.replacen("p(", "", 1).replacen("ρ(", "", 1).replacen(')', "", 1);
     if let Ok(idx) = location.parse::<usize>() {
         return Ok(IndexMemoryCellValueLocation::Index(idx));
     }
@@ -311,4 +318,26 @@ fn check_expression_missing(
         })?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{instructions::{parsing::{parse_index_memory_cell, parse_memory_cell}, IndexMemoryCellValueLocation, error_handling::InstructionParseError}, base::MemoryCell};
+
+    #[test]
+    fn test_parse_memory_cell() {
+        assert_eq!(parse_memory_cell("p(h1)", (0, 4)), Ok("h1".to_string()));
+        assert_eq!(parse_memory_cell("ρ(h1)", (0, 4)), Ok("h1".to_string()));
+        assert_eq!(parse_memory_cell("ρ(1)", (0, 4)), Err(InstructionParseError::InvalidExpression((2, 2), "1".to_string())));
+        assert_eq!(parse_memory_cell("ρ(10)", (0, 5)), Err(InstructionParseError::InvalidExpression((2, 3), "10".to_string())));
+    }
+
+    #[test]
+    fn test_parse_index_memory_cell() {
+        assert_eq!(parse_index_memory_cell("p(p(h1))", (0, 7)), Ok(IndexMemoryCellValueLocation::MemoryCell("h1".to_string())));
+        assert_eq!(parse_index_memory_cell("ρ(ρ(h1))", (0, 7)), Ok(IndexMemoryCellValueLocation::MemoryCell("h1".to_string())));
+        assert_eq!(parse_index_memory_cell("p(10)", (0, 7)), Ok(IndexMemoryCellValueLocation::Index(10)));
+        assert_eq!(parse_index_memory_cell("ρ(10)", (0, 7)), Ok(IndexMemoryCellValueLocation::Index(10)));
+        //TODO Add tests for error cases
+    }
 }
