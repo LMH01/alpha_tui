@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
-    instructions::{Instruction, TargetType, Value},
+    instructions::{Instruction, TargetType, Value, IndexMemoryCellIndexType},
     runtime::{builder::RuntimeBuilder, ControlFlow, RuntimeArgs},
 };
 
@@ -898,4 +898,13 @@ fn setup_empty_runtime_args() -> RuntimeArgs {
     args.accumulators = HashMap::new();
     args.memory_cells = HashMap::new();
     args
+}
+
+#[test]
+fn test_try_target_type_from_string_usize_usize_tuple() {
+    assert_eq!(TargetType::try_from((&"a5".to_string(), (0, 4))), Ok(TargetType::Accumulator(5)));
+    assert_eq!(TargetType::try_from((&"p(h1)".to_string(), (0, 4))), Ok(TargetType::MemoryCell("h1".to_string())));
+    assert_eq!(TargetType::try_from((&"p(10)".to_string(), (0, 4))), Ok(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Direct(10))));
+    assert_eq!(TargetType::try_from((&"p(p(10))".to_string(), (0, 7))), Ok(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Index(10))));
+    assert_eq!(TargetType::try_from((&"p(p(h1))".to_string(), (0, 7))), Ok(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string()))));
 }

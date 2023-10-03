@@ -1,5 +1,3 @@
-use std::panic::Location;
-
 use miette::Result;
 
 use crate::{
@@ -8,7 +6,7 @@ use crate::{
     runtime::{error_handling::RuntimeErrorType, ControlFlow, RuntimeArgs},
 };
 
-use self::parsing::{parse_alpha, parse_memory_cell};
+use self::parsing::{parse_alpha, parse_memory_cell, parse_index_memory_cell};
 
 pub mod error_handling;
 
@@ -291,6 +289,9 @@ impl TryFrom<(&String, (usize, usize))> for TargetType {
     type Error = InstructionParseError;
 
     fn try_from(value: (&String, (usize, usize))) -> Result<Self, Self::Error> {
+        if let Ok(v) = parse_index_memory_cell(value.0, value.1) {
+            return Ok(Self::IndexMemoryCell(v));
+        }
         if let Ok(v) = parse_memory_cell(value.0, value.1) {
             return Ok(Self::MemoryCell(v));
         }

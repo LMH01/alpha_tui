@@ -248,7 +248,7 @@ pub fn parse_memory_cell(
             s.to_string(),
         ));
     }
-    if !name.chars().any(|c| matches!(c, 'a'..='z')) {
+    if !name.chars().any(|c| matches!(c, 'a'..='z')) {// TODO fix that ONLY a-z, A-Z and 0-9 are allowed, names that contain ( or ; should fail!
         return Err(InstructionParseError::InvalidExpression((part_range.0+2, part_range.1-2), name));
     }
     Ok(name)
