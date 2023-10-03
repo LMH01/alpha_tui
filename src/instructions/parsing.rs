@@ -286,14 +286,6 @@ pub fn parse_index_memory_cell(s: &str, part_range: (usize, usize)) -> Result<In
         }
         Err(e) => return Err(e),
     }
-    //// Call this function again to determine if inner value is a number (= instance of Direct), if so the index type is an index.
-    //if let Ok(t) = parse_index_memory_cell(&location, (part_range.0+2, part_range.1-2)) {
-    //    match t {
-    //        IndexMemoryCellIndexType::Direct(idx) => return Ok(IndexMemoryCellIndexType::Index(idx)),
-    //        _ => return Err(InstructionParseError::InvalidExpression((0,0), location)),
-    //    }
-    //}
-    //Err(InstructionParseError::InvalidExpression(part_range, s.to_string()))
 }
 
 /// Calculates the character index range of a part.
