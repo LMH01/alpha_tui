@@ -41,11 +41,19 @@ pub struct Args {
     pub memory_cell_file: Option<String>,
     #[arg(
         long,
-        help = "Disable accumulator and memory_cell detection",
-        long_help = "Set to disable accumulator and memory_cell detection.\nIf disabled, accumulators and memory cells won't be read from program,\ninstead they have to be specified using \"--accumulators\" and \"--memory-cells\" or \"--memory-cell-file\"",
+        help = "Disable accumulator, gamma accumulator and memory_cell detection",
+        long_help = "Set to disable accumulator, gamma accumulator and memory_cell detection.\nIf disabled, accumulators, gamma accumulator and memory cells won't be read from program,\ninstead they have to be specified using \"--accumulators\", \"--enable-gamma-accumulator\" and \"--memory-cells\" or \"--memory-cell-file\"",
         requires = "memory"
     )]
     pub disable_memory_detection: bool,
+    
+    #[arg(
+        long,
+        help = "Enable the gamma accumulator",
+        long_help = "Enable the gamma accumulator, can be used to enable gamma accumulator when automatic detection is disabled by \"--disable-memory-detection\"."
+    )]
+    pub enable_gamma_accumulator: bool,
+
     #[arg(
         long,
         short,

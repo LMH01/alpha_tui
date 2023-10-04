@@ -179,9 +179,13 @@ impl<'a> RuntimeArgs {
                             accumulators
                         }
                     };
+                    let gamma = match args.enable_gamma_accumulator {
+                        true => Some(None),
+                        false => None,
+                    };
                     return Ok(Self {
                         accumulators,
-                        gamma: None,
+                        gamma,
                         memory_cells,
                         index_memory_cells: HashMap::new(),
                         stack: Vec::new(),
@@ -195,11 +199,11 @@ impl<'a> RuntimeArgs {
             None => Vec::new(),
             Some(value) => value.clone(),
         };
-        Ok(Self::new(accumulators as usize, memory_cells))
+        Ok(Self::new(accumulators as usize, memory_cells, args.enable_gamma_accumulator))
     }
 
     pub fn new_debug(memory_cells: &'a [&'static str]) -> Self {
-        Self::new(4, memory_cells.iter().map(|f| (*f).to_string()).collect())
+        Self::new(4, memory_cells.iter().map(|f| (*f).to_string()).collect(), true)
     }
 
     #[allow(dead_code)]
@@ -213,7 +217,7 @@ impl<'a> RuntimeArgs {
         }
     }
 
-    fn new(acc: usize, m_cells: Vec<String>) -> Self {
+    fn new(acc: usize, m_cells: Vec<String>, enable_gamma: bool) -> Self {
         let mut accumulators = HashMap::new();
         for i in 0..acc {
             accumulators.insert(i, Accumulator::new(i));
@@ -222,9 +226,13 @@ impl<'a> RuntimeArgs {
         for i in m_cells {
             memory_cells.insert(i.clone(), MemoryCell::new(i.as_str()));
         }
+        let gamma = match enable_gamma {
+            true => Some(None),
+            false => None,
+        };
         Self {
             accumulators,
-            gamma: None,
+            gamma,
             memory_cells,
             index_memory_cells: HashMap::new(),
             stack: Vec::new(),
