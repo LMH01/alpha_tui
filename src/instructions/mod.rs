@@ -114,6 +114,10 @@ fn run_assign(
                 IndexMemoryCellIndexType::Direct(idx) => {
                     runtime_args.index_memory_cells.insert(*idx, source.value(runtime_args)?);
                 },
+                IndexMemoryCellIndexType::Gamma => {
+                    let idx = index_from_gamma(runtime_args)?;
+                    runtime_args.index_memory_cells.insert(idx, source.value(runtime_args)?);
+                }
                 IndexMemoryCellIndexType::MemoryCell(name) => {
                     let idx = index_from_memory_cell(runtime_args, &name)?;
                     runtime_args.index_memory_cells.insert(idx as usize, source.value(runtime_args)?);
@@ -158,6 +162,10 @@ fn run_calc(
                 IndexMemoryCellIndexType::Direct(idx) => {
                     runtime_args.index_memory_cells.insert(*idx, res);
                 },
+                IndexMemoryCellIndexType::Gamma => {
+                    let idx = index_from_gamma(runtime_args)?;
+                    runtime_args.index_memory_cells.insert(idx, res);
+                }
                 IndexMemoryCellIndexType::MemoryCell(name) => {
                     let idx = index_from_memory_cell(runtime_args, &name)?;
                     runtime_args.index_memory_cells.insert(idx as usize, res);
@@ -338,6 +346,8 @@ pub enum IndexMemoryCellIndexType {
     /// 
     /// E.g. p(1)
     Direct(usize),
+    /// Indicates that this index memory cell uses the value of the gamma accumulator as index where the data is accessed.
+    Gamma,
     /// Indicates that this index memory cell searches for the index in the location of memory cell with name String.
     /// 
     /// E.g. p(p(h1)), String would be h1.
@@ -406,6 +416,10 @@ impl Value {
                     IndexMemoryCellIndexType::Direct(idx) => {
                         Ok(assert_index_memory_cell_contains_value(runtime_args, *idx)?)
                     },
+                    IndexMemoryCellIndexType::Gamma => {
+                        let idx = index_from_gamma(runtime_args)?;
+                        Ok(assert_index_memory_cell_contains_value(runtime_args, idx)?)
+                    }
                     IndexMemoryCellIndexType::Index(idx) => {
                         let idx = index_from_index_memory_cell(runtime_args, idx)?;
                         Ok(assert_index_memory_cell_contains_value(runtime_args, idx)?)
@@ -452,6 +466,16 @@ impl TryFrom<(String, (usize, usize))> for Value {
 /// return the value if it is.
 fn index_from_accumulator(runtime_args: &RuntimeArgs, idx: &usize) -> Result<usize, RuntimeErrorType> {
     let idx = assert_accumulator_contains_value(runtime_args, *idx)?;
+    if idx.is_negative() {
+        return Err(RuntimeErrorType::IndexMemoryCellNegativeIndex(idx))
+    }
+    Ok(idx as usize)
+}
+
+/// Gets the content from the gamma accumulator and checks if the value is positive,
+/// return the value if it is.
+fn index_from_gamma(runtime_args: &RuntimeArgs) -> Result<usize, RuntimeErrorType> {
+    let idx = assert_gamma_contains_value(runtime_args)?;
     if idx.is_negative() {
         return Err(RuntimeErrorType::IndexMemoryCellNegativeIndex(idx))
     }

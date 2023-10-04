@@ -287,6 +287,9 @@ pub fn parse_index_memory_cell(s: &str, part_range: (usize, usize)) -> Result<In
     if let Ok(idx) = location.parse::<usize>() {
         return Ok(IndexMemoryCellIndexType::Direct(idx));
     }
+    if let Ok(_) = parse_gamma(&location, (part_range.0+2, part_range.1-2)) {
+        return Ok(IndexMemoryCellIndexType::Gamma);
+    }
     if let Ok(idx) = parse_alpha(&location, (part_range.0+2, part_range.1-2), false) {
         return Ok(IndexMemoryCellIndexType::Accumulator(idx));
     }
@@ -363,6 +366,7 @@ mod tests {
         assert_eq!(parse_index_memory_cell("p(a)", (0, 3)), Err(InstructionParseError::InvalidExpression((2, 2), "a".to_string())));
         assert_eq!(parse_index_memory_cell("p(a0)", (0, 3)), Ok(IndexMemoryCellIndexType::Accumulator(0)));
         assert_eq!(parse_index_memory_cell("p(a1)", (0, 4)), Ok(IndexMemoryCellIndexType::Accumulator(1)));
+        assert_eq!(parse_index_memory_cell("p(y)", (0, 3)), Ok(IndexMemoryCellIndexType::Gamma));
         assert_eq!(parse_index_memory_cell("p(p(h1))", (0, 7)), Ok(IndexMemoryCellIndexType::MemoryCell("h1".to_string())));
         assert_eq!(parse_index_memory_cell("ρ(ρ(h1))", (0, 7)), Ok(IndexMemoryCellIndexType::MemoryCell("h1".to_string())));
         assert_eq!(parse_index_memory_cell("p(p(hello))", (0, 7)), Ok(IndexMemoryCellIndexType::MemoryCell("hello".to_string())));

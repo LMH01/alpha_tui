@@ -137,15 +137,16 @@ fn test_run_calc_gamma() {
 }
 
 #[test]
-fn test_parse_assign_index_memory_cell() {// TODO add test case for gamma
+fn test_parse_assign_index_memory_cell() {
     assert_eq!(Instruction::try_from("p(5) := 5"), Ok(Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Direct(5)), Value::Constant(5))));
     assert_eq!(Instruction::try_from("p(p(5)) := 5"), Ok(Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Index(5)), Value::Constant(5))));
+    assert_eq!(Instruction::try_from("p(y) := 5"), Ok(Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Gamma), Value::Constant(5))));
     assert_eq!(Instruction::try_from("p(p(h1)) := 5"), Ok(Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string())), Value::Constant(5))));
     assert_eq!(Instruction::try_from("p(a0) := 5"), Ok(Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0)), Value::Constant(5))));
 }
 
 #[test]
-fn test_run_assign_index_memory_cell() {// TODO add test case for gamma
+fn test_run_assign_index_memory_cell() {
     let mut args = setup_runtime_args();
     let mut control_flow = ControlFlow::new();
     Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Direct(5)), Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
@@ -164,18 +165,24 @@ fn test_run_assign_index_memory_cell() {// TODO add test case for gamma
     args.accumulators.get_mut(&0).unwrap().data = Some(3);
     Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0)), Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
     assert_eq!(args.index_memory_cells.get(&3), Some(&5));
+
+    args.index_memory_cells.insert(4, 0);
+    args.gamma = Some(Some(4));
+    Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Gamma), Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
+    assert_eq!(args.index_memory_cells.get(&4), Some(&5));
 }
 
 #[test]
-fn test_parse_calc_index_memory_cell() {// TODO add test case for gamma
+fn test_parse_calc_index_memory_cell() {
     assert_eq!(Instruction::try_from("p(5) := 1 + 3"), Ok(Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Direct(5)), Value::Constant(1), Operation::Add, Value::Constant(3))));
     assert_eq!(Instruction::try_from("p(p(5)) := 1 + 3"), Ok(Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Index(5)), Value::Constant(1), Operation::Add, Value::Constant(3))));
+    assert_eq!(Instruction::try_from("p(y) := 5 + 5"), Ok(Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Gamma), Value::Constant(5), Operation::Add, Value::Constant(5))));
     assert_eq!(Instruction::try_from("p(p(h1)) := 1 + 3"), Ok(Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string())), Value::Constant(1), Operation::Add, Value::Constant(3))));
     assert_eq!(Instruction::try_from("p(a0) := 5 + 5"), Ok(Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0)), Value::Constant(5), Operation::Add, Value::Constant(5))));
 }
 
 #[test]
-fn test_run_calc_index_memory_cell() {// TODO add test case for gamma
+fn test_run_calc_index_memory_cell() {
     let mut args = setup_runtime_args();
     let mut control_flow = ControlFlow::new();
     Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Direct(5)), Value::Constant(5), Operation::Add, Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
@@ -194,6 +201,11 @@ fn test_run_calc_index_memory_cell() {// TODO add test case for gamma
     args.accumulators.get_mut(&0).unwrap().data = Some(3);
     Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0)), Value::Constant(5), Operation::Add, Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
     assert_eq!(args.index_memory_cells.get(&3), Some(&10));
+    
+    args.index_memory_cells.insert(4, 1);
+    args.gamma = Some(Some(4));
+    Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Gamma), Value::Constant(5), Operation::Add, Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
+    assert_eq!(args.index_memory_cells.get(&4), Some(&10));
 }
 
 #[test]
@@ -794,7 +806,7 @@ fn test_example_program_memory_cells_text_parsing() {
     runtime_args.add_storage_cell("d");
     runtime_args.add_storage_cell("w");
     runtime_args.add_storage_cell("x");
-    runtime_args.add_storage_cell("y");
+    runtime_args.add_storage_cell("yy");
     runtime_args.add_storage_cell("z");
     runtime_args.add_storage_cell("h1");
     runtime_args.add_storage_cell("h2");
@@ -807,16 +819,16 @@ fn test_example_program_memory_cells_text_parsing() {
     instructions.push("p(d) := 9\n");
     instructions.push("p(w) := 4\n");
     instructions.push("p(x) := 8\n");
-    instructions.push("p(y) := 3\n");
+    instructions.push("p(yy) := 3\n");
     instructions.push("p(z) := 2\n");
     instructions.push("p(h1) := p(aa) * p(w)\n");
-    instructions.push("p(h2) := p(b) * p(y)\n");
+    instructions.push("p(h2) := p(b) * p(yy)\n");
     instructions.push("p(h3) := p(aa) * p(x)\n");
     instructions.push("p(h4) := p(b) * p(z)\n");
     instructions.push("p(aa) := p(h1) + p(h2)\n");
     instructions.push("p(b) := p(h3) + p(h4)\n");
     instructions.push("p(h1) := p(c) * p(w)\n");
-    instructions.push("p(h2) := p(d) * p(y)\n");
+    instructions.push("p(h2) := p(d) * p(yy)\n");
     instructions.push("p(h3) := p(c) * p(x)\n");
     instructions.push("p(h4) := p(d) * p(z)\n");
     instructions.push("p(c) := p(h1) + p(h2)\n");
