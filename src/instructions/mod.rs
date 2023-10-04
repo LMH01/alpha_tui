@@ -108,17 +108,11 @@ fn run_assign(
                     runtime_args.index_memory_cells.insert(*idx, source.value(runtime_args)?);
                 },
                 IndexMemoryCellIndexType::MemoryCell(name) => {
-                    let idx = assert_memory_cell_contains_value(runtime_args, &name)?;
-                    if idx.is_negative() {
-                        return Err(RuntimeErrorType::IndexMemoryCellNegativeIndex(idx))
-                    }
+                    let idx = index_from_memory_cell(runtime_args, &name)?;
                     runtime_args.index_memory_cells.insert(idx as usize, source.value(runtime_args)?);
                 },
                 IndexMemoryCellIndexType::Index(idx) => {
-                    let idx = assert_index_memory_cell_contains_value(runtime_args, *idx)?;
-                    if idx.is_negative() {
-                        return Err(RuntimeErrorType::IndexMemoryCellNegativeIndex(idx))
-                    }
+                    let idx = index_from_index_memory_cell(runtime_args, idx)?;
                     runtime_args.index_memory_cells.insert(idx as usize, source.value(runtime_args)?);
                 }
             }
@@ -143,8 +137,21 @@ fn run_calc(
             runtime_args.memory_cells.get_mut(a).unwrap().data =
                 Some(op.calc(source_a.value(runtime_args)?, source_b.value(runtime_args)?)?);
         }
-        TargetType::IndexMemoryCell(location) => {
-            todo!()
+        TargetType::IndexMemoryCell(t) => {
+            let res = op.calc(source_a.value(runtime_args)?, source_b.value(runtime_args)?)?;
+            match t {
+                IndexMemoryCellIndexType::Direct(idx) => {
+                    runtime_args.index_memory_cells.insert(*idx, res);
+                },
+                IndexMemoryCellIndexType::MemoryCell(name) => {
+                    let idx = index_from_memory_cell(runtime_args, &name)?;
+                    runtime_args.index_memory_cells.insert(idx as usize, res);
+                },
+                IndexMemoryCellIndexType::Index(idx) => {
+                    let idx = index_from_index_memory_cell(runtime_args, idx)?;
+                    runtime_args.index_memory_cells.insert(idx as usize, res);
+                }
+            }
         }
     }
     Ok(())
@@ -330,12 +337,12 @@ pub enum Value {
     Accumulator(usize),
     MemoryCell(String),
     Constant(i32),
+    IndexMemoryCell(IndexMemoryCellIndexType),
 }
 
 impl Value {
     fn value(&self, runtime_args: &RuntimeArgs) -> Result<i32, RuntimeErrorType> {
         match self {
-            //TODO When I use this add checks to test if accumulator / memory_cell exists / contains data before accessing it
             Self::Accumulator(a) => {
                 assert_accumulator_contains_value(runtime_args, *a)?;
                 Ok(runtime_args.accumulators.get(a).unwrap().data.unwrap())
@@ -345,6 +352,21 @@ impl Value {
                 assert_memory_cell_contains_value(runtime_args, a)?;
                 Ok(runtime_args.memory_cells.get(a).unwrap().data.unwrap())
             }
+            Self::IndexMemoryCell(t) => {
+                match t {
+                    IndexMemoryCellIndexType::Direct(idx) => {
+                        Ok(assert_index_memory_cell_contains_value(runtime_args, *idx)?)
+                    },
+                    IndexMemoryCellIndexType::Index(idx) => {
+                        let idx = index_from_index_memory_cell(runtime_args, idx)?;
+                        Ok(assert_index_memory_cell_contains_value(runtime_args, idx)?)
+                    },
+                    IndexMemoryCellIndexType::MemoryCell(name) => {
+                        let idx = index_from_memory_cell(runtime_args, name)?;
+                        Ok(assert_index_memory_cell_contains_value(runtime_args, idx)?)
+                    },
+                }
+            }
         }
     }
 }
@@ -353,6 +375,9 @@ impl TryFrom<(&String, (usize, usize))> for Value {
     type Error = InstructionParseError;
 
     fn try_from(value: (&String, (usize, usize))) -> Result<Self, Self::Error> {
+        if let Ok(t) = parse_index_memory_cell(value.0, value.1) {
+            return Ok(Self::IndexMemoryCell(t))
+        }
         if let Ok(v) = parse_memory_cell(value.0, value.1) {
             return Ok(Self::MemoryCell(v));
         }
@@ -369,4 +394,24 @@ impl TryFrom<(String, (usize, usize))> for Value {
     fn try_from(value: (String, (usize, usize))) -> Result<Self, Self::Error> {
         Self::try_from((&value.0, value.1))
     }
+}
+
+/// Gets the content of the memory cell with name `name` and check if this value is positive,
+/// returns the value if it is.
+fn index_from_memory_cell(runtime_args: &RuntimeArgs, name: &str) -> Result<usize, RuntimeErrorType> {
+    let idx = assert_memory_cell_contains_value(runtime_args, name)?;
+    if idx.is_negative() {
+        return Err(RuntimeErrorType::IndexMemoryCellNegativeIndex(idx))
+    }
+    Ok(idx as usize)
+}
+
+/// Gets the content of the index memory cell with index `idx` and checks if this value is positive,
+/// returns the value if it is.
+fn index_from_index_memory_cell(runtime_args: &RuntimeArgs, idx: &usize) -> Result<usize, RuntimeErrorType> {
+    let idx = assert_index_memory_cell_contains_value(runtime_args, *idx)?;
+    if idx.is_negative() {
+        return Err(RuntimeErrorType::IndexMemoryCellNegativeIndex(idx))
+    }
+    Ok(idx as usize)
 }

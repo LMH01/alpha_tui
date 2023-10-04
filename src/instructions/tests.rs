@@ -105,6 +105,54 @@ fn test_run_assign_accumulator_from_memory_cell() {
 }
 
 #[test]
+fn test_parse_assign_index_memory_cell() {// TODO add test case for gamma
+    assert_eq!(Instruction::try_from("p(5) := 5"), Ok(Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Direct(5)), Value::Constant(5))));
+    assert_eq!(Instruction::try_from("p(p(5)) := 5"), Ok(Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Index(5)), Value::Constant(5))));
+    assert_eq!(Instruction::try_from("p(p(h1)) := 5"), Ok(Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string())), Value::Constant(5))));
+}
+
+#[test]
+fn test_run_assign_index_memory_cell() {// TODO add test case for gamma
+    let mut args = setup_runtime_args();
+    let mut control_flow = ControlFlow::new();
+    Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Direct(5)), Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
+    assert_eq!(args.index_memory_cells.get(&5), Some(&5));
+
+    args.index_memory_cells.insert(1, 1);
+    Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Index(1)), Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
+    assert_eq!(args.index_memory_cells.get(&1), Some(&5));
+    
+    args.index_memory_cells.insert(2, 1);
+    args.memory_cells.get_mut("h1").unwrap().data = Some(2);
+    Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string())), Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
+    assert_eq!(args.index_memory_cells.get(&2), Some(&5));
+}
+
+#[test]
+fn test_parse_calc_index_memory_cell() {// TODO add test case for gamma
+    assert_eq!(Instruction::try_from("p(5) := 1 + 3"), Ok(Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Direct(5)), Value::Constant(1), Operation::Add, Value::Constant(3))));
+    assert_eq!(Instruction::try_from("p(p(5)) := 1 + 3"), Ok(Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Index(5)), Value::Constant(1), Operation::Add, Value::Constant(3))));
+    assert_eq!(Instruction::try_from("p(p(h1)) := 1 + 3"), Ok(Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string())), Value::Constant(1), Operation::Add, Value::Constant(3))));
+}
+
+#[test]
+fn test_run_calc_index_memory_cell() {// TODO add test case for gamma
+    let mut args = setup_runtime_args();
+    let mut control_flow = ControlFlow::new();
+    Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Direct(5)), Value::Constant(5), Operation::Add, Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
+    assert_eq!(args.index_memory_cells.get(&5), Some(&10));
+
+    args.index_memory_cells.insert(1, 1);
+    Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Index(1)), Value::Constant(5), Operation::Add, Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
+    assert_eq!(args.index_memory_cells.get(&1), Some(&10));
+    
+    args.index_memory_cells.insert(2, 1);
+    args.memory_cells.get_mut("h1").unwrap().data = Some(2);
+    Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string())), Value::Constant(5), Operation::Add, Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
+    assert_eq!(args.index_memory_cells.get(&2), Some(&10));
+}
+
+#[test]
 fn test_parse_calc_accumulator_with_memory_cells() {
     assert_eq!(
         Instruction::try_from("a0 := p(h1) / p(h2)"),
@@ -907,4 +955,14 @@ fn test_try_target_type_from_string_usize_usize_tuple() {
     assert_eq!(TargetType::try_from((&"p(10)".to_string(), (0, 4))), Ok(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Direct(10))));
     assert_eq!(TargetType::try_from((&"p(p(10))".to_string(), (0, 7))), Ok(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Index(10))));
     assert_eq!(TargetType::try_from((&"p(p(h1))".to_string(), (0, 7))), Ok(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string()))));
+}
+
+#[test]
+fn test_try_value_from_string_usize_usize_tuple() {
+    assert_eq!(Value::try_from((&"5".to_string(), (0, 4))), Ok(Value::Constant(5)));
+    assert_eq!(Value::try_from((&"a5".to_string(), (0, 4))), Ok(Value::Accumulator(5)));
+    assert_eq!(Value::try_from((&"p(h1)".to_string(), (0, 4))), Ok(Value::MemoryCell("h1".to_string())));
+    assert_eq!(Value::try_from((&"p(10)".to_string(), (0, 4))), Ok(Value::IndexMemoryCell(IndexMemoryCellIndexType::Direct(10))));
+    assert_eq!(Value::try_from((&"p(p(10))".to_string(), (0, 7))), Ok(Value::IndexMemoryCell(IndexMemoryCellIndexType::Index(10))));
+    assert_eq!(Value::try_from((&"p(p(h1))".to_string(), (0, 7))), Ok(Value::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string()))));
 }
