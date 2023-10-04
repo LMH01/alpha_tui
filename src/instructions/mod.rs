@@ -107,6 +107,10 @@ fn run_assign(
         }
         TargetType::IndexMemoryCell(t) => {
             match t {
+                IndexMemoryCellIndexType::Accumulator(idx) => {
+                    let idx = index_from_accumulator(runtime_args, idx)?;
+                    runtime_args.index_memory_cells.insert(idx, source.value(runtime_args)?);
+                }
                 IndexMemoryCellIndexType::Direct(idx) => {
                     runtime_args.index_memory_cells.insert(*idx, source.value(runtime_args)?);
                 },
@@ -147,6 +151,10 @@ fn run_calc(
         TargetType::IndexMemoryCell(t) => {
             let res = op.calc(source_a.value(runtime_args)?, source_b.value(runtime_args)?)?;
             match t {
+                IndexMemoryCellIndexType::Accumulator(idx) => {
+                    let idx = index_from_accumulator(runtime_args, idx)?;
+                    runtime_args.index_memory_cells.insert(idx, res);
+                }
                 IndexMemoryCellIndexType::Direct(idx) => {
                     runtime_args.index_memory_cells.insert(*idx, res);
                 },
@@ -324,6 +332,8 @@ fn assert_index_memory_cell_contains_value(runtime_args: &RuntimeArgs, index: us
 /// Specifies the location where the index memory cell should look for the value of the index of the index memory cell
 #[derive(Debug, PartialEq, Clone)]
 pub enum IndexMemoryCellIndexType {
+    /// Indicates that this index memory cell uses the value of an accumulator as index where the data is accessed.
+    Accumulator(usize),
     /// Indicates that this index memory cell uses a direct index to access data.
     /// 
     /// E.g. p(1)
@@ -359,7 +369,7 @@ impl TryFrom<(&String, (usize, usize))> for TargetType {
         if let Ok(_) = parse_gamma(value.0, value.1) {
             return Ok(Self::Gamma)
         }
-        Ok(Self::Accumulator(parse_alpha(value.0, value.1)?))
+        Ok(Self::Accumulator(parse_alpha(value.0, value.1, true)?))
     }
 }
 
@@ -389,6 +399,10 @@ impl Value {
             }
             Self::IndexMemoryCell(t) => {
                 match t {
+                    IndexMemoryCellIndexType::Accumulator(idx) => {
+                        let idx = index_from_accumulator(runtime_args, idx)?;
+                        Ok(assert_index_memory_cell_contains_value(runtime_args, idx as usize)?)
+                    }
                     IndexMemoryCellIndexType::Direct(idx) => {
                         Ok(assert_index_memory_cell_contains_value(runtime_args, *idx)?)
                     },
@@ -422,7 +436,7 @@ impl TryFrom<(&String, (usize, usize))> for Value {
         if let Ok(_) = parse_gamma(value.0, value.1) {
             return Ok(Self::Gamma)
         }
-        Ok(Self::Accumulator(parse_alpha(value.0, value.1)?))
+        Ok(Self::Accumulator(parse_alpha(value.0, value.1, true)?))
     }
 }
 
@@ -432,6 +446,16 @@ impl TryFrom<(String, (usize, usize))> for Value {
     fn try_from(value: (String, (usize, usize))) -> Result<Self, Self::Error> {
         Self::try_from((&value.0, value.1))
     }
+}
+
+/// Gets the content from the accumulator with the index `idx` and checks if this value is positive,
+/// return the value if it is.
+fn index_from_accumulator(runtime_args: &RuntimeArgs, idx: &usize) -> Result<usize, RuntimeErrorType> {
+    let idx = assert_accumulator_contains_value(runtime_args, *idx)?;
+    if idx.is_negative() {
+        return Err(RuntimeErrorType::IndexMemoryCellNegativeIndex(idx))
+    }
+    Ok(idx as usize)
 }
 
 /// Gets the content of the memory cell with name `name` and check if this value is positive,

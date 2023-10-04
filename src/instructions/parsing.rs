@@ -152,17 +152,22 @@ impl TryFrom<&str> for Instruction {
 /// Tries to parse the index of the accumulator.
 ///
 /// `part_range` indicates the area that is affected.
-pub fn parse_alpha(s: &str, part_range: (usize, usize)) -> Result<usize, InstructionParseError> {
+/// If 'allow_short' is set, a will be resolved to accumulator 0, if it is not set accumulator 0 can only be resolved by the input string 'a0'.
+pub fn parse_alpha(s: &str, part_range: (usize, usize), allow_short: bool) -> Result<usize, InstructionParseError> {
     if !s.starts_with('a') && !s.starts_with('α') && !s.is_empty() {
         return Err(InstructionParseError::InvalidExpression(
             part_range,
             s.to_string(),
         ));
     }
-    let input = s.replace(['a', 'α'], "");
+    let input = s.replacen(['a', 'α'], "", 1);
     if input.is_empty() {
-        // if no index is supplied default to accumulator 0
-        return Ok(0);
+        if allow_short {
+            // if no index is supplied default to accumulator 0
+            return Ok(0);
+        } else {
+            return Err(InstructionParseError::InvalidExpression(part_range, s.to_string()))
+        }
     }
     match input.parse::<usize>() {
         Ok(x) => Ok(x),
@@ -282,7 +287,10 @@ pub fn parse_index_memory_cell(s: &str, part_range: (usize, usize)) -> Result<In
     if let Ok(idx) = location.parse::<usize>() {
         return Ok(IndexMemoryCellIndexType::Direct(idx));
     }
-    if let Ok(name) = parse_memory_cell(&location, part_range) {
+    if let Ok(idx) = parse_alpha(&location, (part_range.0+2, part_range.1-2), false) {
+        return Ok(IndexMemoryCellIndexType::Accumulator(idx));
+    }
+    if let Ok(name) = parse_memory_cell(&location, (part_range.0+2, part_range.1-2)) {
         return Ok(IndexMemoryCellIndexType::MemoryCell(name));
     }
     // Call this function again to determine if inner value is a number (= instance of Direct), if so the index type is an index.
@@ -290,7 +298,7 @@ pub fn parse_index_memory_cell(s: &str, part_range: (usize, usize)) -> Result<In
         Ok(t) => {
             match t {
                 IndexMemoryCellIndexType::Direct(idx) => return Ok(IndexMemoryCellIndexType::Index(idx)),
-                _ => return Err(InstructionParseError::UnknownInstruction((0,0), location)),
+                _ => return Err(InstructionParseError::InvalidExpression((part_range.0+2, part_range.1-2), location)),
             }
         }
         Err(e) => return Err(e),
@@ -340,7 +348,7 @@ fn check_expression_missing(
 
 #[cfg(test)]
 mod tests {
-    use crate::{instructions::{parsing::{parse_index_memory_cell, parse_memory_cell, parse_gamma}, IndexMemoryCellIndexType, error_handling::InstructionParseError}, base::MemoryCell};
+    use crate::{instructions::{parsing::{parse_index_memory_cell, parse_memory_cell, parse_gamma, parse_alpha}, IndexMemoryCellIndexType, error_handling::InstructionParseError}, base::MemoryCell};
 
     #[test]
     fn test_parse_memory_cell() {
@@ -352,6 +360,9 @@ mod tests {
 
     #[test]
     fn test_parse_index_memory_cell() {
+        assert_eq!(parse_index_memory_cell("p(a)", (0, 3)), Err(InstructionParseError::InvalidExpression((2, 2), "a".to_string())));
+        assert_eq!(parse_index_memory_cell("p(a0)", (0, 3)), Ok(IndexMemoryCellIndexType::Accumulator(0)));
+        assert_eq!(parse_index_memory_cell("p(a1)", (0, 4)), Ok(IndexMemoryCellIndexType::Accumulator(1)));
         assert_eq!(parse_index_memory_cell("p(p(h1))", (0, 7)), Ok(IndexMemoryCellIndexType::MemoryCell("h1".to_string())));
         assert_eq!(parse_index_memory_cell("ρ(ρ(h1))", (0, 7)), Ok(IndexMemoryCellIndexType::MemoryCell("h1".to_string())));
         assert_eq!(parse_index_memory_cell("p(p(hello))", (0, 7)), Ok(IndexMemoryCellIndexType::MemoryCell("hello".to_string())));
@@ -365,5 +376,13 @@ mod tests {
     fn test_parse_gamma() {
         assert_eq!(parse_gamma("y", (0, 0)), Ok(()));
         assert_eq!(parse_gamma("γ", (0, 0)), Ok(()));
+    }
+
+    #[test]
+    fn test_parse_alpha() {
+        assert_eq!(parse_alpha("a0", (0, 1), true), Ok(0));
+        assert_eq!(parse_alpha("a0", (0, 1), false), Ok(0));
+        assert_eq!(parse_alpha("a", (0, 0), true), Ok(0));
+        assert_eq!(parse_alpha("a", (0, 0), false), Err(InstructionParseError::InvalidExpression((0, 0), "a".to_string())));
     }
 }
