@@ -147,6 +147,11 @@ impl ControlFlow {
 pub struct RuntimeArgs {
     /// Current values stored in accumulators
     pub accumulators: HashMap<usize, Accumulator>,
+    /// The value of the gamma accumulator
+    /// 
+    /// First option determines if gamma is active.
+    /// Inner option determine if gamma contains a value.
+    pub gamma: Option<Option<i32>>,
     /// All registers that are used to store data
     pub memory_cells: HashMap<String, MemoryCell>,
     /// All index registers that are used to store data,
@@ -176,6 +181,7 @@ impl<'a> RuntimeArgs {
                     };
                     return Ok(Self {
                         accumulators,
+                        gamma: None,
                         memory_cells,
                         index_memory_cells: HashMap::new(),
                         stack: Vec::new(),
@@ -200,6 +206,7 @@ impl<'a> RuntimeArgs {
     pub fn new_empty() -> Self {
         Self {
             accumulators: HashMap::new(),
+            gamma: None,
             memory_cells: HashMap::new(),
             index_memory_cells: HashMap::new(),
             stack: Vec::new(),
@@ -217,6 +224,7 @@ impl<'a> RuntimeArgs {
         }
         Self {
             accumulators,
+            gamma: None,
             memory_cells,
             index_memory_cells: HashMap::new(),
             stack: Vec::new(),

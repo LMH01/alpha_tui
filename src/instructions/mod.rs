@@ -6,7 +6,7 @@ use crate::{
     runtime::{error_handling::RuntimeErrorType, ControlFlow, RuntimeArgs},
 };
 
-use self::parsing::{parse_alpha, parse_memory_cell, parse_index_memory_cell};
+use self::parsing::{parse_alpha, parse_memory_cell, parse_index_memory_cell, parse_gamma};
 
 pub mod error_handling;
 
@@ -98,6 +98,9 @@ fn run_assign(
             assert_accumulator_exists(runtime_args, *a)?;
             runtime_args.accumulators.get_mut(a).unwrap().data = Some(source.value(runtime_args)?);
         }
+        TargetType::Gamma => {
+            runtime_args.gamma = Some(Some(source.value(runtime_args)?));
+        }
         TargetType::MemoryCell(a) => {
             assert_memory_cell_exists(runtime_args, a)?;
             runtime_args.memory_cells.get_mut(a).unwrap().data = Some(source.value(runtime_args)?);
@@ -132,6 +135,10 @@ fn run_calc(
         TargetType::Accumulator(a) => {
             runtime_args.accumulators.get_mut(a).unwrap().data =
                 Some(op.calc(source_a.value(runtime_args)?, source_b.value(runtime_args)?)?);
+        }
+        TargetType::Gamma => {
+            assert_gamma_exists(runtime_args)?;
+            runtime_args.gamma = Some(Some(op.calc(source_a.value(runtime_args)?, source_b.value(runtime_args)?)?));
         }
         TargetType::MemoryCell(a) => {
             runtime_args.memory_cells.get_mut(a).unwrap().data =
@@ -254,6 +261,26 @@ fn assert_accumulator_contains_value(
     }
 }
 
+/// Tests if gamma exists
+fn assert_gamma_exists(runtime_args: &RuntimeArgs) -> Result<(), RuntimeErrorType> {
+    if let Some(value) = runtime_args.gamma {
+        return Ok(());
+    }
+    Err(RuntimeErrorType::GammaDoesNotExist)
+}
+
+/// Tests if gamma contains a value.
+fn assert_gamma_contains_value(runtime_args: &RuntimeArgs) -> Result<i32, RuntimeErrorType> {
+    if let Some(value) = runtime_args.gamma {
+        if let Some(value) = value {
+            return Ok(value);
+        } else {
+            return Err(RuntimeErrorType::GammaUninitialized)
+        }
+    }
+    Err(RuntimeErrorType::GammaDoesNotExist)
+}
+
 /// Tests if the memory cell with **label** exists.
 fn assert_memory_cell_exists(
     runtime_args: &RuntimeArgs,
@@ -314,6 +341,7 @@ pub enum IndexMemoryCellIndexType {
 #[derive(Debug, PartialEq, Clone)]
 pub enum TargetType {
     Accumulator(usize),
+    Gamma,
     MemoryCell(String),
     IndexMemoryCell(IndexMemoryCellIndexType),
 }
@@ -328,6 +356,9 @@ impl TryFrom<(&String, (usize, usize))> for TargetType {
         if let Ok(v) = parse_memory_cell(value.0, value.1) {
             return Ok(Self::MemoryCell(v));
         }
+        if let Ok(_) = parse_gamma(value.0, value.1) {
+            return Ok(Self::Gamma)
+        }
         Ok(Self::Accumulator(parse_alpha(value.0, value.1)?))
     }
 }
@@ -335,6 +366,7 @@ impl TryFrom<(&String, (usize, usize))> for TargetType {
 #[derive(Debug, PartialEq, Clone)]
 pub enum Value {
     Accumulator(usize),
+    Gamma,
     MemoryCell(String),
     Constant(i32),
     IndexMemoryCell(IndexMemoryCellIndexType),
@@ -346,6 +378,9 @@ impl Value {
             Self::Accumulator(a) => {
                 assert_accumulator_contains_value(runtime_args, *a)?;
                 Ok(runtime_args.accumulators.get(a).unwrap().data.unwrap())
+            }
+            Self::Gamma => {
+                return assert_gamma_contains_value(runtime_args);
             }
             Self::Constant(a) => Ok(*a),
             Self::MemoryCell(a) => {
@@ -383,6 +418,9 @@ impl TryFrom<(&String, (usize, usize))> for Value {
         }
         if let Ok(v) = value.0.parse::<i32>() {
             return Ok(Self::Constant(v));
+        }
+        if let Ok(_) = parse_gamma(value.0, value.1) {
+            return Ok(Self::Gamma)
         }
         Ok(Self::Accumulator(parse_alpha(value.0, value.1)?))
     }

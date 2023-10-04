@@ -364,6 +364,7 @@ impl TargetType {
             Self::Accumulator(index) => check_accumulator(runtime_args, *index, add_missing)?,
             Self::MemoryCell(name) => check_memory_cell(runtime_args, name, add_missing)?,
             Self::IndexMemoryCell(t) => /*todo!()*/(),// TODO implement check
+            Self::Gamma => (),// TODO implement check
         }
         Ok(())
     }
@@ -380,6 +381,7 @@ impl Value {
     ) -> Result<(), RuntimeBuildError> {
         match self {
             Self::Accumulator(index) => check_accumulator(runtime_args, *index, add_missing)?,
+            Self::Gamma => (),// TODO implement check
             Self::MemoryCell(name) => check_memory_cell(runtime_args, name, add_missing)?,
             Self::Constant(_) => (),
             Self::IndexMemoryCell(t) => (),// TODO implement check

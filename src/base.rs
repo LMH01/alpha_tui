@@ -17,6 +17,7 @@ impl Accumulator {
     pub fn new(id: usize) -> Self {
         Self { id, data: None }
     }
+
 }
 
 impl Display for Accumulator {

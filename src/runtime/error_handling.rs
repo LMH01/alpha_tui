@@ -58,6 +58,20 @@ pub enum RuntimeErrorType {
     )]
     AccumulatorDoesNotExist(usize),
 
+    #[error("Attempt to use value of accumulator gamma while value is not initialized")]
+    #[diagnostic(
+        code("runtime_error::gamma_uninitialized"),
+        help("Try assigning a value before accessing it.\nExample: y := 5")
+    )]
+    GammaUninitialized,
+
+    #[error("Attempt to use accumulator gamma while it does not exist")]
+    #[diagnostic(
+        code("runtime_error::gamma_does_not_exist"),
+        help("Make sure to tell the program to use the gamma accumulator by using the TODO flag") // TODO implement flag that enables gamma accumulator
+    )]
+    GammaDoesNotExist,
+
     #[error("Attempt to use value of memory cell named '{0}' while value is not initialized")]
     #[diagnostic(
         code("runtime_error::memory_cell_uninitialized"),

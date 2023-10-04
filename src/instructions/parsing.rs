@@ -173,6 +173,15 @@ pub fn parse_alpha(s: &str, part_range: (usize, usize)) -> Result<usize, Instruc
     }
 }
 
+/// Checks if the string contains only 'y' or 'γ'
+pub fn parse_gamma(s: &str, part_range: (usize, usize)) -> Result<(), InstructionParseError> {
+    if s.eq("y") || s.eq("γ") {
+        Ok(())
+    } else {
+        Err(InstructionParseError::InvalidExpression(part_range, s.to_string()))
+    }
+}
+
 /// Tries to parse the operation.
 ///
 /// `part_range` indicates the area that is affected.
@@ -331,7 +340,7 @@ fn check_expression_missing(
 
 #[cfg(test)]
 mod tests {
-    use crate::{instructions::{parsing::{parse_index_memory_cell, parse_memory_cell}, IndexMemoryCellIndexType, error_handling::InstructionParseError}, base::MemoryCell};
+    use crate::{instructions::{parsing::{parse_index_memory_cell, parse_memory_cell, parse_gamma}, IndexMemoryCellIndexType, error_handling::InstructionParseError}, base::MemoryCell};
 
     #[test]
     fn test_parse_memory_cell() {
@@ -350,5 +359,11 @@ mod tests {
         assert_eq!(parse_index_memory_cell("p(10)", (0, 7)), Ok(IndexMemoryCellIndexType::Direct(10)));
         assert_eq!(parse_index_memory_cell("p(p())", (0, 6)), Err(InstructionParseError::InvalidExpression((4, 4), "".to_string())));
         assert_eq!(parse_index_memory_cell("p(p()))", (0, 7)), Err(InstructionParseError::InvalidExpression((4, 5), ")".to_string())));
+    }
+
+    #[test]
+    fn test_parse_gamma() {
+        assert_eq!(parse_gamma("y", (0, 0)), Ok(()));
+        assert_eq!(parse_gamma("γ", (0, 0)), Ok(()));
     }
 }
