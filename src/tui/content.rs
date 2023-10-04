@@ -186,6 +186,7 @@ fn list_prev(list_state: &mut ListState, max_index: usize) {
 /// Used to update and set the lists for accumulators, memory cells and stack.
 pub struct MemoryListsManager {
     accumulators: HashMap<usize, (String, bool)>,
+    gamma: Option<(Option<i32>, bool)>,
     memory_cells: HashMap<String, (String, bool)>,
     index_memory_cells: HashMap<usize, (String, bool)>,
     stack: Vec<ListItem<'static>>,
@@ -207,8 +208,14 @@ impl MemoryListsManager {
         for cell in &runtime_args.index_memory_cells {
             index_memory_cells.insert(*cell.0, (format!("{}", *cell.1), false));
         }
+        let gamma = match runtime_args.gamma {
+            Some(value) => Some((value, false)),
+            None => None,
+        };
+        println!("{:?}", gamma);
         Self {
             accumulators,
+            gamma,
             memory_cells,
             index_memory_cells,
             stack: Vec::new(),
@@ -253,6 +260,18 @@ impl MemoryListsManager {
                 *a = (update, true);
             }
         }
+        // Update gamma
+        if let Some(update) = runtime_args.gamma {
+            if let Some(value) = self.gamma.as_mut() {
+                if update == value.0 {
+                    value.1 = false;
+                } else {
+                    *value = (update, true);
+                }
+            } else {
+                self.gamma = Some((update, true));
+            }
+        }
         // Update stack
         let stack_changed = self.stack.len() != runtime_args.stack.len();
         let mut new_stack: Vec<ListItem<'_>> = runtime_args
@@ -281,6 +300,24 @@ impl MemoryListsManager {
             list.push((item, acc.0));
         }
         list.sort_by(|a, b| a.1.cmp(b.1));
+        list.reverse();
+        // Insert gamma accumulator if it is in use
+        if let Some(value) = self.gamma {
+            if let Some(inner_value) = value.0 {
+                let mut item = ListItem::new(format!(" γ: {}", inner_value));
+                if value.1 {
+                    item = item.style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
+                }
+                list.push((item, &0));
+            } else {
+                let mut item = ListItem::new(format!(" γ: None"));
+                if value.1 {
+                    item = item.style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
+                }
+                list.push((item, &0));
+            }
+        }
+        list.reverse(); // reverse list to make gamma appear at top of list
         list.iter().map(|f| f.0.clone()).collect()
     }
 
