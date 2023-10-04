@@ -351,6 +351,21 @@ pub fn check_memory_cell(
     Ok(())
 }
 
+/// Checks if gamma is enabled in runtime args.
+/// 
+/// If 'add_missing' is set, gamma is enabled, instead of returning an error.
+pub fn check_gamma(runtime_args: &mut RuntimeArgs, add_missing: bool) -> Result<(), RuntimeBuildError> {
+    if runtime_args.gamma.is_none() {
+        if add_missing {
+            runtime_args.gamma = Some(None);
+            return Ok(());
+        } else {
+            return Err(RuntimeBuildError::GammaDisabled);
+        }
+    }
+    Ok(())
+}
+
 impl TargetType {
     /// Checks if this type is missing in `runtime_args`.
     ///
@@ -364,7 +379,7 @@ impl TargetType {
             Self::Accumulator(index) => check_accumulator(runtime_args, *index, add_missing)?,
             Self::MemoryCell(name) => check_memory_cell(runtime_args, name, add_missing)?,
             Self::IndexMemoryCell(t) => /*todo!()*/(),// TODO implement check
-            Self::Gamma => (),// TODO implement check
+            Self::Gamma => check_gamma(runtime_args, add_missing)?,
         }
         Ok(())
     }
@@ -381,10 +396,10 @@ impl Value {
     ) -> Result<(), RuntimeBuildError> {
         match self {
             Self::Accumulator(index) => check_accumulator(runtime_args, *index, add_missing)?,
-            Self::Gamma => (),// TODO implement check
             Self::MemoryCell(name) => check_memory_cell(runtime_args, name, add_missing)?,
             Self::Constant(_) => (),
             Self::IndexMemoryCell(t) => (),// TODO implement check
+            Self::Gamma => check_gamma(runtime_args, add_missing)?,
         }
         Ok(())
     }

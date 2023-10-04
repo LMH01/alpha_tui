@@ -26,6 +26,13 @@ pub enum RuntimeBuildError {
         help("Make sure to have the number of available accumulators set to at least {0}+1")
     )]
     AccumulatorMissing(String),
+    
+    #[error("Gamma accumulator is disabled")]
+    #[diagnostic(
+        code("runtime_build_error::gamma_disabled"),
+        help("You can't use the gamma accumulator when it is disabled, to reenable it remove the -TODO flag.") // TODO Add flag to disable gamma accumulator and update this message
+    )]
+    GammaDisabled,
 }
 
 #[derive(Debug)]
