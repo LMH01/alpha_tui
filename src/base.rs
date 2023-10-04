@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, cmp::Ordering};
 
 use crate::runtime::error_handling::{CalcError, RuntimeErrorType};
 
@@ -55,6 +55,27 @@ impl Display for MemoryCell {
         }
     }
 }
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct IndexMemoryCell {
+    pub index: usize,
+    pub data: i32,
+}
+
+//impl PartialEq for IndexMemoryCell {
+//    fn eq(&self, other: &Self) -> bool {
+//        self.index == other.index
+//    }
+//}
+//
+//impl PartialOrd for IndexMemoryCell {
+//    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+//        match self.index.partial_cmp(&other.index) {
+//            Some(core::cmp::Ordering::Equal) => return Some(Ordering::Equal),
+//            ord => return ord,
+//        }
+//    }
+//}
 
 /// Different ways of paring two values
 #[derive(Debug, PartialEq, Clone)]

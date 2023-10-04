@@ -1,9 +1,9 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, BinaryHeap};
 
 use miette::Result;
 
 use crate::{
-    base::{Accumulator, MemoryCell},
+    base::{Accumulator, MemoryCell, IndexMemoryCell},
     cli::Args,
     instructions::Instruction,
     utils::read_file,
