@@ -48,7 +48,7 @@ $\gamma$ is a special register that can be used to access index memory cells. Fo
 
 Normal $\alpha$ registers can also be used to access the index, not however that due to a limitation in the implementation you cant abbreviate $\alpha_0$ with just $\alpha$. To access $\alpha_0$ inside an index memory cell you have to either write $\alpha_0$ or $a0$. For example: $\rho(a0)$. Otherwise the memory cell with label $a$ will be accessed instead of the index memory cell at index $\alpha$.
 
-### Example
+#### Example
 
 For a working example on how index memory cells can be used take a look [here](examples/programs/index_memory_cells.alpha).
 
