@@ -35,7 +35,7 @@ pub struct Args {
     #[arg(
         long,
         help = "Load memory cells from a file",
-        long_help = "Load memory cell values from a file.\nEach line contains a single memory cell in the following formatting: NAME=VALUE\nExample: h1=5\nEmpty cells can be set with: NAME\nExample: h2",
+        long_help = "Load memory cell values from a file.\nEach line contains a single memory cell in the following formatting: NAME=VALUE\nExample: h1=5\nEmpty cells can be set with: NAME\nExample: h2\n\nIndex memory cells can be set by using the following formatting: [INDEX]=VALUE\nExample: [0]=5",
         conflicts_with = "memory_cells"
     )]
     pub memory_cell_file: Option<String>,

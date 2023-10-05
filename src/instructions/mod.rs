@@ -109,22 +109,22 @@ fn run_assign(
             match t {
                 IndexMemoryCellIndexType::Accumulator(idx) => {
                     let idx = index_from_accumulator(runtime_args, idx)?;
-                    runtime_args.index_memory_cells.insert(idx, source.value(runtime_args)?);
+                    runtime_args.index_memory_cells.insert(idx, Some(source.value(runtime_args)?));
                 }
                 IndexMemoryCellIndexType::Direct(idx) => {
-                    runtime_args.index_memory_cells.insert(*idx, source.value(runtime_args)?);
+                    runtime_args.index_memory_cells.insert(*idx, Some(source.value(runtime_args)?));
                 },
                 IndexMemoryCellIndexType::Gamma => {
                     let idx = index_from_gamma(runtime_args)?;
-                    runtime_args.index_memory_cells.insert(idx, source.value(runtime_args)?);
+                    runtime_args.index_memory_cells.insert(idx, Some(source.value(runtime_args)?));
                 }
                 IndexMemoryCellIndexType::MemoryCell(name) => {
                     let idx = index_from_memory_cell(runtime_args, &name)?;
-                    runtime_args.index_memory_cells.insert(idx as usize, source.value(runtime_args)?);
+                    runtime_args.index_memory_cells.insert(idx as usize, Some(source.value(runtime_args)?));
                 },
                 IndexMemoryCellIndexType::Index(idx) => {
                     let idx = index_from_index_memory_cell(runtime_args, idx)?;
-                    runtime_args.index_memory_cells.insert(idx as usize, source.value(runtime_args)?);
+                    runtime_args.index_memory_cells.insert(idx as usize, Some(source.value(runtime_args)?));
                 }
             }
         }
@@ -157,22 +157,22 @@ fn run_calc(
             match t {
                 IndexMemoryCellIndexType::Accumulator(idx) => {
                     let idx = index_from_accumulator(runtime_args, idx)?;
-                    runtime_args.index_memory_cells.insert(idx, res);
+                    runtime_args.index_memory_cells.insert(idx, Some(res));
                 }
                 IndexMemoryCellIndexType::Direct(idx) => {
-                    runtime_args.index_memory_cells.insert(*idx, res);
+                    runtime_args.index_memory_cells.insert(*idx, Some(res));
                 },
                 IndexMemoryCellIndexType::Gamma => {
                     let idx = index_from_gamma(runtime_args)?;
-                    runtime_args.index_memory_cells.insert(idx, res);
+                    runtime_args.index_memory_cells.insert(idx, Some(res));
                 }
                 IndexMemoryCellIndexType::MemoryCell(name) => {
                     let idx = index_from_memory_cell(runtime_args, &name)?;
-                    runtime_args.index_memory_cells.insert(idx as usize, res);
+                    runtime_args.index_memory_cells.insert(idx as usize, Some(res));
                 },
                 IndexMemoryCellIndexType::Index(idx) => {
                     let idx = index_from_index_memory_cell(runtime_args, idx)?;
-                    runtime_args.index_memory_cells.insert(idx as usize, res);
+                    runtime_args.index_memory_cells.insert(idx as usize, Some(res));
                 }
             }
         }
@@ -331,9 +331,13 @@ fn assert_memory_cell_contains_value(
 
 fn assert_index_memory_cell_contains_value(runtime_args: &RuntimeArgs, index: usize) -> Result<i32, RuntimeErrorType> {
     if let Some(value) = runtime_args.index_memory_cells.get(&index) {
-        Ok(*value)
+        if let Some(value) = value {
+            Ok(*value)
+        } else {
+            Err(RuntimeErrorType::IndexMemoryCellUninitialized(index))
+        }
     } else {
-        Err(RuntimeErrorType::IndexMemoryCellUninitialized(index))
+        Err(RuntimeErrorType::IndexMemoryCellUninitialized(index)) //TODO create new error type index memory cell does not exist
     }
 }
 

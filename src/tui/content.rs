@@ -206,7 +206,11 @@ impl MemoryListsManager {
         }
         let mut index_memory_cells = HashMap::new();
         for cell in &runtime_args.index_memory_cells {
-            index_memory_cells.insert(*cell.0, (format!("{}", *cell.1), false));
+            if let Some(v) = cell.1 {
+                index_memory_cells.insert(*cell.0, (format!("[{:2}]: {}", *cell.0, *v), false));
+            } else {
+                index_memory_cells.insert(*cell.0, (format!("[{:2}]: None", *cell.0), false));
+            }
         }
         let gamma = match runtime_args.gamma {
             Some(value) => Some((value, false)),
@@ -249,11 +253,18 @@ impl MemoryListsManager {
         // Update index memory cells
         for cell in &runtime_args.index_memory_cells {
             if !self.index_memory_cells.contains_key(cell.0) {
-                self.index_memory_cells.insert(*cell.0, (format!("[{:2}]: {}", cell.0, cell.1), true));
+                if let Some(v) = cell.1 {
+                    self.index_memory_cells.insert(*cell.0, (format!("[{:2}]: {}", cell.0, v), true));
+                } else {
+                    self.index_memory_cells.insert(*cell.0, (format!("[{:2}]: None", cell.0), true));
+                }
                 continue;
             }
             let a = self.index_memory_cells.get_mut(cell.0).unwrap();
-            let update = format!("[{:2}]: {}", cell.0, cell.1);
+            let update = match cell.1 {
+                Some(v) => format!("[{:2}]: {}", cell.0, v),
+                None => format!("[{:2}]: None", cell.0),
+            };
             if update == *a.0 {
                 a.1 = false;
             } else {

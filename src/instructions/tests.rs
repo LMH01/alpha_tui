@@ -150,26 +150,26 @@ fn test_run_assign_index_memory_cell() {
     let mut args = setup_runtime_args();
     let mut control_flow = ControlFlow::new();
     Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Direct(5)), Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
-    assert_eq!(args.index_memory_cells.get(&5), Some(&5));
+    assert_eq!(args.index_memory_cells.get(&5), Some(&Some(5)));
 
-    args.index_memory_cells.insert(1, 1);
+    args.index_memory_cells.insert(1, Some(1));
     Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Index(1)), Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
-    assert_eq!(args.index_memory_cells.get(&1), Some(&5));
+    assert_eq!(args.index_memory_cells.get(&1), Some(&Some(5)));
     
-    args.index_memory_cells.insert(2, 1);
+    args.index_memory_cells.insert(2, Some(1));
     args.memory_cells.get_mut("h1").unwrap().data = Some(2);
     Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string())), Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
-    assert_eq!(args.index_memory_cells.get(&2), Some(&5));
+    assert_eq!(args.index_memory_cells.get(&2), Some(&Some(5)));
 
-    args.index_memory_cells.insert(3, 4);
+    args.index_memory_cells.insert(3, Some(4));
     args.accumulators.get_mut(&0).unwrap().data = Some(3);
     Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0)), Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
-    assert_eq!(args.index_memory_cells.get(&3), Some(&5));
+    assert_eq!(args.index_memory_cells.get(&3), Some(&Some(5)));
 
-    args.index_memory_cells.insert(4, 0);
+    args.index_memory_cells.insert(4, Some(0));
     args.gamma = Some(Some(4));
     Instruction::Assign(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Gamma), Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
-    assert_eq!(args.index_memory_cells.get(&4), Some(&5));
+    assert_eq!(args.index_memory_cells.get(&4), Some(&Some(5)));
 }
 
 #[test]
@@ -186,26 +186,26 @@ fn test_run_calc_index_memory_cell() {
     let mut args = setup_runtime_args();
     let mut control_flow = ControlFlow::new();
     Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Direct(5)), Value::Constant(5), Operation::Add, Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
-    assert_eq!(args.index_memory_cells.get(&5), Some(&10));
+    assert_eq!(args.index_memory_cells.get(&5), Some(&Some(10)));
 
-    args.index_memory_cells.insert(1, 1);
+    args.index_memory_cells.insert(1, Some(1));
     Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Index(1)), Value::Constant(5), Operation::Add, Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
-    assert_eq!(args.index_memory_cells.get(&1), Some(&10));
+    assert_eq!(args.index_memory_cells.get(&1), Some(&Some(10)));
     
-    args.index_memory_cells.insert(2, 1);
+    args.index_memory_cells.insert(2, Some(1));
     args.memory_cells.get_mut("h1").unwrap().data = Some(2);
     Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string())), Value::Constant(5), Operation::Add, Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
-    assert_eq!(args.index_memory_cells.get(&2), Some(&10));
+    assert_eq!(args.index_memory_cells.get(&2), Some(&Some(10)));
 
-    args.index_memory_cells.insert(3, 1);
+    args.index_memory_cells.insert(3, Some(1));
     args.accumulators.get_mut(&0).unwrap().data = Some(3);
     Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0)), Value::Constant(5), Operation::Add, Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
-    assert_eq!(args.index_memory_cells.get(&3), Some(&10));
+    assert_eq!(args.index_memory_cells.get(&3), Some(&Some(10)));
     
-    args.index_memory_cells.insert(4, 1);
+    args.index_memory_cells.insert(4, Some(1));
     args.gamma = Some(Some(4));
     Instruction::Calc(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Gamma), Value::Constant(5), Operation::Add, Value::Constant(5)).run(&mut args, &mut control_flow).unwrap();
-    assert_eq!(args.index_memory_cells.get(&4), Some(&10));
+    assert_eq!(args.index_memory_cells.get(&4), Some(&Some(10)));
 }
 
 #[test]
