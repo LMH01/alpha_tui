@@ -216,7 +216,6 @@ impl MemoryListsManager {
             Some(value) => Some((value, false)),
             None => None,
         };
-        println!("{:?}", gamma);
         Self {
             accumulators,
             gamma,
