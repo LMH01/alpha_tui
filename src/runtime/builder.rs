@@ -5,8 +5,9 @@ use crate::{
     cli::Args,
     instructions::{
         error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
-        Instruction, TargetType, Value, IndexMemoryCellIndexType,
-    }, utils::remove_comment,
+        IndexMemoryCellIndexType, Instruction, TargetType, Value,
+    },
+    utils::remove_comment,
 };
 
 use super::{
@@ -355,21 +356,28 @@ pub fn check_memory_cell(
 pub fn check_index_memory_cell(
     runtime_args: &mut RuntimeArgs,
     t: &IndexMemoryCellIndexType,
-    add_missing: bool
+    add_missing: bool,
 ) -> Result<(), RuntimeBuildError> {
     match t {
-        IndexMemoryCellIndexType::Accumulator(idx) => check_accumulator(runtime_args, *idx, add_missing),
+        IndexMemoryCellIndexType::Accumulator(idx) => {
+            check_accumulator(runtime_args, *idx, add_missing)
+        }
         IndexMemoryCellIndexType::Direct(_) => Ok(()),
         IndexMemoryCellIndexType::Gamma => check_gamma(runtime_args, add_missing),
         IndexMemoryCellIndexType::Index(_) => Ok(()),
-        IndexMemoryCellIndexType::MemoryCell(name) => check_memory_cell(runtime_args, &name, add_missing),
+        IndexMemoryCellIndexType::MemoryCell(name) => {
+            check_memory_cell(runtime_args, &name, add_missing)
+        }
     }
 }
 
 /// Checks if gamma is enabled in runtime args.
-/// 
+///
 /// If 'add_missing' is set, gamma is enabled, instead of returning an error.
-pub fn check_gamma(runtime_args: &mut RuntimeArgs, add_missing: bool) -> Result<(), RuntimeBuildError> {
+pub fn check_gamma(
+    runtime_args: &mut RuntimeArgs,
+    add_missing: bool,
+) -> Result<(), RuntimeBuildError> {
     if runtime_args.gamma.is_none() {
         if add_missing {
             runtime_args.gamma = Some(None);
@@ -422,7 +430,14 @@ impl Value {
 
 #[cfg(test)]
 mod tests {
-    use crate::{runtime::{builder::{RuntimeBuilder, check_index_memory_cell}, RuntimeArgs, error_handling::RuntimeBuildError}, instructions::IndexMemoryCellIndexType};
+    use crate::{
+        instructions::IndexMemoryCellIndexType,
+        runtime::{
+            builder::{check_index_memory_cell, RuntimeBuilder},
+            error_handling::RuntimeBuildError,
+            RuntimeArgs,
+        },
+    };
 
     /// Used to set the available memory cells during testing.
     const TEST_MEMORY_CELL_LABELS: &[&str] = &[
@@ -478,12 +493,38 @@ mod tests {
     #[test]
     fn test_check_index_memory_cell() {
         let mut args = RuntimeArgs::new_empty();
-        assert_eq!(check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Accumulator(0), false), Err(RuntimeBuildError::AccumulatorMissing("0".to_string())));
-        assert_eq!(check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Gamma, false), Err(RuntimeBuildError::GammaDisabled));
-        assert_eq!(check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::MemoryCell("h1".to_string()), false), Err(RuntimeBuildError::MemoryCellMissing("h1".to_string())));
-        assert_eq!(check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Accumulator(0), true), Ok(()));
-        assert_eq!(check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Gamma, true), Ok(()));
-        assert_eq!(check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::MemoryCell("h1".to_string()), true), Ok(()));
+        assert_eq!(
+            check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Accumulator(0), false),
+            Err(RuntimeBuildError::AccumulatorMissing("0".to_string()))
+        );
+        assert_eq!(
+            check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Gamma, false),
+            Err(RuntimeBuildError::GammaDisabled)
+        );
+        assert_eq!(
+            check_index_memory_cell(
+                &mut args,
+                &IndexMemoryCellIndexType::MemoryCell("h1".to_string()),
+                false
+            ),
+            Err(RuntimeBuildError::MemoryCellMissing("h1".to_string()))
+        );
+        assert_eq!(
+            check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Accumulator(0), true),
+            Ok(())
+        );
+        assert_eq!(
+            check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Gamma, true),
+            Ok(())
+        );
+        assert_eq!(
+            check_index_memory_cell(
+                &mut args,
+                &IndexMemoryCellIndexType::MemoryCell("h1".to_string()),
+                true
+            ),
+            Ok(())
+        );
         assert!(args.accumulators.contains_key(&0));
         assert!(args.gamma.is_some());
         assert!(args.memory_cells.contains_key("h1"));

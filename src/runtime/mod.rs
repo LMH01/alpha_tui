@@ -1,9 +1,9 @@
-use std::collections::{HashMap, BinaryHeap};
+use std::collections::{BinaryHeap, HashMap};
 
 use miette::Result;
 
 use crate::{
-    base::{Accumulator, MemoryCell, IndexMemoryCell},
+    base::{Accumulator, IndexMemoryCell, MemoryCell},
     cli::Args,
     instructions::Instruction,
     utils::read_file,
@@ -119,10 +119,9 @@ impl ControlFlow {
     /// and sets the next instruction index.
     /// Returns StackOverflowError when call stack exceeds size of i16::max elements (= the maximum size is ~2MB).
     pub fn call_function(&mut self, label: &str) -> Result<(), RuntimeErrorType> {
-        self.call_stack
-            .push(self.next_instruction_index);
+        self.call_stack.push(self.next_instruction_index);
         if self.call_stack.len() > i16::MAX as usize {
-            return Err(RuntimeErrorType::StackOverflowError)
+            return Err(RuntimeErrorType::StackOverflowError);
         }
         self.next_instruction_index(label)?;
         Ok(())
@@ -148,7 +147,7 @@ pub struct RuntimeArgs {
     /// Current values stored in accumulators
     pub accumulators: HashMap<usize, Accumulator>,
     /// The value of the gamma accumulator
-    /// 
+    ///
     /// First option determines if gamma is active.
     /// Inner option determine if gamma contains a value.
     pub gamma: Option<Option<i32>>,
@@ -203,11 +202,21 @@ impl<'a> RuntimeArgs {
             None => None,
             Some(value) => Some(value.clone()),
         };
-        Ok(Self::new(accumulators as usize, memory_cells, idx_memory_cells, args.enable_gamma_accumulator))
+        Ok(Self::new(
+            accumulators as usize,
+            memory_cells,
+            idx_memory_cells,
+            args.enable_gamma_accumulator,
+        ))
     }
 
     pub fn new_debug(memory_cells: &'a [&'static str]) -> Self {
-        Self::new(4, memory_cells.iter().map(|f| (*f).to_string()).collect(), None, true)
+        Self::new(
+            4,
+            memory_cells.iter().map(|f| (*f).to_string()).collect(),
+            None,
+            true,
+        )
     }
 
     #[allow(dead_code)]
@@ -221,7 +230,12 @@ impl<'a> RuntimeArgs {
         }
     }
 
-    fn new(acc: usize, m_cells: Vec<String>, idx_m_cells: Option<Vec<usize>>, enable_gamma: bool) -> Self {
+    fn new(
+        acc: usize,
+        m_cells: Vec<String>,
+        idx_m_cells: Option<Vec<usize>>,
+        enable_gamma: bool,
+    ) -> Self {
         let mut accumulators = HashMap::new();
         for i in 0..acc {
             accumulators.insert(i, Accumulator::new(i));
@@ -296,12 +310,14 @@ impl<'a> RuntimeArgs {
 /// Each line contains a single memory cell in the following formatting: NAME=VALUE or [INDEX]=VALUE
 ///
 /// If value is missing an empty memory cell will be created.
-/// 
+///
 /// Tuple value 0 is the list of normal memory cells, tuple value 1 is the list of index memory cells.
 ///
 /// Errors when file could not be read.
 #[allow(clippy::unnecessary_unwrap)]
-fn read_memory_cells_from_file(path: &str) -> Result<(HashMap<String, MemoryCell>, HashMap<usize, Option<i32>>), String> {
+fn read_memory_cells_from_file(
+    path: &str,
+) -> Result<(HashMap<String, MemoryCell>, HashMap<usize, Option<i32>>), String> {
     let contents = read_file(path)?;
     let mut memory_cells = HashMap::new();
     let mut index_memory_cells = HashMap::new();
@@ -347,7 +363,7 @@ fn read_memory_cells_from_file(path: &str) -> Result<(HashMap<String, MemoryCell
 }
 
 /// Tries to parse an index from the first chunk.
-/// 
+///
 /// In order to parse the index the formatting has to be "[INDEX]".
 fn parse_index(chunks: &Vec<&str>) -> Option<usize> {
     if let Some(p1) = chunks.get(0) {

@@ -71,7 +71,7 @@ impl App {
             filename,
             instruction_list_states: InstructionListStates::new(
                 instructions,
-                set_breakpoints.as_ref()
+                set_breakpoints.as_ref(),
             ),
             keybind_hints: init_keybind_hints(),
             memory_lists_manager: mlm,

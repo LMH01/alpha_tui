@@ -22,7 +22,6 @@ pub struct InstructionListStates {
 
 #[allow(clippy::cast_sign_loss)]
 impl InstructionListStates {
-    
     /// Creates new InstructionListStates which hold the current state of the instruction list.
     pub fn new(instructions: &[String], set_breakpoints: Option<&Vec<usize>>) -> Self {
         let mut i = Vec::new();
@@ -253,9 +252,11 @@ impl MemoryListsManager {
         for cell in &runtime_args.index_memory_cells {
             if !self.index_memory_cells.contains_key(cell.0) {
                 if let Some(v) = cell.1 {
-                    self.index_memory_cells.insert(*cell.0, (format!("[{:2}]: {}", cell.0, v), true));
+                    self.index_memory_cells
+                        .insert(*cell.0, (format!("[{:2}]: {}", cell.0, v), true));
                 } else {
-                    self.index_memory_cells.insert(*cell.0, (format!("[{:2}]: None", cell.0), true));
+                    self.index_memory_cells
+                        .insert(*cell.0, (format!("[{:2}]: None", cell.0), true));
                 }
                 continue;
             }
@@ -332,7 +333,8 @@ impl MemoryListsManager {
     }
 
     /// Returns the current memory cells as list (also contains index memory cells)
-    pub fn memory_cell_list(&self) -> Vec<ListItem<'static>> {// TODO Add gamma
+    pub fn memory_cell_list(&self) -> Vec<ListItem<'static>> {
+        // TODO Add gamma
         let mut list = Vec::new();
         for cell in &self.memory_cells {
             let mut item = ListItem::new(cell.1 .0.clone());
@@ -345,7 +347,7 @@ impl MemoryListsManager {
         // Add index memory cells
         let mut imc: Vec<(usize, bool, String)> = Vec::new();
         for cell in &self.index_memory_cells {
-            imc.push((*cell.0, cell.1.1, cell.1.0.clone()));
+            imc.push((*cell.0, cell.1 .1, cell.1 .0.clone()));
         }
         imc.sort(); // Make sure that index memory cells are properly sorted by index
         for cell in imc {

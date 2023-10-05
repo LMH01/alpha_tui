@@ -11,7 +11,11 @@ use crossterm::{
 use miette::{miette, Context, IntoDiagnostic, Result};
 use utils::read_file;
 
-use crate::{runtime::builder::RuntimeBuilder, tui::App, utils::{pretty_format_instructions, write_file}};
+use crate::{
+    runtime::builder::RuntimeBuilder,
+    tui::App,
+    utils::{pretty_format_instructions, write_file},
+};
 
 /// Contains all required data types used to run programs
 mod base;

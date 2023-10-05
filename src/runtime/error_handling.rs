@@ -5,7 +5,8 @@ use crate::base::Operation;
 
 /// Errors that can occur when a runtime is constructed from a `RuntimeBuilder`.
 #[derive(Debug, PartialEq, Error, Diagnostic)]
-pub enum RuntimeBuildError { // TODO Make error messages consistent by starting them with a captial letter and by better explaining the reason, make them consistent with the runtime errors
+pub enum RuntimeBuildError {
+    // TODO Make error messages consistent by starting them with a captial letter and by better explaining the reason, make them consistent with the runtime errors
     #[error("runtime arguments missing")]
     #[diagnostic(code("runtime_build_error::runtime_args_missing"))]
     RuntimeArgsMissing,
@@ -26,7 +27,7 @@ pub enum RuntimeBuildError { // TODO Make error messages consistent by starting 
         help("Make sure to have the number of available accumulators set to at least {0}+1")
     )]
     AccumulatorMissing(String),
-    
+
     #[error("Gamma accumulator is used in the program but is disabled")]
     #[diagnostic(
         code("runtime_build_error::gamma_disabled"),
@@ -93,7 +94,9 @@ pub enum RuntimeErrorType {
     )]
     MemoryCellDoesNotExist(String),
 
-    #[error("Attempt to use value of index memory cell with index '{0}' while value is not initialized")]
+    #[error(
+        "Attempt to use value of index memory cell with index '{0}' while value is not initialized"
+    )]
     #[diagnostic(
         code("runtime_error::index_memory_cell_uninitialized"),
         help("Try assigning a value before accessing it.\nExample p({0}) := 5")

@@ -3,7 +3,7 @@ use crate::{
     instructions::error_handling::InstructionParseError,
 };
 
-use super::{Instruction, TargetType, Value, IndexMemoryCellIndexType};
+use super::{IndexMemoryCellIndexType, Instruction, TargetType, Value};
 
 impl TryFrom<&Vec<&str>> for Instruction {
     type Error = InstructionParseError;
@@ -86,12 +86,23 @@ impl TryFrom<&Vec<&str>> for Instruction {
             match parts.len() {
                 1 => {
                     let op_txt = parts[0].replace("stack", "");
-                    return Ok(Instruction::StackOp(parse_operation(&op_txt, (5, 4 + op_txt.len()))?));
-                },
+                    return Ok(Instruction::StackOp(parse_operation(
+                        &op_txt,
+                        (5, 4 + op_txt.len()),
+                    )?));
+                }
                 2 => {
-                    return Ok(Instruction::StackOp(parse_operation(&parts[1], (6, 5 + parts[1].len()))?));
-                },
-                _ => return Err(InstructionParseError::UnknownInstruction(whole_range(&parts), parts.join(" "))),
+                    return Ok(Instruction::StackOp(parse_operation(
+                        &parts[1],
+                        (6, 5 + parts[1].len()),
+                    )?));
+                }
+                _ => {
+                    return Err(InstructionParseError::UnknownInstruction(
+                        whole_range(&parts),
+                        parts.join(" "),
+                    ))
+                }
             };
         }
 
@@ -153,7 +164,11 @@ impl TryFrom<&str> for Instruction {
 ///
 /// `part_range` indicates the area that is affected.
 /// If 'allow_short' is set, a will be resolved to accumulator 0, if it is not set accumulator 0 can only be resolved by the input string 'a0'.
-pub fn parse_alpha(s: &str, part_range: (usize, usize), allow_short: bool) -> Result<usize, InstructionParseError> {
+pub fn parse_alpha(
+    s: &str,
+    part_range: (usize, usize),
+    allow_short: bool,
+) -> Result<usize, InstructionParseError> {
     if !s.starts_with('a') && !s.starts_with('α') && !s.is_empty() {
         return Err(InstructionParseError::InvalidExpression(
             part_range,
@@ -166,7 +181,10 @@ pub fn parse_alpha(s: &str, part_range: (usize, usize), allow_short: bool) -> Re
             // if no index is supplied default to accumulator 0
             return Ok(0);
         } else {
-            return Err(InstructionParseError::InvalidExpression(part_range, s.to_string()))
+            return Err(InstructionParseError::InvalidExpression(
+                part_range,
+                s.to_string(),
+            ));
         }
     }
     match input.parse::<usize>() {
@@ -183,7 +201,10 @@ pub fn parse_gamma(s: &str, part_range: (usize, usize)) -> Result<(), Instructio
     if s.eq("y") || s.eq("γ") {
         Ok(())
     } else {
-        Err(InstructionParseError::InvalidExpression(part_range, s.to_string()))
+        Err(InstructionParseError::InvalidExpression(
+            part_range,
+            s.to_string(),
+        ))
     }
 }
 
@@ -255,20 +276,30 @@ pub fn parse_memory_cell(
             s.to_string(),
         ));
     }
-    let name = s.replacen("p(", "", 1).replacen("ρ(", "", 1).replacen(')', "", 1);
+    let name = s
+        .replacen("p(", "", 1)
+        .replacen("ρ(", "", 1)
+        .replacen(')', "", 1);
     if name.is_empty() {
         return Err(InstructionParseError::InvalidExpression(
             part_range,
             s.to_string(),
         ));
     }
-    if !name.chars().any(|c| matches!(c, 'a'..='z')) {// TODO fix that ONLY a-z, A-Z and 0-9 are allowed, names that contain ( or ; should fail!
-        return Err(InstructionParseError::InvalidExpression((part_range.0+2, part_range.1-2), name));
+    if !name.chars().any(|c| matches!(c, 'a'..='z')) {
+        // TODO fix that ONLY a-z, A-Z and 0-9 are allowed, names that contain ( or ; should fail!
+        return Err(InstructionParseError::InvalidExpression(
+            (part_range.0 + 2, part_range.1 - 2),
+            name,
+        ));
     }
     Ok(name)
 }
 
-pub fn parse_index_memory_cell(s: &str, part_range: (usize, usize)) -> Result<IndexMemoryCellIndexType, InstructionParseError> {
+pub fn parse_index_memory_cell(
+    s: &str,
+    part_range: (usize, usize),
+) -> Result<IndexMemoryCellIndexType, InstructionParseError> {
     if !s.starts_with("p(") && !s.starts_with("ρ(") {
         return Err(InstructionParseError::InvalidExpression(
             part_range,
@@ -282,28 +313,37 @@ pub fn parse_index_memory_cell(s: &str, part_range: (usize, usize)) -> Result<In
         ));
     }
     // At this point we know that the string starts with p( and ends with ), we can remove these indicators to get the inner value
-    let location = s.chars().skip(2).take(s.chars().count()-1-2).collect::<String>();
+    let location = s
+        .chars()
+        .skip(2)
+        .take(s.chars().count() - 1 - 2)
+        .collect::<String>();
     //let location = s.replacen("p(", "", 1).replacen("ρ(", "", 1).replacen(')', "", 1);
     if let Ok(idx) = location.parse::<usize>() {
         return Ok(IndexMemoryCellIndexType::Direct(idx));
     }
-    if let Ok(_) = parse_gamma(&location, (part_range.0+2, part_range.1-2)) {
+    if let Ok(_) = parse_gamma(&location, (part_range.0 + 2, part_range.1 - 2)) {
         return Ok(IndexMemoryCellIndexType::Gamma);
     }
-    if let Ok(idx) = parse_alpha(&location, (part_range.0+2, part_range.1-2), false) {
+    if let Ok(idx) = parse_alpha(&location, (part_range.0 + 2, part_range.1 - 2), false) {
         return Ok(IndexMemoryCellIndexType::Accumulator(idx));
     }
-    if let Ok(name) = parse_memory_cell(&location, (part_range.0+2, part_range.1-2)) {
+    if let Ok(name) = parse_memory_cell(&location, (part_range.0 + 2, part_range.1 - 2)) {
         return Ok(IndexMemoryCellIndexType::MemoryCell(name));
     }
     // Call this function again to determine if inner value is a number (= instance of Direct), if so the index type is an index.
-    match parse_index_memory_cell(&location, (part_range.0+2, part_range.1-1)) {
-        Ok(t) => {
-            match t {
-                IndexMemoryCellIndexType::Direct(idx) => return Ok(IndexMemoryCellIndexType::Index(idx)),
-                _ => return Err(InstructionParseError::InvalidExpression((part_range.0+2, part_range.1-2), location)),
+    match parse_index_memory_cell(&location, (part_range.0 + 2, part_range.1 - 1)) {
+        Ok(t) => match t {
+            IndexMemoryCellIndexType::Direct(idx) => {
+                return Ok(IndexMemoryCellIndexType::Index(idx))
             }
-        }
+            _ => {
+                return Err(InstructionParseError::InvalidExpression(
+                    (part_range.0 + 2, part_range.1 - 2),
+                    location,
+                ))
+            }
+        },
         Err(e) => return Err(e),
     }
 }
@@ -351,29 +391,90 @@ fn check_expression_missing(
 
 #[cfg(test)]
 mod tests {
-    use crate::{instructions::{parsing::{parse_index_memory_cell, parse_memory_cell, parse_gamma, parse_alpha}, IndexMemoryCellIndexType, error_handling::InstructionParseError}, base::MemoryCell};
+    use crate::{
+        base::MemoryCell,
+        instructions::{
+            error_handling::InstructionParseError,
+            parsing::{parse_alpha, parse_gamma, parse_index_memory_cell, parse_memory_cell},
+            IndexMemoryCellIndexType,
+        },
+    };
 
     #[test]
     fn test_parse_memory_cell() {
         assert_eq!(parse_memory_cell("p(h1)", (0, 4)), Ok("h1".to_string()));
         assert_eq!(parse_memory_cell("ρ(h1)", (0, 4)), Ok("h1".to_string()));
-        assert_eq!(parse_memory_cell("p(1)", (0, 4)), Err(InstructionParseError::InvalidExpression((2, 2), "1".to_string())));
-        assert_eq!(parse_memory_cell("ρ(10)", (0, 5)), Err(InstructionParseError::InvalidExpression((2, 3), "10".to_string())));
+        assert_eq!(
+            parse_memory_cell("p(1)", (0, 4)),
+            Err(InstructionParseError::InvalidExpression(
+                (2, 2),
+                "1".to_string()
+            ))
+        );
+        assert_eq!(
+            parse_memory_cell("ρ(10)", (0, 5)),
+            Err(InstructionParseError::InvalidExpression(
+                (2, 3),
+                "10".to_string()
+            ))
+        );
     }
 
     #[test]
     fn test_parse_index_memory_cell() {
-        assert_eq!(parse_index_memory_cell("p(a)", (0, 3)), Err(InstructionParseError::InvalidExpression((2, 2), "a".to_string())));
-        assert_eq!(parse_index_memory_cell("p(a0)", (0, 3)), Ok(IndexMemoryCellIndexType::Accumulator(0)));
-        assert_eq!(parse_index_memory_cell("p(a1)", (0, 4)), Ok(IndexMemoryCellIndexType::Accumulator(1)));
-        assert_eq!(parse_index_memory_cell("p(y)", (0, 3)), Ok(IndexMemoryCellIndexType::Gamma));
-        assert_eq!(parse_index_memory_cell("p(p(h1))", (0, 7)), Ok(IndexMemoryCellIndexType::MemoryCell("h1".to_string())));
-        assert_eq!(parse_index_memory_cell("ρ(ρ(h1))", (0, 7)), Ok(IndexMemoryCellIndexType::MemoryCell("h1".to_string())));
-        assert_eq!(parse_index_memory_cell("p(p(hello))", (0, 7)), Ok(IndexMemoryCellIndexType::MemoryCell("hello".to_string())));
-        assert_eq!(parse_index_memory_cell("p(p(1))", (0, 7)), Ok(IndexMemoryCellIndexType::Index(1)));
-        assert_eq!(parse_index_memory_cell("p(10)", (0, 7)), Ok(IndexMemoryCellIndexType::Direct(10)));
-        assert_eq!(parse_index_memory_cell("p(p())", (0, 6)), Err(InstructionParseError::InvalidExpression((4, 4), "".to_string())));
-        assert_eq!(parse_index_memory_cell("p(p()))", (0, 7)), Err(InstructionParseError::InvalidExpression((4, 5), ")".to_string())));
+        assert_eq!(
+            parse_index_memory_cell("p(a)", (0, 3)),
+            Err(InstructionParseError::InvalidExpression(
+                (2, 2),
+                "a".to_string()
+            ))
+        );
+        assert_eq!(
+            parse_index_memory_cell("p(a0)", (0, 3)),
+            Ok(IndexMemoryCellIndexType::Accumulator(0))
+        );
+        assert_eq!(
+            parse_index_memory_cell("p(a1)", (0, 4)),
+            Ok(IndexMemoryCellIndexType::Accumulator(1))
+        );
+        assert_eq!(
+            parse_index_memory_cell("p(y)", (0, 3)),
+            Ok(IndexMemoryCellIndexType::Gamma)
+        );
+        assert_eq!(
+            parse_index_memory_cell("p(p(h1))", (0, 7)),
+            Ok(IndexMemoryCellIndexType::MemoryCell("h1".to_string()))
+        );
+        assert_eq!(
+            parse_index_memory_cell("ρ(ρ(h1))", (0, 7)),
+            Ok(IndexMemoryCellIndexType::MemoryCell("h1".to_string()))
+        );
+        assert_eq!(
+            parse_index_memory_cell("p(p(hello))", (0, 7)),
+            Ok(IndexMemoryCellIndexType::MemoryCell("hello".to_string()))
+        );
+        assert_eq!(
+            parse_index_memory_cell("p(p(1))", (0, 7)),
+            Ok(IndexMemoryCellIndexType::Index(1))
+        );
+        assert_eq!(
+            parse_index_memory_cell("p(10)", (0, 7)),
+            Ok(IndexMemoryCellIndexType::Direct(10))
+        );
+        assert_eq!(
+            parse_index_memory_cell("p(p())", (0, 6)),
+            Err(InstructionParseError::InvalidExpression(
+                (4, 4),
+                "".to_string()
+            ))
+        );
+        assert_eq!(
+            parse_index_memory_cell("p(p()))", (0, 7)),
+            Err(InstructionParseError::InvalidExpression(
+                (4, 5),
+                ")".to_string()
+            ))
+        );
     }
 
     #[test]
@@ -387,6 +488,12 @@ mod tests {
         assert_eq!(parse_alpha("a0", (0, 1), true), Ok(0));
         assert_eq!(parse_alpha("a0", (0, 1), false), Ok(0));
         assert_eq!(parse_alpha("a", (0, 0), true), Ok(0));
-        assert_eq!(parse_alpha("a", (0, 0), false), Err(InstructionParseError::InvalidExpression((0, 0), "a".to_string())));
+        assert_eq!(
+            parse_alpha("a", (0, 0), false),
+            Err(InstructionParseError::InvalidExpression(
+                (0, 0),
+                "a".to_string()
+            ))
+        );
     }
 }

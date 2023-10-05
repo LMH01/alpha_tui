@@ -1,9 +1,9 @@
 use std::{
-    fs::{File, remove_file},
-    io::{BufRead, BufReader, BufWriter, Write, LineWriter},
+    fs::{remove_file, File},
+    io::{BufRead, BufReader, BufWriter, LineWriter, Write},
 };
 
-use miette::{Result, IntoDiagnostic};
+use miette::{IntoDiagnostic, Result};
 
 /// Reads a file into a string vector.
 ///
@@ -127,7 +127,7 @@ pub fn pretty_format_instructions(instructions: &[String]) -> Vec<String> {
             None => {
                 pretty_instruction.push_str(&" ".repeat(max_instruction_length + SPACING));
                 pretty_instruction = pretty_instruction.trim_end().to_string();
-            },
+            }
         }
 
         pretty_instructions.push(pretty_instruction);

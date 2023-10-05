@@ -1,4 +1,4 @@
-use std::{fmt::Display, cmp::Ordering};
+use std::{cmp::Ordering, fmt::Display};
 
 use crate::runtime::error_handling::{CalcError, RuntimeErrorType};
 
@@ -17,7 +17,6 @@ impl Accumulator {
     pub fn new(id: usize) -> Self {
         Self { id, data: None }
     }
-
 }
 
 impl Display for Accumulator {

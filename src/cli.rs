@@ -54,7 +54,7 @@ pub struct Args {
         requires_all = [ "memory" ]
     )]
     pub disable_memory_detection: bool,
-    
+
     #[arg(
         long,
         help = "Enable the gamma accumulator",
@@ -82,7 +82,7 @@ pub struct Args {
         long,
         help = "Write the changed program file alignment to file",
         long_help = "Write the changed program file alignment for better readability to the source file.",
-        conflicts_with = "disable_alignment",
+        conflicts_with = "disable_alignment"
     )]
-    pub write_alignment: bool
+    pub write_alignment: bool,
 }
