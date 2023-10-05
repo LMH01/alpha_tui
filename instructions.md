@@ -32,9 +32,17 @@ $\textbf{cmp}\in\lbrace <,\leq,=, \ne,\geq,>\rbrace;$
 |call label | call function | the next instruction pointer is updated to the instruction and a return address is set |
 |return | return| returns from the current function to the point where the instruction was called, if return is called inside the main function/without previous function being called, the program exits|
 
-## Index memory cells
+## Memory cells
 
-It is supported to access memory cells by use of an index. For example $\rho(0)$ would access the memory cell with index 0. This can even be nested up to one time to take the value of another memory cell as index that should be accessed: $\rho(\rho(h1))$.
+Memory cells are accessed using `p(NAME)`, `NAME` can contain the letters a-z, A-Z and the numbers 0-9, if at least one letter is used.
+
+Example on how to assign value: `p(h1) := 5`
+
+Example on how to read value: `a := p(h1)`
+
+### Index memory cells
+
+Index memory cells are a special kind of memory cell, with them it is supported to access the data by using an index. For example $\rho(0)$ would access the memory cell with index 0. This can even be nested up to one time to take the value of another memory cell as index that should be accessed: $\rho(\rho(h1))$.
 
 $\gamma$ is a special register that can be used to access index memory cells. For example $\rho(\gamma)$ would access the index that is stored in $\gamma$. $\gamma$ can be assigned just like standard accumulators: $\gamma := 5$.
 
