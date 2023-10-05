@@ -315,9 +315,7 @@ type IndexMemoryCells = HashMap<usize, Option<i32>>;
 ///
 /// Errors when file could not be read.
 #[allow(clippy::unnecessary_unwrap)]
-fn read_memory_cells_from_file(
-    path: &str,
-) -> Result<(MemoryCells, IndexMemoryCells), String> {
+fn read_memory_cells_from_file(path: &str) -> Result<(MemoryCells, IndexMemoryCells), String> {
     let contents = read_file(path)?;
     let mut memory_cells = HashMap::new();
     let mut index_memory_cells = HashMap::new();
@@ -352,11 +350,10 @@ fn read_memory_cells_from_file(
                 );
             }
         } else if let Some(idx) = idx {
-                index_memory_cells.insert(idx, None);
-            } else {
-                memory_cells.insert(chunks[0].to_string(), MemoryCell::new(chunks[0]));
-            }
-        
+            index_memory_cells.insert(idx, None);
+        } else {
+            memory_cells.insert(chunks[0].to_string(), MemoryCell::new(chunks[0]));
+        }
     }
     Ok((memory_cells, index_memory_cells))
 }

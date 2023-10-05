@@ -421,9 +421,7 @@ impl Value {
                 assert_accumulator_contains_value(runtime_args, *a)?;
                 Ok(runtime_args.accumulators.get(a).unwrap().data.unwrap())
             }
-            Self::Gamma => {
-                assert_gamma_contains_value(runtime_args)
-            }
+            Self::Gamma => assert_gamma_contains_value(runtime_args),
             Self::Constant(a) => Ok(*a),
             Self::MemoryCell(a) => {
                 assert_memory_cell_contains_value(runtime_args, a)?;

@@ -335,15 +335,11 @@ pub fn parse_index_memory_cell(
     // Call this function again to determine if inner value is a number (= instance of Direct), if so the index type is an index.
     match parse_index_memory_cell(&location, (part_range.0 + 2, part_range.1 - 1)) {
         Ok(t) => match t {
-            IndexMemoryCellIndexType::Direct(idx) => {
-                Ok(IndexMemoryCellIndexType::Index(idx))
-            }
-            _ => {
-                Err(InstructionParseError::InvalidExpression(
-                    (part_range.0 + 2, part_range.1 - 2),
-                    location,
-                ))
-            }
+            IndexMemoryCellIndexType::Direct(idx) => Ok(IndexMemoryCellIndexType::Index(idx)),
+            _ => Err(InstructionParseError::InvalidExpression(
+                (part_range.0 + 2, part_range.1 - 2),
+                location,
+            )),
         },
         Err(e) => Err(e),
     }
@@ -393,10 +389,10 @@ fn check_expression_missing(
 #[cfg(test)]
 mod tests {
     use crate::instructions::{
-            error_handling::InstructionParseError,
-            parsing::{parse_alpha, parse_gamma, parse_index_memory_cell, parse_memory_cell},
-            IndexMemoryCellIndexType,
-        };
+        error_handling::InstructionParseError,
+        parsing::{parse_alpha, parse_gamma, parse_index_memory_cell, parse_memory_cell},
+        IndexMemoryCellIndexType,
+    };
 
     #[test]
     fn test_parse_memory_cell() {
