@@ -51,7 +51,7 @@ pub struct RuntimeError {
 }
 
 #[derive(Debug, Clone, PartialEq, Error, Diagnostic)]
-pub enum RuntimeErrorType {
+pub enum RuntimeErrorType {//TODO implement tests for errors that are new and are not yet tested
     #[error("Attempt to use value of accumulator with index '{0}' while value is not initialized")]
     #[diagnostic(
         code("runtime_error::accumulator_uninitialized"),
