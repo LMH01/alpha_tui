@@ -1,9 +1,9 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, BinaryHeap};
 
 use miette::Result;
 
 use crate::{
-    base::{Accumulator, MemoryCell},
+    base::{Accumulator, MemoryCell, IndexMemoryCell},
     cli::Args,
     instructions::Instruction,
     utils::read_file,
@@ -147,8 +147,16 @@ impl ControlFlow {
 pub struct RuntimeArgs {
     /// Current values stored in accumulators
     pub accumulators: HashMap<usize, Accumulator>,
+    /// The value of the gamma accumulator
+    /// 
+    /// First option determines if gamma is active.
+    /// Inner option determine if gamma contains a value.
+    pub gamma: Option<Option<i32>>,
     /// All registers that are used to store data
     pub memory_cells: HashMap<String, MemoryCell>,
+    /// All index registers that are used to store data,
+    /// key is the index, value is the value of that register
+    pub index_memory_cells: HashMap<usize, Option<i32>>,
     /// The stack of the runner
     pub stack: Vec<i32>,
 }
@@ -171,9 +179,15 @@ impl<'a> RuntimeArgs {
                             accumulators
                         }
                     };
+                    let gamma = match args.enable_gamma_accumulator {
+                        true => Some(None),
+                        false => None,
+                    };
                     return Ok(Self {
                         accumulators,
-                        memory_cells,
+                        gamma,
+                        memory_cells: memory_cells.0,
+                        index_memory_cells: memory_cells.1,
                         stack: Vec::new(),
                     });
                 }
@@ -185,23 +199,29 @@ impl<'a> RuntimeArgs {
             None => Vec::new(),
             Some(value) => value.clone(),
         };
-        Ok(Self::new(accumulators as usize, memory_cells))
+        let idx_memory_cells = match args.index_memory_cells.as_ref() {
+            None => None,
+            Some(value) => Some(value.clone()),
+        };
+        Ok(Self::new(accumulators as usize, memory_cells, idx_memory_cells, args.enable_gamma_accumulator))
     }
 
     pub fn new_debug(memory_cells: &'a [&'static str]) -> Self {
-        Self::new(4, memory_cells.iter().map(|f| (*f).to_string()).collect())
+        Self::new(4, memory_cells.iter().map(|f| (*f).to_string()).collect(), None, true)
     }
 
     #[allow(dead_code)]
     pub fn new_empty() -> Self {
         Self {
             accumulators: HashMap::new(),
+            gamma: None,
             memory_cells: HashMap::new(),
+            index_memory_cells: HashMap::new(),
             stack: Vec::new(),
         }
     }
 
-    fn new(acc: usize, m_cells: Vec<String>) -> Self {
+    fn new(acc: usize, m_cells: Vec<String>, idx_m_cells: Option<Vec<usize>>, enable_gamma: bool) -> Self {
         let mut accumulators = HashMap::new();
         for i in 0..acc {
             accumulators.insert(i, Accumulator::new(i));
@@ -210,9 +230,21 @@ impl<'a> RuntimeArgs {
         for i in m_cells {
             memory_cells.insert(i.clone(), MemoryCell::new(i.as_str()));
         }
+        let gamma = match enable_gamma {
+            true => Some(None),
+            false => None,
+        };
+        let mut index_memory_cells = HashMap::new();
+        if let Some(cells) = idx_m_cells {
+            for c in cells {
+                index_memory_cells.insert(c, None);
+            }
+        }
         Self {
             accumulators,
+            gamma,
             memory_cells,
+            index_memory_cells,
             stack: Vec::new(),
         }
     }
@@ -258,18 +290,23 @@ impl<'a> RuntimeArgs {
 
 /// Reads memory cells from file and returns map of memory cells.
 ///
-/// Each line contains a single memory cell in the following formatting: NAME=VALUE
+/// Each line contains a single memory cell in the following formatting: NAME=VALUE or [INDEX]=VALUE
 ///
 /// If value is missing an empty memory cell will be created.
+/// 
+/// Tuple value 0 is the list of normal memory cells, tuple value 1 is the list of index memory cells.
 ///
 /// Errors when file could not be read.
 #[allow(clippy::unnecessary_unwrap)]
-fn read_memory_cells_from_file(path: &str) -> Result<HashMap<String, MemoryCell>, String> {
+fn read_memory_cells_from_file(path: &str) -> Result<(HashMap<String, MemoryCell>, HashMap<usize, Option<i32>>), String> {
     let contents = read_file(path)?;
-    let mut map = HashMap::new();
+    let mut memory_cells = HashMap::new();
+    let mut index_memory_cells = HashMap::new();
     for (index, line) in contents.iter().enumerate() {
         let chunks = line.split('=').collect::<Vec<&str>>();
         let v = chunks.get(1);
+        // Check if line is index memory cell
+        let idx = parse_index(&chunks);
         if v.is_some() && !v.unwrap().is_empty() {
             let v = v.unwrap();
             let value = match v.parse::<i32>() {
@@ -284,18 +321,41 @@ fn read_memory_cells_from_file(path: &str) -> Result<HashMap<String, MemoryCell>
                     ))
                 }
             };
-            map.insert(
-                chunks[0].to_string(),
-                MemoryCell {
-                    label: chunks[0].to_string(),
-                    data: Some(value),
-                },
-            );
+            if let Some(idx) = idx {
+                index_memory_cells.insert(idx, Some(value));
+            } else {
+                memory_cells.insert(
+                    chunks[0].to_string(),
+                    MemoryCell {
+                        label: chunks[0].to_string(),
+                        data: Some(value),
+                    },
+                );
+            }
         } else {
-            map.insert(chunks[0].to_string(), MemoryCell::new(chunks[0]));
+            if let Some(idx) = idx {
+                index_memory_cells.insert(idx, None);
+            } else {
+                memory_cells.insert(chunks[0].to_string(), MemoryCell::new(chunks[0]));
+            }
         }
     }
-    Ok(map)
+    Ok((memory_cells, index_memory_cells))
+}
+
+/// Tries to parse an index from the first chunk.
+/// 
+/// In order to parse the index the formatting has to be "[INDEX]".
+fn parse_index(chunks: &Vec<&str>) -> Option<usize> {
+    if let Some(p1) = chunks.get(0) {
+        if p1.starts_with("[") && p1.ends_with("]") {
+            let idx = p1.replacen("[", "", 1).replacen("]", "", 1);
+            if let Ok(idx) = idx.parse::<usize>() {
+                return Some(idx);
+            }
+        }
+    }
+    None
 }
 
 #[cfg(test)]
@@ -303,7 +363,7 @@ mod tests {
     use crate::{
         base::{Comparison, Operation},
         instructions::{Instruction, TargetType, Value},
-        runtime::{builder::RuntimeBuilder, error_handling::RuntimeBuildError},
+        runtime::{builder::RuntimeBuilder, error_handling::RuntimeBuildError, parse_index},
     };
 
     use super::RuntimeArgs;
@@ -449,5 +509,10 @@ mod tests {
             let b = rb.build();
             assert_eq!(b, Err(RuntimeBuildError::MemoryCellMissing(s.to_string())));
         }
+    }
+
+    #[test]
+    fn test_parse_index() {
+        assert_eq!(parse_index(&vec!["[10]"]), Some(10));
     }
 }

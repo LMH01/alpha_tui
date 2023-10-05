@@ -186,7 +186,9 @@ fn list_prev(list_state: &mut ListState, max_index: usize) {
 /// Used to update and set the lists for accumulators, memory cells and stack.
 pub struct MemoryListsManager {
     accumulators: HashMap<usize, (String, bool)>,
+    gamma: Option<(Option<i32>, bool)>,
     memory_cells: HashMap<String, (String, bool)>,
+    index_memory_cells: HashMap<usize, (String, bool)>,
     stack: Vec<ListItem<'static>>,
 }
 
@@ -202,9 +204,24 @@ impl MemoryListsManager {
         for cell in &runtime_args.memory_cells {
             memory_cells.insert(cell.1.label.clone(), (format!("{}", cell.1), false));
         }
+        let mut index_memory_cells = HashMap::new();
+        for cell in &runtime_args.index_memory_cells {
+            if let Some(v) = cell.1 {
+                index_memory_cells.insert(*cell.0, (format!("[{:2}]: {}", *cell.0, *v), false));
+            } else {
+                index_memory_cells.insert(*cell.0, (format!("[{:2}]: None", *cell.0), false));
+            }
+        }
+        let gamma = match runtime_args.gamma {
+            Some(value) => Some((value, false)),
+            None => None,
+        };
+        println!("{:?}", gamma);
         Self {
             accumulators,
+            gamma,
             memory_cells,
+            index_memory_cells,
             stack: Vec::new(),
         }
     }
@@ -224,13 +241,46 @@ impl MemoryListsManager {
             }
         }
         // Update memory_cells
-        for acc in &runtime_args.memory_cells {
-            let a = self.memory_cells.get_mut(&acc.1.label).unwrap();
-            let update = format!("{}", acc.1);
+        for cell in &runtime_args.memory_cells {
+            let a = self.memory_cells.get_mut(&cell.1.label).unwrap();
+            let update = format!("{}", cell.1);
             if update == *a.0 {
                 a.1 = false;
             } else {
                 *a = (update, true);
+            }
+        }
+        // Update index memory cells
+        for cell in &runtime_args.index_memory_cells {
+            if !self.index_memory_cells.contains_key(cell.0) {
+                if let Some(v) = cell.1 {
+                    self.index_memory_cells.insert(*cell.0, (format!("[{:2}]: {}", cell.0, v), true));
+                } else {
+                    self.index_memory_cells.insert(*cell.0, (format!("[{:2}]: None", cell.0), true));
+                }
+                continue;
+            }
+            let a = self.index_memory_cells.get_mut(cell.0).unwrap();
+            let update = match cell.1 {
+                Some(v) => format!("[{:2}]: {}", cell.0, v),
+                None => format!("[{:2}]: None", cell.0),
+            };
+            if update == *a.0 {
+                a.1 = false;
+            } else {
+                *a = (update, true);
+            }
+        }
+        // Update gamma
+        if let Some(update) = runtime_args.gamma {
+            if let Some(value) = self.gamma.as_mut() {
+                if update == value.0 {
+                    value.1 = false;
+                } else {
+                    *value = (update, true);
+                }
+            } else {
+                self.gamma = Some((update, true));
             }
         }
         // Update stack
@@ -261,20 +311,51 @@ impl MemoryListsManager {
             list.push((item, acc.0));
         }
         list.sort_by(|a, b| a.1.cmp(b.1));
+        list.reverse();
+        // Insert gamma accumulator if it is in use
+        if let Some(value) = self.gamma {
+            if let Some(inner_value) = value.0 {
+                let mut item = ListItem::new(format!(" γ: {}", inner_value));
+                if value.1 {
+                    item = item.style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
+                }
+                list.push((item, &0));
+            } else {
+                let mut item = ListItem::new(format!(" γ: None"));
+                if value.1 {
+                    item = item.style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
+                }
+                list.push((item, &0));
+            }
+        }
+        list.reverse(); // reverse list to make gamma appear at top of list
         list.iter().map(|f| f.0.clone()).collect()
     }
 
-    /// Returns the current memory cells as list
-    pub fn memory_cell_list(&self) -> Vec<ListItem<'static>> {
+    /// Returns the current memory cells as list (also contains index memory cells)
+    pub fn memory_cell_list(&self) -> Vec<ListItem<'static>> {// TODO Add gamma
         let mut list = Vec::new();
         for cell in &self.memory_cells {
             let mut item = ListItem::new(cell.1 .0.clone());
             if cell.1 .1 {
                 item = item.style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
             }
-            list.push((item, cell.0));
+            list.push((item, cell.0.clone()));
         }
-        list.sort_by(|a, b| a.1.cmp(b.1));
+        list.sort_by(|a, b| a.1.cmp(&b.1));
+        // Add index memory cells
+        let mut imc: Vec<(usize, bool, String)> = Vec::new();
+        for cell in &self.index_memory_cells {
+            imc.push((*cell.0, cell.1.1, cell.1.0.clone()));
+        }
+        imc.sort(); // Make sure that index memory cells are properly sorted by index
+        for cell in imc {
+            let mut item = ListItem::new(cell.2.clone());
+            if cell.1 {
+                item = item.style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
+            }
+            list.push((item, format!("{}", cell.0)));
+        }
         list.iter().map(|f| f.0.clone()).collect()
     }
 

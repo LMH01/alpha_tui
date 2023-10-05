@@ -5,7 +5,7 @@ use crate::base::Operation;
 
 /// Errors that can occur when a runtime is constructed from a `RuntimeBuilder`.
 #[derive(Debug, PartialEq, Error, Diagnostic)]
-pub enum RuntimeBuildError {
+pub enum RuntimeBuildError { // TODO Make error messages consistent by starting them with a captial letter and by better explaining the reason, make them consistent with the runtime errors
     #[error("runtime arguments missing")]
     #[diagnostic(code("runtime_build_error::runtime_args_missing"))]
     RuntimeArgsMissing,
@@ -26,6 +26,13 @@ pub enum RuntimeBuildError {
         help("Make sure to have the number of available accumulators set to at least {0}+1")
     )]
     AccumulatorMissing(String),
+    
+    #[error("Gamma accumulator is used in the program but is disabled")]
+    #[diagnostic(
+        code("runtime_build_error::gamma_disabled"),
+        help("You can't use the gamma accumulator when it is disabled, to enable it you can either enable automatic memory detection\nby removing the \"--disable-memory-detection\" flag or you can explicitly enable it by using the \"--enable-gamma-accumulator\" flag.") // TODO Add flag to disable gamma accumulator and update this message
+    )]
+    GammaDisabled,
 }
 
 #[derive(Debug)]
@@ -58,6 +65,20 @@ pub enum RuntimeErrorType {
     )]
     AccumulatorDoesNotExist(usize),
 
+    #[error("Attempt to use value of accumulator gamma while value is not initialized")]
+    #[diagnostic(
+        code("runtime_error::gamma_uninitialized"),
+        help("Try assigning a value before accessing it.\nExample: y := 5")
+    )]
+    GammaUninitialized,
+
+    #[error("Attempt to use accumulator gamma while it does not exist")]
+    #[diagnostic(
+        code("runtime_error::gamma_does_not_exist"),
+        help("Make sure to tell the program to use the gamma accumulator by using the TODO flag") // TODO implement flag that enables gamma accumulator
+    )]
+    GammaDoesNotExist,
+
     #[error("Attempt to use value of memory cell named '{0}' while value is not initialized")]
     #[diagnostic(
         code("runtime_error::memory_cell_uninitialized"),
@@ -71,6 +92,13 @@ pub enum RuntimeErrorType {
         help("Make sure to tell the program to use this memory cell by using the '-m' flag")
     )]
     MemoryCellDoesNotExist(String),
+
+    #[error("Attempt to use value of index memory cell with index '{0}' while value is not initialized")]
+    #[diagnostic(
+        code("runtime_error::index_memory_cell_uninitialized"),
+        help("Try assigning a value before accessing it.\nExample p({0}) := 5")
+    )]
+    IndexMemoryCellUninitialized(usize),
 
     #[error("Attempt to push value of a0 onto stack while a0 is not initialized")]
     #[diagnostic(
@@ -119,6 +147,13 @@ pub enum RuntimeErrorType {
         #[diagnostic_source]
         cause: CalcError,
     },
+
+    #[error("Attempt to access index memory cell with negative index, '{0}'")]
+    #[diagnostic(
+        code("runtime_error::index_memory_cell_negative_index"),
+        help("Make sure that the value with which you try to access the index memory cell is positive")
+    )]
+    IndexMemoryCellNegativeIndex(i32),
 }
 
 #[derive(Debug, Clone, PartialEq, Error, Diagnostic)]
@@ -203,7 +238,7 @@ mod tests {
 
     #[test]
     fn test_re_accumulator_uninitialized() {
-        let mut ra = RuntimeArgs::new(1, vec!["h1".to_string()]);
+        let mut ra = RuntimeArgs::new(1, vec!["h1".to_string()], None, true);
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Assign(
@@ -217,7 +252,7 @@ mod tests {
 
     #[test]
     fn test_re_accumulator_does_not_exist() {
-        let mut ra = RuntimeArgs::new(0, vec!["h1".to_string()]);
+        let mut ra = RuntimeArgs::new(0, vec!["h1".to_string()], None, true);
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Assign(
@@ -231,7 +266,7 @@ mod tests {
 
     #[test]
     fn test_re_memory_cell_uninitialized() {
-        let mut ra = RuntimeArgs::new(1, vec!["a".to_string()]);
+        let mut ra = RuntimeArgs::new(1, vec!["a".to_string()], None, true);
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Assign(
@@ -245,7 +280,7 @@ mod tests {
 
     #[test]
     fn test_re_memory_cell_does_not_exist() {
-        let mut ra = RuntimeArgs::new(1, vec![]);
+        let mut ra = RuntimeArgs::new(1, vec![], None, true);
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Assign(
@@ -259,7 +294,7 @@ mod tests {
 
     #[test]
     fn test_re_push_fail() {
-        let mut ra = RuntimeArgs::new(1, vec![]);
+        let mut ra = RuntimeArgs::new(1, vec![], None, true);
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Push.run(&mut ra, &mut cf),
@@ -269,7 +304,7 @@ mod tests {
 
     #[test]
     fn test_re_pop_fail() {
-        let mut ra = RuntimeArgs::new(1, vec!["a".to_string()]);
+        let mut ra = RuntimeArgs::new(1, vec!["a".to_string()], None, true);
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Pop.run(&mut ra, &mut cf),
@@ -279,7 +314,7 @@ mod tests {
 
     #[test]
     fn test_re_stack_overflow() {
-        let ra = RuntimeArgs::new(1, vec!["a".to_string()]);
+        let ra = RuntimeArgs::new(1, vec!["a".to_string()], None, true);
         let mut rb = RuntimeBuilder::new();
         rb.set_runtime_args(ra);
         let instructions = vec!["loop: call loop"];
@@ -293,7 +328,7 @@ mod tests {
 
     #[test]
     fn test_re_label_missing() {
-        let mut ra = RuntimeArgs::new(1, vec!["a".to_string()]);
+        let mut ra = RuntimeArgs::new(1, vec!["a".to_string()], None, true);
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Goto("loop".to_string()).run(&mut ra, &mut cf),
@@ -303,7 +338,7 @@ mod tests {
 
     #[test]
     fn test_ce_me_attempt_to_divide_by_zero() {
-        let mut ra = RuntimeArgs::new(2, vec![]);
+        let mut ra = RuntimeArgs::new(2, vec![], None, true);
         ra.accumulators.get_mut(&0).unwrap().data = Some(0);
         ra.accumulators.get_mut(&1).unwrap().data = Some(0);
         let mut cf = ControlFlow::new();
@@ -323,7 +358,7 @@ mod tests {
 
     #[test]
     fn test_re_ce_attempt_to_overflow_add() {
-        let mut ra = RuntimeArgs::new(2, vec![]);
+        let mut ra = RuntimeArgs::new(2, vec![], None, true);
         ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MAX);
         ra.accumulators.get_mut(&1).unwrap().data = Some(1);
         let mut cf = ControlFlow::new();
@@ -343,7 +378,7 @@ mod tests {
 
     #[test]
     fn test_re_ce_attempt_to_overflow_sub() {
-        let mut ra = RuntimeArgs::new(2, vec![]);
+        let mut ra = RuntimeArgs::new(2, vec![], None, true);
         ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MIN);
         ra.accumulators.get_mut(&1).unwrap().data = Some(1);
         let mut cf = ControlFlow::new();
@@ -366,7 +401,7 @@ mod tests {
 
     #[test]
     fn test_re_ce_attempt_to_overflow_div() {
-        let mut ra = RuntimeArgs::new(2, vec![]);
+        let mut ra = RuntimeArgs::new(2, vec![], None, true);
         ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MIN);
         ra.accumulators.get_mut(&1).unwrap().data = Some(-1);
         let mut cf = ControlFlow::new();
@@ -386,7 +421,7 @@ mod tests {
 
     #[test]
     fn test_re_ce_attempt_to_overflow_mul() {
-        let mut ra = RuntimeArgs::new(2, vec![]);
+        let mut ra = RuntimeArgs::new(2, vec![], None, true);
         ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MAX);
         ra.accumulators.get_mut(&1).unwrap().data = Some(2);
         let mut cf = ControlFlow::new();
@@ -409,7 +444,7 @@ mod tests {
 
     #[test]
     fn test_re_ce_attempt_to_overflow_mod() {
-        let mut ra = RuntimeArgs::new(2, vec![]);
+        let mut ra = RuntimeArgs::new(2, vec![], None, true);
         ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MIN);
         ra.accumulators.get_mut(&1).unwrap().data = Some(-1);
         let mut cf = ControlFlow::new();
@@ -429,7 +464,7 @@ mod tests {
 
     #[test]
     fn test_re_ce_attempt_to_divide_by_zero_mod() {
-        let mut ra = RuntimeArgs::new(2, vec![]);
+        let mut ra = RuntimeArgs::new(2, vec![], None, true);
         ra.accumulators.get_mut(&0).unwrap().data = Some(10);
         ra.accumulators.get_mut(&1).unwrap().data = Some(0);
         let mut cf = ControlFlow::new();

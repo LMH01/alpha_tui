@@ -1,0 +1,8 @@
+p(6) := 42 // assign memory at index 6 the value 42
+a1 := 30
+y := 5
+loop:
+p(y) := 5 // assign memory at index y value 5
+if y = a1 then goto end
+y := y + 1
+goto loop
