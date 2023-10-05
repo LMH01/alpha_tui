@@ -16,7 +16,9 @@ $n,o,p\in\mathbb{N}|n\geq0:j,k,l\in\lbrace h_0,\ldots,h_n\rbrace;$
 
 $T\in\lbrace\alpha_n, \alpha_o, \alpha_p, \rho(j),\rho(k),\rho(l),\rho(\gamma),\rho(\rho(\gamma)),\rho(\alpha_n),\rho(\rho(\alpha_n)),\rho(n),\rho(\rho(n)),\rho(j),\rho(\rho(j))\rbrace;$
 
-$S\in\lbrace T, c\rbrace;\textbf{op}\in\lbrace +,-,\times,\div,\%\rbrace;\textbf{cmp}\in\lbrace <,\leq,=, \ne,\geq,>\rbrace;$
+$S\in\lbrace T, c\rbrace;\textbf{op}\in\lbrace +,-,\times,\div,modulo \rbrace;$
+
+$\textbf{cmp}\in\lbrace <,\leq,=, \ne,\geq,>\rbrace;$
 
 | Formal instruction | code example | explanation |
 | - | - | - |
