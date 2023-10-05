@@ -36,7 +36,7 @@ pub struct Args {
     #[arg(
         long,
         help = "List of available index memory cells",
-        long_help = "List of available index memory cells.\nExample: 0,1,2,3\n\nCan be used to visualize how index memory cells are filled with values as they are normally created on a need to use basis.",
+        long_help = "List of available index memory cells.\nExample: 0,1,2,3\n\nCan be used to visualize how index memory cells are filled with values or to explicitly enable index memory cells when automatic detection has been disabled by the \"--disable-memory-detection\" flag.",
         value_delimiter = ','
     )]
     pub index_memory_cells: Option<Vec<usize>>,
@@ -50,7 +50,7 @@ pub struct Args {
     #[arg(
         long,
         help = "Disable accumulator, gamma accumulator and memory_cell detection",
-        long_help = "Set to disable accumulator, gamma accumulator and memory_cell detection.\nIf disabled, accumulators, gamma accumulator and memory cells won't be read from program,\ninstead they have to be specified using \"--accumulators\", \"--enable-gamma-accumulator\" and \"--memory-cells\" or \"--memory-cell-file\"\n\nThis however does not apply to index_memory_cells, they are still created on a need to use basis.",
+        long_help = "Set to disable accumulator, gamma accumulator and memory_cell detection.\nIf disabled, accumulators, gamma accumulator and memory cells won't be read from program,\ninstead they have to be specified using \"--accumulators\", \"--enable-gamma-accumulator\" and \"--memory-cells\" or \"--memory-cell-file\" and \"--index-memory-cells\" or \"--memory-cell-file\"",
         requires_all = [ "memory" ]
     )]
     pub disable_memory_detection: bool,

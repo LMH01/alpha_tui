@@ -108,32 +108,22 @@ fn run_assign(
         TargetType::IndexMemoryCell(t) => match t {
             IndexMemoryCellIndexType::Accumulator(idx) => {
                 let idx = index_from_accumulator(runtime_args, idx)?;
-                runtime_args
-                    .index_memory_cells
-                    .insert(idx, Some(source.value(runtime_args)?));
+                assign_index_memory_cell_from_value(runtime_args, idx, source)?;
             }
             IndexMemoryCellIndexType::Direct(idx) => {
-                runtime_args
-                    .index_memory_cells
-                    .insert(*idx, Some(source.value(runtime_args)?));
+                assign_index_memory_cell_from_value(runtime_args, *idx, source)?;
             }
             IndexMemoryCellIndexType::Gamma => {
                 let idx = index_from_gamma(runtime_args)?;
-                runtime_args
-                    .index_memory_cells
-                    .insert(idx, Some(source.value(runtime_args)?));
+                assign_index_memory_cell_from_value(runtime_args, idx, source)?;
             }
             IndexMemoryCellIndexType::MemoryCell(name) => {
                 let idx = index_from_memory_cell(runtime_args, name)?;
-                runtime_args
-                    .index_memory_cells
-                    .insert(idx as usize, Some(source.value(runtime_args)?));
+                assign_index_memory_cell_from_value(runtime_args, idx, source)?;
             }
             IndexMemoryCellIndexType::Index(idx) => {
                 let idx = index_from_index_memory_cell(runtime_args, idx)?;
-                runtime_args
-                    .index_memory_cells
-                    .insert(idx as usize, Some(source.value(runtime_args)?));
+                assign_index_memory_cell_from_value(runtime_args, idx, source)?;
             }
         },
     }
@@ -167,26 +157,22 @@ fn run_calc(
             match t {
                 IndexMemoryCellIndexType::Accumulator(idx) => {
                     let idx = index_from_accumulator(runtime_args, idx)?;
-                    runtime_args.index_memory_cells.insert(idx, Some(res));
+                    assign_index_memory_cell(runtime_args, idx, res)?;
                 }
                 IndexMemoryCellIndexType::Direct(idx) => {
-                    runtime_args.index_memory_cells.insert(*idx, Some(res));
+                    assign_index_memory_cell(runtime_args, *idx, res)?;
                 }
                 IndexMemoryCellIndexType::Gamma => {
                     let idx = index_from_gamma(runtime_args)?;
-                    runtime_args.index_memory_cells.insert(idx, Some(res));
+                    assign_index_memory_cell(runtime_args, idx, res)?;
                 }
                 IndexMemoryCellIndexType::MemoryCell(name) => {
                     let idx = index_from_memory_cell(runtime_args, name)?;
-                    runtime_args
-                        .index_memory_cells
-                        .insert(idx as usize, Some(res));
+                    assign_index_memory_cell(runtime_args, idx, res)?;
                 }
                 IndexMemoryCellIndexType::Index(idx) => {
                     let idx = index_from_index_memory_cell(runtime_args, idx)?;
-                    runtime_args
-                        .index_memory_cells
-                        .insert(idx as usize, Some(res));
+                    assign_index_memory_cell(runtime_args, idx, res)?;
                 }
             }
         }
@@ -343,7 +329,6 @@ fn assert_memory_cell_contains_value(
     }
 }
 
-#[allow(clippy::collapsible_match)] // TODO remove this lint, when error type index memory cell does not exist is implemented
 fn assert_index_memory_cell_contains_value(
     runtime_args: &RuntimeArgs,
     index: usize,
@@ -355,8 +340,34 @@ fn assert_index_memory_cell_contains_value(
             Err(RuntimeErrorType::IndexMemoryCellUninitialized(index))
         }
     } else {
-        Err(RuntimeErrorType::IndexMemoryCellUninitialized(index)) //TODO create new error type index memory cell does not exist
+        Err(RuntimeErrorType::IndexMemoryCellDoesNotExist(index))
     }
+}
+
+/// Tries to assign a value to the memory cell, if the imc does not exist and 'runtime_args.enable_imc_auto_creation' is true, the memory cell is created and the value is assigned.
+/// Otherwise returns an runtime error.
+fn assign_index_memory_cell(runtime_args: &mut RuntimeArgs, idx: usize, value: i32) -> Result<(), RuntimeErrorType> {
+    if runtime_args.index_memory_cells.contains_key(&idx) ||runtime_args.settings.enable_imc_auto_creation {
+        runtime_args
+            .index_memory_cells
+            .insert(idx, Some(value));
+    } else {
+        return Err(RuntimeErrorType::IndexMemoryCellDoesNotExist(idx))
+    }
+    Ok(())
+}
+
+/// Tries to assign a value to the memory cell, if the imc does not exist and 'runtime_args.enable_imc_auto_creation' is true, the memory cell is created and the value is assigned.
+/// Otherwise returns an runtime error.
+fn assign_index_memory_cell_from_value(runtime_args: &mut RuntimeArgs, idx: usize, source: &Value) -> Result<(), RuntimeErrorType> {
+    if runtime_args.index_memory_cells.contains_key(&idx) ||runtime_args.settings.enable_imc_auto_creation {
+        runtime_args
+            .index_memory_cells
+            .insert(idx, Some(source.value(runtime_args)?));
+    } else {
+        return Err(RuntimeErrorType::IndexMemoryCellDoesNotExist(idx))
+    }
+    Ok(())
 }
 
 /// Specifies the location where the index memory cell should look for the value of the index of the index memory cell

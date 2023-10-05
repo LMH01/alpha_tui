@@ -158,6 +158,7 @@ pub struct RuntimeArgs {
     pub index_memory_cells: HashMap<usize, Option<i32>>,
     /// The stack of the runner
     pub stack: Vec<i32>,
+    pub settings: RuntimeSettings,
 }
 
 impl<'a> RuntimeArgs {
@@ -188,6 +189,7 @@ impl<'a> RuntimeArgs {
                         memory_cells: memory_cells.0,
                         index_memory_cells: memory_cells.1,
                         stack: Vec::new(),
+                        settings: RuntimeSettings::from(args),
                     });
                 }
                 Err(e) => return Err(e),
@@ -204,6 +206,7 @@ impl<'a> RuntimeArgs {
             memory_cells,
             idx_memory_cells,
             args.enable_gamma_accumulator,
+            RuntimeSettings::from(args)
         ))
     }
 
@@ -213,6 +216,7 @@ impl<'a> RuntimeArgs {
             memory_cells.iter().map(|f| (*f).to_string()).collect(),
             None,
             true,
+            RuntimeSettings::new_default(),
         )
     }
 
@@ -224,6 +228,7 @@ impl<'a> RuntimeArgs {
             memory_cells: HashMap::new(),
             index_memory_cells: HashMap::new(),
             stack: Vec::new(),
+            settings: RuntimeSettings::new_default(),
         }
     }
 
@@ -232,6 +237,7 @@ impl<'a> RuntimeArgs {
         m_cells: Vec<String>,
         idx_m_cells: Option<Vec<usize>>,
         enable_gamma: bool,
+        settings: RuntimeSettings,
     ) -> Self {
         let mut accumulators = HashMap::new();
         for i in 0..acc {
@@ -257,6 +263,7 @@ impl<'a> RuntimeArgs {
             memory_cells,
             index_memory_cells,
             stack: Vec::new(),
+            settings,
         }
     }
 
@@ -299,6 +306,33 @@ impl<'a> RuntimeArgs {
             *cell.1 = None;
         }
         self.stack = Vec::new();
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct RuntimeSettings {
+    /// If true, index memory cells are generated when they are receiving a value and if the don't already exist.
+    /// 
+    /// If false, they will not be generated and a runtime error is thrown.
+    pub enable_imc_auto_creation: bool,
+}
+
+impl RuntimeSettings {
+
+    fn new_default() -> Self {
+        Self {
+            enable_imc_auto_creation: true,
+        }
+    }
+
+}
+
+impl From<&Args> for RuntimeSettings {
+
+    fn from(value: &Args) -> Self {
+        Self {
+            enable_imc_auto_creation: !value.disable_memory_detection,
+        }
     }
 }
 
