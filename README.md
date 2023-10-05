@@ -27,7 +27,7 @@ You can use either `#` or `//` to mark inline or full-line comments.
 ## Options
 
 Accumulators and memory cells are automatically created when the input program is read.
-To circumvent that you can set the option `-d`. You then need to specify the accumulators and memory_cells that should be created. The options `-a` and `-m` or `--memory-cell-file` can be used to specify those values.
+To circumvent that you can set the option `--disable-memory-detection`. You then need to specify the accumulators and memory_cells that should be created. The options `-a`, `-m` and `--memory-cell-file` can be used to specify those values. `--memory-cell-file` can also be used to specify available memory cells, when automatic detection is disabled.
 
 If you require memory cells to be pre initialized you can use the option `--memory-cell-file` to read in a file that contains memory cell information. An example for such file can be found [here](examples/memory_cells.cells).
 
