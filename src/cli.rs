@@ -36,7 +36,7 @@ pub struct Args {
     #[arg(
         long,
         help = "List of available index memory cells",
-        long_help = "List of available index memory cells.\nExample: 0,1,2,3",
+        long_help = "List of available index memory cells.\nExample: 0,1,2,3\n\nCan be used to visualize how index memory cells are filled with values as they are normally created on a need to use basis.",
         value_delimiter = ','
     )]
     pub index_memory_cells: Option<Vec<usize>>,
