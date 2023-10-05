@@ -1,6 +1,6 @@
 use std::{
     fs::{remove_file, File},
-    io::{BufRead, BufReader, BufWriter, LineWriter, Write},
+    io::{BufRead, BufReader, LineWriter, Write},
 };
 
 use miette::{IntoDiagnostic, Result};
@@ -50,7 +50,7 @@ pub fn pretty_format_instructions(instructions: &[String]) -> Vec<String> {
         if parts.is_empty() {
             continue;
         }
-        if parts[0].ends_with(":") {
+        if parts[0].ends_with(':') {
             // label detected
             if max_label_length < parts[0].chars().count() {
                 max_label_length = parts[0].chars().count();
@@ -76,8 +76,6 @@ pub fn pretty_format_instructions(instructions: &[String]) -> Vec<String> {
     let mut pretty_instructions = Vec::new();
     for instruction in instructions {
         let mut label: Option<String> = None;
-        let instruction_txt: String;
-        let comment: Option<String>;
         const SPACING: usize = 2;
 
         // Check if instruction is empty string
@@ -88,18 +86,18 @@ pub fn pretty_format_instructions(instructions: &[String]) -> Vec<String> {
 
         // Check for labels
         let mut parts = instruction.split_whitespace().collect::<Vec<&str>>();
-        if parts[0].ends_with(":") {
+        if parts[0].ends_with(':') {
             // label detected
             label = Some(parts.remove(0).trim().to_string());
         }
 
         // Detect comment
         let without_label = parts.join(" ");
-        comment = get_comment(&without_label);
+        let comment = get_comment(&without_label);
 
         // Detect instruction
         // remove comment from instruction line, if comment exists
-        instruction_txt = match comment {
+        let instruction_txt = match comment {
             Some(ref c) => without_label.replace(c, "").trim().to_string(),
             None => without_label,
         };
@@ -123,7 +121,7 @@ pub fn pretty_format_instructions(instructions: &[String]) -> Vec<String> {
         ));
         // comment
         match comment {
-            Some(ref c) => pretty_instruction.push_str(&format!("{}", c)),
+            Some(ref c) => pretty_instruction.push_str(&c.to_string()),
             None => {
                 pretty_instruction.push_str(&" ".repeat(max_instruction_length + SPACING));
                 pretty_instruction = pretty_instruction.trim_end().to_string();
@@ -214,7 +212,7 @@ mod tests {
             "         pop".to_string()
         ];
         let pretty_instructions = pretty_format_instructions(&instructions);
-        for (idx, i) in pretty_instructions.iter().enumerate() {
+        for (idx, _) in pretty_instructions.iter().enumerate() {
             assert_eq!(pretty_instructions[idx], formatted_instructions[idx]);
         }
         assert_eq!(

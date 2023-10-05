@@ -260,6 +260,7 @@ pub fn parse_comparison(
 /// The numbers 0-9 are also allowed, if at least one letter is included.
 ///
 /// `part_range` indicates the area that is affected.
+#[allow(clippy::manual_is_ascii_check)] //TODO remove when below todo is implemented
 pub fn parse_memory_cell(
     s: &str,
     part_range: (usize, usize),
@@ -322,7 +323,7 @@ pub fn parse_index_memory_cell(
     if let Ok(idx) = location.parse::<usize>() {
         return Ok(IndexMemoryCellIndexType::Direct(idx));
     }
-    if let Ok(_) = parse_gamma(&location, (part_range.0 + 2, part_range.1 - 2)) {
+    if parse_gamma(&location, (part_range.0 + 2, part_range.1 - 2)).is_ok() {
         return Ok(IndexMemoryCellIndexType::Gamma);
     }
     if let Ok(idx) = parse_alpha(&location, (part_range.0 + 2, part_range.1 - 2), false) {
@@ -335,16 +336,16 @@ pub fn parse_index_memory_cell(
     match parse_index_memory_cell(&location, (part_range.0 + 2, part_range.1 - 1)) {
         Ok(t) => match t {
             IndexMemoryCellIndexType::Direct(idx) => {
-                return Ok(IndexMemoryCellIndexType::Index(idx))
+                Ok(IndexMemoryCellIndexType::Index(idx))
             }
             _ => {
-                return Err(InstructionParseError::InvalidExpression(
+                Err(InstructionParseError::InvalidExpression(
                     (part_range.0 + 2, part_range.1 - 2),
                     location,
                 ))
             }
         },
-        Err(e) => return Err(e),
+        Err(e) => Err(e),
     }
 }
 
@@ -391,14 +392,11 @@ fn check_expression_missing(
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        base::MemoryCell,
-        instructions::{
+    use crate::instructions::{
             error_handling::InstructionParseError,
             parsing::{parse_alpha, parse_gamma, parse_index_memory_cell, parse_memory_cell},
             IndexMemoryCellIndexType,
-        },
-    };
+        };
 
     #[test]
     fn test_parse_memory_cell() {

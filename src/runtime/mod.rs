@@ -1,9 +1,9 @@
-use std::collections::{BinaryHeap, HashMap};
+use std::collections::HashMap;
 
 use miette::Result;
 
 use crate::{
-    base::{Accumulator, IndexMemoryCell, MemoryCell},
+    base::{Accumulator, MemoryCell},
     cli::Args,
     instructions::Instruction,
     utils::read_file,
@@ -198,10 +198,7 @@ impl<'a> RuntimeArgs {
             None => Vec::new(),
             Some(value) => value.clone(),
         };
-        let idx_memory_cells = match args.index_memory_cells.as_ref() {
-            None => None,
-            Some(value) => Some(value.clone()),
-        };
+        let idx_memory_cells = args.index_memory_cells.as_ref().cloned();
         Ok(Self::new(
             accumulators as usize,
             memory_cells,
@@ -305,6 +302,9 @@ impl<'a> RuntimeArgs {
     }
 }
 
+type MemoryCells = HashMap<String, MemoryCell>;
+type IndexMemoryCells = HashMap<usize, Option<i32>>;
+
 /// Reads memory cells from file and returns map of memory cells.
 ///
 /// Each line contains a single memory cell in the following formatting: NAME=VALUE or [INDEX]=VALUE
@@ -317,7 +317,7 @@ impl<'a> RuntimeArgs {
 #[allow(clippy::unnecessary_unwrap)]
 fn read_memory_cells_from_file(
     path: &str,
-) -> Result<(HashMap<String, MemoryCell>, HashMap<usize, Option<i32>>), String> {
+) -> Result<(MemoryCells, IndexMemoryCells), String> {
     let contents = read_file(path)?;
     let mut memory_cells = HashMap::new();
     let mut index_memory_cells = HashMap::new();
@@ -351,13 +351,12 @@ fn read_memory_cells_from_file(
                     },
                 );
             }
-        } else {
-            if let Some(idx) = idx {
+        } else if let Some(idx) = idx {
                 index_memory_cells.insert(idx, None);
             } else {
                 memory_cells.insert(chunks[0].to_string(), MemoryCell::new(chunks[0]));
             }
-        }
+        
     }
     Ok((memory_cells, index_memory_cells))
 }
@@ -365,10 +364,10 @@ fn read_memory_cells_from_file(
 /// Tries to parse an index from the first chunk.
 ///
 /// In order to parse the index the formatting has to be "[INDEX]".
-fn parse_index(chunks: &Vec<&str>) -> Option<usize> {
-    if let Some(p1) = chunks.get(0) {
-        if p1.starts_with("[") && p1.ends_with("]") {
-            let idx = p1.replacen("[", "", 1).replacen("]", "", 1);
+fn parse_index(chunks: &[&str]) -> Option<usize> {
+    if let Some(p1) = chunks.first() {
+        if p1.starts_with('[') && p1.ends_with(']') {
+            let idx = p1.replacen('[', "", 1).replacen(']', "", 1);
             if let Ok(idx) = idx.parse::<usize>() {
                 return Some(idx);
             }

@@ -366,7 +366,7 @@ pub fn check_index_memory_cell(
         IndexMemoryCellIndexType::Gamma => check_gamma(runtime_args, add_missing),
         IndexMemoryCellIndexType::Index(_) => Ok(()),
         IndexMemoryCellIndexType::MemoryCell(name) => {
-            check_memory_cell(runtime_args, &name, add_missing)
+            check_memory_cell(runtime_args, name, add_missing)
         }
     }
 }

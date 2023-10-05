@@ -124,7 +124,7 @@ fn run_assign(
                     .insert(idx, Some(source.value(runtime_args)?));
             }
             IndexMemoryCellIndexType::MemoryCell(name) => {
-                let idx = index_from_memory_cell(runtime_args, &name)?;
+                let idx = index_from_memory_cell(runtime_args, name)?;
                 runtime_args
                     .index_memory_cells
                     .insert(idx as usize, Some(source.value(runtime_args)?));
@@ -177,7 +177,7 @@ fn run_calc(
                     runtime_args.index_memory_cells.insert(idx, Some(res));
                 }
                 IndexMemoryCellIndexType::MemoryCell(name) => {
-                    let idx = index_from_memory_cell(runtime_args, &name)?;
+                    let idx = index_from_memory_cell(runtime_args, name)?;
                     runtime_args
                         .index_memory_cells
                         .insert(idx as usize, Some(res));
@@ -293,7 +293,7 @@ fn assert_accumulator_contains_value(
 
 /// Tests if gamma exists
 fn assert_gamma_exists(runtime_args: &RuntimeArgs) -> Result<(), RuntimeErrorType> {
-    if let Some(value) = runtime_args.gamma {
+    if runtime_args.gamma.is_some() {
         return Ok(());
     }
     Err(RuntimeErrorType::GammaDoesNotExist)
@@ -343,6 +343,7 @@ fn assert_memory_cell_contains_value(
     }
 }
 
+#[allow(clippy::collapsible_match)] // TODO remove this lint, when error type index memory cell does not exist is implemented
 fn assert_index_memory_cell_contains_value(
     runtime_args: &RuntimeArgs,
     index: usize,
@@ -397,7 +398,7 @@ impl TryFrom<(&String, (usize, usize))> for TargetType {
         if let Ok(v) = parse_memory_cell(value.0, value.1) {
             return Ok(Self::MemoryCell(v));
         }
-        if let Ok(_) = parse_gamma(value.0, value.1) {
+        if parse_gamma(value.0, value.1).is_ok() {
             return Ok(Self::Gamma);
         }
         Ok(Self::Accumulator(parse_alpha(value.0, value.1, true)?))
@@ -421,7 +422,7 @@ impl Value {
                 Ok(runtime_args.accumulators.get(a).unwrap().data.unwrap())
             }
             Self::Gamma => {
-                return assert_gamma_contains_value(runtime_args);
+                assert_gamma_contains_value(runtime_args)
             }
             Self::Constant(a) => Ok(*a),
             Self::MemoryCell(a) => {
@@ -469,7 +470,7 @@ impl TryFrom<(&String, (usize, usize))> for Value {
         if let Ok(v) = value.0.parse::<i32>() {
             return Ok(Self::Constant(v));
         }
-        if let Ok(_) = parse_gamma(value.0, value.1) {
+        if parse_gamma(value.0, value.1).is_ok() {
             return Ok(Self::Gamma);
         }
         Ok(Self::Accumulator(parse_alpha(value.0, value.1, true)?))

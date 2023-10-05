@@ -211,10 +211,7 @@ impl MemoryListsManager {
                 index_memory_cells.insert(*cell.0, (format!("[{:2}]: None", *cell.0), false));
             }
         }
-        let gamma = match runtime_args.gamma {
-            Some(value) => Some((value, false)),
-            None => None,
-        };
+        let gamma = runtime_args.gamma.map(|value| (value, false));
         Self {
             accumulators,
             gamma,
@@ -321,7 +318,7 @@ impl MemoryListsManager {
                 }
                 list.push((item, &0));
             } else {
-                let mut item = ListItem::new(format!(" γ: None"));
+                let mut item = ListItem::new(" γ: None".to_string());
                 if value.1 {
                     item = item.style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
                 }

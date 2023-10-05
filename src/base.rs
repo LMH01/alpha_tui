@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, fmt::Display};
+use std::fmt::Display;
 
 use crate::runtime::error_handling::{CalcError, RuntimeErrorType};
 
