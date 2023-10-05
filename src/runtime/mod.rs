@@ -284,6 +284,9 @@ impl<'a> RuntimeArgs {
         for cell in &mut self.memory_cells {
             cell.1.data = None;
         }
+        for cell in &mut self.index_memory_cells {
+            *cell.1 = None;
+        }
         self.stack = Vec::new();
     }
 }
