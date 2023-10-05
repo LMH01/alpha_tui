@@ -27,23 +27,31 @@ pub struct Args {
     #[arg(
         short,
         long,
-        help = "Number of available memory cells",
-        long_help = "Number of available memory cells.\nIf a large number of memory cells is specified, it can happen that some are not displayed in the tui.\nExample: -a a,b,c,d",
+        help = "List of available memory cells",
+        long_help = "List of available memory cells.\nIf a large number of memory cells is specified, it can happen that some are not displayed in the tui.\nExample: -a a,b,c,d",
         value_delimiter = ','
     )]
     pub memory_cells: Option<Vec<String>>,
+
+    #[arg(
+        long,
+        help = "List of available index memory cells",
+        long_help = "List of available index memory cells.\nExample: 0,1,2,3",
+        value_delimiter = ','
+    )]
+    pub index_memory_cells: Option<Vec<usize>>,
     #[arg(
         long,
         help = "Load memory cells from a file",
         long_help = "Load memory cell values from a file.\nEach line contains a single memory cell in the following formatting: NAME=VALUE\nExample: h1=5\nEmpty cells can be set with: NAME\nExample: h2\n\nIndex memory cells can be set by using the following formatting: [INDEX]=VALUE\nExample: [0]=5",
-        conflicts_with = "memory_cells"
+        conflicts_with_all = [ "memory_cells", "index_memory_cells" ]
     )]
     pub memory_cell_file: Option<String>,
     #[arg(
         long,
         help = "Disable accumulator, gamma accumulator and memory_cell detection",
-        long_help = "Set to disable accumulator, gamma accumulator and memory_cell detection.\nIf disabled, accumulators, gamma accumulator and memory cells won't be read from program,\ninstead they have to be specified using \"--accumulators\", \"--enable-gamma-accumulator\" and \"--memory-cells\" or \"--memory-cell-file\"",
-        requires = "memory"
+        long_help = "Set to disable accumulator, gamma accumulator and memory_cell detection.\nIf disabled, accumulators, gamma accumulator and memory cells won't be read from program,\ninstead they have to be specified using \"--accumulators\", \"--enable-gamma-accumulator\" and \"--memory-cells\" or \"--memory-cell-file\"\n\nThis however does not apply to index_memory_cells, they are still created on a need to use basis.",
+        requires_all = [ "memory" ]
     )]
     pub disable_memory_detection: bool,
     
