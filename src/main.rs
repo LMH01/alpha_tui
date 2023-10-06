@@ -58,18 +58,22 @@ fn main() -> Result<()> {
     )?;
 
     // format instructions pretty if cli flag is set
-    let instructions = match cli.disable_alignment {
-        false => pretty_format_instructions(&instructions),
-        true => instructions,
+    let instructions = match cli.command {
+        Commands::Load(ref args) => match args.disable_alignment {
+            false => pretty_format_instructions(&instructions),
+            true => instructions,
+        }
     };
 
     println!("Building runtime");
     let rt = rb.build().wrap_err("while building runtime")?;
 
-    // write new formatting to file if enabled
-    if cli.write_alignment {
-        println!("Writing alignment to source file");
-        write_file(&instructions, &input)?;
+    if let Commands::Load(ref args) = cli.command {
+        if args.write_alignment {
+            // write new formatting to file if enabled
+            println!("Writing alignment to source file");
+            write_file(&instructions, &input)?;
+        }
     }
 
     // tui
@@ -83,7 +87,9 @@ fn main() -> Result<()> {
     let mut terminal = Terminal::new(backend).unwrap();
 
     // create app
-    let mut app = App::from_runtime(rt, input, &instructions, &cli.breakpoints);
+    let mut app = match cli.command {
+        Commands::Load(ref args) => App::from_runtime(rt, input, &instructions, &args.breakpoints),
+    };
     let res = app.run(&mut terminal);
 
     // restore terminal

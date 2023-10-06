@@ -61,6 +61,19 @@ pub struct Cli {
     )]
     pub enable_gamma_accumulator: bool,
 
+    #[command(subcommand)]
+    pub command: Commands,
+}
+
+#[derive(Args, Clone, Debug)]
+#[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_cell_file"]))]
+pub struct LoadArgs {
+    #[arg(
+        long_help = "Specify the input file that contains the program",
+        required = true
+    )]
+    pub file: String,
+
     #[arg(
         long,
         short,
@@ -87,19 +100,6 @@ pub struct Cli {
         global = true,
     )]
     pub write_alignment: bool,
-
-    #[command(subcommand)]
-    pub command: Commands,
-}
-
-#[derive(Args, Clone, Debug)]
-#[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_cell_file"]))]
-pub struct LoadArgs {
-    #[arg(
-        long_help = "Specify the input file that contains the program",
-        required = true
-    )]
-    pub file: String,
 }
 
 #[derive(Subcommand, Clone, Debug)]

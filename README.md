@@ -11,7 +11,7 @@ Pull requests and bug reports are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md
 1. Download the [newest release](https://github.com/lmh01/alpha_tui/releases/latest) specific for your system
 2. Extract the .zip file 
 3. Create a program by using the text editor of your choice or try an example program located in [examples/programs](examples/programs). The examples might help you write your program.
-4. Run `alpha_tui` by opening a terminal in the folder and then typing `alpha_tui -i FILENAME`, for an example program this command could look like this: `alpha_tui -i examples/programs/faculty.alpha`
+4. Run `alpha_tui` by opening a terminal in the folder and then typing `alpha_tui load FILENAME`, for an example program this command could look like this: `alpha_tui load examples/programs/faculty.alpha`
 5. The terminal ui will open where you can run the program line by line by using the `[r]` key
 
 ### Compile from source
@@ -24,16 +24,24 @@ See [instructions](instructions.md).
 
 You can use either `#` or `//` to mark inline or full-line comments.
 
-## Options
+## Commands and options
+
+For a full list of options and more explanation see `alpha_tui --help` or `alpha_tui run --help`.
+
+### General options
 
 Accumulators and memory cells are automatically created when the input program is read.
 To circumvent that you can set the option `--disable-memory-detection`. You then need to specify the accumulators and memory_cells that should be created. The options `-a`, `-m` and `--memory-cell-file` can be used to specify those values. `--memory-cell-file` can also be used to specify available memory cells, when automatic detection is disabled.
 
 If you require memory cells to be pre initialized you can use the option `--memory-cell-file` to read in a file that contains memory cell information. An example for such file can be found [here](examples/memory_cells.cells).
 
+### Load command
+
+The main command to compile and run a program is the `load` command, it takes the file as first parameter. Example: `alpha_tui load examples/programs/faculty.alpha`.
+
 By default the code that is read will be formatted to be easier to read, this can be disabled by using the `--disable-alignment` flag. If you however would like to write the formatted code into the source file you can use the `--write-alignment` flag.
 
-For a full list of options and more explanation see `alpha_tui --help`.
+Predetermined breakpoints can be loaded by using the `--breakpoints` flag, it takes multiple line numbers as parameter. Example: `alpha_tui load examples/programs/faculty.alpha -b 5`.
 
 ## Interface and usage
 
