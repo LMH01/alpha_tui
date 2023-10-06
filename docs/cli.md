@@ -1,6 +1,6 @@
 # CLI Commands and options
 
-For a full list of options and more explanation see `alpha_tui help`, `alpha_tui run help` or `alpha_tui check help`.
+For a full list of options and more explanation see `alpha_tui help`, `alpha_tui load help` or `alpha_tui check help`.
 
 ## General options
 
