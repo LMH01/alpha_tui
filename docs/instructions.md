@@ -50,7 +50,7 @@ Normal $\alpha$ registers can also be used to access the index, not however that
 
 #### Example
 
-For a working example on how index memory cells can be used take a look [here](examples/programs/index_memory_cells.alpha).
+For a working example on how index memory cells can be used take a look [here](../examples/programs/index_memory_cells.alpha).
 
 ## Substitutions
 
@@ -70,7 +70,7 @@ The following symbols can be substituted to make writing programs easier
 
 ## Examples
 
-Example programs can be found [here](examples/programs/).
+Example programs can be found [here](../examples/programs/).
 
 | code | explanation |
 | - | - |
