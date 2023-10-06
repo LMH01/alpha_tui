@@ -82,6 +82,15 @@ impl InstructionListStates {
         self.last_index = current_instruction_idx - 1;
     }
 
+    /// Used to set the instruction that should be executed next.
+    /// 
+    /// Updates the visuals, current and last index.
+    pub fn set_instruction(&mut self, index: usize) {
+        self.force_set(index);
+        self.last_index = index as i32;
+        self.current_index = (index+1) as i32;
+    }
+
     /// Used to force the highlight of a specific line.
     ///
     /// Should only be used for visuals if the line is known that should be highlighted.
@@ -144,6 +153,7 @@ impl InstructionListStates {
     pub fn breakpoint_list_state_mut(&mut self) -> &mut ListState {
         &mut self.breakpoint_list_state
     }
+
 }
 
 impl PartialEq for InstructionListStates {

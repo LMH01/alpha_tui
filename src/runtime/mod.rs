@@ -51,6 +51,13 @@ impl Runtime {
         Ok(false)
     }
 
+    /// Sets the instruction that should be executed next.
+    /// 
+    /// Warning: using this may lead to runtime errors due to changed call stack.
+    pub fn set_next_instruction(&mut self, idx: &usize) {
+        self.control_flow.next_instruction_index = *idx;
+    }
+
     /// Returns true when the execution is finished,
     pub fn finished(&self) -> bool {
         self.control_flow.next_instruction_index >= self.instructions.len()

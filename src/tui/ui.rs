@@ -51,10 +51,10 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .border_type(BorderType::Rounded);
     if let State::Errored(_) = app.state {
         code_area = code_area.border_style(Style::default().fg(ERROR_COLOR));
-    } else if let State::Breakpoints(_, _) = app.state {
+    } else if let State::DebugSelect(_, _) = app.state {
         code_area = code_area
             .border_style(Style::default().fg(BREAKPOINT_ACCENT_COLOR))
-            .title("Breakpoint mode");
+            .title("Debug select mode");
     } else {
         code_area = code_area
             .border_style(Style::default().fg(CODE_AREA_DEFAULT_COLOR))
@@ -64,7 +64,7 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     // Create a List from all instructions and highlight current instruction
     let items = List::new(app.instruction_list_states.as_list_items())
         .block(code_area)
-        .highlight_style(if let State::Breakpoints(_, _) = app.state {
+        .highlight_style(if let State::DebugSelect(_, _) = app.state {
             Style::default()
                 .bg(BREAKPOINT_ACCENT_COLOR)
                 .add_modifier(Modifier::BOLD)

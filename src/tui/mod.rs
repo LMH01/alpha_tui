@@ -33,9 +33,9 @@ const EXECUTION_FINISHED_POPUP_COLOR: Color = Color::Green;
 enum State {
     Default,
     Running,
-    // 0 = state to restore to when breakpoint mode is exited
-    // 1 = index of instruction that was selected before breakpoint mode was started
-    Breakpoints(Box<State>, Option<usize>),
+    // 0 = state to restore to when debug mode is exited
+    // 1 = index of instruction that was selected before debug mode was started
+    DebugSelect(Box<State>, Option<usize>),
     // 0 = stores if the popup window is open
     Finished(bool),
     Errored(RuntimeError),
@@ -85,27 +85,27 @@ impl App {
             if let Event::Key(key) = event::read().into_diagnostic()? {
                 match key.code {
                     KeyCode::Up => {
-                        if let State::Breakpoints(_s, _i) = &self.state {
+                        if let State::DebugSelect(_s, _i) = &self.state {
                             self.instruction_list_states.set_prev_visual();
-                            //TODO See if it is a good idea to make the breakpoint list move too
                         }
                     }
                     KeyCode::Down => {
-                        if let State::Breakpoints(_s, _i) = &self.state {
+                        if let State::DebugSelect(_s, _i) = &self.state {
                             self.instruction_list_states.set_next_visual();
                         }
                     }
-                    KeyCode::Char('b') => match &self.state {
-                        State::Breakpoints(s, i) => {
-                            self.instruction_list_states.set_instruction_list_state(*i);
-                            self.set_state(s.deref().clone());
-                        }
-                        State::Default | State::Running => self.start_breakpoint_mode(),
-                        _ => (),
-                    },
                     KeyCode::Char('t') => {
-                        if let State::Breakpoints(_, _) = &self.state {
+                        if let State::DebugSelect(_, _) = &self.state {
                             self.instruction_list_states.toggle_breakpoint();
+                        }
+                    }
+                    KeyCode::Char('j') => {
+                        if let State::DebugSelect(_, _) = &self.state {
+                            self.set_state(State::Running);
+                            let idx = self.instruction_list_states.instruction_list_state_mut().selected().unwrap();
+                            self.instruction_list_states.set_instruction(idx-1);
+                            self.runtime.set_next_instruction(&idx);
+                            self.step();
                         }
                     }
                     KeyCode::Char('q') => match &self.state {
@@ -113,13 +113,13 @@ impl App {
                         _ => return Ok(()),
                     },
                     KeyCode::Char('w') => {
-                        if let State::Breakpoints(_, _) = self.state {
+                        if let State::DebugSelect(_, _) = self.state {
                             self.instruction_list_states.set_prev_visual();
                         }
                     }
                     KeyCode::Char('s') => match self.state {
                         State::Running | State::Finished(_) => self.reset(),
-                        State::Breakpoints(_, _) => {
+                        State::DebugSelect(_, _) => {
                             self.instruction_list_states.set_next_visual();
                         }
                         _ => (),
@@ -145,12 +145,19 @@ impl App {
                             }
                         }
                     }
-                    KeyCode::Char('d') => {
-                        // dismiss execution finished popup
-                        if self.state == State::Finished(true) {
-                            self.set_state(State::Finished(false));
+                    KeyCode::Char('d') => match &self.state {
+                        State::DebugSelect(s, i) => {
+                            self.instruction_list_states.set_instruction_list_state(*i);
+                            self.set_state(s.deref().clone());
                         }
-                    }
+                        State::Default | State::Running => self.start_debug_select_mode(),
+                        State::Finished(b) => {
+                            if *b {
+                                self.set_state(State::Finished(false));
+                            }
+                        }
+                        _ => (),
+                    },
                     _ => (),
                 }
             }
@@ -210,8 +217,8 @@ impl App {
         }
     }
 
-    fn start_breakpoint_mode(&mut self) {
-        let state = State::Breakpoints(
+    fn start_debug_select_mode(&mut self) {
+        let state = State::DebugSelect(
             Box::new(self.state.clone()),
             self.instruction_list_states.selected_line(),
         );
@@ -244,29 +251,31 @@ impl App {
         match &self.state {
             State::Default => {
                 self.set_keybind_hint('q', true);
-                self.set_keybind_hint('b', true);
+                self.set_keybind_hint('d', true);
                 self.set_keybind_hint('r', true);
                 self.set_keybind_message('r', "Run");
             }
             State::Running => {
                 self.set_keybind_hint('q', true);
-                self.set_keybind_hint('b', true);
+                self.set_keybind_hint('d', true);
                 self.set_keybind_hint('r', true);
                 self.set_keybind_hint('s', true);
                 self.set_keybind_hint('n', true);
                 self.set_keybind_message('r', "Run next instruction");
             }
-            State::Breakpoints(_s, _i) => {
+            State::DebugSelect(_s, _i) => {
                 self.set_keybind_hint('q', true);
-                self.set_keybind_hint('b', true);
+                self.set_keybind_hint('d', true);
                 self.set_keybind_hint('↑', true);
                 self.set_keybind_hint('↓', true);
                 self.set_keybind_hint('t', true);
+                self.set_keybind_hint('j', true);
                 self.set_keybind_message('t', "Toggle breakpoint");
-                self.set_keybind_message('b', "Exit breakpoint mode");
+                self.set_keybind_message('d', "Exit debug select mode");
             }
             State::Finished(b) => {
                 self.set_keybind_hint('d', *b);
+                self.set_keybind_message('d', "Dismiss message");
                 self.set_keybind_hint('q', true);
                 self.set_keybind_hint('s', true);
             }
@@ -281,7 +290,7 @@ impl App {
         for hint in &mut self.keybind_hints {
             hint.1.enabled = false;
         }
-        self.set_keybind_message('b', "Enter breakpoint mode");
+        self.set_keybind_message('d', "Enter debug select mode");
     }
 }
 
@@ -310,10 +319,10 @@ pub fn init_keybind_hints() -> HashMap<char, KeybindHint> {
     map.insert('s', KeybindHint::new(1, 's', "Reset", false));
     map.insert('n', KeybindHint::new(2, 'n', "Next breakpoint", false));
     map.insert('r', KeybindHint::new(6, 'r', "Run", true));
-    map.insert('d', KeybindHint::new(7, 'd', "Dismiss message", false));
-    map.insert('b', KeybindHint::new(8, 'b', "Enter breakpoint mode", true));
+    map.insert('d', KeybindHint::new(7, 'd', "Enter debug select mode", true));
     map.insert('t', KeybindHint::new(9, 't', "Toggle breakpoint", false));
-    map.insert('↑', KeybindHint::new(10, '↑', "Up", false));
-    map.insert('↓', KeybindHint::new(11, '↓', "Down", false));
+    map.insert('j', KeybindHint::new(9, 'j', "Jump to line", false));
+    map.insert('↑', KeybindHint::new(11, '↑', "Up", false));
+    map.insert('↓', KeybindHint::new(12, '↓', "Down", false));
     map
 }
