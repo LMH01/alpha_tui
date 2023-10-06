@@ -31,6 +31,8 @@ To circumvent that you can set the option `--disable-memory-detection`. You then
 
 If you require memory cells to be pre initialized you can use the option `--memory-cell-file` to read in a file that contains memory cell information. An example for such file can be found [here](examples/memory_cells.cells).
 
+By default the code that is read will be formatted to be easier to read, this can be disabled by using the `--disable-alignment` flag. If you however would like to write the formatted code into the source file you can use the `--write-alignment` flag.
+
 For a full list of options and more explanation see `alpha_tui --help`.
 
 ## Interface and usage
