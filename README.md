@@ -4,7 +4,9 @@
 
 # alpha_tui
 
-This is my attempt at writing a compiler for the Alpha-Notation used in my Systemnahe Informatik lecture at university.
+![Demo](docs/base_demo.gif)
+
+This is my attempt at writing a compiler and runtime environment for the Alpha-Notation used in my Systemnahe Informatik lecture at university.
 
 Programs are read in and then compiled, a terminal ui is then opened where you can run the program line by line or by using breakpoints.
 

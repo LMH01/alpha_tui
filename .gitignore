@@ -3,3 +3,4 @@ examples/programs/debug.alpha
 .vscode/
 .rustup/
 .cargo/
+*.tape
