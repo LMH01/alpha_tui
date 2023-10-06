@@ -4,7 +4,7 @@ use miette::Result;
 
 use crate::{
     base::{Accumulator, MemoryCell},
-    cli::Args,
+    cli::Cli,
     instructions::Instruction,
     utils::read_file,
 };
@@ -172,7 +172,7 @@ impl<'a> RuntimeArgs {
     /// Creates a new runtimes args struct with empty lists.
     ///
     /// Errors if option is set to parse memory cells from file and the parsing fails.
-    pub fn from_args(args: &Args) -> Result<Self, String> {
+    pub fn from_args(args: &Cli) -> Result<Self, String> {
         if let Some(path) = &args.memory_cell_file {
             match read_memory_cells_from_file(path) {
                 Ok(memory_cells) => {
@@ -334,9 +334,9 @@ impl RuntimeSettings {
 
 }
 
-impl From<&Args> for RuntimeSettings {
+impl From<&Cli> for RuntimeSettings {
 
-    fn from(value: &Args) -> Self {
+    fn from(value: &Cli) -> Self {
         Self {
             enable_imc_auto_creation: !value.disable_memory_detection,
         }

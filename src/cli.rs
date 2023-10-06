@@ -1,4 +1,4 @@
-use clap::{ArgGroup, Parser};
+use clap::{ArgGroup, Parser, Subcommand, Args};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -8,20 +8,14 @@ use clap::{ArgGroup, Parser};
     long_about = "debugger and runtime environment for the alpha notation used in my Systemnahme Informatik lecture"
 )]
 #[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_cell_file"]))]
-pub struct Args {
-    #[arg(
-        short,
-        long,
-        long_help = "Specify the input file that contains the program",
-        required = true
-    )]
-    pub input: String,
+pub struct Cli {
     #[arg(
         short,
         long,
         help = "Number of available accumulators",
         long_help = "Number of available accumulators.\nIf the value is too large it can happen that accumulators are not displayed in the tui.",
-        required_if_eq("disable_memory_detection", "true")
+        required_if_eq("disable_memory_detection", "true"),
+        global = true,
     )]
     pub accumulators: Option<u8>,
     #[arg(
@@ -29,7 +23,8 @@ pub struct Args {
         long,
         help = "List of available memory cells",
         long_help = "List of available memory cells.\nIf a large number of memory cells is specified, it can happen that some are not displayed in the tui.\nExample: -a a,b,c,d",
-        value_delimiter = ','
+        value_delimiter = ',',
+        global = true,
     )]
     pub memory_cells: Option<Vec<String>>,
 
@@ -37,28 +32,32 @@ pub struct Args {
         long,
         help = "List of available index memory cells",
         long_help = "List of available index memory cells.\nExample: 0,1,2,3\n\nCan be used to visualize how index memory cells are filled with values or to explicitly enable index memory cells when automatic detection has been disabled by the \"--disable-memory-detection\" flag.",
-        value_delimiter = ','
+        value_delimiter = ',',
+        global = true,
     )]
     pub index_memory_cells: Option<Vec<usize>>,
     #[arg(
         long,
         help = "Load memory cells from a file",
         long_help = "Load memory cell values from a file.\nEach line contains a single memory cell in the following formatting: NAME=VALUE\nExample: h1=5\nEmpty cells can be set with: NAME\nExample: h2\n\nIndex memory cells can be set by using the following formatting: [INDEX]=VALUE\nExample: [0]=5",
-        conflicts_with_all = [ "memory_cells", "index_memory_cells" ]
+        conflicts_with_all = [ "memory_cells", "index_memory_cells" ],
+        global = true,
     )]
     pub memory_cell_file: Option<String>,
     #[arg(
         long,
         help = "Disable accumulator, gamma accumulator and memory_cell detection",
         long_help = "Set to disable accumulator, gamma accumulator and memory_cell detection.\nIf disabled, accumulators, gamma accumulator and memory cells won't be read from program,\ninstead they have to be specified using \"--accumulators\", \"--enable-gamma-accumulator\" and \"--memory-cells\" or \"--memory-cell-file\" and \"--index-memory-cells\" or \"--memory-cell-file\"",
-        requires_all = [ "memory" ]
+        requires_all = [ "memory" ],
+        global = true,
     )]
     pub disable_memory_detection: bool,
 
     #[arg(
         long,
         help = "Enable the gamma accumulator",
-        long_help = "Enable the gamma accumulator, can be used to enable gamma accumulator when automatic detection is disabled by \"--disable-memory-detection\"."
+        long_help = "Enable the gamma accumulator, can be used to enable gamma accumulator when automatic detection is disabled by \"--disable-memory-detection\".",
+        global = true,
     )]
     pub enable_gamma_accumulator: bool,
 
@@ -67,14 +66,16 @@ pub struct Args {
         short,
         help = "Enable predetermined breakpoints",
         long_help = "Enable predetermined breakpoints.\nThe supplied element specifies the line in which the breakpoint should be set.\nExample: -b 1,7,8",
-        value_delimiter = ','
+        value_delimiter = ',',
+        global = true,
     )]
     pub breakpoints: Option<Vec<usize>>,
     #[arg(
         short,
         long,
         help = "Disable alignment of labels, instructions and comments",
-        long_help = "Per default labels, instructions and comments are aligned in columns to make reading easier, this can be disabled by setting this flag."
+        long_help = "Per default labels, instructions and comments are aligned in columns to make reading easier, this can be disabled by setting this flag.",
+        global = true,
     )]
     pub disable_alignment: bool,
     #[arg(
@@ -82,7 +83,29 @@ pub struct Args {
         long,
         help = "Write the changed program file alignment to file",
         long_help = "Write the changed program file alignment for better readability to the source file.",
-        conflicts_with = "disable_alignment"
+        conflicts_with = "disable_alignment",
+        global = true,
     )]
     pub write_alignment: bool,
+
+    #[command(subcommand)]
+    pub command: Commands,
+}
+
+#[derive(Args, Clone, Debug)]
+#[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_cell_file"]))]
+pub struct LoadArgs {
+    #[arg(
+        long_help = "Specify the input file that contains the program",
+        required = true
+    )]
+    pub file: String,
+}
+
+#[derive(Subcommand, Clone, Debug)]
+pub enum Commands {
+    #[command(
+        about = "Load an alpha notation program",
+    )]
+    Load(LoadArgs),
 }

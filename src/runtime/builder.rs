@@ -2,7 +2,7 @@ use miette::{NamedSource, Result, SourceOffset, SourceSpan};
 
 use crate::{
     base::{Accumulator, MemoryCell},
-    cli::Args,
+    cli::Cli,
     instructions::{
         error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
         IndexMemoryCellIndexType, Instruction, TargetType, Value,
@@ -41,7 +41,7 @@ impl RuntimeBuilder {
     }
 
     /// Creates a new runtime builder from the cli arguments.
-    pub fn from_args(args: &Args) -> Result<Self, String> {
+    pub fn from_args(args: &Cli) -> Result<Self, String> {
         Ok(Self {
             runtime_args: Some(RuntimeArgs::from_args(args)?),
             instructions: None,

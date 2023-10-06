@@ -2,7 +2,7 @@ use std::io;
 
 use ::ratatui::{backend::CrosstermBackend, Terminal};
 use clap::Parser;
-use cli::Args;
+use cli::Cli;
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture},
     execute,
@@ -14,7 +14,7 @@ use utils::read_file;
 use crate::{
     runtime::builder::RuntimeBuilder,
     tui::App,
-    utils::{pretty_format_instructions, write_file},
+    utils::{pretty_format_instructions, write_file}, cli::{LoadArgs, Commands},
 };
 
 /// Contains all required data types used to run programs
@@ -32,16 +32,19 @@ mod tui;
 mod utils;
 
 fn main() -> Result<()> {
-    let args = Args::parse();
+    let cli = Cli::parse();
+    let input = match cli.command {
+        Commands::Load(ref args) => args.file.clone(),
+    };
 
-    let instructions = match read_file(&args.input) {
+    let instructions = match read_file(&input) {
         Ok(i) => i,
         Err(e) => {
-            return Err(miette!("Unable to read file [{}]: {}", args.input, e));
+            return Err(miette!("Unable to read file [{}]: {}", &input, e));
         }
     };
     println!("Building program");
-    let mut rb = match RuntimeBuilder::from_args(&args) {
+    let mut rb = match RuntimeBuilder::from_args(&cli) {
         Ok(rb) => rb,
         Err(e) => {
             return Err(miette!(
@@ -51,11 +54,11 @@ fn main() -> Result<()> {
     };
     rb.build_instructions(
         &instructions.iter().map(String::as_str).collect(),
-        &args.input,
+        &input,
     )?;
 
     // format instructions pretty if cli flag is set
-    let instructions = match args.disable_alignment {
+    let instructions = match cli.disable_alignment {
         false => pretty_format_instructions(&instructions),
         true => instructions,
     };
@@ -64,9 +67,9 @@ fn main() -> Result<()> {
     let rt = rb.build().wrap_err("while building runtime")?;
 
     // write new formatting to file if enabled
-    if args.write_alignment {
+    if cli.write_alignment {
         println!("Writing alignment to source file");
-        write_file(&instructions, &args.input)?;
+        write_file(&instructions, &input)?;
     }
 
     // tui
@@ -80,7 +83,7 @@ fn main() -> Result<()> {
     let mut terminal = Terminal::new(backend).unwrap();
 
     // create app
-    let mut app = App::from_runtime(rt, args.input, &instructions, &args.breakpoints);
+    let mut app = App::from_runtime(rt, input, &instructions, &cli.breakpoints);
     let res = app.run(&mut terminal);
 
     // restore terminal
