@@ -54,6 +54,9 @@ pub struct App {
     memory_lists_manager: MemoryListsManager,
     // Don't set state directly, use set_state() to also update keybind hints
     state: State,
+    /// Stores if the jump to line feature has been used, if it is used, a different error message is displayed,
+    /// when a runtime error occurs and the option to reset the runtime is given.
+    jump_to_line_used: bool,
 }
 
 #[allow(clippy::cast_possible_wrap)]
@@ -76,6 +79,7 @@ impl App {
             keybind_hints: init_keybind_hints(),
             memory_lists_manager: mlm,
             state: State::Default,
+            jump_to_line_used: false,
         }
     }
 
@@ -101,6 +105,7 @@ impl App {
                     }
                     KeyCode::Char('j') => {
                         if let State::DebugSelect(_, _) = &self.state {
+                            self.jump_to_line_used = true;
                             self.set_state(State::Running);
                             let idx = self.instruction_list_states.instruction_list_state_mut().selected().unwrap();
                             self.instruction_list_states.set_instruction(idx-1);
@@ -119,6 +124,11 @@ impl App {
                     }
                     KeyCode::Char('s') => match self.state {
                         State::Running | State::Finished(_) => self.reset(),
+                        State::Errored(_) => {
+                            if self.jump_to_line_used {
+                                self.reset();
+                            }
+                        }
                         State::DebugSelect(_, _) => {
                             self.instruction_list_states.set_next_visual();
                         }
