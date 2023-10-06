@@ -110,6 +110,9 @@ pub struct CheckArgs {
         required = true
     )]
     pub file: String,
+
+    #[command(subcommand)]
+    command: CheckCommands,
 }
 
 #[derive(Subcommand, Clone, Debug)]
@@ -123,4 +126,13 @@ pub enum Commands {
         long_about = "Perform different checks on the program.\nReturn values:\n\n 0 - Check successful\n 1 - Compilation error\n 2 - Runtime error\n10 - IO error",
     )]
     Check(CheckArgs),
+}
+
+#[derive(Subcommand, Clone, Debug)]
+pub enum CheckCommands {
+    #[command(
+        about = "Check if the program compiles"
+    )]
+    #[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_cell_file"]))]
+    Compile,
 }
