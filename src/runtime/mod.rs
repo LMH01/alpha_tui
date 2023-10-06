@@ -52,7 +52,7 @@ impl Runtime {
     }
 
     /// Sets the instruction that should be executed next.
-    /// 
+    ///
     /// Warning: using this may lead to runtime errors due to changed call stack.
     pub fn set_next_instruction(&mut self, idx: usize) {
         self.control_flow.next_instruction_index = idx;
@@ -214,7 +214,7 @@ impl<'a> RuntimeArgs {
             memory_cells,
             idx_memory_cells,
             args.enable_gamma_accumulator,
-            Settings::from(args)
+            Settings::from(args),
         ))
     }
 
@@ -255,11 +255,7 @@ impl<'a> RuntimeArgs {
         for i in m_cells {
             memory_cells.insert(i.clone(), MemoryCell::new(i.as_str()));
         }
-        let gamma = if enable_gamma {
-            Some(None)
-        } else {
-            None
-        };
+        let gamma = if enable_gamma { Some(None) } else { None };
         let mut index_memory_cells = HashMap::new();
         if let Some(cells) = idx_m_cells {
             for c in cells {
@@ -322,23 +318,20 @@ impl<'a> RuntimeArgs {
 /// Settings that may be required during runtime
 pub struct Settings {
     /// If true, index memory cells are generated when they are receiving a value and if the don't already exist.
-    /// 
+    ///
     /// If false, they will not be generated and a runtime error is thrown.
     pub enable_imc_auto_creation: bool,
 }
 
 impl Settings {
-
     fn new_default() -> Self {
         Self {
             enable_imc_auto_creation: true,
         }
     }
-
 }
 
 impl From<&Cli> for Settings {
-
     fn from(value: &Cli) -> Self {
         Self {
             enable_imc_auto_creation: !value.disable_memory_detection,

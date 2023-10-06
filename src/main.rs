@@ -8,13 +8,14 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use miette::{miette, Context, IntoDiagnostic, Result, Report};
+use miette::{miette, Context, IntoDiagnostic, Report, Result};
 use utils::read_file;
 
 use crate::{
+    cli::Commands,
     runtime::builder::RuntimeBuilder,
     tui::App,
-    utils::{pretty_format_instructions, write_file}, cli::Commands,
+    utils::{pretty_format_instructions, write_file},
 };
 
 /// Contains all required data types used to run programs
@@ -57,17 +58,21 @@ fn cmd_check(cli: &Cli, instructions: &[String], input: &str) {
     let mut rb = match RuntimeBuilder::from_args(cli) {
         Ok(rb) => rb,
         Err(e) => {
-            println!("Check unsuccessful: {:?}", miette!(
+            println!(
+                "Check unsuccessful: {:?}",
+                miette!(
                 "Unable to create RuntimeBuilder, memory cells could not be loaded from file:\n{e}"
-            ));
+            )
+            );
             exit(10);
         }
     };
-    if let Err(e) = rb.build_instructions(
-        &instructions.iter().map(String::as_str).collect(),
-        input,
-    ) {
-        println!("Check unsuccessful, program did not compile.\nError: {:?}", Report::new(e));
+    if let Err(e) = rb.build_instructions(&instructions.iter().map(String::as_str).collect(), input)
+    {
+        println!(
+            "Check unsuccessful, program did not compile.\nError: {:?}",
+            Report::new(e)
+        );
         exit(1);
     }
     println!("Check successful");
@@ -84,10 +89,7 @@ fn cmd_load(cli: &Cli, instructions: Vec<String>, input: String) -> Result<()> {
             ));
         }
     };
-    rb.build_instructions(
-        &instructions.iter().map(String::as_str).collect(),
-        &input,
-    )?;
+    rb.build_instructions(&instructions.iter().map(String::as_str).collect(), &input)?;
 
     // format instructions pretty if cli flag is set
     let instructions = match cli.command {
@@ -97,7 +99,7 @@ fn cmd_load(cli: &Cli, instructions: Vec<String>, input: String) -> Result<()> {
             } else {
                 pretty_format_instructions(&instructions)
             }
-        },
+        }
         _ => pretty_format_instructions(&instructions),
     };
 

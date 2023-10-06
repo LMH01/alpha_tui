@@ -1,4 +1,4 @@
-use clap::{ArgGroup, Parser, Subcommand, Args};
+use clap::{ArgGroup, Args, Parser, Subcommand};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -15,7 +15,7 @@ pub struct Cli {
         help = "Number of available accumulators",
         long_help = "Number of available accumulators.\nIf the value is too large it can happen that accumulators are not displayed in the tui.",
         required_if_eq("disable_memory_detection", "true"),
-        global = true,
+        global = true
     )]
     pub accumulators: Option<u8>,
     #[arg(
@@ -24,7 +24,7 @@ pub struct Cli {
         help = "List of available memory cells",
         long_help = "List of available memory cells.\nIf a large number of memory cells is specified, it can happen that some are not displayed in the tui.\nExample: -a a,b,c,d",
         value_delimiter = ',',
-        global = true,
+        global = true
     )]
     pub memory_cells: Option<Vec<String>>,
 
@@ -33,7 +33,7 @@ pub struct Cli {
         help = "List of available index memory cells",
         long_help = "List of available index memory cells.\nExample: 0,1,2,3\n\nCan be used to visualize how index memory cells are filled with values or to explicitly enable index memory cells when automatic detection has been disabled by the \"--disable-memory-detection\" flag.",
         value_delimiter = ',',
-        global = true,
+        global = true
     )]
     pub index_memory_cells: Option<Vec<usize>>,
     #[arg(
@@ -57,7 +57,7 @@ pub struct Cli {
         long,
         help = "Enable the gamma accumulator",
         long_help = "Enable the gamma accumulator, can be used to enable gamma accumulator when automatic detection is disabled by \"--disable-memory-detection\".",
-        global = true,
+        global = true
     )]
     pub enable_gamma_accumulator: bool,
 
@@ -80,7 +80,7 @@ pub struct LoadArgs {
         help = "Enable predetermined breakpoints",
         long_help = "Enable predetermined breakpoints.\nThe supplied element specifies the line in which the breakpoint should be set.\nExample: -b 1,7,8",
         value_delimiter = ',',
-        global = true,
+        global = true
     )]
     pub breakpoints: Option<Vec<usize>>,
     #[arg(
@@ -88,7 +88,7 @@ pub struct LoadArgs {
         long,
         help = "Disable alignment of labels, instructions and comments",
         long_help = "Per default labels, instructions and comments are aligned in columns to make reading easier, this can be disabled by setting this flag.",
-        global = true,
+        global = true
     )]
     pub disable_alignment: bool,
     #[arg(
@@ -97,7 +97,7 @@ pub struct LoadArgs {
         help = "Write the changed program file alignment to file",
         long_help = "Write the changed program file alignment for better readability to the source file.",
         conflicts_with = "disable_alignment",
-        global = true,
+        global = true
     )]
     pub write_alignment: bool,
 }
@@ -117,22 +117,18 @@ pub struct CheckArgs {
 
 #[derive(Subcommand, Clone, Debug)]
 pub enum Commands {
-    #[command(
-        about = "Load an alpha notation program",
-    )]
+    #[command(about = "Load an alpha notation program")]
     Load(LoadArgs),
     #[command(
         about = "Perform different checks on the program",
-        long_about = "Perform different checks on the program.\nReturn values:\n\n 0 - Check successful\n 1 - Compilation error\n 2 - Runtime error\n10 - IO error",
+        long_about = "Perform different checks on the program.\nReturn values:\n\n 0 - Check successful\n 1 - Compilation error\n 2 - Runtime error\n10 - IO error"
     )]
     Check(CheckArgs),
 }
 
 #[derive(Subcommand, Clone, Debug)]
 pub enum CheckCommands {
-    #[command(
-        about = "Check if the program compiles"
-    )]
+    #[command(about = "Check if the program compiles")]
     #[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_cell_file"]))]
     Compile,
 }

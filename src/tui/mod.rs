@@ -107,8 +107,12 @@ impl App {
                         if let State::DebugSelect(_, _) = &self.state {
                             self.jump_to_line_used = true;
                             self.set_state(State::Running);
-                            let idx = self.instruction_list_states.instruction_list_state_mut().selected().unwrap();
-                            self.instruction_list_states.set_instruction(idx-1);
+                            let idx = self
+                                .instruction_list_states
+                                .instruction_list_state_mut()
+                                .selected()
+                                .unwrap();
+                            self.instruction_list_states.set_instruction(idx - 1);
                             self.runtime.set_next_instruction(idx);
                             self.step();
                         }
@@ -329,7 +333,10 @@ pub fn init_keybind_hints() -> HashMap<char, KeybindHint> {
     map.insert('s', KeybindHint::new(1, 's', "Reset", false));
     map.insert('n', KeybindHint::new(2, 'n', "Next breakpoint", false));
     map.insert('r', KeybindHint::new(6, 'r', "Run", true));
-    map.insert('d', KeybindHint::new(7, 'd', "Enter debug select mode", true));
+    map.insert(
+        'd',
+        KeybindHint::new(7, 'd', "Enter debug select mode", true),
+    );
     map.insert('t', KeybindHint::new(9, 't', "Toggle breakpoint", false));
     map.insert('j', KeybindHint::new(9, 'j', "Jump to line", false));
     map.insert('↑', KeybindHint::new(11, '↑', "Up", false));

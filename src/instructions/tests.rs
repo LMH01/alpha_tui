@@ -2,8 +2,13 @@ use std::collections::HashMap;
 
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
-    instructions::{IndexMemoryCellIndexType, Instruction, TargetType, Value, assign_index_memory_cell_from_value, assign_index_memory_cell},
-    runtime::{builder::RuntimeBuilder, ControlFlow, RuntimeArgs, error_handling::RuntimeErrorType},
+    instructions::{
+        assign_index_memory_cell, assign_index_memory_cell_from_value, IndexMemoryCellIndexType,
+        Instruction, TargetType, Value,
+    },
+    runtime::{
+        builder::RuntimeBuilder, error_handling::RuntimeErrorType, ControlFlow, RuntimeArgs,
+    },
 };
 
 /// Used to set the available memory cells during testing.
@@ -1238,14 +1243,23 @@ fn test_assign_index_memory_cell() {
     runtime_args.settings.enable_imc_auto_creation = true;
     assert_eq!(assign_index_memory_cell(&mut runtime_args, 0, 5), Ok(()));
     runtime_args.settings.enable_imc_auto_creation = false;
-    assert_eq!(assign_index_memory_cell(&mut runtime_args, 1, 5), Err(RuntimeErrorType::IndexMemoryCellDoesNotExist(1)));
+    assert_eq!(
+        assign_index_memory_cell(&mut runtime_args, 1, 5),
+        Err(RuntimeErrorType::IndexMemoryCellDoesNotExist(1))
+    );
 }
 
 #[test]
 fn test_assign_index_memory_cell_from_value() {
     let mut runtime_args = RuntimeArgs::new_debug(&[&""]);
     runtime_args.settings.enable_imc_auto_creation = true;
-    assert_eq!(assign_index_memory_cell_from_value(&mut runtime_args, 0, &Value::Constant(5)), Ok(()));
+    assert_eq!(
+        assign_index_memory_cell_from_value(&mut runtime_args, 0, &Value::Constant(5)),
+        Ok(())
+    );
     runtime_args.settings.enable_imc_auto_creation = false;
-    assert_eq!(assign_index_memory_cell_from_value(&mut runtime_args, 1, &Value::Constant(5)), Err(RuntimeErrorType::IndexMemoryCellDoesNotExist(1)));
+    assert_eq!(
+        assign_index_memory_cell_from_value(&mut runtime_args, 1, &Value::Constant(5)),
+        Err(RuntimeErrorType::IndexMemoryCellDoesNotExist(1))
+    );
 }

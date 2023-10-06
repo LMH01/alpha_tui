@@ -51,7 +51,8 @@ pub struct RuntimeError {
 }
 
 #[derive(Debug, Clone, PartialEq, Error, Diagnostic)]
-pub enum RuntimeErrorType {//TODO implement tests for errors that are new and are not yet tested
+pub enum RuntimeErrorType {
+    //TODO implement tests for errors that are new and are not yet tested
     #[error("Attempt to use value of accumulator with index '{0}' while value is not initialized")]
     #[diagnostic(
         code("runtime_error::accumulator_uninitialized"),
@@ -250,7 +251,13 @@ mod tests {
 
     #[test]
     fn test_re_accumulator_uninitialized() {
-        let mut ra = RuntimeArgs::new(1, vec!["h1".to_string()], None, true, Settings::new_default());
+        let mut ra = RuntimeArgs::new(
+            1,
+            vec!["h1".to_string()],
+            None,
+            true,
+            Settings::new_default(),
+        );
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Assign(
@@ -264,7 +271,13 @@ mod tests {
 
     #[test]
     fn test_re_accumulator_does_not_exist() {
-        let mut ra = RuntimeArgs::new(0, vec!["h1".to_string()], None, true, Settings::new_default());
+        let mut ra = RuntimeArgs::new(
+            0,
+            vec!["h1".to_string()],
+            None,
+            true,
+            Settings::new_default(),
+        );
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Assign(
@@ -278,7 +291,13 @@ mod tests {
 
     #[test]
     fn test_re_memory_cell_uninitialized() {
-        let mut ra = RuntimeArgs::new(1, vec!["a".to_string()], None, true, Settings::new_default());
+        let mut ra = RuntimeArgs::new(
+            1,
+            vec!["a".to_string()],
+            None,
+            true,
+            Settings::new_default(),
+        );
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Assign(
@@ -316,7 +335,13 @@ mod tests {
 
     #[test]
     fn test_re_pop_fail() {
-        let mut ra = RuntimeArgs::new(1, vec!["a".to_string()], None, true, Settings::new_default());
+        let mut ra = RuntimeArgs::new(
+            1,
+            vec!["a".to_string()],
+            None,
+            true,
+            Settings::new_default(),
+        );
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Pop.run(&mut ra, &mut cf),
@@ -326,7 +351,13 @@ mod tests {
 
     #[test]
     fn test_re_stack_overflow() {
-        let ra = RuntimeArgs::new(1, vec!["a".to_string()], None, true, Settings::new_default());
+        let ra = RuntimeArgs::new(
+            1,
+            vec!["a".to_string()],
+            None,
+            true,
+            Settings::new_default(),
+        );
         let mut rb = RuntimeBuilder::new();
         rb.set_runtime_args(ra);
         let instructions = vec!["loop: call loop"];
@@ -340,7 +371,13 @@ mod tests {
 
     #[test]
     fn test_re_label_missing() {
-        let mut ra = RuntimeArgs::new(1, vec!["a".to_string()], None, true, Settings::new_default());
+        let mut ra = RuntimeArgs::new(
+            1,
+            vec!["a".to_string()],
+            None,
+            true,
+            Settings::new_default(),
+        );
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Goto("loop".to_string()).run(&mut ra, &mut cf),

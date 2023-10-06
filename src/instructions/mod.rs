@@ -345,26 +345,36 @@ fn assert_index_memory_cell_contains_value(
 
 /// Tries to assign a value to the memory cell, if the imc does not exist and `runtime_args.enable_imc_auto_creation` is true, the memory cell is created and the value is assigned.
 /// Otherwise returns an runtime error.
-fn assign_index_memory_cell(runtime_args: &mut RuntimeArgs, idx: usize, value: i32) -> Result<(), RuntimeErrorType> {
-    if runtime_args.index_memory_cells.contains_key(&idx) ||runtime_args.settings.enable_imc_auto_creation {
-        runtime_args
-            .index_memory_cells
-            .insert(idx, Some(value));
+fn assign_index_memory_cell(
+    runtime_args: &mut RuntimeArgs,
+    idx: usize,
+    value: i32,
+) -> Result<(), RuntimeErrorType> {
+    if runtime_args.index_memory_cells.contains_key(&idx)
+        || runtime_args.settings.enable_imc_auto_creation
+    {
+        runtime_args.index_memory_cells.insert(idx, Some(value));
     } else {
-        return Err(RuntimeErrorType::IndexMemoryCellDoesNotExist(idx))
+        return Err(RuntimeErrorType::IndexMemoryCellDoesNotExist(idx));
     }
     Ok(())
 }
 
 /// Tries to assign a value to the memory cell, if the imc does not exist and `runtime_args.enable_imc_auto_creation` is true, the memory cell is created and the value is assigned.
 /// Otherwise returns an runtime error.
-fn assign_index_memory_cell_from_value(runtime_args: &mut RuntimeArgs, idx: usize, source: &Value) -> Result<(), RuntimeErrorType> {
-    if runtime_args.index_memory_cells.contains_key(&idx) ||runtime_args.settings.enable_imc_auto_creation {
+fn assign_index_memory_cell_from_value(
+    runtime_args: &mut RuntimeArgs,
+    idx: usize,
+    source: &Value,
+) -> Result<(), RuntimeErrorType> {
+    if runtime_args.index_memory_cells.contains_key(&idx)
+        || runtime_args.settings.enable_imc_auto_creation
+    {
         runtime_args
             .index_memory_cells
             .insert(idx, Some(source.value(runtime_args)?));
     } else {
-        return Err(RuntimeErrorType::IndexMemoryCellDoesNotExist(idx))
+        return Err(RuntimeErrorType::IndexMemoryCellDoesNotExist(idx));
     }
     Ok(())
 }
