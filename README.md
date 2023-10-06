@@ -20,28 +20,13 @@ To compile the program from source the rust toolchain is needed. Once installed 
 
 ## Instructions
 
-See [instructions](instructions.md).
+See [instructions](docs/instructions.md).
 
 You can use either `#` or `//` to mark inline or full-line comments.
 
-## Commands and options
+## CLI Commands and options
 
-For a full list of options and more explanation see `alpha_tui --help` or `alpha_tui run --help`.
-
-### General options
-
-Accumulators and memory cells are automatically created when the input program is read.
-To circumvent that you can set the option `--disable-memory-detection`. You then need to specify the accumulators and memory_cells that should be created. The options `-a`, `-m` and `--memory-cell-file` can be used to specify those values. `--memory-cell-file` can also be used to specify available memory cells, when automatic detection is disabled.
-
-If you require memory cells to be pre initialized you can use the option `--memory-cell-file` to read in a file that contains memory cell information. An example for such file can be found [here](examples/memory_cells.cells).
-
-### Load command
-
-The main command to compile and run a program is the `load` command, it takes the file as first parameter. Example: `alpha_tui load examples/programs/faculty.alpha`.
-
-By default the code that is read will be formatted to be easier to read, this can be disabled by using the `--disable-alignment` flag. If you however would like to write the formatted code into the source file you can use the `--write-alignment` flag.
-
-Predetermined breakpoints can be loaded by using the `--breakpoints` flag, it takes multiple line numbers as parameter. Example: `alpha_tui load examples/programs/faculty.alpha -b 5`.
+See [cli](docs/cli.md) or `alpha_tui help`.
 
 ## Interface and usage
 
@@ -91,6 +76,7 @@ or this:
 - [ ] Make instruction list scroll down to make 3 instructions before the current one always displayed
     - ratatui currently does not provide a simple solution for this
 - [ ] Add command line parameter that allows a program to be run where the content of a specific accumulator or memory cell is compared against a defined value that is provided when the program is launched. Alpha_tui will exit with 0 if the resulting value is equal to the provided value. This will make it possible to automate tests for alpha notation programs.
+    - This can be implemented using the check subcommand
 - [ ] Move backend (internal runtime environment) into own project which makes it possible to write new programs without the need to copy the backend of this program
 - [ ] Text editor inside the program to write new alpha notation programs
     - This would however come with a drawback, the nice error messages could probably not be shown inside the tui.
