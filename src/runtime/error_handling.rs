@@ -193,7 +193,7 @@ mod tests {
         runtime::{
             builder::RuntimeBuilder,
             error_handling::{CalcError, RuntimeBuildError, RuntimeErrorType},
-            ControlFlow, RuntimeArgs, RuntimeSettings,
+            ControlFlow, RuntimeArgs, Settings,
         },
     };
 
@@ -250,7 +250,7 @@ mod tests {
 
     #[test]
     fn test_re_accumulator_uninitialized() {
-        let mut ra = RuntimeArgs::new(1, vec!["h1".to_string()], None, true, RuntimeSettings::new_default());
+        let mut ra = RuntimeArgs::new(1, vec!["h1".to_string()], None, true, Settings::new_default());
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Assign(
@@ -264,7 +264,7 @@ mod tests {
 
     #[test]
     fn test_re_accumulator_does_not_exist() {
-        let mut ra = RuntimeArgs::new(0, vec!["h1".to_string()], None, true, RuntimeSettings::new_default());
+        let mut ra = RuntimeArgs::new(0, vec!["h1".to_string()], None, true, Settings::new_default());
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Assign(
@@ -278,7 +278,7 @@ mod tests {
 
     #[test]
     fn test_re_memory_cell_uninitialized() {
-        let mut ra = RuntimeArgs::new(1, vec!["a".to_string()], None, true, RuntimeSettings::new_default());
+        let mut ra = RuntimeArgs::new(1, vec!["a".to_string()], None, true, Settings::new_default());
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Assign(
@@ -292,7 +292,7 @@ mod tests {
 
     #[test]
     fn test_re_memory_cell_does_not_exist() {
-        let mut ra = RuntimeArgs::new(1, vec![], None, true, RuntimeSettings::new_default());
+        let mut ra = RuntimeArgs::new(1, vec![], None, true, Settings::new_default());
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Assign(
@@ -306,7 +306,7 @@ mod tests {
 
     #[test]
     fn test_re_push_fail() {
-        let mut ra = RuntimeArgs::new(1, vec![], None, true, RuntimeSettings::new_default());
+        let mut ra = RuntimeArgs::new(1, vec![], None, true, Settings::new_default());
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Push.run(&mut ra, &mut cf),
@@ -316,7 +316,7 @@ mod tests {
 
     #[test]
     fn test_re_pop_fail() {
-        let mut ra = RuntimeArgs::new(1, vec!["a".to_string()], None, true, RuntimeSettings::new_default());
+        let mut ra = RuntimeArgs::new(1, vec!["a".to_string()], None, true, Settings::new_default());
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Pop.run(&mut ra, &mut cf),
@@ -326,7 +326,7 @@ mod tests {
 
     #[test]
     fn test_re_stack_overflow() {
-        let ra = RuntimeArgs::new(1, vec!["a".to_string()], None, true, RuntimeSettings::new_default());
+        let ra = RuntimeArgs::new(1, vec!["a".to_string()], None, true, Settings::new_default());
         let mut rb = RuntimeBuilder::new();
         rb.set_runtime_args(ra);
         let instructions = vec!["loop: call loop"];
@@ -340,7 +340,7 @@ mod tests {
 
     #[test]
     fn test_re_label_missing() {
-        let mut ra = RuntimeArgs::new(1, vec!["a".to_string()], None, true, RuntimeSettings::new_default());
+        let mut ra = RuntimeArgs::new(1, vec!["a".to_string()], None, true, Settings::new_default());
         let mut cf = ControlFlow::new();
         assert_eq!(
             Instruction::Goto("loop".to_string()).run(&mut ra, &mut cf),
@@ -350,7 +350,7 @@ mod tests {
 
     #[test]
     fn test_ce_me_attempt_to_divide_by_zero() {
-        let mut ra = RuntimeArgs::new(2, vec![], None, true, RuntimeSettings::new_default());
+        let mut ra = RuntimeArgs::new(2, vec![], None, true, Settings::new_default());
         ra.accumulators.get_mut(&0).unwrap().data = Some(0);
         ra.accumulators.get_mut(&1).unwrap().data = Some(0);
         let mut cf = ControlFlow::new();
@@ -370,7 +370,7 @@ mod tests {
 
     #[test]
     fn test_re_ce_attempt_to_overflow_add() {
-        let mut ra = RuntimeArgs::new(2, vec![], None, true, RuntimeSettings::new_default());
+        let mut ra = RuntimeArgs::new(2, vec![], None, true, Settings::new_default());
         ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MAX);
         ra.accumulators.get_mut(&1).unwrap().data = Some(1);
         let mut cf = ControlFlow::new();
@@ -390,7 +390,7 @@ mod tests {
 
     #[test]
     fn test_re_ce_attempt_to_overflow_sub() {
-        let mut ra = RuntimeArgs::new(2, vec![], None, true, RuntimeSettings::new_default());
+        let mut ra = RuntimeArgs::new(2, vec![], None, true, Settings::new_default());
         ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MIN);
         ra.accumulators.get_mut(&1).unwrap().data = Some(1);
         let mut cf = ControlFlow::new();
@@ -413,7 +413,7 @@ mod tests {
 
     #[test]
     fn test_re_ce_attempt_to_overflow_div() {
-        let mut ra = RuntimeArgs::new(2, vec![], None, true, RuntimeSettings::new_default());
+        let mut ra = RuntimeArgs::new(2, vec![], None, true, Settings::new_default());
         ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MIN);
         ra.accumulators.get_mut(&1).unwrap().data = Some(-1);
         let mut cf = ControlFlow::new();
@@ -433,7 +433,7 @@ mod tests {
 
     #[test]
     fn test_re_ce_attempt_to_overflow_mul() {
-        let mut ra = RuntimeArgs::new(2, vec![], None, true, RuntimeSettings::new_default());
+        let mut ra = RuntimeArgs::new(2, vec![], None, true, Settings::new_default());
         ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MAX);
         ra.accumulators.get_mut(&1).unwrap().data = Some(2);
         let mut cf = ControlFlow::new();
@@ -456,7 +456,7 @@ mod tests {
 
     #[test]
     fn test_re_ce_attempt_to_overflow_mod() {
-        let mut ra = RuntimeArgs::new(2, vec![], None, true, RuntimeSettings::new_default());
+        let mut ra = RuntimeArgs::new(2, vec![], None, true, Settings::new_default());
         ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MIN);
         ra.accumulators.get_mut(&1).unwrap().data = Some(-1);
         let mut cf = ControlFlow::new();
@@ -476,7 +476,7 @@ mod tests {
 
     #[test]
     fn test_re_ce_attempt_to_divide_by_zero_mod() {
-        let mut ra = RuntimeArgs::new(2, vec![], None, true, RuntimeSettings::new_default());
+        let mut ra = RuntimeArgs::new(2, vec![], None, true, Settings::new_default());
         ra.accumulators.get_mut(&0).unwrap().data = Some(10);
         ra.accumulators.get_mut(&1).unwrap().data = Some(0);
         let mut cf = ControlFlow::new();

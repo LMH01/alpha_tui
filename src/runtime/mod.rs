@@ -54,8 +54,8 @@ impl Runtime {
     /// Sets the instruction that should be executed next.
     /// 
     /// Warning: using this may lead to runtime errors due to changed call stack.
-    pub fn set_next_instruction(&mut self, idx: &usize) {
-        self.control_flow.next_instruction_index = *idx;
+    pub fn set_next_instruction(&mut self, idx: usize) {
+        self.control_flow.next_instruction_index = idx;
     }
 
     /// Returns true when the execution is finished,
@@ -124,7 +124,7 @@ impl ControlFlow {
 
     /// Updates the call stack with the instruction index from which the function was called
     /// and sets the next instruction index.
-    /// Returns StackOverflowError when call stack exceeds size of i16::max elements (= the maximum size is ~2MB).
+    /// Returns `StackOverflowError` when call stack exceeds size of `i16::max` elements (= the maximum size is ~2MB).
     pub fn call_function(&mut self, label: &str) -> Result<(), RuntimeErrorType> {
         self.call_stack.push(self.next_instruction_index);
         if self.call_stack.len() > i16::MAX as usize {
@@ -149,7 +149,7 @@ impl ControlFlow {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-#[allow(clippy::module_name_repetitions)]
+#[allow(clippy::module_name_repetitions, clippy::option_option)]
 pub struct RuntimeArgs {
     /// Current values stored in accumulators
     pub accumulators: HashMap<usize, Accumulator>,
@@ -165,7 +165,7 @@ pub struct RuntimeArgs {
     pub index_memory_cells: HashMap<usize, Option<i32>>,
     /// The stack of the runner
     pub stack: Vec<i32>,
-    pub settings: RuntimeSettings,
+    pub settings: Settings,
 }
 
 impl<'a> RuntimeArgs {
@@ -186,9 +186,10 @@ impl<'a> RuntimeArgs {
                             accumulators
                         }
                     };
-                    let gamma = match args.enable_gamma_accumulator {
-                        true => Some(None),
-                        false => None,
+                    let gamma = if args.enable_gamma_accumulator {
+                        Some(None)
+                    } else {
+                        None
                     };
                     return Ok(Self {
                         accumulators,
@@ -196,7 +197,7 @@ impl<'a> RuntimeArgs {
                         memory_cells: memory_cells.0,
                         index_memory_cells: memory_cells.1,
                         stack: Vec::new(),
-                        settings: RuntimeSettings::from(args),
+                        settings: Settings::from(args),
                     });
                 }
                 Err(e) => return Err(e),
@@ -213,7 +214,7 @@ impl<'a> RuntimeArgs {
             memory_cells,
             idx_memory_cells,
             args.enable_gamma_accumulator,
-            RuntimeSettings::from(args)
+            Settings::from(args)
         ))
     }
 
@@ -223,7 +224,7 @@ impl<'a> RuntimeArgs {
             memory_cells.iter().map(|f| (*f).to_string()).collect(),
             None,
             true,
-            RuntimeSettings::new_default(),
+            Settings::new_default(),
         )
     }
 
@@ -235,7 +236,7 @@ impl<'a> RuntimeArgs {
             memory_cells: HashMap::new(),
             index_memory_cells: HashMap::new(),
             stack: Vec::new(),
-            settings: RuntimeSettings::new_default(),
+            settings: Settings::new_default(),
         }
     }
 
@@ -244,7 +245,7 @@ impl<'a> RuntimeArgs {
         m_cells: Vec<String>,
         idx_m_cells: Option<Vec<usize>>,
         enable_gamma: bool,
-        settings: RuntimeSettings,
+        settings: Settings,
     ) -> Self {
         let mut accumulators = HashMap::new();
         for i in 0..acc {
@@ -254,9 +255,10 @@ impl<'a> RuntimeArgs {
         for i in m_cells {
             memory_cells.insert(i.clone(), MemoryCell::new(i.as_str()));
         }
-        let gamma = match enable_gamma {
-            true => Some(None),
-            false => None,
+        let gamma = if enable_gamma {
+            Some(None)
+        } else {
+            None
         };
         let mut index_memory_cells = HashMap::new();
         if let Some(cells) = idx_m_cells {
@@ -317,14 +319,15 @@ impl<'a> RuntimeArgs {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct RuntimeSettings {
+/// Settings that may be required during runtime
+pub struct Settings {
     /// If true, index memory cells are generated when they are receiving a value and if the don't already exist.
     /// 
     /// If false, they will not be generated and a runtime error is thrown.
     pub enable_imc_auto_creation: bool,
 }
 
-impl RuntimeSettings {
+impl Settings {
 
     fn new_default() -> Self {
         Self {
@@ -334,7 +337,7 @@ impl RuntimeSettings {
 
 }
 
-impl From<&Cli> for RuntimeSettings {
+impl From<&Cli> for Settings {
 
     fn from(value: &Cli) -> Self {
         Self {

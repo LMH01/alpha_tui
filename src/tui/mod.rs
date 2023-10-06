@@ -109,7 +109,7 @@ impl App {
                             self.set_state(State::Running);
                             let idx = self.instruction_list_states.instruction_list_state_mut().selected().unwrap();
                             self.instruction_list_states.set_instruction(idx-1);
-                            self.runtime.set_next_instruction(&idx);
+                            self.runtime.set_next_instruction(idx);
                             self.step();
                         }
                     }
@@ -132,7 +132,7 @@ impl App {
                         State::DebugSelect(_, _) => {
                             self.instruction_list_states.set_next_visual();
                         }
-                        _ => (),
+                        State::Default => (),
                     },
                     KeyCode::Char('r') => {
                         if self.state == State::Default || self.state == State::Running {
@@ -166,7 +166,7 @@ impl App {
                                 self.set_state(State::Finished(false));
                             }
                         }
-                        _ => (),
+                        State::Errored(_) => (),
                     },
                     _ => (),
                 }

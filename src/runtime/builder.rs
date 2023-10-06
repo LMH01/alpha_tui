@@ -352,7 +352,7 @@ pub fn check_memory_cell(
     Ok(())
 }
 
-/// Checks if the accumulator or memory_cell exists that is used inside an index_memory_cell.
+/// Checks if the accumulator or `memory_cell` exists that is used inside an `index_memory_cell`.
 pub fn check_index_memory_cell(
     runtime_args: &mut RuntimeArgs,
     t: &IndexMemoryCellIndexType,
@@ -362,9 +362,8 @@ pub fn check_index_memory_cell(
         IndexMemoryCellIndexType::Accumulator(idx) => {
             check_accumulator(runtime_args, *idx, add_missing)
         }
-        IndexMemoryCellIndexType::Direct(_) => Ok(()),
+        IndexMemoryCellIndexType::Direct(_) | IndexMemoryCellIndexType::Index(_) => Ok(()),
         IndexMemoryCellIndexType::Gamma => check_gamma(runtime_args, add_missing),
-        IndexMemoryCellIndexType::Index(_) => Ok(()),
         IndexMemoryCellIndexType::MemoryCell(name) => {
             check_memory_cell(runtime_args, name, add_missing)
         }
@@ -373,7 +372,7 @@ pub fn check_index_memory_cell(
 
 /// Checks if gamma is enabled in runtime args.
 ///
-/// If 'add_missing' is set, gamma is enabled, instead of returning an error.
+/// If `add_missing` is set, gamma is enabled, instead of returning an error.
 pub fn check_gamma(
     runtime_args: &mut RuntimeArgs,
     add_missing: bool,
@@ -382,9 +381,8 @@ pub fn check_gamma(
         if add_missing {
             runtime_args.gamma = Some(None);
             return Ok(());
-        } else {
-            return Err(RuntimeBuildError::GammaDisabled);
         }
+        return Err(RuntimeBuildError::GammaDisabled);
     }
     Ok(())
 }

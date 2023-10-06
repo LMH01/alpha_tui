@@ -22,7 +22,7 @@ pub struct InstructionListStates {
 
 #[allow(clippy::cast_sign_loss)]
 impl InstructionListStates {
-    /// Creates new InstructionListStates which hold the current state of the instruction list.
+    /// Creates new `InstructionListStates` which hold the current state of the instruction list.
     pub fn new(instructions: &[String], set_breakpoints: Option<&Vec<usize>>) -> Self {
         let mut i = Vec::new();
         for (index, s) in instructions.iter().enumerate() {
@@ -87,8 +87,8 @@ impl InstructionListStates {
     /// Updates the visuals, current and last index.
     pub fn set_instruction(&mut self, index: usize) {
         self.force_set(index);
-        self.last_index = index as i32;
-        self.current_index = (index+1) as i32;
+        self.last_index = i32::try_from(index).expect("Unable to parse i32 from usize.");
+        self.current_index = i32::try_from(index+1).expect("Unable to parse i32 from usize.");
     }
 
     /// Used to force the highlight of a specific line.
@@ -322,7 +322,7 @@ impl MemoryListsManager {
         // Insert gamma accumulator if it is in use
         if let Some(value) = self.gamma {
             if let Some(inner_value) = value.0 {
-                let mut item = ListItem::new(format!(" γ: {}", inner_value));
+                let mut item = ListItem::new(format!(" γ: {inner_value}"));
                 if value.1 {
                     item = item.style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
                 }

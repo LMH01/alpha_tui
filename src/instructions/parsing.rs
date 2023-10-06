@@ -5,6 +5,7 @@ use crate::{
 
 use super::{IndexMemoryCellIndexType, Instruction, TargetType, Value};
 
+#[allow(clippy::too_many_lines)]
 impl TryFrom<&Vec<&str>> for Instruction {
     type Error = InstructionParseError;
 
@@ -163,7 +164,7 @@ impl TryFrom<&str> for Instruction {
 /// Tries to parse the index of the accumulator.
 ///
 /// `part_range` indicates the area that is affected.
-/// If 'allow_short' is set, a will be resolved to accumulator 0, if it is not set accumulator 0 can only be resolved by the input string 'a0'.
+/// If `allow_short` is set, a will be resolved to accumulator 0, if it is not set accumulator 0 can only be resolved by the input string 'a0'.
 pub fn parse_alpha(
     s: &str,
     part_range: (usize, usize),
@@ -180,12 +181,11 @@ pub fn parse_alpha(
         if allow_short {
             // if no index is supplied default to accumulator 0
             return Ok(0);
-        } else {
-            return Err(InstructionParseError::InvalidExpression(
-                part_range,
-                s.to_string(),
-            ));
         }
+        return Err(InstructionParseError::InvalidExpression(
+            part_range,
+            s.to_string(),
+        ));
     }
     match input.parse::<usize>() {
         Ok(x) => Ok(x),

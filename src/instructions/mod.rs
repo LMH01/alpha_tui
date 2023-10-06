@@ -107,7 +107,7 @@ fn run_assign(
         }
         TargetType::IndexMemoryCell(t) => match t {
             IndexMemoryCellIndexType::Accumulator(idx) => {
-                let idx = index_from_accumulator(runtime_args, idx)?;
+                let idx = index_from_accumulator(runtime_args, *idx)?;
                 assign_index_memory_cell_from_value(runtime_args, idx, source)?;
             }
             IndexMemoryCellIndexType::Direct(idx) => {
@@ -122,7 +122,7 @@ fn run_assign(
                 assign_index_memory_cell_from_value(runtime_args, idx, source)?;
             }
             IndexMemoryCellIndexType::Index(idx) => {
-                let idx = index_from_index_memory_cell(runtime_args, idx)?;
+                let idx = index_from_index_memory_cell(runtime_args, *idx)?;
                 assign_index_memory_cell_from_value(runtime_args, idx, source)?;
             }
         },
@@ -156,7 +156,7 @@ fn run_calc(
             let res = op.calc(source_a.value(runtime_args)?, source_b.value(runtime_args)?)?;
             match t {
                 IndexMemoryCellIndexType::Accumulator(idx) => {
-                    let idx = index_from_accumulator(runtime_args, idx)?;
+                    let idx = index_from_accumulator(runtime_args, *idx)?;
                     assign_index_memory_cell(runtime_args, idx, res)?;
                 }
                 IndexMemoryCellIndexType::Direct(idx) => {
@@ -171,7 +171,7 @@ fn run_calc(
                     assign_index_memory_cell(runtime_args, idx, res)?;
                 }
                 IndexMemoryCellIndexType::Index(idx) => {
-                    let idx = index_from_index_memory_cell(runtime_args, idx)?;
+                    let idx = index_from_index_memory_cell(runtime_args, *idx)?;
                     assign_index_memory_cell(runtime_args, idx, res)?;
                 }
             }
@@ -290,9 +290,8 @@ fn assert_gamma_contains_value(runtime_args: &RuntimeArgs) -> Result<i32, Runtim
     if let Some(value) = runtime_args.gamma {
         if let Some(value) = value {
             return Ok(value);
-        } else {
-            return Err(RuntimeErrorType::GammaUninitialized);
         }
+        return Err(RuntimeErrorType::GammaUninitialized);
     }
     Err(RuntimeErrorType::GammaDoesNotExist)
 }
@@ -344,7 +343,7 @@ fn assert_index_memory_cell_contains_value(
     }
 }
 
-/// Tries to assign a value to the memory cell, if the imc does not exist and 'runtime_args.enable_imc_auto_creation' is true, the memory cell is created and the value is assigned.
+/// Tries to assign a value to the memory cell, if the imc does not exist and `runtime_args.enable_imc_auto_creation` is true, the memory cell is created and the value is assigned.
 /// Otherwise returns an runtime error.
 fn assign_index_memory_cell(runtime_args: &mut RuntimeArgs, idx: usize, value: i32) -> Result<(), RuntimeErrorType> {
     if runtime_args.index_memory_cells.contains_key(&idx) ||runtime_args.settings.enable_imc_auto_creation {
@@ -357,7 +356,7 @@ fn assign_index_memory_cell(runtime_args: &mut RuntimeArgs, idx: usize, value: i
     Ok(())
 }
 
-/// Tries to assign a value to the memory cell, if the imc does not exist and 'runtime_args.enable_imc_auto_creation' is true, the memory cell is created and the value is assigned.
+/// Tries to assign a value to the memory cell, if the imc does not exist and `runtime_args.enable_imc_auto_creation` is true, the memory cell is created and the value is assigned.
 /// Otherwise returns an runtime error.
 fn assign_index_memory_cell_from_value(runtime_args: &mut RuntimeArgs, idx: usize, source: &Value) -> Result<(), RuntimeErrorType> {
     if runtime_args.index_memory_cells.contains_key(&idx) ||runtime_args.settings.enable_imc_auto_creation {
@@ -440,7 +439,7 @@ impl Value {
             }
             Self::IndexMemoryCell(t) => match t {
                 IndexMemoryCellIndexType::Accumulator(idx) => {
-                    let idx = index_from_accumulator(runtime_args, idx)?;
+                    let idx = index_from_accumulator(runtime_args, *idx)?;
                     Ok(assert_index_memory_cell_contains_value(
                         runtime_args,
                         idx as usize,
@@ -454,7 +453,7 @@ impl Value {
                     Ok(assert_index_memory_cell_contains_value(runtime_args, idx)?)
                 }
                 IndexMemoryCellIndexType::Index(idx) => {
-                    let idx = index_from_index_memory_cell(runtime_args, idx)?;
+                    let idx = index_from_index_memory_cell(runtime_args, *idx)?;
                     Ok(assert_index_memory_cell_contains_value(runtime_args, idx)?)
                 }
                 IndexMemoryCellIndexType::MemoryCell(name) => {
@@ -496,11 +495,12 @@ impl TryFrom<(String, (usize, usize))> for Value {
 
 /// Gets the content from the accumulator with the index `idx` and checks if this value is positive,
 /// return the value if it is.
+#[allow(clippy::cast_sign_loss)]
 fn index_from_accumulator(
     runtime_args: &RuntimeArgs,
-    idx: &usize,
+    idx: usize,
 ) -> Result<usize, RuntimeErrorType> {
-    let idx = assert_accumulator_contains_value(runtime_args, *idx)?;
+    let idx = assert_accumulator_contains_value(runtime_args, idx)?;
     if idx.is_negative() {
         return Err(RuntimeErrorType::IndexMemoryCellNegativeIndex(idx));
     }
@@ -509,6 +509,7 @@ fn index_from_accumulator(
 
 /// Gets the content from the gamma accumulator and checks if the value is positive,
 /// return the value if it is.
+#[allow(clippy::cast_sign_loss)]
 fn index_from_gamma(runtime_args: &RuntimeArgs) -> Result<usize, RuntimeErrorType> {
     let idx = assert_gamma_contains_value(runtime_args)?;
     if idx.is_negative() {
@@ -519,6 +520,7 @@ fn index_from_gamma(runtime_args: &RuntimeArgs) -> Result<usize, RuntimeErrorTyp
 
 /// Gets the content of the memory cell with name `name` and check if this value is positive,
 /// returns the value if it is.
+#[allow(clippy::cast_sign_loss)]
 fn index_from_memory_cell(
     runtime_args: &RuntimeArgs,
     name: &str,
@@ -532,11 +534,12 @@ fn index_from_memory_cell(
 
 /// Gets the content of the index memory cell with index `idx` and checks if this value is positive,
 /// returns the value if it is.
+#[allow(clippy::cast_sign_loss)]
 fn index_from_index_memory_cell(
     runtime_args: &RuntimeArgs,
-    idx: &usize,
+    idx: usize,
 ) -> Result<usize, RuntimeErrorType> {
-    let idx = assert_index_memory_cell_contains_value(runtime_args, *idx)?;
+    let idx = assert_index_memory_cell_contains_value(runtime_args, idx)?;
     if idx.is_negative() {
         return Err(RuntimeErrorType::IndexMemoryCellNegativeIndex(idx));
     }

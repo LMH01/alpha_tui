@@ -5,6 +5,9 @@ use std::{
 
 use miette::{IntoDiagnostic, Result};
 
+/// How many spaces should be between labels, instructions and comments when pretty formatting them
+const SPACING: usize = 2;
+
 /// Reads a file into a string vector.
 ///
 /// Each  line is a new entry.
@@ -76,7 +79,6 @@ pub fn pretty_format_instructions(instructions: &[String]) -> Vec<String> {
     let mut pretty_instructions = Vec::new();
     for instruction in instructions {
         let mut label: Option<String> = None;
-        const SPACING: usize = 2;
 
         // Check if instruction is empty string
         if instruction.is_empty() {
@@ -120,12 +122,11 @@ pub fn pretty_format_instructions(instructions: &[String]) -> Vec<String> {
             " ".repeat(max_instruction_length - instruction_txt.chars().count() + SPACING)
         ));
         // comment
-        match comment {
-            Some(ref c) => pretty_instruction.push_str(&c.to_string()),
-            None => {
-                pretty_instruction.push_str(&" ".repeat(max_instruction_length + SPACING));
-                pretty_instruction = pretty_instruction.trim_end().to_string();
-            }
+        if let Some(ref c) = comment {
+            pretty_instruction.push_str(&c.to_string());
+        } else {
+            pretty_instruction.push_str(&" ".repeat(max_instruction_length + SPACING));
+            pretty_instruction = pretty_instruction.trim_end().to_string();
         }
 
         pretty_instructions.push(pretty_instruction);

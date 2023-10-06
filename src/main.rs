@@ -46,15 +46,15 @@ fn main() -> Result<()> {
     };
 
     match cli.command {
-        Commands::Check(_) => cmd_check(&cli, instructions, input)?,
+        Commands::Check(_) => cmd_check(&cli, &instructions, &input),
         Commands::Load(_) => cmd_load(&cli, instructions, input)?,
     }
     Ok(())
 }
 
-fn cmd_check(cli: &Cli, instructions: Vec<String>, input: String) -> Result<()> {
+fn cmd_check(cli: &Cli, instructions: &[String], input: &str) {
     println!("Building program");
-    let mut rb = match RuntimeBuilder::from_args(&cli) {
+    let mut rb = match RuntimeBuilder::from_args(cli) {
         Ok(rb) => rb,
         Err(e) => {
             println!("Check unsuccessful: {:?}", miette!(
@@ -65,18 +65,18 @@ fn cmd_check(cli: &Cli, instructions: Vec<String>, input: String) -> Result<()> 
     };
     if let Err(e) = rb.build_instructions(
         &instructions.iter().map(String::as_str).collect(),
-        &input,
+        input,
     ) {
         println!("Check unsuccessful, program did not compile.\nError: {:?}", Report::new(e));
         exit(1);
     }
     println!("Check successful");
-    Ok(())
 }
 
+#[allow(clippy::match_wildcard_for_single_variants)]
 fn cmd_load(cli: &Cli, instructions: Vec<String>, input: String) -> Result<()> {
     println!("Building program");
-    let mut rb = match RuntimeBuilder::from_args(&cli) {
+    let mut rb = match RuntimeBuilder::from_args(cli) {
         Ok(rb) => rb,
         Err(e) => {
             return Err(miette!(
@@ -91,9 +91,12 @@ fn cmd_load(cli: &Cli, instructions: Vec<String>, input: String) -> Result<()> {
 
     // format instructions pretty if cli flag is set
     let instructions = match cli.command {
-        Commands::Load(ref args) => match args.disable_alignment {
-            false => pretty_format_instructions(&instructions),
-            true => instructions,
+        Commands::Load(ref args) => {
+            if args.disable_alignment {
+                instructions
+            } else {
+                pretty_format_instructions(&instructions)
+            }
         },
         _ => pretty_format_instructions(&instructions),
     };
