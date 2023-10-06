@@ -1,3 +1,7 @@
+[![Downloads](https://img.shields.io/github/v/release/lmh01/alpha_tui)](https://github.com/lmh01/alpha_tui/releases)
+![Downloads](https://img.shields.io/github/downloads/lmh01/alpha_tui/total)
+[![License](https://img.shields.io/github/license/lmh01/alpha_tui)](LICENSE)
+
 # alpha_tui
 
 This is my attempt at writing a compiler for the Alpha-Notation used in my Systemnahe Informatik lecture at university.
