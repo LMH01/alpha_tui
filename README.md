@@ -43,15 +43,28 @@ Press `[r]` to begin to run the program, subsequent instructions can also be run
 
 When the last instruction was executed the following window is displayed. You can restart by pressing `[s]` or exit the program by pressing `[q]`. ![Program finished example](media/gui_program_finished.png)
 
-### Breakpoints
+### Debug features
+
+Some debug features require you to select a line in which a debug action should take place.
+
+You can enter debug select mode by pressing `[d]`, this could look like this: ![Debug select mode](media/gui_debug_select_mode.png)
+
+Navigate by using the `arrow keys`, for ease of use `[w]` and `[s]` are also supported.
+
+#### Breakpoints
 
 Breakpoints can be set to run all lines of code up until the line in which the breakpoint is set.
 
-Press `[b]` to enter breakpoint mode, it could look like this:![Breakpoint mode](media/gui_breakpoint_mode.png)
+To set a breakpoint enter `debug select mode` and press `[t]` in the line in which you want to set the breakpoint. A star to the left will indicate where a breakpoint is placed.
 
-Navigate by using the `arrow keys`, for ease of `[w]` and `[s]` are also supported. To `set` or `remove` a breakpoint in the selected line press the `[t]` key: ![Breakpoint set](media/gui_breakpoint_set.png)
+A placed breakpoint can look like this: ![Breakpoint set](media/gui_breakpoint_set.png)
 
-Exit breakpoint mode by pressing the `[b]` key again. Press `[n]` when in run mode to make the program run automatically to the next breakpoint (note how the values to the right have been updated): ![Next breakpoint](media/gui_breakpoint_mode_run.png)
+Press `[n]` when in run mode to make the program run automatically to the next breakpoint (note how the values to the right have been updated): ![Next breakpoint](media/gui_breakpoint_mode_run.png)
+
+#### Jump to line
+
+When in `debug select mode` you can select a line and jump directly to it using `[j]`, skipping all other instructions. You should however be careful when using this, because runtime errors are far more likely to occur due to uninitialized accumulators or memory cells.
+Functions may also no longer be properly exited because of a misaligned call stack.
 
 ### Error handling
 
