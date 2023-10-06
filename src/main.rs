@@ -1,4 +1,4 @@
-use std::io;
+use std::{io, process::exit};
 
 use ::ratatui::{backend::CrosstermBackend, Terminal};
 use clap::Parser;
@@ -8,13 +8,13 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use miette::{miette, Context, IntoDiagnostic, Result};
+use miette::{miette, Context, IntoDiagnostic, Result, Report};
 use utils::read_file;
 
 use crate::{
     runtime::builder::RuntimeBuilder,
     tui::App,
-    utils::{pretty_format_instructions, write_file}, cli::{LoadArgs, Commands},
+    utils::{pretty_format_instructions, write_file}, cli::Commands,
 };
 
 /// Contains all required data types used to run programs
@@ -35,6 +35,7 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
     let input = match cli.command {
         Commands::Load(ref args) => args.file.clone(),
+        Commands::Check(ref args) => args.file.clone(),
     };
 
     let instructions = match read_file(&input) {
@@ -43,6 +44,37 @@ fn main() -> Result<()> {
             return Err(miette!("Unable to read file [{}]: {}", &input, e));
         }
     };
+
+    match cli.command {
+        Commands::Check(_) => cmd_check(&cli, instructions, input)?,
+        Commands::Load(_) => cmd_load(&cli, instructions, input)?,
+    }
+    Ok(())
+}
+
+fn cmd_check(cli: &Cli, instructions: Vec<String>, input: String) -> Result<()> {
+    println!("Building program");
+    let mut rb = match RuntimeBuilder::from_args(&cli) {
+        Ok(rb) => rb,
+        Err(e) => {
+            println!("Check unsuccessful: {:?}", miette!(
+                "Unable to create RuntimeBuilder, memory cells could not be loaded from file:\n{e}"
+            ));
+            exit(10);
+        }
+    };
+    if let Err(e) = rb.build_instructions(
+        &instructions.iter().map(String::as_str).collect(),
+        &input,
+    ) {
+        println!("Check unsuccessful, program did not compile.\nError: {:?}", Report::new(e));
+        exit(1);
+    }
+    println!("Check successful");
+    Ok(())
+}
+
+fn cmd_load(cli: &Cli, instructions: Vec<String>, input: String) -> Result<()> {
     println!("Building program");
     let mut rb = match RuntimeBuilder::from_args(&cli) {
         Ok(rb) => rb,
@@ -62,7 +94,8 @@ fn main() -> Result<()> {
         Commands::Load(ref args) => match args.disable_alignment {
             false => pretty_format_instructions(&instructions),
             true => instructions,
-        }
+        },
+        _ => pretty_format_instructions(&instructions),
     };
 
     println!("Building runtime");
@@ -89,6 +122,7 @@ fn main() -> Result<()> {
     // create app
     let mut app = match cli.command {
         Commands::Load(ref args) => App::from_runtime(rt, input, &instructions, &args.breakpoints),
+        _ => App::from_runtime(rt, input, &instructions, &None),
     };
     let res = app.run(&mut terminal);
 

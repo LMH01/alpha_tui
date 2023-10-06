@@ -102,10 +102,25 @@ pub struct LoadArgs {
     pub write_alignment: bool,
 }
 
+#[derive(Args, Clone, Debug)]
+#[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_cell_file"]))]
+pub struct CheckArgs {
+    #[arg(
+        long_help = "Specify the input file that contains the program",
+        required = true
+    )]
+    pub file: String,
+}
+
 #[derive(Subcommand, Clone, Debug)]
 pub enum Commands {
     #[command(
         about = "Load an alpha notation program",
     )]
     Load(LoadArgs),
+    #[command(
+        about = "Perform different checks on the program",
+        long_about = "Perform different checks on the program.\nReturn values:\n\n 0 - Check successful\n 1 - Compilation error\n 2 - Runtime error\n10 - IO error",
+    )]
+    Check(CheckArgs),
 }
