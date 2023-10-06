@@ -4,7 +4,7 @@
 
 # alpha_tui
 
-![Demo](docs/base_demo.gif)
+![Demo](docs/demo.gif)
 
 This is my attempt at writing a compiler and runtime environment for the Alpha-Notation used in my Systemnahe Informatik lecture at university.
 
