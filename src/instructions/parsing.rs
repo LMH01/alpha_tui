@@ -122,7 +122,6 @@ impl TryFrom<&Vec<&str>> for Instruction {
             ));
         }
 
-        //TODO Add expression missing checks here
         let target = TargetType::try_from((&parts[0], part_range(&parts, 0)))?;
         if parts.len() == 2 {
             return Err(InstructionParseError::MissingExpression {

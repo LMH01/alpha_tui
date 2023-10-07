@@ -6,7 +6,7 @@ use crate::base::Operation;
 /// Errors that can occur when a runtime is constructed from a `RuntimeBuilder`.
 #[derive(Debug, PartialEq, Error, Diagnostic)]
 pub enum RuntimeBuildError {
-    
+
     #[error("Runtime arguments missing")]
     #[diagnostic(
         code("runtime_build_error::runtime_args_missing"),
@@ -43,7 +43,7 @@ pub enum RuntimeBuildError {
     #[error("Gamma accumulator is used in the program but is disabled")]
     #[diagnostic(
         code("runtime_build_error::gamma_disabled"),
-        help("You can't use the gamma accumulator when it is disabled, to enable it you can either enable automatic memory detection\nby removing the \"--disable-memory-detection\" flag or you can explicitly enable it by using the \"--enable-gamma-accumulator\" flag.") // TODO Add flag to disable gamma accumulator and update this message
+        help("You can't use the gamma accumulator when it is disabled, to enable it you can either enable automatic memory detection\nby removing the \"--disable-memory-detection\" flag or you can explicitly enable it by using the \"--enable-gamma-accumulator\" flag.")
     )]
     GammaDisabled,
 }
