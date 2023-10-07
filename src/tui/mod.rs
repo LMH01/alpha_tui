@@ -199,7 +199,7 @@ impl App {
 
     /// returns true when the execution finished in this step
     fn step(&mut self) -> bool {
-        let res = self.runtime.step(); //TODO Move the two similar parts of this and the above function into a new function
+        let res = self.runtime.step();
         if let Err(e) = res {
             self.set_state(State::Errored(e));
         }

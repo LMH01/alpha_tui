@@ -340,7 +340,6 @@ impl MemoryListsManager {
 
     /// Returns the current memory cells as list (also contains index memory cells)
     pub fn memory_cell_list(&self) -> Vec<ListItem<'static>> {
-        // TODO Add gamma
         let mut list = Vec::new();
         for cell in &self.memory_cells {
             let mut item = ListItem::new(cell.1 .0.clone());

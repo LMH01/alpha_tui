@@ -6,22 +6,34 @@ use crate::base::Operation;
 /// Errors that can occur when a runtime is constructed from a `RuntimeBuilder`.
 #[derive(Debug, PartialEq, Error, Diagnostic)]
 pub enum RuntimeBuildError {
-    // TODO Make error messages consistent by starting them with a captial letter and by better explaining the reason, make them consistent with the runtime errors
-    #[error("runtime arguments missing")]
-    #[diagnostic(code("runtime_build_error::runtime_args_missing"))]
+    
+    #[error("Runtime arguments missing")]
+    #[diagnostic(
+        code("runtime_build_error::runtime_args_missing"),
+        help("This is an internal error and should not be exposed, please create a new bug report on github."),
+        url("https://github.com/LMH01/alpha_tui/issues")
+    )]
     RuntimeArgsMissing,
-    #[error("instructions missing")]
-    #[diagnostic(code("runtime_build_error::instructions_missing"))]
+
+    #[error("Instructions are missing")]
+    #[diagnostic(
+        code("runtime_build_error::instructions_missing"),
+        help("This is an internal error and should not be exposed, please create a new bug report on github."),
+        url("https://github.com/LMH01/alpha_tui/issues")
+    )]
     InstructionsMissing,
+
     /// Indicates that a label is used in an instruction that does not exist in the control flow.
     /// This would lead to a runtime error.
-    #[error("label '{0}' undefined")]
+    #[error("Label '{0}' should be used but is not defined")]
     #[diagnostic(code("runtime_build_error::label_undefined"), help("Make sure that you include the label somewhere before an instruction.\nExample: '{0}: a0 := 5'"))]
     LabelUndefined(String),
-    #[error("memory cell '{0}' is missing")]
+
+    #[error("Memory cell '{0}' should be used but is missing")]
     #[diagnostic(code("runtime_build_error::memory_cell_missing"), help("Make sure to include the memory cell '{0}' in the available memory cells.\nExample: alpha_tui -i FILE -m {0}"))]
     MemoryCellMissing(String),
-    #[error("accumulator with id '{0}' is missing")]
+
+    #[error("Accumulator with id '{0}' should be used but is missing")]
     #[diagnostic(
         code("runtime_build_error::accumulator_missing"),
         help("Make sure to have the number of available accumulators set to at least {0}+1")
@@ -77,7 +89,7 @@ pub enum RuntimeErrorType {
     #[error("Attempt to use accumulator gamma while it does not exist")]
     #[diagnostic(
         code("runtime_error::gamma_does_not_exist"),
-        help("Make sure to tell the program to use the gamma accumulator by using the TODO flag") // TODO implement flag that enables gamma accumulator
+        help("Make sure to tell the program to use the gamma accumulator by using the TODO flag")
     )]
     GammaDoesNotExist,
 

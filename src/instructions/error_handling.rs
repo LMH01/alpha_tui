@@ -11,6 +11,7 @@ pub enum InstructionParseError {
         help("Did you mean one of these?: + - * /")
     )]
     UnknownOperation((usize, usize), String),
+
     /// Indicates that the specified comparison does not exist.
     /// Argument specifies the character index at which the error occurred.
     /// and the string that caused it.
@@ -20,12 +21,14 @@ pub enum InstructionParseError {
         help("Did you mean one of these?: < <= == != >= >")
     )]
     UnknownComparison((usize, usize), String),
+
     /// Indicates that a value that was expected to be a number is not a number.
     /// Argument specifies the character index at which the error occurred.
     /// and the string that caused it.
     #[error("'{1}' is not a number")]
     #[diagnostic(code("parse_instruction::not_a_number"))]
     NotANumber((usize, usize), String),
+
     /// Indicates that the market expression is not valid.
     /// The reason might be a syntax error.
     #[error("invalid expression '{1}'")]
@@ -35,6 +38,7 @@ pub enum InstructionParseError {
         help("Make sure that you use a supported instruction.")
     )]
     InvalidExpression((usize, usize), String),
+
     /// Indicates that no instruction was found that matches the input.
     #[error("unknown instruction '{1}'")]
     #[diagnostic(
@@ -43,6 +47,7 @@ pub enum InstructionParseError {
         help("Make sure that you use a supported instruction.")
     )]
     UnknownInstruction((usize, usize), String),
+    
     #[error("missing expression")]
     #[diagnostic(
         code("parse_instruction::missing_expression"),

@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.1 (dev)
+
+### Other
+- Made runtime build errors consistent with runtime errors
+
 ## v1.0.0
 
 ### New feature
