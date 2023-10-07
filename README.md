@@ -1,5 +1,8 @@
 [![Downloads](https://img.shields.io/github/v/release/lmh01/alpha_tui)](https://github.com/lmh01/alpha_tui/releases)
 ![Downloads](https://img.shields.io/github/downloads/lmh01/alpha_tui/total)
+[![Coverage](https://img.shields.io/codecov/c/github/lmh01/alpha_tui)](https://app.codecov.io/gh/LMH01/alpha_tui)
+![Pipeline status](https://img.shields.io/github/actions/workflow/status/lmh01/alpha_tui/rust.yml
+)
 [![License](https://img.shields.io/github/license/lmh01/alpha_tui)](LICENSE)
 
 # alpha_tui
