@@ -6,7 +6,6 @@ use crate::base::Operation;
 /// Errors that can occur when a runtime is constructed from a `RuntimeBuilder`.
 #[derive(Debug, PartialEq, Error, Diagnostic)]
 pub enum RuntimeBuildError {
-
     #[error("Runtime arguments missing")]
     #[diagnostic(
         code("runtime_build_error::runtime_args_missing"),
@@ -125,6 +124,13 @@ pub enum RuntimeErrorType {
     )]
     IndexMemoryCellDoesNotExist(usize),
 
+    #[error("Attempt to access index memory cell with negative index, '{0}'")]
+    #[diagnostic(
+        code("runtime_error::index_memory_cell_negative_index"),
+        help("Make sure that the value with which you try to access the index memory cell is positive")
+    )]
+    IndexMemoryCellNegativeIndex(i32),
+
     #[error("Attempt to push value of a0 onto stack while a0 is not initialized")]
     #[diagnostic(
         code("runtime_error::push_fail"),
@@ -172,13 +178,6 @@ pub enum RuntimeErrorType {
         #[diagnostic_source]
         cause: CalcError,
     },
-
-    #[error("Attempt to access index memory cell with negative index, '{0}'")]
-    #[diagnostic(
-        code("runtime_error::index_memory_cell_negative_index"),
-        help("Make sure that the value with which you try to access the index memory cell is positive")
-    )]
-    IndexMemoryCellNegativeIndex(i32),
 }
 
 #[derive(Debug, Clone, PartialEq, Error, Diagnostic)]
@@ -201,8 +200,8 @@ pub enum CalcError {
 #[cfg(test)]
 mod tests {
     use crate::{
-        base::Operation,
-        instructions::{Instruction, TargetType, Value},
+        base::{Operation, MemoryCell},
+        instructions::{IndexMemoryCellIndexType, Instruction, TargetType, Value},
         runtime::{
             builder::RuntimeBuilder,
             error_handling::{CalcError, RuntimeBuildError, RuntimeErrorType},
@@ -262,6 +261,22 @@ mod tests {
     }
 
     #[test]
+    fn test_rbe_gamma_disabled() {
+        let mut rt = RuntimeBuilder::new_debug(&[]);
+        let mut ra = RuntimeArgs::new_debug(&["h1"]);
+        ra.gamma = None;
+        rt.set_runtime_args(ra);
+        rt.set_instructions(vec![Instruction::Assign(
+            TargetType::Gamma,
+            Value::Constant(10),
+        )]);
+        assert_eq!(
+            rt.build(),
+            Err(RuntimeBuildError::GammaDisabled)
+        );
+    }
+
+    #[test]
     fn test_re_accumulator_uninitialized() {
         let mut ra = RuntimeArgs::new(
             1,
@@ -302,6 +317,30 @@ mod tests {
     }
 
     #[test]
+    fn test_re_gamma_uninitialized() {
+        let mut ra = RuntimeArgs::new_debug(&["h1"]);
+        ra.gamma = Some(None);
+        let mut cf = ControlFlow::new();
+        assert_eq!(
+            Instruction::Assign(TargetType::MemoryCell("h1".to_string()), Value::Gamma)
+                .run(&mut ra, &mut cf),
+            Err(RuntimeErrorType::GammaUninitialized)
+        )
+    }
+
+    #[test]
+    fn test_re_gamma_does_not_exist() {
+        let mut ra = RuntimeArgs::new_debug(&["h1"]);
+        ra.gamma = None;
+        let mut cf = ControlFlow::new();
+        assert_eq!(
+            Instruction::Assign(TargetType::MemoryCell("h1".to_string()), Value::Gamma)
+                .run(&mut ra, &mut cf),
+            Err(RuntimeErrorType::GammaDoesNotExist)
+        )
+    }
+
+    #[test]
     fn test_re_memory_cell_uninitialized() {
         let mut ra = RuntimeArgs::new(
             1,
@@ -336,6 +375,51 @@ mod tests {
     }
 
     #[test]
+    fn test_re_imc_uninitialized() {
+        let mut ra = RuntimeArgs::new_debug(&["h1"]);
+        let mut cf = ControlFlow::new();
+        ra.index_memory_cells.insert(0, None);
+        assert_eq!(
+            Instruction::Assign(
+                TargetType::MemoryCell("h1".to_string()),
+                Value::IndexMemoryCell(IndexMemoryCellIndexType::Direct(0))
+            )
+            .run(&mut ra, &mut cf),
+            Err(RuntimeErrorType::IndexMemoryCellUninitialized(0))
+        )
+    }
+
+    #[test]
+    fn test_re_imc_does_not_exist() {
+        let mut ra = RuntimeArgs::new_debug(&["h1"]);
+        let mut cf = ControlFlow::new();
+        assert_eq!(
+            Instruction::Assign(
+                TargetType::MemoryCell("h1".to_string()),
+                Value::IndexMemoryCell(IndexMemoryCellIndexType::Direct(0))
+            )
+            .run(&mut ra, &mut cf),
+            Err(RuntimeErrorType::IndexMemoryCellDoesNotExist(0))
+        )
+    }
+
+    #[test]
+    fn test_re_imc_negative_index() {
+        let mut ra = RuntimeArgs::new_debug(&["h1"]);
+        let mut cf = ControlFlow::new();
+        ra.memory_cells.insert("h1".to_string(), MemoryCell::new("h1"));
+        ra.memory_cells.get_mut("h1").unwrap().data = Some(-1);
+        assert_eq!(
+            Instruction::Assign(
+                TargetType::MemoryCell("h1".to_string()),
+                Value::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string()))
+            )
+            .run(&mut ra, &mut cf),
+            Err(RuntimeErrorType::IndexMemoryCellNegativeIndex(-1))
+        )
+    }
+
+    #[test]
     fn test_re_push_fail() {
         let mut ra = RuntimeArgs::new(1, vec![], None, true, Settings::new_default());
         let mut cf = ControlFlow::new();
@@ -359,6 +443,17 @@ mod tests {
             Instruction::Pop.run(&mut ra, &mut cf),
             Err(RuntimeErrorType::PopFail)
         );
+    }
+
+    #[test]
+    fn test_re_stack_op_fail() {
+        let mut ra = RuntimeArgs::new_debug(&["h1"]);
+        let mut cf = ControlFlow::new();
+        assert_eq!(
+            Instruction::StackOp(Operation::Add)
+            .run(&mut ra, &mut cf),
+            Err(RuntimeErrorType::StackOpFail(Operation::Add))
+        )
     }
 
     #[test]
@@ -398,7 +493,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ce_me_attempt_to_divide_by_zero() {
+    fn test_re_ce_attempt_to_divide_by_zero() {
         let mut ra = RuntimeArgs::new(2, vec![], None, true, Settings::new_default());
         ra.accumulators.get_mut(&0).unwrap().data = Some(0);
         ra.accumulators.get_mut(&1).unwrap().data = Some(0);
