@@ -133,7 +133,6 @@ pub struct BuildProgramError {
     pub reason: BuildProgramErrorTypes,
 }
 
-//TODO Add error tests
 #[cfg(test)]
 mod tests {
     use crate::{
@@ -143,37 +142,6 @@ mod tests {
         },
         runtime::builder::RuntimeBuilder,
     };
-
-    #[test]
-    fn test_bpe_main_label_defined_multiple_times() {
-        let mut rb = RuntimeBuilder::new_debug(&["a", "b"]);
-        let instructions_input = vec!["main:", "", "MAIN:"];
-        assert_eq!(
-            rb.build_instructions(&instructions_input, "test"),
-            Err(BuildProgramError {
-                reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes
-            })
-        );
-        let instructions_input = vec!["main:", "", "main:"];
-        assert_eq!(
-            rb.build_instructions(&instructions_input, "test"),
-            Err(BuildProgramError {
-                reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes
-            })
-        )
-    }
-
-    #[test]
-    fn test_bpe_label_definined_multiple_times() {
-        let mut rb = RuntimeBuilder::new_debug(&["a", "b"]);
-        let instructions_input = vec!["loop:", "", "loop:"];
-        assert_eq!(
-            rb.build_instructions(&instructions_input, "test"),
-            Err(BuildProgramError {
-                reason: BuildProgramErrorTypes::LabelDefinedMultipleTimes("loop".to_string())
-            })
-        )
-    }
 
     #[test]
     fn test_ipe_unknown_operation() {
@@ -353,4 +321,36 @@ mod tests {
             })
         );
     }
+
+    #[test]
+    fn test_bpe_label_defined_multiple_times() {
+        let mut rb = RuntimeBuilder::new_debug(&["a", "b"]);
+        let instructions_input = vec!["loop:", "", "loop:"];
+        assert_eq!(
+            rb.build_instructions(&instructions_input, "test"),
+            Err(BuildProgramError {
+                reason: BuildProgramErrorTypes::LabelDefinedMultipleTimes("loop".to_string())
+            })
+        )
+    }
+
+    #[test]
+    fn test_bpe_main_label_defined_multiple_times() {
+        let mut rb = RuntimeBuilder::new_debug(&["a", "b"]);
+        let instructions_input = vec!["main:", "", "MAIN:"];
+        assert_eq!(
+            rb.build_instructions(&instructions_input, "test"),
+            Err(BuildProgramError {
+                reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes
+            })
+        );
+        let instructions_input = vec!["main:", "", "main:"];
+        assert_eq!(
+            rb.build_instructions(&instructions_input, "test"),
+            Err(BuildProgramError {
+                reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes
+            })
+        )
+    }
+
 }
