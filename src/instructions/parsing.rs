@@ -259,7 +259,6 @@ pub fn parse_comparison(
 /// The numbers 0-9 are also allowed, if at least one letter is included.
 ///
 /// `part_range` indicates the area that is affected.
-#[allow(clippy::manual_is_ascii_check)] //TODO remove when below todo is implemented
 pub fn parse_memory_cell(
     s: &str,
     part_range: (usize, usize),
@@ -286,10 +285,16 @@ pub fn parse_memory_cell(
             s.to_string(),
         ));
     }
-    if !name.chars().any(|c| matches!(c, 'a'..='z')) {
-        // TODO fix that ONLY a-z, A-Z and 0-9 are allowed, names that contain ( or ; should fail!
+    if name.chars().any(|c| matches!(c, 'a'..='z' | 'A'..='Z')) {
+        if !name.chars().all(|c| matches!(c, 'a'..='z' | 'A'..='Z' | '0'..='9')) {
+            return Err(InstructionParseError::InvalidExpression(
+                (part_range.0 + 2, part_range.1 - 1),
+                name,
+            ));
+        }
+    } else {
         return Err(InstructionParseError::InvalidExpression(
-            (part_range.0 + 2, part_range.1 - 2),
+            (part_range.0 + 2, part_range.1 - 1),
             name,
         ));
     }
@@ -398,19 +403,23 @@ mod tests {
         assert_eq!(parse_memory_cell("p(h1)", (0, 4)), Ok("h1".to_string()));
         assert_eq!(parse_memory_cell("ρ(h1)", (0, 4)), Ok("h1".to_string()));
         assert_eq!(
-            parse_memory_cell("p(1)", (0, 4)),
+            parse_memory_cell("p(1)", (0, 3)),
             Err(InstructionParseError::InvalidExpression(
                 (2, 2),
                 "1".to_string()
             ))
         );
         assert_eq!(
-            parse_memory_cell("ρ(10)", (0, 5)),
+            parse_memory_cell("ρ(10)", (0, 4)),
             Err(InstructionParseError::InvalidExpression(
                 (2, 3),
                 "10".to_string()
             ))
         );
+        assert_eq!(
+            parse_memory_cell("p(x;y)", (0, 5)),
+            Err(InstructionParseError::InvalidExpression((2, 4), "x;y".to_string()))
+        )
     }
 
     #[test]

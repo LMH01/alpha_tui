@@ -5,6 +5,9 @@
 ### Other
 - Made runtime build errors consistent with runtime errors
 
+### Bug fixes
+- Memory cell names could contain non alphabetic or numeric characters
+
 ## v1.0.0
 
 ### New feature
