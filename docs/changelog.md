@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.0.1 (dev)
+## v1.0.1
 
 ### Other
 - Made runtime build errors consistent with runtime errors
