@@ -398,7 +398,7 @@ fn assign_index_memory_cell_from_value(
 /// 
 /// This is needed when checking if instructions are allowed because the `Eq` implementation determines that `TargetType::Accumulator(0)``
 /// is not equal to `TargetType::Accumulator(1)`` even though they are basically the same type of command.
-pub trait Identifier {// TODO determine better name...
+pub trait Identifier {
 
     /// Returns the identifier for this instruction (put together from the identifiers of the different instruction components)
     /// under which it is resolved when placed in the allowed instruction list.
