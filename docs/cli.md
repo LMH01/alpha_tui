@@ -13,7 +13,7 @@ If you require memory cells to be pre initialized you can use the option `--memo
 
 You can use the option `--allowed-instructions` to specify a file where allowed instructions are stored. When this option is provided, all programs will fail to build that contain instructions that are not included in the file.
 
-This makes it possible to challenge yourself in working with only a limited instruction set.
+This makes it possible to challenge yourself into working with only a limited instruction set.
 
 #### How it works
 
@@ -28,7 +28,7 @@ All commands that are understood by the program can be used to specify what inst
 | OP | any operation |
 | CMP | any comparison |
 
-In addition to this, it is not required to specify a label for the following instructions: `goto, call, if _ then goto`.
+Furthermore it is not required to specify a label for the following instructions: `goto, call, if _ then goto`.
 
 This results in this file
 
