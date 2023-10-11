@@ -9,7 +9,7 @@ use miette::{miette, IntoDiagnostic, NamedSource, Result, SourceOffset, SourceSp
 use crate::{
     instructions::{
         error_handling::{BuildAllowedInstructionsError, InstructionParseError},
-        Instruction,
+        Instruction, InstructionWhitelist,
     },
     runtime::builder::RuntimeBuilder,
 };
@@ -210,7 +210,7 @@ pub fn build_instructions_with_whitelist(
     for (idx, s) in whitelisted_instructions_file_contents.iter().enumerate() {
         match Instruction::try_from(s.as_str()) {
             Ok(i) => {
-                let _ = whitelisted_instructions.insert(i);
+                let _ = whitelisted_instructions.insert(i.identifier());
             }
             Err(e) => {
                 // Workaround for wrong end_range value depending on error.

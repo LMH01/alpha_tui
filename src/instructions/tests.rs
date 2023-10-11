@@ -1,19 +1,16 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use assert_cmd::Command;
-use miette::{NamedSource, SourceOffset, SourceSpan};
 
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
     instructions::{
         assign_index_memory_cell, assign_index_memory_cell_from_value,
-        error_handling::{BuildAllowedInstructionsError, BuildProgramError, InstructionParseError},
         IndexMemoryCellIndexType, Instruction, TargetType, Value, InstructionWhitelist, ACCUMULATOR_IDENTIFIER, CONSTANT_IDENTIFIER, GAMMA_IDENTIFIER, MEMORY_CELL_IDENTIFIER, COMPARISON_IDENTIFIER, OPERATOR_IDENTIFIER,
     },
     runtime::{
         builder::RuntimeBuilder, error_handling::RuntimeErrorType, ControlFlow, RuntimeArgs,
     },
-    utils::build_instructions_with_whitelist,
 };
 
 /// Used to set the available memory cells during testing.
@@ -1489,10 +1486,10 @@ fn test_bai_error() {
   × when building program
   ╰─▶ build_program::instruction_not_allowed_error
       
-        × instruction 'pop' in line '1' is not allowed
-        help: Make sure that you include this type of instruction in the
-      whitelist
-              or use a different instruction.
+        × instruction 'pop' in line '2' is not allowed
+        help: Make sure that you include this type ('pop') of instruction
+      in the
+              whitelist or use a different instruction.
               These types of instructions are allowed:
       
               push

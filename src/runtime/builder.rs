@@ -7,7 +7,7 @@ use crate::{
     cli::Cli,
     instructions::{
         error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
-        IndexMemoryCellIndexType, Instruction, TargetType, Value,
+        IndexMemoryCellIndexType, Instruction, TargetType, Value, InstructionWhitelist,
     },
     utils::remove_comment,
 };
@@ -237,13 +237,15 @@ impl RuntimeBuilder {
 
     /// Builds instructions from the vector and compares them with a provided whitelist of instructions.
     /// If instructions are found that are not contained in the whitelist, the build will fail and an error is returned.
+    /// 
+    /// The whitelist contains the return value of `Instruction::identifier()`.
     ///
     /// `RuntimeBuilder::check_instructions()` is used for the check if instructions are allowed.
     pub fn build_instructions_whitelist(
         &mut self,
         instructions_input: &[&str],
         file_name: &str,
-        whitelist: &HashSet<Instruction>,
+        whitelist: &HashSet<String>,
     ) -> Result<(), BuildProgramError> {
         let instructions = self.build_instructions_internal(instructions_input, file_name)?;
         check_instructions(&instructions, whitelist)?;
@@ -425,15 +427,19 @@ pub fn check_gamma(
 
 /// Checks instructions that are set by comparing them with the provided whitelist of instructions.
 /// If this runtime builder contains instructions that are not contained within the whitelist, an error is returned.
+/// 
+/// The whitelist contains the return value of `Instruction::identifier()`.
 pub fn check_instructions(
     instructions: &[Instruction],
-    whitelist: &HashSet<Instruction>,
+    whitelist: &HashSet<String>,
 ) -> Result<(), BuildProgramError> {
     for (idx, i) in instructions.iter().enumerate() {
-        if !whitelist.contains(i) {
+        if !whitelist.contains(&i.identifier()) {
             // Instruction found, that is forbidden
+            let mut allowed_instructions = whitelist.iter().map(|f| format!("{}", f)).collect::<Vec<String>>();
+            allowed_instructions.sort();
             return Err(BuildProgramError {
-                reason: BuildProgramErrorTypes::InstructionNotAllowed(idx, format!("{i}"), format!("{}", whitelist.iter().map(|f| format!("{}", f)).collect::<Vec<String>>().join("\n"))),
+                reason: BuildProgramErrorTypes::InstructionNotAllowed(idx+1, format!("{i}"), i.identifier(), format!("{}", allowed_instructions.join("\n"))),
             });
         }
     }
