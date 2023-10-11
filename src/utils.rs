@@ -241,7 +241,7 @@ pub fn build_instructions_with_whitelist(
                         ),
                         SourceOffset::from(end_range),
                     ),
-                    reason: e,
+                    reason: e, 
                 })?;
             }
         }

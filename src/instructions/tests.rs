@@ -1451,7 +1451,10 @@ fn test_bai_error() {
         × instruction 'pop' in line '1' is not allowed
         help: Make sure that you include this type of instruction in the
       whitelist
-              or use a different instruction
+              or use a different instruction.
+              These types of instructions are allowed:
+      
+              push
       
 
 "#);

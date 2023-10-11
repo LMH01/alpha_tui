@@ -106,9 +106,9 @@ pub enum BuildProgramErrorTypes {
     #[error("instruction '{1}' in line '{0}' is not allowed")]
     #[diagnostic(
         code("build_program::instruction_not_allowed_error"),
-        help("Make sure that you include this type of instruction in the whitelist or use a different instruction")
+        help("Make sure that you include this type of instruction in the whitelist or use a different instruction.\nThese types of instructions are allowed:\n\n{2}")
     )]
-    InstructionNotAllowed(usize, String),
+    InstructionNotAllowed(usize, String, String),
 }
 
 #[allow(clippy::match_same_arms)]

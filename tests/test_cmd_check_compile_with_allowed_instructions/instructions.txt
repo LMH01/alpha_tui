@@ -1,0 +1,4 @@
+A := C
+M := M OP M
+A := A OP M
+M := A

@@ -433,7 +433,7 @@ pub fn check_instructions(
         if !whitelist.contains(i) {
             // Instruction found, that is forbidden
             return Err(BuildProgramError {
-                reason: BuildProgramErrorTypes::InstructionNotAllowed(idx, format!("{i}")),
+                reason: BuildProgramErrorTypes::InstructionNotAllowed(idx, format!("{i}"), format!("{}", whitelist.iter().map(|f| format!("{}", f)).collect::<Vec<String>>().join("\n"))),
             });
         }
     }
