@@ -1440,8 +1440,8 @@ fn test_bai_error() {
     let mut cmd = Command::cargo_bin("alpha_tui").unwrap();
     let assert = cmd
         .arg("load")
-        .arg("test_sources/test_bai_error/program.alpha")
-        .arg("--allowed-instructions").arg("test_sources/test_bai_error/allowed_instructions_a.txt")
+        .arg("tests/test_bai_error/program.alpha")
+        .arg("--allowed-instructions").arg("tests/test_bai_error/allowed_instructions_a.txt")
         .assert();
     assert.stderr(r#"Error: build_program_error
 
