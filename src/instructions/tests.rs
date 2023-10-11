@@ -1,14 +1,19 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+
+use assert_cmd::Command;
+use miette::{NamedSource, SourceOffset, SourceSpan};
 
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
     instructions::{
-        assign_index_memory_cell, assign_index_memory_cell_from_value, IndexMemoryCellIndexType,
-        Instruction, TargetType, Value,
+        assign_index_memory_cell, assign_index_memory_cell_from_value,
+        error_handling::{BuildAllowedInstructionsError, BuildProgramError, InstructionParseError},
+        IndexMemoryCellIndexType, Instruction, TargetType, Value,
     },
     runtime::{
         builder::RuntimeBuilder, error_handling::RuntimeErrorType, ControlFlow, RuntimeArgs,
     },
+    utils::build_instructions_with_whitelist,
 };
 
 /// Used to set the available memory cells during testing.
@@ -1428,4 +1433,26 @@ fn test_index_memory_cell_index_type_display() {
         format!("{}", IndexMemoryCellIndexType::MemoryCell("h1".to_string())),
         "p(h1)".to_string()
     );
+}
+
+#[test]
+fn test_bai_error() {
+    let mut cmd = Command::cargo_bin("alpha_tui").unwrap();
+    let assert = cmd
+        .arg("load")
+        .arg("test_sources/test_bai_error/program.alpha")
+        .arg("--allowed-instructions").arg("test_sources/test_bai_error/allowed_instructions_a.txt")
+        .assert();
+    assert.stderr(r#"Error: build_program_error
+
+  × when building program
+  ╰─▶ build_program::instruction_not_allowed_error
+      
+        × instruction 'pop' in line '1' is not allowed
+        help: Make sure that you include this type of instruction in the
+      whitelist
+              or use a different instruction
+      
+
+"#);
 }
