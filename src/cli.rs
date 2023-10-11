@@ -157,7 +157,7 @@ mod tests {
             .assert();
         assert.success();
     }
-    
+
     #[test]
     fn test_cmd_check_compile_with_allowed_instructions_2() {
         let mut cmd = Command::cargo_bin("alpha_tui").unwrap();

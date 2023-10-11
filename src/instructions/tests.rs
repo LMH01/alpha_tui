@@ -5,8 +5,10 @@ use assert_cmd::Command;
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
     instructions::{
-        assign_index_memory_cell, assign_index_memory_cell_from_value,
-        IndexMemoryCellIndexType, Instruction, TargetType, Value, Identifier, ACCUMULATOR_IDENTIFIER, CONSTANT_IDENTIFIER, GAMMA_IDENTIFIER, MEMORY_CELL_IDENTIFIER, COMPARISON_IDENTIFIER, OPERATOR_IDENTIFIER,
+        assign_index_memory_cell, assign_index_memory_cell_from_value, Identifier,
+        IndexMemoryCellIndexType, Instruction, TargetType, Value, ACCUMULATOR_IDENTIFIER,
+        COMPARISON_IDENTIFIER, CONSTANT_IDENTIFIER, GAMMA_IDENTIFIER, MEMORY_CELL_IDENTIFIER,
+        OPERATOR_IDENTIFIER,
     },
     runtime::{
         builder::RuntimeBuilder, error_handling::RuntimeErrorType, ControlFlow, RuntimeArgs,
@@ -1434,19 +1436,40 @@ fn test_index_memory_cell_index_type_display() {
 
 #[test]
 fn test_value_instruction_identifier() {
-    assert_eq!(Value::Accumulator(0).identifier(), ACCUMULATOR_IDENTIFIER.to_string());
-    assert_eq!(Value::Constant(0).identifier(), CONSTANT_IDENTIFIER.to_string());
+    assert_eq!(
+        Value::Accumulator(0).identifier(),
+        ACCUMULATOR_IDENTIFIER.to_string()
+    );
+    assert_eq!(
+        Value::Constant(0).identifier(),
+        CONSTANT_IDENTIFIER.to_string()
+    );
     assert_eq!(Value::Gamma.identifier(), GAMMA_IDENTIFIER.to_string());
-    assert_eq!(Value::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0)).identifier(), MEMORY_CELL_IDENTIFIER.to_string());
-    assert_eq!(Value::MemoryCell("h1".to_string()).identifier(), MEMORY_CELL_IDENTIFIER.to_string());
+    assert_eq!(
+        Value::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0)).identifier(),
+        MEMORY_CELL_IDENTIFIER.to_string()
+    );
+    assert_eq!(
+        Value::MemoryCell("h1".to_string()).identifier(),
+        MEMORY_CELL_IDENTIFIER.to_string()
+    );
 }
 
 #[test]
 fn test_target_type_identifier() {
-    assert_eq!(TargetType::Accumulator(0).identifier(), ACCUMULATOR_IDENTIFIER.to_string());
+    assert_eq!(
+        TargetType::Accumulator(0).identifier(),
+        ACCUMULATOR_IDENTIFIER.to_string()
+    );
     assert_eq!(TargetType::Gamma.identifier(), GAMMA_IDENTIFIER.to_string());
-    assert_eq!(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0)).identifier(), MEMORY_CELL_IDENTIFIER.to_string());
-    assert_eq!(TargetType::MemoryCell("h1".to_string()).identifier(), MEMORY_CELL_IDENTIFIER.to_string());
+    assert_eq!(
+        TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0)).identifier(),
+        MEMORY_CELL_IDENTIFIER.to_string()
+    );
+    assert_eq!(
+        TargetType::MemoryCell("h1".to_string()).identifier(),
+        MEMORY_CELL_IDENTIFIER.to_string()
+    );
 }
 
 #[test]
@@ -1461,16 +1484,46 @@ fn test_operation_identifier() {
 
 #[test]
 fn test_instruction_identifier() {
-    assert_eq!(Instruction::Assign(TargetType::Accumulator(0), Value::Accumulator(0)).identifier(), "A := A".to_string());
-    assert_eq!(Instruction::Calc(TargetType::MemoryCell("h1".to_string()), Value::Constant(5), Operation::Add, Value::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0))).identifier(), "M := C OP M".to_string());
-    assert_eq!(Instruction::Call("label".to_string()).identifier(), "call".to_string());
-    assert_eq!(Instruction::Goto("loop".to_string()).identifier(), "goto".to_string());
-    assert_eq!(Instruction::JumpIf(Value::Gamma, Comparison::Gt, Value::MemoryCell("h1".to_string()), "label".to_string()).identifier(), "if Y CMP M then goto".to_string());
+    assert_eq!(
+        Instruction::Assign(TargetType::Accumulator(0), Value::Accumulator(0)).identifier(),
+        "A := A".to_string()
+    );
+    assert_eq!(
+        Instruction::Calc(
+            TargetType::MemoryCell("h1".to_string()),
+            Value::Constant(5),
+            Operation::Add,
+            Value::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0))
+        )
+        .identifier(),
+        "M := C OP M".to_string()
+    );
+    assert_eq!(
+        Instruction::Call("label".to_string()).identifier(),
+        "call".to_string()
+    );
+    assert_eq!(
+        Instruction::Goto("loop".to_string()).identifier(),
+        "goto".to_string()
+    );
+    assert_eq!(
+        Instruction::JumpIf(
+            Value::Gamma,
+            Comparison::Gt,
+            Value::MemoryCell("h1".to_string()),
+            "label".to_string()
+        )
+        .identifier(),
+        "if Y CMP M then goto".to_string()
+    );
     assert_eq!(Instruction::Noop.identifier(), "NOOP".to_string());
     assert_eq!(Instruction::Pop.identifier(), "pop".to_string());
     assert_eq!(Instruction::Push.identifier(), "push".to_string());
     assert_eq!(Instruction::Return.identifier(), "return".to_string());
-    assert_eq!(Instruction::StackOp(Operation::Add).identifier(), "stackOP".to_string());
+    assert_eq!(
+        Instruction::StackOp(Operation::Add).identifier(),
+        "stackOP".to_string()
+    );
 }
 
 #[test]
@@ -1479,9 +1532,11 @@ fn test_bai_error() {
     let assert = cmd
         .arg("load")
         .arg("tests/test_bai_error/program.alpha")
-        .arg("--allowed-instructions").arg("tests/test_bai_error/allowed_instructions_a.txt")
+        .arg("--allowed-instructions")
+        .arg("tests/test_bai_error/allowed_instructions_a.txt")
         .assert();
-    assert.stderr(r#"Error: build_program_error
+    assert.stderr(
+        r#"Error: build_program_error
 
   × when building program
   ╰─▶ build_program::instruction_not_allowed_error
@@ -1495,5 +1550,6 @@ fn test_bai_error() {
               push
       
 
-"#);
+"#,
+    );
 }

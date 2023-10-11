@@ -7,7 +7,7 @@ use crate::{
     cli::Cli,
     instructions::{
         error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
-        IndexMemoryCellIndexType, Instruction, TargetType, Value, Identifier,
+        Identifier, IndexMemoryCellIndexType, Instruction, TargetType, Value,
     },
     utils::remove_comment,
 };
@@ -237,7 +237,7 @@ impl RuntimeBuilder {
 
     /// Builds instructions from the vector and compares them with a provided whitelist of instructions.
     /// If instructions are found that are not contained in the whitelist, the build will fail and an error is returned.
-    /// 
+    ///
     /// The whitelist contains the return value of `Instruction::identifier()`.
     ///
     /// `RuntimeBuilder::check_instructions()` is used for the check if instructions are allowed.
@@ -427,7 +427,7 @@ pub fn check_gamma(
 
 /// Checks instructions that are set by comparing them with the provided whitelist of instructions.
 /// If this runtime builder contains instructions that are not contained within the whitelist, an error is returned.
-/// 
+///
 /// The whitelist contains the return value of `Instruction::identifier()`.
 pub fn check_instructions(
     instructions: &[Instruction],
@@ -436,10 +436,18 @@ pub fn check_instructions(
     for (idx, i) in instructions.iter().enumerate() {
         if !whitelist.contains(&i.identifier()) {
             // Instruction found, that is forbidden
-            let mut allowed_instructions = whitelist.iter().map(String::to_string).collect::<Vec<String>>();
+            let mut allowed_instructions = whitelist
+                .iter()
+                .map(String::to_string)
+                .collect::<Vec<String>>();
             allowed_instructions.sort();
             return Err(BuildProgramError {
-                reason: BuildProgramErrorTypes::InstructionNotAllowed(idx+1, format!("{i}"), i.identifier(), allowed_instructions.join("\n").to_string()),
+                reason: BuildProgramErrorTypes::InstructionNotAllowed(
+                    idx + 1,
+                    format!("{i}"),
+                    i.identifier(),
+                    allowed_instructions.join("\n").to_string(),
+                ),
             });
         }
     }

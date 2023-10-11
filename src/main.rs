@@ -72,7 +72,10 @@ fn cmd_check(cli: &Cli, instructions: &[String], input: &str) {
         match build_instructions_with_whitelist(&mut rb, instructions, input, file) {
             Ok(_) => (),
             Err(e) => {
-                println!("Check unsuccessful: {:?}", miette!("Unable to create RuntimeBuilder:\n{:?}", e));
+                println!(
+                    "Check unsuccessful: {:?}",
+                    miette!("Unable to create RuntimeBuilder:\n{:?}", e)
+                );
                 exit(1);
             }
         }

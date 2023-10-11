@@ -9,7 +9,7 @@ use miette::{miette, IntoDiagnostic, NamedSource, Result, SourceOffset, SourceSp
 use crate::{
     instructions::{
         error_handling::{BuildAllowedInstructionsError, InstructionParseError},
-        Instruction, Identifier,
+        Identifier, Instruction,
     },
     runtime::builder::RuntimeBuilder,
 };
@@ -241,7 +241,7 @@ pub fn build_instructions_with_whitelist(
                         ),
                         SourceOffset::from(end_range),
                     ),
-                    reason: e, 
+                    reason: e,
                 })?;
             }
         }
@@ -274,11 +274,11 @@ pub fn prepare_whitelist_file(content: Vec<String>) -> Vec<String> {
             "goto" => {
                 prepared.push("goto loop".to_string());
                 continue;
-            },
+            }
             "call" => {
                 prepared.push("call loop".to_string());
                 continue;
-            },
+            }
             _ => (),
         }
         let chunks = line.split(' ');

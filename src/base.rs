@@ -1,6 +1,9 @@
 use std::fmt::Display;
 
-use crate::{runtime::error_handling::{CalcError, RuntimeErrorType}, instructions::{Identifier, OPERATOR_IDENTIFIER, COMPARISON_IDENTIFIER}};
+use crate::{
+    instructions::{Identifier, COMPARISON_IDENTIFIER, OPERATOR_IDENTIFIER},
+    runtime::error_handling::{CalcError, RuntimeErrorType},
+};
 
 /// A single accumulator, represents "Akkumulator/Alpha" from SysInf lecture.
 #[allow(clippy::doc_markdown)]
