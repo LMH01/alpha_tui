@@ -436,10 +436,10 @@ pub fn check_instructions(
     for (idx, i) in instructions.iter().enumerate() {
         if !whitelist.contains(&i.identifier()) {
             // Instruction found, that is forbidden
-            let mut allowed_instructions = whitelist.iter().map(|f| format!("{}", f)).collect::<Vec<String>>();
+            let mut allowed_instructions = whitelist.iter().map(String::to_string).collect::<Vec<String>>();
             allowed_instructions.sort();
             return Err(BuildProgramError {
-                reason: BuildProgramErrorTypes::InstructionNotAllowed(idx+1, format!("{i}"), i.identifier(), format!("{}", allowed_instructions.join("\n"))),
+                reason: BuildProgramErrorTypes::InstructionNotAllowed(idx+1, format!("{i}"), i.identifier(), allowed_instructions.join("\n").to_string()),
             });
         }
     }

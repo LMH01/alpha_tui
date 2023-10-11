@@ -295,7 +295,7 @@ pub fn prepare_whitelist_file(content: Vec<String>) -> Vec<String> {
                 _ => new_chunks.push(chunk),
             }
         }
-        prepared.push(new_chunks.join(" "))
+        prepared.push(new_chunks.join(" "));
     }
     prepared
 }

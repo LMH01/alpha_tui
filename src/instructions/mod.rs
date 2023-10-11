@@ -91,13 +91,13 @@ impl Identifier for Instruction {
         match self {
             Self::Assign(t, v) => format!("{} := {}", t.identifier(), v.identifier()),
             Self::Calc(t, v, op, v2) => format!("{} := {} {} {}", t.identifier(), v.identifier(), op.identifier(), v2.identifier()),
-            Self::Call(_) => format!("call"),
-            Self::Goto(_) => format!("goto"),
+            Self::Call(_) => "call".to_string(),
+            Self::Goto(_) => "goto".to_string(),
             Self::JumpIf(v, cmp, v2, _) => format!("if {} {} {} then goto", v.identifier(), cmp.identifier(), v2.identifier()),
-            Self::Noop => format!("NOOP"),
-            Self::Pop => format!("pop"),
-            Self::Push => format!("push"),
-            Self::Return => format!("return"),
+            Self::Noop => "NOOP".to_string(),
+            Self::Pop => "pop".to_string(),
+            Self::Push => "push".to_string(),
+            Self::Return => "return".to_string(),
             Self::StackOp(op) => format!("stack{}", op.identifier()),
         }
     }
@@ -396,8 +396,8 @@ fn assign_index_memory_cell_from_value(
 
 /// This trait is used to be easily able to compare instructions with one another.
 /// 
-/// This is needed when checking if instructions are allowed because the `Eq` implementation determines that `TargetType::Accumulator(0)``
-/// is not equal to `TargetType::Accumulator(1)`` even though they are basically the same type of command.
+/// This is needed when checking if instructions are allowed because the `Eq` implementation determines that `TargetType::Accumulator(0)`
+/// is not equal to `TargetType::Accumulator(1)` even though they are basically the same type of command.
 pub trait Identifier {
 
     /// Returns the identifier for this instruction (put together from the identifiers of the different instruction components)
