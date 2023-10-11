@@ -278,6 +278,7 @@ pub fn prepare_whitelist_file(content: Vec<String>) -> Vec<String> {
                 "C" => new_chunks.push("0"),
                 "Y" => new_chunks.push("y"),
                 "OP" => new_chunks.push("+"),
+                "stackOP" => new_chunks.push("stack+"),
                 "CMP" => new_chunks.push("=="),
                 _ => new_chunks.push(chunk),
             }

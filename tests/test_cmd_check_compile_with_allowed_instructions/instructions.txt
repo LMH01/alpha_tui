@@ -1,4 +1,7 @@
 A := C
-M := M OP M
-A := A OP M
-M := A
+M := A OP C
+A := M OP C
+M := Y
+push
+pop
+stackOP
