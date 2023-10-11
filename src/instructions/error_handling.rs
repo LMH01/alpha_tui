@@ -47,7 +47,7 @@ pub enum InstructionParseError {
         help("Make sure that you use a supported instruction.")
     )]
     UnknownInstruction((usize, usize), String),
-    
+
     #[error("missing expression")]
     #[diagnostic(
         code("parse_instruction::missing_expression"),
@@ -79,20 +79,6 @@ pub enum BuildProgramErrorTypes {
     #[error("when parsing instruction")]
     #[diagnostic(code(build_program::parse_error))]
     ParseError {
-        #[source_code]
-        src: NamedSource,
-        #[label("here")]
-        bad_bit: SourceSpan,
-        #[source]
-        #[diagnostic_source]
-        reason: InstructionParseError,
-    },
-
-    #[error("when parsing whitelist instructions")]
-    #[diagnostic(
-        code("build_program::parse_whitelist_instruction_error"),
-    )]
-    ParseWhitelistError {
         #[source_code]
         src: NamedSource,
         #[label("here")]
@@ -153,6 +139,19 @@ impl PartialEq for BuildProgramErrorTypes {
 pub struct BuildProgramError {
     #[diagnostic_source]
     pub reason: BuildProgramErrorTypes,
+}
+
+#[derive(Debug, Diagnostic, Error)]
+#[error("when building allowed instructions")]
+#[diagnostic(code("build_allowed_instructions_error"))]
+pub struct BuildAllowedInstructionsError {
+    #[source_code]
+    pub src: NamedSource,
+    #[label("here")]
+    pub bad_bit: SourceSpan,
+    #[source]
+    #[diagnostic_source]
+    pub reason: InstructionParseError,
 }
 
 #[cfg(test)]
@@ -374,5 +373,4 @@ mod tests {
             })
         )
     }
-
 }

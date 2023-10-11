@@ -15,7 +15,7 @@ use crate::{
     cli::Commands,
     runtime::builder::RuntimeBuilder,
     tui::App,
-    utils::{pretty_format_instructions, write_file}, instructions::Instruction,
+    utils::{pretty_format_instructions, write_file, build_instructions_with_whitelist}, instructions::Instruction,
 };
 
 /// Contains all required data types used to run programs
@@ -53,7 +53,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn cmd_check(cli: &Cli, instructions: &[String], input: &str) {
+fn cmd_check(cli: &Cli, instructions: &Vec<String>, input: &str) {
     println!("Building program");
     let mut rb = match RuntimeBuilder::from_args(cli) {
         Ok(rb) => rb,
@@ -67,13 +67,23 @@ fn cmd_check(cli: &Cli, instructions: &[String], input: &str) {
             exit(10);
         }
     };
-    if let Err(e) = rb.build_instructions(&instructions.iter().map(String::as_str).collect(), input)
-    {
-        println!(
-            "Check unsuccessful, program did not compile.\nError: {:?}",
-            Report::new(e)
-        );
-        exit(1);
+
+    if let Some(file) = cli.allowed_instructions_file.as_ref() {//TODO test if this works
+        match build_instructions_with_whitelist(&mut rb, &instructions, input, file) {
+            Ok(_) => (),
+            Err(e) => {
+                println!("Check unsuccessful: {:?}", miette!("Unable to create RuntimeBuilder, allowed instructions could not be loaded from file:\n{e}"));
+            }
+        }
+    } else {
+        if let Err(e) = rb.build_instructions(&instructions.iter().map(String::as_str).collect(), input)
+        {
+            println!(
+                "Check unsuccessful, program did not compile.\nError: {:?}",
+                Report::new(e)
+            );
+            exit(1);
+        }
     }
     println!("Check successful");
 }
@@ -91,21 +101,7 @@ fn cmd_load(cli: &Cli, instructions: Vec<String>, input: String) -> Result<()> {
     };
 
     if let Some(file) = cli.allowed_instructions_file.as_ref() {
-        // Instruction whitelist is provided
-        let whitelisted_instructions_file_contents = match read_file(file) {
-            Ok(i) => i,
-            Err(e) => return Err(miette!("Unable to read whitelisted instruction file [{}]: {}", &input, e)),
-        };
-        let mut whitelisted_instructions = HashSet::new();
-        for s in whitelisted_instructions_file_contents {
-            match Instruction::try_from(s.as_str()) {
-                Ok(i) => {
-                    let _ = whitelisted_instructions.insert(i);
-                },
-                Err(_) => todo!(),
-            }
-        }
-        rb.build_instructions_whitelist(&instructions.iter().map(String::as_str).collect(), &input, &whitelisted_instructions)?;
+        build_instructions_with_whitelist(&mut rb, &instructions, &input, file)?;
     } else {
         rb.build_instructions(&instructions.iter().map(String::as_str).collect(), &input)?;
     }

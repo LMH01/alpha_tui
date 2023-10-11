@@ -167,7 +167,7 @@ impl RuntimeBuilder {
                     continue;
                 }
             }
-            
+
             match Instruction::try_from(&splits) {
                 Ok(i) => instructions.push(i),
                 Err(e) => {

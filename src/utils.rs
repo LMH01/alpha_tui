@@ -1,9 +1,11 @@
 use std::{
     fs::{remove_file, File},
-    io::{BufRead, BufReader, LineWriter, Write},
+    io::{BufRead, BufReader, LineWriter, Write}, collections::HashSet,
 };
 
-use miette::{IntoDiagnostic, Result};
+use miette::{IntoDiagnostic, Result, miette, NamedSource, SourceSpan, SourceOffset};
+
+use crate::{instructions::{Instruction, error_handling::{InstructionParseError, BuildProgramError, BuildProgramErrorTypes, BuildAllowedInstructionsError}}, runtime::builder::RuntimeBuilder};
 
 /// How many spaces should be between labels, instructions and comments when pretty formatting them
 const SPACING: usize = 2;
@@ -172,6 +174,56 @@ pub fn get_comment(instruction: &str) -> Option<String> {
     } else {
         Some(comment)
     }
+}
+
+/// Builds instructions by checking if all used instructions are allowed
+pub fn build_instructions_with_whitelist(rb: &mut RuntimeBuilder, instructions: &Vec<String>, file: &str, whitelist_file: &str) -> Result<()> {
+    // Instruction whitelist is provided
+    let whitelisted_instructions_file_contents = match read_file(&whitelist_file) {
+        Ok(i) => i,
+        Err(e) => return Err(miette!("Unable to read whitelisted instruction file [{}]: {}", &whitelist_file, e)),
+    };
+    let mut whitelisted_instructions = HashSet::new();
+    for (idx, s) in whitelisted_instructions_file_contents.iter().enumerate() {
+        match Instruction::try_from(s.as_str()) {
+            Ok(i) => {
+                let _ = whitelisted_instructions.insert(i);
+            },
+            Err(e) => {
+                // Workaround for wrong end_range value depending on error.
+                // For the line to be printed when more then one character is affected for some reason the range needs to be increased by one.
+                let end_range = match e {
+                    InstructionParseError::InvalidExpression(_, _) => {
+                        e.range().1 - e.range().0 + 1
+                    }
+                    InstructionParseError::UnknownInstruction(_, _) => {
+                        e.range().1 - e.range().0 + 1
+                    }
+                    InstructionParseError::NotANumber(_, _) => e.range().1 - e.range().0,
+                    InstructionParseError::UnknownComparison(_, _) => e.range().1 - e.range().0,
+                    InstructionParseError::UnknownOperation(_, _) => e.range().1 - e.range().0,
+                    InstructionParseError::MissingExpression { range: _, help: _ } => {
+                        e.range().1 - e.range().0
+                    }
+                };
+                let file_contents = whitelisted_instructions_file_contents.join("\n");
+                Err(BuildAllowedInstructionsError {
+                    src: NamedSource::new(whitelist_file, whitelisted_instructions_file_contents.clone().join("\n")),
+                    bad_bit: SourceSpan::new(
+                        SourceOffset::from_location(
+                            file_contents.clone(),
+                            idx + 1,
+                            e.range().0 + 1,
+                        ),
+                        SourceOffset::from(end_range),
+                    ),
+                    reason: e,
+                })?;
+            }
+        }
+    }
+    rb.build_instructions_whitelist(&instructions.iter().map(String::as_str).collect(), &file, &whitelisted_instructions)?;
+    Ok(())
 }
 
 #[cfg(test)]
