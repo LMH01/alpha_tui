@@ -183,7 +183,9 @@ pub fn get_comment(instruction: &str) -> Option<String> {
     }
 }
 
-/// Builds instructions by checking if all used instructions are allowed
+/// Builds instructions by checking if all used instructions are allowed.
+/// 
+/// For that the read in file is first formatted to be a compilable program by using `prepare_whitelist_file()`
 #[allow(clippy::match_same_arms)]
 pub fn build_instructions_with_whitelist(
     rb: &mut RuntimeBuilder,
@@ -192,7 +194,7 @@ pub fn build_instructions_with_whitelist(
     whitelist_file: &str,
 ) -> Result<()> {
     // Instruction whitelist is provided
-    let whitelisted_instructions_file_contents = match read_file(whitelist_file) {
+    let mut whitelisted_instructions_file_contents = match read_file(whitelist_file) {
         Ok(i) => i,
         Err(e) => {
             return Err(miette!(
@@ -202,6 +204,7 @@ pub fn build_instructions_with_whitelist(
             ))
         }
     };
+    whitelisted_instructions_file_contents = prepare_whitelist_file(whitelisted_instructions_file_contents);
     let mut whitelisted_instructions = HashSet::new();
     for (idx, s) in whitelisted_instructions_file_contents.iter().enumerate() {
         match Instruction::try_from(s.as_str()) {
@@ -253,9 +256,39 @@ pub fn build_instructions_with_whitelist(
     Ok(())
 }
 
+/// Prepares the whitelist file for parsing to instructions by replacing placeholders with correct alpha notation code.
+///
+/// The following is replaced:
+/// A - a0
+/// M - p(h1)
+/// C - 0
+/// Y - y
+/// OP - +
+/// CMP - ==
+pub fn prepare_whitelist_file(content: Vec<String>) -> Vec<String> {
+    let mut prepared = Vec::new();
+    for line in content {
+        let mut new_chunks = Vec::new();
+        let chunks = line.split(' ');
+        for chunk in chunks {
+            match chunk {
+                "A" => new_chunks.push("a0"),
+                "M" => new_chunks.push("p(h1)"),
+                "C" => new_chunks.push("0"),
+                "Y" => new_chunks.push("y"),
+                "OP" => new_chunks.push("+"),
+                "CMP" => new_chunks.push("=="),
+                _ => new_chunks.push(chunk),
+            }
+        }
+        prepared.push(new_chunks.join(" "))
+    }
+    prepared
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::utils::{get_comment, remove_comment};
+    use crate::utils::{get_comment, prepare_whitelist_file, remove_comment};
 
     use super::pretty_format_instructions;
 
@@ -332,5 +365,22 @@ mod tests {
         assert_eq!(get_comment("#a := 5"), Some(String::from("#a := 5")));
         assert_eq!(get_comment("//a := 5"), Some(String::from("//a := 5")));
         assert_eq!(get_comment("a := 5"), None);
+    }
+
+    #[test]
+    fn test_prepare_whitelist_file() {
+        let contents = "A := M\nA := C\nM := A\nY := A OP M\nif A CMP M then goto loop";
+        let contents = prepare_whitelist_file(contents
+            .split('\n')
+            .map(String::from)
+            .collect::<Vec<String>>());
+        let after = vec![
+            "a0 := p(h1)".to_string(),
+            "a0 := 0".to_string(),
+            "p(h1) := a0".to_string(),
+            "y := a0 + p(h1)".to_string(),
+            "if a0 == p(h1) then goto loop".to_string(),
+        ];
+        assert_eq!(*contents, after);
     }
 }

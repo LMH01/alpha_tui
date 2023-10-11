@@ -143,7 +143,10 @@ pub struct BuildProgramError {
 
 #[derive(Debug, Diagnostic, Error)]
 #[error("when building allowed instructions")]
-#[diagnostic(code("build_allowed_instructions_error"))]
+#[diagnostic(
+    code("build_allowed_instructions_error"),
+    help("Maybe you wanted to use a token, make sure to use one of these: A, M, C, Y, OP, CMP\nFor more help take a look at the documentation: ")//TODO Add link to documentation
+)]
 pub struct BuildAllowedInstructionsError {
     #[source_code]
     pub src: NamedSource,
