@@ -19,7 +19,7 @@
 ### New feature
 
 - Added prettier formatting for code in code window (can be disabled with `-d`)
-    - Pretty formatting can be written into the source filr
+    - Pretty formatting can be written into the source file
 - Added support for index memory cells
 - Added support for special accumulator gamma
 - Added debug feature: continue execution at line
