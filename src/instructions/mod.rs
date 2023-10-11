@@ -62,7 +62,7 @@ impl Instruction {
 
 impl Display for Instruction {
 
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {//TODO implement display
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Assign(t, v) => write!(f, "{t} := {v}"),
             Self::Calc(t, v, op, v2) => write!(f, "{t} := {v} {op} {v2}"),

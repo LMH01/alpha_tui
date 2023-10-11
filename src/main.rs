@@ -68,7 +68,7 @@ fn cmd_check(cli: &Cli, instructions: &Vec<String>, input: &str) {
         }
     };
 
-    if let Some(file) = cli.allowed_instructions_file.as_ref() {//TODO test if this works
+    if let Some(file) = cli.allowed_instructions_file.as_ref() {
         match build_instructions_with_whitelist(&mut rb, &instructions, input, file) {
             Ok(_) => (),
             Err(e) => {
