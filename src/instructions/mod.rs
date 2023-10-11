@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use miette::Result;
 
 use crate::{
@@ -16,7 +18,16 @@ mod parsing;
 #[cfg(test)]
 mod tests;
 
-#[derive(Debug, PartialEq, Clone)]
+// These constants are used to set the value with which instruction parts can be compared.
+// This is used to get the instruction whitelist to work.
+const ACCUMULATOR_IDENTIFIER: &str = "A";
+const MEMORY_CELL_IDENTIFIER: &str = "M";
+const GAMMA_IDENTIFIER: &str = "Y";
+const CONSTANT_IDENTIFIER: &str = "C";
+pub const OPERATOR_IDENTIFIER: &str = "OP";
+pub const COMPARISON_IDENTIFIER: &str = "CMP";
+
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub enum Instruction {
     Assign(TargetType, Value),
     Calc(TargetType, Value, Operation, Value),
@@ -56,36 +67,51 @@ impl Instruction {
         }
         Ok(())
     }
+}
 
-    ///// Checks if this instruction is legal by comparing if it matches one instruction in the instruction set
-    ///// This is a workaround until I know if all instructions in the format are valid in alpha notation or if only specific instructions are allowed (= the instructions that I already made in the old version)
-    //fn is_legal(&self) -> bool {//TODO Change return type to Result<InstructionParseError> and create error variant specific for this error
-    //    //TODO Add in all other instructions that are allowed but that are not yet added as instructions to the instruction enum
-    //    match self {
-    //        Instruction::AssignInstruction(target, source) => {
-    //            // All assign instructions are valid
-    //            // These are: a := x, a := b, a := p(i), p(i) := x, p(i) := a, p(i) := p(j)
-    //            return true;
-    //        }
-    //        Instruction::CalcInstruction(target, source_a, op, source_b) => {
-    //            if let TargetType::Accumulator(idx_a) = target {
-    //                if let Value::Accumulator(idx_b) = source_a {
-    //                    if idx_a == idx_b  {
-    //                        if let Value::Constant(_) = source_b {
-    //                            // a := a op x
-    //                            return true;
-    //                        } else if let Value::Accumulator(_)  = source_b {
-    //                            // a := a op b
-    //                            return true;
-    //                        }
-    //                        return false;
-    //                    }
-    //                }
-    //            }
-    //        }
-    //    }
-    //    false
-    //}
+impl Display for Instruction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Assign(t, v) => write!(f, "{t} := {v}"),
+            Self::Calc(t, v, op, v2) => write!(f, "{t} := {v} {op} {v2}"),
+            Self::Call(l) => write!(f, "call {l}"),
+            Self::Goto(l) => write!(f, "goto {l}"),
+            Self::JumpIf(v, cmp, v2, l) => write!(f, "if {v} {cmp} {v2} then goto {l}"),
+            Self::Noop => write!(f, ""),
+            Self::Pop => write!(f, "pop"),
+            Self::Push => write!(f, "push"),
+            Self::Return => write!(f, "return"),
+            Self::StackOp(op) => write!(f, "stack{op}"),
+        }
+    }
+}
+
+impl Identifier for Instruction {
+    fn identifier(&self) -> String {
+        match self {
+            Self::Assign(t, v) => format!("{} := {}", t.identifier(), v.identifier()),
+            Self::Calc(t, v, op, v2) => format!(
+                "{} := {} {} {}",
+                t.identifier(),
+                v.identifier(),
+                op.identifier(),
+                v2.identifier()
+            ),
+            Self::Call(_) => "call".to_string(),
+            Self::Goto(_) => "goto".to_string(),
+            Self::JumpIf(v, cmp, v2, _) => format!(
+                "if {} {} {} then goto",
+                v.identifier(),
+                cmp.identifier(),
+                v2.identifier()
+            ),
+            Self::Noop => "NOOP".to_string(),
+            Self::Pop => "pop".to_string(),
+            Self::Push => "push".to_string(),
+            Self::Return => "return".to_string(),
+            Self::StackOp(op) => format!("stack{}", op.identifier()),
+        }
+    }
 }
 
 fn run_assign(
@@ -379,8 +405,18 @@ fn assign_index_memory_cell_from_value(
     Ok(())
 }
 
+/// This trait is used to be easily able to compare instructions with one another.
+///
+/// This is needed when checking if instructions are allowed because the `Eq` implementation determines that `TargetType::Accumulator(0)`
+/// is not equal to `TargetType::Accumulator(1)` even though they are basically the same type of command.
+pub trait Identifier {
+    /// Returns the identifier for this instruction (put together from the identifiers of the different instruction components)
+    /// under which it is resolved when placed in the allowed instruction list.
+    fn identifier(&self) -> String;
+}
+
 /// Specifies the location where the index memory cell should look for the value of the index of the index memory cell
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum IndexMemoryCellIndexType {
     /// Indicates that this index memory cell uses the value of an accumulator as index where the data is accessed.
     Accumulator(usize),
@@ -400,7 +436,19 @@ pub enum IndexMemoryCellIndexType {
     Index(usize),
 }
 
-#[derive(Debug, PartialEq, Clone)]
+impl Display for IndexMemoryCellIndexType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Accumulator(idx) => write!(f, "a{idx}"),
+            Self::Direct(idx) => write!(f, "{idx}"),
+            Self::Gamma => write!(f, "y"),
+            Self::MemoryCell(n) => write!(f, "p({n})"),
+            Self::Index(idx) => write!(f, "p({idx})"),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum TargetType {
     Accumulator(usize),
     Gamma,
@@ -425,7 +473,28 @@ impl TryFrom<(&String, (usize, usize))> for TargetType {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+impl Display for TargetType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Accumulator(idx) => write!(f, "a{idx}"),
+            Self::Gamma => write!(f, "y"),
+            Self::MemoryCell(n) => write!(f, "p({n})"),
+            Self::IndexMemoryCell(t) => write!(f, "p({t})"),
+        }
+    }
+}
+
+impl Identifier for TargetType {
+    fn identifier(&self) -> String {
+        match self {
+            Self::Accumulator(_) => ACCUMULATOR_IDENTIFIER.to_string(),
+            Self::Gamma => GAMMA_IDENTIFIER.to_string(),
+            Self::IndexMemoryCell(_) | Self::MemoryCell(_) => MEMORY_CELL_IDENTIFIER.to_string(),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Value {
     Accumulator(usize),
     Gamma,
@@ -500,6 +569,29 @@ impl TryFrom<(String, (usize, usize))> for Value {
 
     fn try_from(value: (String, (usize, usize))) -> Result<Self, Self::Error> {
         Self::try_from((&value.0, value.1))
+    }
+}
+
+impl Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Accumulator(idx) => write!(f, "a{idx}"),
+            Self::Constant(c) => write!(f, "{c}"),
+            Self::Gamma => write!(f, "y"),
+            Self::MemoryCell(n) => write!(f, "p({n})"),
+            Self::IndexMemoryCell(t) => write!(f, "p({t})"),
+        }
+    }
+}
+
+impl Identifier for Value {
+    fn identifier(&self) -> String {
+        match self {
+            Self::Accumulator(_) => ACCUMULATOR_IDENTIFIER.to_string(),
+            Self::Constant(_) => CONSTANT_IDENTIFIER.to_string(),
+            Self::Gamma => GAMMA_IDENTIFIER.to_string(),
+            Self::MemoryCell(_) | Self::IndexMemoryCell(_) => MEMORY_CELL_IDENTIFIER.to_string(),
+        }
     }
 }
 

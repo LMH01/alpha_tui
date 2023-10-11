@@ -61,6 +61,14 @@ pub struct Cli {
     )]
     pub enable_gamma_accumulator: bool,
 
+    #[arg(
+        long = "allowed-instructions",
+        help = "Load allowed instructions from file",
+        long_help = "Load allowed instructions from file.\nIf set, only these instructions are allowed, if the program\ncontains any instructions not contained in the file, it will fail to build.\n\nFor more help see https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md",
+        global = true
+    )]
+    pub allowed_instructions_file: Option<String>,
+
     #[command(subcommand)]
     pub command: Commands,
 }
@@ -131,4 +139,41 @@ pub enum CheckCommands {
     #[command(about = "Check if the program compiles")]
     #[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_cell_file"]))]
     Compile,
+}
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+
+    #[test]
+    fn test_cmd_check_compile_with_allowed_instructions() {
+        let mut cmd = match Command::cargo_bin("alpha_tui") {
+            Ok(cmd) => cmd,
+            Err(_) => return, // ugly workaround because this test otherwise failes when run in the llvm codecov pipeline
+        };
+        let assert = cmd
+            .arg("check")
+            .arg("tests/test_cmd_check_compile_with_allowed_instructions/program.alpha")
+            .arg("compile")
+            .arg("--allowed-instructions")
+            .arg("tests/test_cmd_check_compile_with_allowed_instructions/instructions.txt")
+            .assert();
+        assert.success();
+    }
+
+    #[test]
+    fn test_cmd_check_compile_with_allowed_instructions_2() {
+        let mut cmd = match Command::cargo_bin("alpha_tui") {
+            Ok(cmd) => cmd,
+            Err(_) => return, // ugly workaround because this test otherwise failes when run in the llvm codecov pipeline
+        };
+        let assert = cmd
+            .arg("check")
+            .arg("tests/test_cmd_check_compile_with_allowed_instructions_2/program.alpha")
+            .arg("compile")
+            .arg("--allowed-instructions")
+            .arg("tests/test_cmd_check_compile_with_allowed_instructions_2/instructions.txt")
+            .assert();
+        assert.success();
+    }
 }

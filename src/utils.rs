@@ -1,9 +1,18 @@
 use std::{
+    collections::HashSet,
     fs::{remove_file, File},
     io::{BufRead, BufReader, LineWriter, Write},
 };
 
-use miette::{IntoDiagnostic, Result};
+use miette::{miette, IntoDiagnostic, NamedSource, Result, SourceOffset, SourceSpan};
+
+use crate::{
+    instructions::{
+        error_handling::{BuildAllowedInstructionsError, InstructionParseError},
+        Identifier, Instruction,
+    },
+    runtime::builder::RuntimeBuilder,
+};
 
 /// How many spaces should be between labels, instructions and comments when pretty formatting them
 const SPACING: usize = 2;
@@ -174,9 +183,126 @@ pub fn get_comment(instruction: &str) -> Option<String> {
     }
 }
 
+/// Builds instructions by checking if all used instructions are allowed.
+///
+/// For that the read in file is first formatted to be a compilable program by using `prepare_whitelist_file()`
+#[allow(clippy::match_same_arms)]
+pub fn build_instructions_with_whitelist(
+    rb: &mut RuntimeBuilder,
+    instructions: &[String],
+    file: &str,
+    whitelist_file: &str,
+) -> Result<()> {
+    // Instruction whitelist is provided
+    let mut whitelisted_instructions_file_contents = match read_file(whitelist_file) {
+        Ok(i) => i,
+        Err(e) => {
+            return Err(miette!(
+                "Unable to read whitelisted instruction file [{}]: {}",
+                whitelist_file,
+                e
+            ))
+        }
+    };
+    whitelisted_instructions_file_contents =
+        prepare_whitelist_file(whitelisted_instructions_file_contents);
+    let mut whitelisted_instructions = HashSet::new();
+    for (idx, s) in whitelisted_instructions_file_contents.iter().enumerate() {
+        match Instruction::try_from(s.as_str()) {
+            Ok(i) => {
+                let _ = whitelisted_instructions.insert(i.identifier());
+            }
+            Err(e) => {
+                // Workaround for wrong end_range value depending on error.
+                // For the line to be printed when more then one character is affected for some reason the range needs to be increased by one.
+                let end_range = match e {
+                    InstructionParseError::InvalidExpression(_, _) => e.range().1 - e.range().0 + 1,
+                    InstructionParseError::UnknownInstruction(_, _) => {
+                        e.range().1 - e.range().0 + 1
+                    }
+                    InstructionParseError::NotANumber(_, _) => e.range().1 - e.range().0,
+                    InstructionParseError::UnknownComparison(_, _) => e.range().1 - e.range().0,
+                    InstructionParseError::UnknownOperation(_, _) => e.range().1 - e.range().0,
+                    InstructionParseError::MissingExpression { range: _, help: _ } => {
+                        e.range().1 - e.range().0
+                    }
+                };
+                let file_contents = whitelisted_instructions_file_contents.join("\n");
+                Err(BuildAllowedInstructionsError {
+                    src: NamedSource::new(
+                        whitelist_file,
+                        whitelisted_instructions_file_contents.clone().join("\n"),
+                    ),
+                    bad_bit: SourceSpan::new(
+                        SourceOffset::from_location(
+                            file_contents.clone(),
+                            idx + 1,
+                            e.range().0 + 1,
+                        ),
+                        SourceOffset::from(end_range),
+                    ),
+                    reason: e,
+                })?;
+            }
+        }
+    }
+    rb.build_instructions_whitelist(
+        &instructions
+            .iter()
+            .map(String::as_str)
+            .collect::<Vec<&str>>(),
+        file,
+        &whitelisted_instructions,
+    )?;
+    Ok(())
+}
+
+/// Prepares the whitelist file for parsing to instructions by replacing placeholders with correct alpha notation code.
+///
+/// The following is replaced:
+/// A - a0
+/// M - p(h1)
+/// C - 0
+/// Y - y
+/// OP - +
+/// CMP - ==
+pub fn prepare_whitelist_file(content: Vec<String>) -> Vec<String> {
+    let mut prepared = Vec::new();
+    for line in content {
+        let mut new_chunks = Vec::new();
+        match line.as_str() {
+            "goto" => {
+                prepared.push("goto loop".to_string());
+                continue;
+            }
+            "call" => {
+                prepared.push("call loop".to_string());
+                continue;
+            }
+            _ => (),
+        }
+        let chunks = line.split(' ');
+        for chunk in chunks {
+            match chunk {
+                "A" => new_chunks.push("a0"),
+                "M" => new_chunks.push("p(h1)"),
+                "C" => new_chunks.push("0"),
+                "Y" => new_chunks.push("y"),
+                "OP" => new_chunks.push("+"),
+                "stackOP" => new_chunks.push("stack+"),
+                "CMP" => new_chunks.push("=="),
+                "goto" => new_chunks.push("goto loop"),
+                _ => new_chunks.push(chunk),
+            }
+        }
+        prepared.push(new_chunks.join(" "));
+    }
+    prepared
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::utils::{get_comment, remove_comment};
+    use crate::utils::{get_comment, prepare_whitelist_file, remove_comment};
 
     use super::pretty_format_instructions;
 
@@ -253,5 +379,26 @@ mod tests {
         assert_eq!(get_comment("#a := 5"), Some(String::from("#a := 5")));
         assert_eq!(get_comment("//a := 5"), Some(String::from("//a := 5")));
         assert_eq!(get_comment("a := 5"), None);
+    }
+
+    #[test]
+    fn test_prepare_whitelist_file() {
+        let contents = "A := M\nA := C\nM := A\nY := A OP M\nif A CMP M then goto\ngoto\ncall";
+        let contents = prepare_whitelist_file(
+            contents
+                .split('\n')
+                .map(String::from)
+                .collect::<Vec<String>>(),
+        );
+        let after = vec![
+            "a0 := p(h1)".to_string(),
+            "a0 := 0".to_string(),
+            "p(h1) := a0".to_string(),
+            "y := a0 + p(h1)".to_string(),
+            "if a0 == p(h1) then goto loop".to_string(),
+            "goto loop".to_string(),
+            "call loop".to_string(),
+        ];
+        assert_eq!(*contents, after);
     }
 }

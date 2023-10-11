@@ -15,7 +15,7 @@ use crate::{
     cli::Commands,
     runtime::builder::RuntimeBuilder,
     tui::App,
-    utils::{pretty_format_instructions, write_file},
+    utils::{build_instructions_with_whitelist, pretty_format_instructions, write_file},
 };
 
 /// Contains all required data types used to run programs
@@ -67,7 +67,20 @@ fn cmd_check(cli: &Cli, instructions: &[String], input: &str) {
             exit(10);
         }
     };
-    if let Err(e) = rb.build_instructions(&instructions.iter().map(String::as_str).collect(), input)
+
+    if let Some(file) = cli.allowed_instructions_file.as_ref() {
+        match build_instructions_with_whitelist(&mut rb, instructions, input, file) {
+            Ok(_) => (),
+            Err(e) => {
+                println!(
+                    "Check unsuccessful: {:?}",
+                    miette!("Unable to create RuntimeBuilder:\n{:?}", e)
+                );
+                exit(1);
+            }
+        }
+    } else if let Err(e) =
+        rb.build_instructions(&instructions.iter().map(String::as_str).collect(), input)
     {
         println!(
             "Check unsuccessful, program did not compile.\nError: {:?}",
@@ -89,7 +102,12 @@ fn cmd_load(cli: &Cli, instructions: Vec<String>, input: String) -> Result<()> {
             ));
         }
     };
-    rb.build_instructions(&instructions.iter().map(String::as_str).collect(), &input)?;
+
+    if let Some(file) = cli.allowed_instructions_file.as_ref() {
+        build_instructions_with_whitelist(&mut rb, &instructions, &input, file)?;
+    } else {
+        rb.build_instructions(&instructions.iter().map(String::as_str).collect(), &input)?;
+    }
 
     // format instructions pretty if cli flag is set
     let instructions = match cli.command {

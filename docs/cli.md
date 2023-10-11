@@ -9,6 +9,76 @@ To circumvent that you can set the option `--disable-memory-detection`. You then
 
 If you require memory cells to be pre initialized you can use the option `--memory-cell-file` to read in a file that contains memory cell information. An example for such file can be found [here](../examples/memory_cells.cells).
 
+### Allowed instructions
+
+You can use the option `--allowed-instructions` to specify a file where allowed instructions are stored. When this option is provided, all programs will fail to build that contain instructions that are not included in the file.
+
+This makes it possible to challenge yourself into working with only a limited instruction set.
+
+#### How it works
+
+All commands that are understood by the program can be used to specify what instructions should be allowed, in addition to that there are some shortcuts available:
+
+| Shortcut | Explanation |
+| - | - |
+| A | any accumulator |
+| M | any memory cell |
+| C | any constant value |
+| Y | gamma accumulator |
+| OP | any operation |
+| CMP | any comparison |
+
+Furthermore it is not required to specify a label for the following instructions: `goto, call, if _ then goto`.
+
+This results in this file
+
+```
+A := C
+M := A OP C
+A := M OP C
+M := Y
+push
+pop
+stackOP
+call
+goto
+if A CMP M then goto
+```
+or this file
+
+```
+a := 5
+p(h) := a OP 3
+a := p(h) OP 3
+p(h) := y
+push
+pop
+stack+
+call label
+goto label
+if a == p(h) then goto label
+```
+
+allowing instructions like these
+
+```
+a0 := 5
+p(h1) := a0 * 4
+a0 := p(h1) + 2
+p(h2) := y
+push
+pop
+stack*
+call label
+goto label
+if a == p(h) then goto label
+```
+to be used in the program.
+
+**It is important to understand that only the type of instruction is limited by this option, to specifically limit what memory locations are available you can use the options `-a`, `-m` and `--memory-cell-file`. This means that even though you might write `p(h1)` in the allowed instructions file, all available memory cells are allowed in this position, not just `p(h1)`!**
+
+An example file can be found here: [examples/allowed_instructions.txt](../examples/allowed_instructions.txt);
+
 ## Check command
 
 The `check` subcommand can be used to perform checks on the program. It is currently only supported to check if the program compiles. For example the command `alpha_tui check examples/programs/faculty.alpha compile` will check if the program compiles and return `0` if it did. Otherwise an error code is returned, see below for the meaning.

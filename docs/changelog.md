@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.0
+
+### New feature
+- Added new cli option: `--allowed-instructions`
+    - This allows to limit the available instructions, more can be found here: https://github.com/LMH01/alpha_tui/blob/limit_instructions/docs/cli.md
+
 ## v1.0.1
 
 ### Other
@@ -13,7 +19,7 @@
 ### New feature
 
 - Added prettier formatting for code in code window (can be disabled with `-d`)
-    - Pretty formatting can be written into the source filr
+    - Pretty formatting can be written into the source file
 - Added support for index memory cells
 - Added support for special accumulator gamma
 - Added debug feature: continue execution at line

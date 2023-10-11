@@ -1,6 +1,9 @@
 use std::fmt::Display;
 
-use crate::runtime::error_handling::{CalcError, RuntimeErrorType};
+use crate::{
+    instructions::{Identifier, COMPARISON_IDENTIFIER, OPERATOR_IDENTIFIER},
+    runtime::error_handling::{CalcError, RuntimeErrorType},
+};
 
 /// A single accumulator, represents "Akkumulator/Alpha" from SysInf lecture.
 #[allow(clippy::doc_markdown)]
@@ -78,7 +81,7 @@ pub struct IndexMemoryCell {
 //}
 
 /// Different ways of paring two values
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Comparison {
     Lt,
     Le,
@@ -118,7 +121,26 @@ impl TryFrom<&str> for Comparison {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+impl Display for Comparison {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Lt => write!(f, "<"),
+            Self::Le => write!(f, "<="),
+            Self::Eq => write!(f, "=="),
+            Self::Neq => write!(f, "!="),
+            Self::Ge => write!(f, ">="),
+            Self::Gt => write!(f, ">"),
+        }
+    }
+}
+
+impl Identifier for Comparison {
+    fn identifier(&self) -> String {
+        COMPARISON_IDENTIFIER.to_string()
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Hash, Copy)]
 pub enum Operation {
     Add,
     Sub,
@@ -204,6 +226,12 @@ impl Display for Operation {
     }
 }
 
+impl Identifier for Operation {
+    fn identifier(&self) -> String {
+        OPERATOR_IDENTIFIER.to_string()
+    }
+}
+
 impl TryFrom<&str> for Operation {
     type Error = ();
 
@@ -273,6 +301,16 @@ mod tests {
     }
 
     #[test]
+    fn test_comparison_display() {
+        assert_eq!(format!("{}", Comparison::Lt), "<".to_string());
+        assert_eq!(format!("{}", Comparison::Le), "<=".to_string());
+        assert_eq!(format!("{}", Comparison::Eq), "==".to_string());
+        assert_eq!(format!("{}", Comparison::Neq), "!=".to_string());
+        assert_eq!(format!("{}", Comparison::Ge), ">=".to_string());
+        assert_eq!(format!("{}", Comparison::Gt), ">".to_string());
+    }
+
+    #[test]
     fn test_operation() {
         assert_eq!(Operation::Add.calc(20, 5).unwrap(), 25);
         assert_eq!(Operation::Sub.calc(20, 5).unwrap(), 15);
@@ -291,5 +329,14 @@ mod tests {
         assert_eq!(Operation::try_from("÷"), Ok(Operation::Div));
         assert_eq!(Operation::try_from("%"), Ok(Operation::Mod));
         assert_eq!(Operation::try_from("P"), Err(()));
+    }
+
+    #[test]
+    fn test_operation_display() {
+        assert_eq!(format!("{}", Operation::Add), "+".to_string());
+        assert_eq!(format!("{}", Operation::Sub), "-".to_string());
+        assert_eq!(format!("{}", Operation::Mul), "*".to_string());
+        assert_eq!(format!("{}", Operation::Div), "/".to_string());
+        assert_eq!(format!("{}", Operation::Mod), "%".to_string());
     }
 }

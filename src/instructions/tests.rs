@@ -1,10 +1,14 @@
 use std::collections::HashMap;
 
+use assert_cmd::Command;
+
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
     instructions::{
-        assign_index_memory_cell, assign_index_memory_cell_from_value, IndexMemoryCellIndexType,
-        Instruction, TargetType, Value,
+        assign_index_memory_cell, assign_index_memory_cell_from_value, Identifier,
+        IndexMemoryCellIndexType, Instruction, TargetType, Value, ACCUMULATOR_IDENTIFIER,
+        COMPARISON_IDENTIFIER, CONSTANT_IDENTIFIER, GAMMA_IDENTIFIER, MEMORY_CELL_IDENTIFIER,
+        OPERATOR_IDENTIFIER,
     },
     runtime::{
         builder::RuntimeBuilder, error_handling::RuntimeErrorType, ControlFlow, RuntimeArgs,
@@ -1261,5 +1265,294 @@ fn test_assign_index_memory_cell_from_value() {
     assert_eq!(
         assign_index_memory_cell_from_value(&mut runtime_args, 1, &Value::Constant(5)),
         Err(RuntimeErrorType::IndexMemoryCellDoesNotExist(1))
+    );
+}
+
+#[test]
+fn test_instruction_display() {
+    assert_eq!(
+        format!(
+            "{}",
+            Instruction::Assign(TargetType::Accumulator(0), Value::Constant(5))
+        ),
+        "a0 := 5".to_string()
+    );
+    assert_eq!(
+        format!(
+            "{}",
+            Instruction::Calc(
+                TargetType::Accumulator(0),
+                Value::Constant(5),
+                Operation::Add,
+                Value::MemoryCell("h1".to_string())
+            )
+        ),
+        "a0 := 5 + p(h1)".to_string()
+    );
+    assert_eq!(
+        format!("{}", Instruction::Call("fun".to_string())),
+        "call fun".to_string()
+    );
+    assert_eq!(
+        format!("{}", Instruction::Goto("loop".to_string())),
+        "goto loop".to_string()
+    );
+    assert_eq!(
+        format!(
+            "{}",
+            Instruction::JumpIf(
+                Value::Accumulator(0),
+                Comparison::Eq,
+                Value::IndexMemoryCell(IndexMemoryCellIndexType::Direct(0)),
+                "loop".to_string()
+            )
+        ),
+        "if a0 == p(0) then goto loop".to_string()
+    );
+    assert_eq!(format!("{}", Instruction::Noop), "".to_string());
+    assert_eq!(format!("{}", Instruction::Pop), "pop".to_string());
+    assert_eq!(format!("{}", Instruction::Push), "push".to_string());
+    assert_eq!(format!("{}", Instruction::Return), "return".to_string());
+    assert_eq!(
+        format!("{}", Instruction::StackOp(Operation::Mul)),
+        "stack*".to_string()
+    );
+}
+
+#[test]
+fn test_value_display() {
+    assert_eq!(format!("{}", Value::Accumulator(0)), "a0".to_string());
+    assert_eq!(format!("{}", Value::Constant(5)), "5".to_string());
+    assert_eq!(format!("{}", Value::Gamma), "y".to_string());
+    assert_eq!(
+        format!(
+            "{}",
+            Value::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0))
+        ),
+        "p(a0)".to_string()
+    );
+    assert_eq!(
+        format!(
+            "{}",
+            Value::IndexMemoryCell(IndexMemoryCellIndexType::Direct(0))
+        ),
+        "p(0)".to_string()
+    );
+    assert_eq!(
+        format!(
+            "{}",
+            Value::IndexMemoryCell(IndexMemoryCellIndexType::Gamma)
+        ),
+        "p(y)".to_string()
+    );
+    assert_eq!(
+        format!(
+            "{}",
+            Value::IndexMemoryCell(IndexMemoryCellIndexType::Index(0))
+        ),
+        "p(p(0))".to_string()
+    );
+    assert_eq!(
+        format!(
+            "{}",
+            Value::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string()))
+        ),
+        "p(p(h1))".to_string()
+    );
+    assert_eq!(
+        format!("{}", Value::MemoryCell("h1".to_string())),
+        "p(h1)".to_string()
+    );
+}
+
+#[test]
+fn test_target_type_display() {
+    assert_eq!(format!("{}", TargetType::Accumulator(0)), "a0".to_string());
+    assert_eq!(format!("{}", TargetType::Gamma), "y".to_string());
+    assert_eq!(
+        format!(
+            "{}",
+            TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0))
+        ),
+        "p(a0)".to_string()
+    );
+    assert_eq!(
+        format!(
+            "{}",
+            TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Direct(0))
+        ),
+        "p(0)".to_string()
+    );
+    assert_eq!(
+        format!(
+            "{}",
+            TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Gamma)
+        ),
+        "p(y)".to_string()
+    );
+    assert_eq!(
+        format!(
+            "{}",
+            TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Index(0))
+        ),
+        "p(p(0))".to_string()
+    );
+    assert_eq!(
+        format!(
+            "{}",
+            TargetType::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string()))
+        ),
+        "p(p(h1))".to_string()
+    );
+    assert_eq!(
+        format!("{}", TargetType::MemoryCell("h1".to_string())),
+        "p(h1)".to_string()
+    );
+}
+
+#[test]
+fn test_index_memory_cell_index_type_display() {
+    assert_eq!(
+        format!("{}", IndexMemoryCellIndexType::Accumulator(0)),
+        "a0".to_string()
+    );
+    assert_eq!(
+        format!("{}", IndexMemoryCellIndexType::Direct(0)),
+        "0".to_string()
+    );
+    assert_eq!(
+        format!("{}", IndexMemoryCellIndexType::Gamma),
+        "y".to_string()
+    );
+    assert_eq!(
+        format!("{}", IndexMemoryCellIndexType::Index(0)),
+        "p(0)".to_string()
+    );
+    assert_eq!(
+        format!("{}", IndexMemoryCellIndexType::MemoryCell("h1".to_string())),
+        "p(h1)".to_string()
+    );
+}
+
+#[test]
+fn test_value_instruction_identifier() {
+    assert_eq!(
+        Value::Accumulator(0).identifier(),
+        ACCUMULATOR_IDENTIFIER.to_string()
+    );
+    assert_eq!(
+        Value::Constant(0).identifier(),
+        CONSTANT_IDENTIFIER.to_string()
+    );
+    assert_eq!(Value::Gamma.identifier(), GAMMA_IDENTIFIER.to_string());
+    assert_eq!(
+        Value::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0)).identifier(),
+        MEMORY_CELL_IDENTIFIER.to_string()
+    );
+    assert_eq!(
+        Value::MemoryCell("h1".to_string()).identifier(),
+        MEMORY_CELL_IDENTIFIER.to_string()
+    );
+}
+
+#[test]
+fn test_target_type_identifier() {
+    assert_eq!(
+        TargetType::Accumulator(0).identifier(),
+        ACCUMULATOR_IDENTIFIER.to_string()
+    );
+    assert_eq!(TargetType::Gamma.identifier(), GAMMA_IDENTIFIER.to_string());
+    assert_eq!(
+        TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0)).identifier(),
+        MEMORY_CELL_IDENTIFIER.to_string()
+    );
+    assert_eq!(
+        TargetType::MemoryCell("h1".to_string()).identifier(),
+        MEMORY_CELL_IDENTIFIER.to_string()
+    );
+}
+
+#[test]
+fn test_comparison_identifier() {
+    assert_eq!(Comparison::Eq.identifier(), COMPARISON_IDENTIFIER);
+}
+
+#[test]
+fn test_operation_identifier() {
+    assert_eq!(Operation::Add.identifier(), OPERATOR_IDENTIFIER);
+}
+
+#[test]
+fn test_instruction_identifier() {
+    assert_eq!(
+        Instruction::Assign(TargetType::Accumulator(0), Value::Accumulator(0)).identifier(),
+        "A := A".to_string()
+    );
+    assert_eq!(
+        Instruction::Calc(
+            TargetType::MemoryCell("h1".to_string()),
+            Value::Constant(5),
+            Operation::Add,
+            Value::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0))
+        )
+        .identifier(),
+        "M := C OP M".to_string()
+    );
+    assert_eq!(
+        Instruction::Call("label".to_string()).identifier(),
+        "call".to_string()
+    );
+    assert_eq!(
+        Instruction::Goto("loop".to_string()).identifier(),
+        "goto".to_string()
+    );
+    assert_eq!(
+        Instruction::JumpIf(
+            Value::Gamma,
+            Comparison::Gt,
+            Value::MemoryCell("h1".to_string()),
+            "label".to_string()
+        )
+        .identifier(),
+        "if Y CMP M then goto".to_string()
+    );
+    assert_eq!(Instruction::Noop.identifier(), "NOOP".to_string());
+    assert_eq!(Instruction::Pop.identifier(), "pop".to_string());
+    assert_eq!(Instruction::Push.identifier(), "push".to_string());
+    assert_eq!(Instruction::Return.identifier(), "return".to_string());
+    assert_eq!(
+        Instruction::StackOp(Operation::Add).identifier(),
+        "stackOP".to_string()
+    );
+}
+
+#[test]
+fn test_bai_error() {
+    let mut cmd = match Command::cargo_bin("alpha_tui") {
+        Ok(cmd) => cmd,
+        Err(_) => return, // ugly workaround because this test otherwise failes when run in the llvm codecov pipeline
+    };
+    let assert = cmd
+        .arg("load")
+        .arg("tests/test_bai_error/program.alpha")
+        .arg("--allowed-instructions")
+        .arg("tests/test_bai_error/allowed_instructions_a.txt")
+        .assert();
+    assert.stderr(
+        r#"Error: build_program_error
+
+  × when building program
+  ╰─▶ build_program::instruction_not_allowed_error
+      
+        × instruction 'pop' in line '2' is not allowed
+        help: Make sure that you include this type ('pop') of instruction
+      in the
+              whitelist or use a different instruction.
+              These types of instructions are allowed:
+      
+              push
+      
+
+"#,
     );
 }

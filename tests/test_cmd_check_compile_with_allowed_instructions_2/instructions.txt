@@ -1,0 +1,10 @@
+a := 5
+p(h) := a OP 3
+a := p(h) OP 3
+p(h) := y
+push
+pop
+stack+
+call label
+goto label
+if a == p(h) then goto label

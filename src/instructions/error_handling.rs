@@ -47,7 +47,7 @@ pub enum InstructionParseError {
         help("Make sure that you use a supported instruction.")
     )]
     UnknownInstruction((usize, usize), String),
-    
+
     #[error("missing expression")]
     #[diagnostic(
         code("parse_instruction::missing_expression"),
@@ -101,6 +101,14 @@ pub enum BuildProgramErrorTypes {
         help("Make sure that you define at most one main label, either 'main' or 'MAIN'")
     )]
     MainLabelDefinedMultipleTimes,
+
+    /// Indicates that this instruction is not allowed because it is not contained in the whitelist
+    #[error("instruction '{1}' in line '{0}' is not allowed")]
+    #[diagnostic(
+        code("build_program::instruction_not_allowed_error"),
+        help("Make sure that you include this type ('{2}') of instruction in the whitelist or use a different instruction.\nThese types of instructions are allowed:\n\n{3}")
+    )]
+    InstructionNotAllowed(usize, String, String, String),
 }
 
 #[allow(clippy::match_same_arms)]
@@ -131,6 +139,22 @@ impl PartialEq for BuildProgramErrorTypes {
 pub struct BuildProgramError {
     #[diagnostic_source]
     pub reason: BuildProgramErrorTypes,
+}
+
+#[derive(Debug, Diagnostic, Error)]
+#[error("when building allowed instructions")]
+#[diagnostic(
+    code("build_allowed_instructions_error"),
+    help("Maybe you wanted to use a token, make sure to use one of these: A, M, C, Y, OP, CMP\nFor more help take a look at the documentation: https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md")
+)]
+pub struct BuildAllowedInstructionsError {
+    #[source_code]
+    pub src: NamedSource,
+    #[label("here")]
+    pub bad_bit: SourceSpan,
+    #[source]
+    #[diagnostic_source]
+    pub reason: InstructionParseError,
 }
 
 #[cfg(test)]
@@ -352,5 +376,4 @@ mod tests {
             })
         )
     }
-
 }

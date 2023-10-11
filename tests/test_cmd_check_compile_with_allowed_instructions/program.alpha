@@ -1,0 +1,10 @@
+a0 := 5
+p(h1) := a0 * 4
+a0 := p(h1) + 2
+p(h2) := y
+push
+pop
+stack*
+call label
+goto label
+if a == p(h) then goto label

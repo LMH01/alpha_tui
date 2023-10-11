@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use miette::{NamedSource, Result, SourceOffset, SourceSpan};
 
 use crate::{
@@ -5,7 +7,7 @@ use crate::{
     cli::Cli,
     instructions::{
         error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
-        IndexMemoryCellIndexType, Instruction, TargetType, Value,
+        Identifier, IndexMemoryCellIndexType, Instruction, TargetType, Value,
     },
     utils::remove_comment,
 };
@@ -120,13 +122,14 @@ impl RuntimeBuilder {
     /// Control flow is reset and updated accordingly.
     ///
     /// If an instruction could not be parsed, an error is returned containing the reason.
-    #[allow(clippy::ptr_arg)]
+    ///
+    /// This function was written to outsource the common code from `RuntimeBuilder::build_instructions` and `RuntimeBuilder::build_instructions_whitelist`.
     #[allow(clippy::match_same_arms)]
-    pub fn build_instructions(
+    fn build_instructions_internal(
         &mut self,
-        instructions_input: &Vec<&str>,
+        instructions_input: &[&str],
         file_name: &str,
-    ) -> Result<(), BuildProgramError> {
+    ) -> Result<Vec<Instruction>, BuildProgramError> {
         self.control_flow.reset();
         let mut instructions = Vec::new();
         for (index, instruction) in instructions_input.iter().enumerate() {
@@ -164,8 +167,7 @@ impl RuntimeBuilder {
                     continue;
                 }
             }
-            //instructions.push(Instruction::try_from(&splits).wrap_err("when building instructions")?)
-            //instructions.push(Instruction::try_from(&splits)?)
+
             match Instruction::try_from(&splits) {
                 Ok(i) => instructions.push(i),
                 Err(e) => {
@@ -211,6 +213,42 @@ impl RuntimeBuilder {
                 reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes,
             });
         }
+        Ok(instructions)
+    }
+
+    /// Builds instructions from the vector.
+    ///
+    /// Each element is a single instruction.
+    ///
+    /// Control flow is reset and updated accordingly.
+    ///
+    /// If an instruction could not be parsed, an error is returned containing the reason.
+    #[allow(clippy::ptr_arg)]
+    #[allow(clippy::match_same_arms)]
+    pub fn build_instructions(
+        &mut self,
+        instructions_input: &Vec<&str>,
+        file_name: &str,
+    ) -> Result<(), BuildProgramError> {
+        let instructions = self.build_instructions_internal(instructions_input, file_name)?;
+        self.instructions = Some(instructions);
+        Ok(())
+    }
+
+    /// Builds instructions from the vector and compares them with a provided whitelist of instructions.
+    /// If instructions are found that are not contained in the whitelist, the build will fail and an error is returned.
+    ///
+    /// The whitelist contains the return value of `Instruction::identifier()`.
+    ///
+    /// `RuntimeBuilder::check_instructions()` is used for the check if instructions are allowed.
+    pub fn build_instructions_whitelist(
+        &mut self,
+        instructions_input: &[&str],
+        file_name: &str,
+        whitelist: &HashSet<String>,
+    ) -> Result<(), BuildProgramError> {
+        let instructions = self.build_instructions_internal(instructions_input, file_name)?;
+        check_instructions(&instructions, whitelist)?;
         self.instructions = Some(instructions);
         Ok(())
     }
@@ -383,6 +421,35 @@ pub fn check_gamma(
             return Ok(());
         }
         return Err(RuntimeBuildError::GammaDisabled);
+    }
+    Ok(())
+}
+
+/// Checks instructions that are set by comparing them with the provided whitelist of instructions.
+/// If this runtime builder contains instructions that are not contained within the whitelist, an error is returned.
+///
+/// The whitelist contains the return value of `Instruction::identifier()`.
+pub fn check_instructions(
+    instructions: &[Instruction],
+    whitelist: &HashSet<String>,
+) -> Result<(), BuildProgramError> {
+    for (idx, i) in instructions.iter().enumerate() {
+        if !whitelist.contains(&i.identifier()) {
+            // Instruction found, that is forbidden
+            let mut allowed_instructions = whitelist
+                .iter()
+                .map(String::to_string)
+                .collect::<Vec<String>>();
+            allowed_instructions.sort();
+            return Err(BuildProgramError {
+                reason: BuildProgramErrorTypes::InstructionNotAllowed(
+                    idx + 1,
+                    format!("{i}"),
+                    i.identifier(),
+                    allowed_instructions.join("\n").to_string(),
+                ),
+            });
+        }
     }
     Ok(())
 }
