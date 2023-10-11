@@ -1,5 +1,0 @@
-A := M
-M := A
-A := A OP M
-push
-pop
