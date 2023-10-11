@@ -199,7 +199,7 @@ pub enum CalcError {
 #[cfg(test)]
 mod tests {
     use crate::{
-        base::{Operation, MemoryCell},
+        base::{MemoryCell, Operation},
         instructions::{IndexMemoryCellIndexType, Instruction, TargetType, Value},
         runtime::{
             builder::RuntimeBuilder,
@@ -269,10 +269,7 @@ mod tests {
             TargetType::Gamma,
             Value::Constant(10),
         )]);
-        assert_eq!(
-            rt.build(),
-            Err(RuntimeBuildError::GammaDisabled)
-        );
+        assert_eq!(rt.build(), Err(RuntimeBuildError::GammaDisabled));
     }
 
     #[test]
@@ -406,7 +403,8 @@ mod tests {
     fn test_re_imc_negative_index() {
         let mut ra = RuntimeArgs::new_debug(&["h1"]);
         let mut cf = ControlFlow::new();
-        ra.memory_cells.insert("h1".to_string(), MemoryCell::new("h1"));
+        ra.memory_cells
+            .insert("h1".to_string(), MemoryCell::new("h1"));
         ra.memory_cells.get_mut("h1").unwrap().data = Some(-1);
         assert_eq!(
             Instruction::Assign(
@@ -449,8 +447,7 @@ mod tests {
         let mut ra = RuntimeArgs::new_debug(&["h1"]);
         let mut cf = ControlFlow::new();
         assert_eq!(
-            Instruction::StackOp(Operation::Add)
-            .run(&mut ra, &mut cf),
+            Instruction::StackOp(Operation::Add).run(&mut ra, &mut cf),
             Err(RuntimeErrorType::StackOpFail(Operation::Add))
         )
     }

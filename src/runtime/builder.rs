@@ -425,7 +425,10 @@ pub fn check_gamma(
 
 /// Checks instructions that are set by comparing them with the provided whitelist of instructions.
 /// If this runtime builder contains instructions that are not contained within the whitelist, an error is returned.
-pub fn check_instructions(instructions: &[Instruction], whitelist: &HashSet<Instruction>) -> Result<(), BuildProgramError> {
+pub fn check_instructions(
+    instructions: &[Instruction],
+    whitelist: &HashSet<Instruction>,
+) -> Result<(), BuildProgramError> {
     for (idx, i) in instructions.iter().enumerate() {
         if !whitelist.contains(i) {
             // Instruction found, that is forbidden

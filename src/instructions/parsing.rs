@@ -286,7 +286,10 @@ pub fn parse_memory_cell(
         ));
     }
     if name.chars().any(|c| c.is_ascii_alphabetic()) {
-        if !name.chars().all(|c| matches!(c, 'a'..='z' | 'A'..='Z' | '0'..='9')) {
+        if !name
+            .chars()
+            .all(|c| matches!(c, 'a'..='z' | 'A'..='Z' | '0'..='9'))
+        {
             return Err(InstructionParseError::InvalidExpression(
                 (part_range.0 + 2, part_range.1 - 1),
                 name,
@@ -418,7 +421,10 @@ mod tests {
         );
         assert_eq!(
             parse_memory_cell("p(x;y)", (0, 5)),
-            Err(InstructionParseError::InvalidExpression((2, 4), "x;y".to_string()))
+            Err(InstructionParseError::InvalidExpression(
+                (2, 4),
+                "x;y".to_string()
+            ))
         )
     }
 
