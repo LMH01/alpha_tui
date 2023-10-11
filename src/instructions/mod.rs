@@ -63,7 +63,18 @@ impl Instruction {
 impl Display for Instruction {
 
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {//TODO implement display
-        todo!()
+        match self {
+            Self::Assign(t, v) => write!(f, "{t} := {v}"),
+            Self::Calc(t, v, op, v2) => write!(f, "{t} := {v} {op} {v2}"),
+            Self::Call(l) => write!(f, "call {l}"),
+            Self::Goto(l) => write!(f, "goto {l}"),
+            Self::JumpIf(v, cmp, v2, l) => write!(f, "if {v} {cmp} {v2} then goto {l}"),
+            Self::Noop => write!(f, ""),
+            Self::Pop => write!(f, "pop"),
+            Self::Push => write!(f, "push"),
+            Self::Return => write!(f, "return"),
+            Self::StackOp(op) => write!(f, "stack{op}"),
+        }
     }
 }
 
@@ -379,6 +390,18 @@ pub enum IndexMemoryCellIndexType {
     Index(usize),
 }
 
+impl Display for IndexMemoryCellIndexType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Accumulator(idx) => write!(f, "a{idx}"),
+            Self::Direct(idx) => write!(f, "{idx}"),
+            Self::Gamma => write!(f, "y"),
+            Self::MemoryCell(n) => write!(f, "p({n})"),
+            Self::Index(idx) => write!(f, "p({idx})"),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum TargetType {
     Accumulator(usize),
@@ -401,6 +424,17 @@ impl TryFrom<(&String, (usize, usize))> for TargetType {
             return Ok(Self::Gamma);
         }
         Ok(Self::Accumulator(parse_alpha(value.0, value.1, true)?))
+    }
+}
+
+impl Display for TargetType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Accumulator(idx) => write!(f, "a{idx}"),
+            Self::Gamma => write!(f, "y"),
+            Self::MemoryCell(n) => write!(f, "p({n})"),
+            Self::IndexMemoryCell(t) => write!(f, "p({t})"),
+        }
     }
 }
 
@@ -479,6 +513,18 @@ impl TryFrom<(String, (usize, usize))> for Value {
 
     fn try_from(value: (String, (usize, usize))) -> Result<Self, Self::Error> {
         Self::try_from((&value.0, value.1))
+    }
+}
+
+impl Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Accumulator(idx) => write!(f, "a{idx}"),
+            Self::Constant(c) => write!(f, "{c}"),
+            Self::Gamma => write!(f, "y"),
+            Self::MemoryCell(n) => write!(f, "p({n})"),
+            Self::IndexMemoryCell(t) => write!(f, "p({t})"),
+        }
     }
 }
 

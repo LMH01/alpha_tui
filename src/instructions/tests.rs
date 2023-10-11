@@ -1263,3 +1263,51 @@ fn test_assign_index_memory_cell_from_value() {
         Err(RuntimeErrorType::IndexMemoryCellDoesNotExist(1))
     );
 }
+
+#[test]
+fn test_instruction_display() {
+    assert_eq!(format!("{}", Instruction::Assign(TargetType::Accumulator(0), Value::Constant(5))), "a0 := 5".to_string());
+    assert_eq!(format!("{}", Instruction::Calc(TargetType::Accumulator(0), Value::Constant(5), Operation::Add, Value::MemoryCell("h1".to_string()))), "a0 := 5 + p(h1)".to_string());
+    assert_eq!(format!("{}", Instruction::Call("fun".to_string())), "call fun".to_string());
+    assert_eq!(format!("{}", Instruction::Goto("loop".to_string())), "goto loop".to_string());
+    assert_eq!(format!("{}", Instruction::JumpIf(Value::Accumulator(0), Comparison::Eq, Value::IndexMemoryCell(IndexMemoryCellIndexType::Direct(0)), "loop".to_string())), "if a0 == p(0) then goto loop".to_string());
+    assert_eq!(format!("{}", Instruction::Noop), "".to_string());
+    assert_eq!(format!("{}", Instruction::Pop), "pop".to_string());
+    assert_eq!(format!("{}", Instruction::Push), "push".to_string());
+    assert_eq!(format!("{}", Instruction::Return), "return".to_string());
+    assert_eq!(format!("{}", Instruction::StackOp(Operation::Mul)), "stack*".to_string());
+}
+
+#[test]
+fn test_value_display() {
+    assert_eq!(format!("{}", Value::Accumulator(0)), "a0".to_string());
+    assert_eq!(format!("{}", Value::Constant(5)), "5".to_string());
+    assert_eq!(format!("{}", Value::Gamma), "y".to_string());
+    assert_eq!(format!("{}", Value::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0))), "p(a0)".to_string());
+    assert_eq!(format!("{}", Value::IndexMemoryCell(IndexMemoryCellIndexType::Direct(0))), "p(0)".to_string());
+    assert_eq!(format!("{}", Value::IndexMemoryCell(IndexMemoryCellIndexType::Gamma)), "p(y)".to_string());
+    assert_eq!(format!("{}", Value::IndexMemoryCell(IndexMemoryCellIndexType::Index(0))), "p(p(0))".to_string());
+    assert_eq!(format!("{}", Value::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string()))), "p(p(h1))".to_string());
+    assert_eq!(format!("{}", Value::MemoryCell("h1".to_string())), "p(h1)".to_string());
+}
+
+#[test]
+fn test_target_type_display() {
+    assert_eq!(format!("{}", TargetType::Accumulator(0)), "a0".to_string());
+    assert_eq!(format!("{}", TargetType::Gamma), "y".to_string());
+    assert_eq!(format!("{}", TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0))), "p(a0)".to_string());
+    assert_eq!(format!("{}", TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Direct(0))), "p(0)".to_string());
+    assert_eq!(format!("{}", TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Gamma)), "p(y)".to_string());
+    assert_eq!(format!("{}", TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Index(0))), "p(p(0))".to_string());
+    assert_eq!(format!("{}", TargetType::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string()))), "p(p(h1))".to_string());
+    assert_eq!(format!("{}", TargetType::MemoryCell("h1".to_string())), "p(h1)".to_string());
+}
+
+#[test]
+fn test_index_memory_cell_index_type_display() {
+    assert_eq!(format!("{}", IndexMemoryCellIndexType::Accumulator(0)), "a0".to_string());
+    assert_eq!(format!("{}", IndexMemoryCellIndexType::Direct(0)), "0".to_string());
+    assert_eq!(format!("{}", IndexMemoryCellIndexType::Gamma), "y".to_string());
+    assert_eq!(format!("{}", IndexMemoryCellIndexType::Index(0)), "p(0)".to_string());
+    assert_eq!(format!("{}", IndexMemoryCellIndexType::MemoryCell("h1".to_string())), "p(h1)".to_string());
+}

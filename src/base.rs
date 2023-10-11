@@ -118,6 +118,19 @@ impl TryFrom<&str> for Comparison {
     }
 }
 
+impl Display for Comparison {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Lt => write!(f, "<"),
+            Self::Le => write!(f, "<="),
+            Self::Eq => write!(f, "=="),
+            Self::Neq => write!(f, "!="),
+            Self::Ge => write!(f, ">="),
+            Self::Gt => write!(f, ">"),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Hash, Copy)]
 pub enum Operation {
     Add,
@@ -273,6 +286,16 @@ mod tests {
     }
 
     #[test]
+    fn test_comparison_display() {
+        assert_eq!(format!("{}", Comparison::Lt), "<".to_string());
+        assert_eq!(format!("{}", Comparison::Le), "<=".to_string());
+        assert_eq!(format!("{}", Comparison::Eq), "==".to_string());
+        assert_eq!(format!("{}", Comparison::Neq), "!=".to_string());
+        assert_eq!(format!("{}", Comparison::Ge), ">=".to_string());
+        assert_eq!(format!("{}", Comparison::Gt), ">".to_string());
+    }
+
+    #[test]
     fn test_operation() {
         assert_eq!(Operation::Add.calc(20, 5).unwrap(), 25);
         assert_eq!(Operation::Sub.calc(20, 5).unwrap(), 15);
@@ -291,5 +314,14 @@ mod tests {
         assert_eq!(Operation::try_from("÷"), Ok(Operation::Div));
         assert_eq!(Operation::try_from("%"), Ok(Operation::Mod));
         assert_eq!(Operation::try_from("P"), Err(()));
+    }
+
+    #[test]
+    fn test_operation_display() {
+        assert_eq!(format!("{}", Operation::Add), "+".to_string());
+        assert_eq!(format!("{}", Operation::Sub), "-".to_string());
+        assert_eq!(format!("{}", Operation::Mul), "*".to_string());
+        assert_eq!(format!("{}", Operation::Div), "/".to_string());
+        assert_eq!(format!("{}", Operation::Mod), "%".to_string());
     }
 }
