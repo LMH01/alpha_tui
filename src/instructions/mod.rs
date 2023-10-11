@@ -86,7 +86,7 @@ impl Display for Instruction {
     }
 }
 
-impl InstructionWhitelist for Instruction {
+impl Identifier for Instruction {
     fn identifier(&self) -> String {
         match self {
             Self::Assign(t, v) => format!("{} := {}", t.identifier(), v.identifier()),
@@ -398,7 +398,7 @@ fn assign_index_memory_cell_from_value(
 /// 
 /// This is needed when checking if instructions are allowed because the `Eq` implementation determines that `TargetType::Accumulator(0)``
 /// is not equal to `TargetType::Accumulator(1)`` even though they are basically the same type of command.
-pub trait InstructionWhitelist {// TODO determine better name...
+pub trait Identifier {// TODO determine better name...
 
     /// Returns the identifier for this instruction (put together from the identifiers of the different instruction components)
     /// under which it is resolved when placed in the allowed instruction list.
@@ -474,7 +474,7 @@ impl Display for TargetType {
     }
 }
 
-impl InstructionWhitelist for TargetType {
+impl Identifier for TargetType {
     fn identifier(&self) -> String {
         match self {
             Self::Accumulator(_) => ACCUMULATOR_IDENTIFIER.to_string(),
@@ -574,7 +574,7 @@ impl Display for Value {
     }
 }
 
-impl InstructionWhitelist for Value {
+impl Identifier for Value {
     fn identifier(&self) -> String {
         match self {
             Self::Accumulator(_) => ACCUMULATOR_IDENTIFIER.to_string(),

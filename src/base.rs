@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::{runtime::error_handling::{CalcError, RuntimeErrorType}, instructions::{InstructionWhitelist, OPERATOR_IDENTIFIER, COMPARISON_IDENTIFIER}};
+use crate::{runtime::error_handling::{CalcError, RuntimeErrorType}, instructions::{Identifier, OPERATOR_IDENTIFIER, COMPARISON_IDENTIFIER}};
 
 /// A single accumulator, represents "Akkumulator/Alpha" from SysInf lecture.
 #[allow(clippy::doc_markdown)]
@@ -131,7 +131,7 @@ impl Display for Comparison {
     }
 }
 
-impl InstructionWhitelist for Comparison {
+impl Identifier for Comparison {
     fn identifier(&self) -> String {
         COMPARISON_IDENTIFIER.to_string()
     }
@@ -223,7 +223,7 @@ impl Display for Operation {
     }
 }
 
-impl InstructionWhitelist for Operation {
+impl Identifier for Operation {
     fn identifier(&self) -> String {
         OPERATOR_IDENTIFIER.to_string()
     }

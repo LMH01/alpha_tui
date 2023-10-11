@@ -7,7 +7,7 @@ use crate::{
     cli::Cli,
     instructions::{
         error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
-        IndexMemoryCellIndexType, Instruction, TargetType, Value, InstructionWhitelist,
+        IndexMemoryCellIndexType, Instruction, TargetType, Value, Identifier,
     },
     utils::remove_comment,
 };

@@ -6,7 +6,7 @@ use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
     instructions::{
         assign_index_memory_cell, assign_index_memory_cell_from_value,
-        IndexMemoryCellIndexType, Instruction, TargetType, Value, InstructionWhitelist, ACCUMULATOR_IDENTIFIER, CONSTANT_IDENTIFIER, GAMMA_IDENTIFIER, MEMORY_CELL_IDENTIFIER, COMPARISON_IDENTIFIER, OPERATOR_IDENTIFIER,
+        IndexMemoryCellIndexType, Instruction, TargetType, Value, Identifier, ACCUMULATOR_IDENTIFIER, CONSTANT_IDENTIFIER, GAMMA_IDENTIFIER, MEMORY_CELL_IDENTIFIER, COMPARISON_IDENTIFIER, OPERATOR_IDENTIFIER,
     },
     runtime::{
         builder::RuntimeBuilder, error_handling::RuntimeErrorType, ControlFlow, RuntimeArgs,

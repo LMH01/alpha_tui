@@ -9,7 +9,7 @@ use miette::{miette, IntoDiagnostic, NamedSource, Result, SourceOffset, SourceSp
 use crate::{
     instructions::{
         error_handling::{BuildAllowedInstructionsError, InstructionParseError},
-        Instruction, InstructionWhitelist,
+        Instruction, Identifier,
     },
     runtime::builder::RuntimeBuilder,
 };
