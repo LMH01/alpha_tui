@@ -270,6 +270,17 @@ pub fn prepare_whitelist_file(content: Vec<String>) -> Vec<String> {
     let mut prepared = Vec::new();
     for line in content {
         let mut new_chunks = Vec::new();
+        match line.as_str() {
+            "goto" => {
+                prepared.push("goto loop".to_string());
+                continue;
+            },
+            "call" => {
+                prepared.push("call loop".to_string());
+                continue;
+            },
+            _ => (),
+        }
         let chunks = line.split(' ');
         for chunk in chunks {
             match chunk {
@@ -280,6 +291,7 @@ pub fn prepare_whitelist_file(content: Vec<String>) -> Vec<String> {
                 "OP" => new_chunks.push("+"),
                 "stackOP" => new_chunks.push("stack+"),
                 "CMP" => new_chunks.push("=="),
+                "goto" => new_chunks.push("goto loop"),
                 _ => new_chunks.push(chunk),
             }
         }
@@ -371,7 +383,7 @@ mod tests {
 
     #[test]
     fn test_prepare_whitelist_file() {
-        let contents = "A := M\nA := C\nM := A\nY := A OP M\nif A CMP M then goto loop";
+        let contents = "A := M\nA := C\nM := A\nY := A OP M\nif A CMP M then goto\ngoto\ncall";
         let contents = prepare_whitelist_file(
             contents
                 .split('\n')
@@ -384,6 +396,8 @@ mod tests {
             "p(h1) := a0".to_string(),
             "y := a0 + p(h1)".to_string(),
             "if a0 == p(h1) then goto loop".to_string(),
+            "goto loop".to_string(),
+            "call loop".to_string(),
         ];
         assert_eq!(*contents, after);
     }

@@ -5,3 +5,6 @@ M := Y
 push
 pop
 stackOP
+call
+goto
+if A CMP M then goto

@@ -5,3 +5,6 @@ p(h) := y
 push
 pop
 stack+
+call label
+goto label
+if a == p(h) then goto label

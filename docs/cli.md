@@ -19,7 +19,7 @@ This makes it possible to challenge yourself in working with only a limited inst
 
 All commands that are understood by the program can be used to specify what instructions should be allowed, in addition to that there are some shortcuts available:
 
-| Symbol | Explanation |
+| Shortcut | Explanation |
 | - | - |
 | A | any accumulator |
 | M | any memory cell |
@@ -27,6 +27,8 @@ All commands that are understood by the program can be used to specify what inst
 | Y | gamma accumulator |
 | OP | any operation |
 | CMP | any comparison |
+
+In addition to this, it is not required to specify a label for the following instructions: `goto, call, if _ then goto`.
 
 This results in this file
 
@@ -38,6 +40,9 @@ M := Y
 push
 pop
 stackOP
+call
+goto
+if A CMP M then goto
 ```
 or this file
 
@@ -49,6 +54,9 @@ p(h) := y
 push
 pop
 stack+
+call label
+goto label
+if a == p(h) then goto label
 ```
 
 allowing instructions like these
@@ -61,6 +69,9 @@ p(h2) := y
 push
 pop
 stack*
+call label
+goto label
+if a == p(h) then goto label
 ```
 to be used in the program.
 
