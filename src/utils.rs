@@ -177,6 +177,7 @@ pub fn get_comment(instruction: &str) -> Option<String> {
 }
 
 /// Builds instructions by checking if all used instructions are allowed
+#[allow(clippy::match_same_arms)]
 pub fn build_instructions_with_whitelist(rb: &mut RuntimeBuilder, instructions: &[String], file: &str, whitelist_file: &str) -> Result<()> {
     // Instruction whitelist is provided
     let whitelisted_instructions_file_contents = match read_file(whitelist_file) {

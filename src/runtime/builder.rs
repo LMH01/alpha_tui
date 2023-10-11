@@ -124,6 +124,7 @@ impl RuntimeBuilder {
     /// If an instruction could not be parsed, an error is returned containing the reason.
     ///
     /// This function was written to outsource the common code from `RuntimeBuilder::build_instructions` and `RuntimeBuilder::build_instructions_whitelist`.
+    #[allow(clippy::match_same_arms)]
     fn build_instructions_internal(
         &mut self,
         instructions_input: &[&str],
@@ -245,22 +246,8 @@ impl RuntimeBuilder {
         whitelist: &HashSet<Instruction>,
     ) -> Result<(), BuildProgramError> {
         let instructions = self.build_instructions_internal(instructions_input, file_name)?;
-        self.check_instructions(&instructions, whitelist)?;
+        check_instructions(&instructions, whitelist)?;
         self.instructions = Some(instructions);
-        Ok(())
-    }
-
-    /// Checks instructions that are set by comparing them with the provided whitelist of instructions.
-    /// If this runtime builder contains instructions that are not contained within the whitelist, an error is returned.
-    pub fn check_instructions(&self, instructions: &[Instruction], whitelist: &HashSet<Instruction>) -> Result<(), BuildProgramError> {
-        for (idx, i) in instructions.iter().enumerate() {
-            if !whitelist.contains(i) {
-                // Instruction found, that is forbidden
-                return Err(BuildProgramError {
-                    reason: BuildProgramErrorTypes::InstructionNotAllowed(idx, format!("{}", i)),
-                });
-            }
-        }
         Ok(())
     }
 
@@ -432,6 +419,20 @@ pub fn check_gamma(
             return Ok(());
         }
         return Err(RuntimeBuildError::GammaDisabled);
+    }
+    Ok(())
+}
+
+/// Checks instructions that are set by comparing them with the provided whitelist of instructions.
+/// If this runtime builder contains instructions that are not contained within the whitelist, an error is returned.
+pub fn check_instructions(instructions: &[Instruction], whitelist: &HashSet<Instruction>) -> Result<(), BuildProgramError> {
+    for (idx, i) in instructions.iter().enumerate() {
+        if !whitelist.contains(i) {
+            // Instruction found, that is forbidden
+            return Err(BuildProgramError {
+                reason: BuildProgramErrorTypes::InstructionNotAllowed(idx, format!("{i}")),
+            });
+        }
     }
     Ok(())
 }
