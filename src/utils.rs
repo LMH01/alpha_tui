@@ -184,7 +184,7 @@ pub fn get_comment(instruction: &str) -> Option<String> {
 }
 
 /// Builds instructions by checking if all used instructions are allowed.
-/// 
+///
 /// For that the read in file is first formatted to be a compilable program by using `prepare_whitelist_file()`
 #[allow(clippy::match_same_arms)]
 pub fn build_instructions_with_whitelist(
@@ -204,7 +204,8 @@ pub fn build_instructions_with_whitelist(
             ))
         }
     };
-    whitelisted_instructions_file_contents = prepare_whitelist_file(whitelisted_instructions_file_contents);
+    whitelisted_instructions_file_contents =
+        prepare_whitelist_file(whitelisted_instructions_file_contents);
     let mut whitelisted_instructions = HashSet::new();
     for (idx, s) in whitelisted_instructions_file_contents.iter().enumerate() {
         match Instruction::try_from(s.as_str()) {
@@ -370,10 +371,12 @@ mod tests {
     #[test]
     fn test_prepare_whitelist_file() {
         let contents = "A := M\nA := C\nM := A\nY := A OP M\nif A CMP M then goto loop";
-        let contents = prepare_whitelist_file(contents
-            .split('\n')
-            .map(String::from)
-            .collect::<Vec<String>>());
+        let contents = prepare_whitelist_file(
+            contents
+                .split('\n')
+                .map(String::from)
+                .collect::<Vec<String>>(),
+        );
         let after = vec![
             "a0 := p(h1)".to_string(),
             "a0 := 0".to_string(),
