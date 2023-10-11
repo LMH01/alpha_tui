@@ -88,6 +88,20 @@ pub enum BuildProgramErrorTypes {
         reason: InstructionParseError,
     },
 
+    #[error("when parsing whitelist instructions")]
+    #[diagnostic(
+        code("build_program::parse_whitelist_instruction_error"),
+    )]
+    ParseWhitelistError {
+        #[source_code]
+        src: NamedSource,
+        #[label("here")]
+        bad_bit: SourceSpan,
+        #[source]
+        #[diagnostic_source]
+        reason: InstructionParseError,
+    },
+
     #[error("label '{0}' is defined multiple times")]
     #[diagnostic(
         code("build_program::label_definition_error"),
@@ -101,6 +115,14 @@ pub enum BuildProgramErrorTypes {
         help("Make sure that you define at most one main label, either 'main' or 'MAIN'")
     )]
     MainLabelDefinedMultipleTimes,
+
+    /// Indicates that this instruction is not allowed because it is not contained in the whitelist
+    #[error("instruction '{1}' in line '{0}' is not allowed")]
+    #[diagnostic(
+        code("build_program::instruction_not_allowed_error"),
+        help("Make sure that you include this type of instruction in the whitelist or use a different instruction")
+    )]
+    InstructionNotAllowed(usize, String),
 }
 
 #[allow(clippy::match_same_arms)]

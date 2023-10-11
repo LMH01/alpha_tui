@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use miette::Result;
 
 use crate::{
@@ -16,7 +18,7 @@ mod parsing;
 #[cfg(test)]
 mod tests;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub enum Instruction {
     Assign(TargetType, Value),
     Calc(TargetType, Value, Operation, Value),
@@ -56,36 +58,13 @@ impl Instruction {
         }
         Ok(())
     }
+}
 
-    ///// Checks if this instruction is legal by comparing if it matches one instruction in the instruction set
-    ///// This is a workaround until I know if all instructions in the format are valid in alpha notation or if only specific instructions are allowed (= the instructions that I already made in the old version)
-    //fn is_legal(&self) -> bool {//TODO Change return type to Result<InstructionParseError> and create error variant specific for this error
-    //    //TODO Add in all other instructions that are allowed but that are not yet added as instructions to the instruction enum
-    //    match self {
-    //        Instruction::AssignInstruction(target, source) => {
-    //            // All assign instructions are valid
-    //            // These are: a := x, a := b, a := p(i), p(i) := x, p(i) := a, p(i) := p(j)
-    //            return true;
-    //        }
-    //        Instruction::CalcInstruction(target, source_a, op, source_b) => {
-    //            if let TargetType::Accumulator(idx_a) = target {
-    //                if let Value::Accumulator(idx_b) = source_a {
-    //                    if idx_a == idx_b  {
-    //                        if let Value::Constant(_) = source_b {
-    //                            // a := a op x
-    //                            return true;
-    //                        } else if let Value::Accumulator(_)  = source_b {
-    //                            // a := a op b
-    //                            return true;
-    //                        }
-    //                        return false;
-    //                    }
-    //                }
-    //            }
-    //        }
-    //    }
-    //    false
-    //}
+impl Display for Instruction {
+
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {//TODO implement display
+        todo!()
+    }
 }
 
 fn run_assign(
@@ -380,7 +359,7 @@ fn assign_index_memory_cell_from_value(
 }
 
 /// Specifies the location where the index memory cell should look for the value of the index of the index memory cell
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum IndexMemoryCellIndexType {
     /// Indicates that this index memory cell uses the value of an accumulator as index where the data is accessed.
     Accumulator(usize),
@@ -400,7 +379,7 @@ pub enum IndexMemoryCellIndexType {
     Index(usize),
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum TargetType {
     Accumulator(usize),
     Gamma,
@@ -425,7 +404,7 @@ impl TryFrom<(&String, (usize, usize))> for TargetType {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Value {
     Accumulator(usize),
     Gamma,

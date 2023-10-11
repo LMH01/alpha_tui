@@ -1,9 +1,12 @@
+use std::collections::HashSet;
+
 use miette::{NamedSource, Result, SourceOffset, SourceSpan};
 
 use crate::{
     base::{Accumulator, MemoryCell},
     cli::Cli,
     instructions::{
+        self,
         error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
         IndexMemoryCellIndexType, Instruction, TargetType, Value,
     },
@@ -120,13 +123,13 @@ impl RuntimeBuilder {
     /// Control flow is reset and updated accordingly.
     ///
     /// If an instruction could not be parsed, an error is returned containing the reason.
-    #[allow(clippy::ptr_arg)]
-    #[allow(clippy::match_same_arms)]
-    pub fn build_instructions(
+    ///
+    /// This function was written to outsource the common code from `RuntimeBuilder::build_instructions` and `RuntimeBuilder::build_instructions_whitelist`.
+    fn build_instructions_internal(
         &mut self,
         instructions_input: &Vec<&str>,
         file_name: &str,
-    ) -> Result<(), BuildProgramError> {
+    ) -> Result<Vec<Instruction>, BuildProgramError> {
         self.control_flow.reset();
         let mut instructions = Vec::new();
         for (index, instruction) in instructions_input.iter().enumerate() {
@@ -164,8 +167,7 @@ impl RuntimeBuilder {
                     continue;
                 }
             }
-            //instructions.push(Instruction::try_from(&splits).wrap_err("when building instructions")?)
-            //instructions.push(Instruction::try_from(&splits)?)
+            
             match Instruction::try_from(&splits) {
                 Ok(i) => instructions.push(i),
                 Err(e) => {
@@ -211,7 +213,55 @@ impl RuntimeBuilder {
                 reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes,
             });
         }
+        Ok(instructions)
+    }
+
+    /// Builds instructions from the vector.
+    ///
+    /// Each element is a single instruction.
+    ///
+    /// Control flow is reset and updated accordingly.
+    ///
+    /// If an instruction could not be parsed, an error is returned containing the reason.
+    #[allow(clippy::ptr_arg)]
+    #[allow(clippy::match_same_arms)]
+    pub fn build_instructions(
+        &mut self,
+        instructions_input: &Vec<&str>,
+        file_name: &str,
+    ) -> Result<(), BuildProgramError> {
+        let instructions = self.build_instructions_internal(instructions_input, file_name)?;
         self.instructions = Some(instructions);
+        Ok(())
+    }
+
+    /// Builds instructions from the vector and compares them with a provided whitelist of instructions.
+    /// If instructions are found that are not contained in the whitelist, the build will fail and an error is returned.
+    ///
+    /// `RuntimeBuilder::check_instructions()` is used for the check if instructions are allowed.
+    pub fn build_instructions_whitelist(
+        &mut self,
+        instructions_input: &Vec<&str>,
+        file_name: &str,
+        whitelist: &HashSet<Instruction>,
+    ) -> Result<(), BuildProgramError> {
+        let instructions = self.build_instructions_internal(instructions_input, file_name)?;
+        self.check_instructions(&instructions, whitelist)?;
+        self.instructions = Some(instructions);
+        Ok(())
+    }
+
+    /// Checks instructions that are set by comparing them with the provided whitelist of instructions.
+    /// If this runtime builder contains instructions that are not contained within the whitelist, an error is returned.
+    pub fn check_instructions(&self, instructions: &Vec<Instruction>, whitelist: &HashSet<Instruction>) -> Result<(), BuildProgramError> {
+        for (idx, i) in instructions.iter().enumerate() {
+            if !whitelist.contains(i) {
+                // Instruction found, that is forbidden
+                return Err(BuildProgramError {
+                    reason: BuildProgramErrorTypes::InstructionNotAllowed(idx, format!("{}", i)),
+                });
+            }
+        }
         Ok(())
     }
 

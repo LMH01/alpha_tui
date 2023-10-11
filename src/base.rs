@@ -78,7 +78,7 @@ pub struct IndexMemoryCell {
 //}
 
 /// Different ways of paring two values
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Comparison {
     Lt,
     Le,
@@ -118,7 +118,7 @@ impl TryFrom<&str> for Comparison {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, Copy)]
 pub enum Operation {
     Add,
     Sub,

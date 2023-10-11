@@ -1,4 +1,4 @@
-use std::{io, process::exit};
+use std::{io, process::exit, collections::HashSet};
 
 use ::ratatui::{backend::CrosstermBackend, Terminal};
 use clap::Parser;
@@ -15,7 +15,7 @@ use crate::{
     cli::Commands,
     runtime::builder::RuntimeBuilder,
     tui::App,
-    utils::{pretty_format_instructions, write_file},
+    utils::{pretty_format_instructions, write_file}, instructions::Instruction,
 };
 
 /// Contains all required data types used to run programs
@@ -89,7 +89,26 @@ fn cmd_load(cli: &Cli, instructions: Vec<String>, input: String) -> Result<()> {
             ));
         }
     };
-    rb.build_instructions(&instructions.iter().map(String::as_str).collect(), &input)?;
+
+    if let Some(file) = cli.allowed_instructions_file.as_ref() {
+        // Instruction whitelist is provided
+        let whitelisted_instructions_file_contents = match read_file(file) {
+            Ok(i) => i,
+            Err(e) => return Err(miette!("Unable to read whitelisted instruction file [{}]: {}", &input, e)),
+        };
+        let mut whitelisted_instructions = HashSet::new();
+        for s in whitelisted_instructions_file_contents {
+            match Instruction::try_from(s.as_str()) {
+                Ok(i) => {
+                    let _ = whitelisted_instructions.insert(i);
+                },
+                Err(_) => todo!(),
+            }
+        }
+        rb.build_instructions_whitelist(&instructions.iter().map(String::as_str).collect(), &input, &whitelisted_instructions)?;
+    } else {
+        rb.build_instructions(&instructions.iter().map(String::as_str).collect(), &input)?;
+    }
 
     // format instructions pretty if cli flag is set
     let instructions = match cli.command {
