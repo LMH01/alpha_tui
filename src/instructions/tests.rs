@@ -8,7 +8,7 @@ use crate::{
     instructions::{
         assign_index_memory_cell, assign_index_memory_cell_from_value,
         error_handling::{BuildAllowedInstructionsError, BuildProgramError, InstructionParseError},
-        IndexMemoryCellIndexType, Instruction, TargetType, Value,
+        IndexMemoryCellIndexType, Instruction, TargetType, Value, InstructionWhitelist, ACCUMULATOR_IDENTIFIER, CONSTANT_IDENTIFIER, GAMMA_IDENTIFIER, MEMORY_CELL_IDENTIFIER, COMPARISON_IDENTIFIER, OPERATOR_IDENTIFIER,
     },
     runtime::{
         builder::RuntimeBuilder, error_handling::RuntimeErrorType, ControlFlow, RuntimeArgs,
@@ -1433,6 +1433,47 @@ fn test_index_memory_cell_index_type_display() {
         format!("{}", IndexMemoryCellIndexType::MemoryCell("h1".to_string())),
         "p(h1)".to_string()
     );
+}
+
+#[test]
+fn test_value_instruction_identifier() {
+    assert_eq!(Value::Accumulator(0).identifier(), ACCUMULATOR_IDENTIFIER.to_string());
+    assert_eq!(Value::Constant(0).identifier(), CONSTANT_IDENTIFIER.to_string());
+    assert_eq!(Value::Gamma.identifier(), GAMMA_IDENTIFIER.to_string());
+    assert_eq!(Value::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0)).identifier(), MEMORY_CELL_IDENTIFIER.to_string());
+    assert_eq!(Value::MemoryCell("h1".to_string()).identifier(), MEMORY_CELL_IDENTIFIER.to_string());
+}
+
+#[test]
+fn test_target_type_identifier() {
+    assert_eq!(TargetType::Accumulator(0).identifier(), ACCUMULATOR_IDENTIFIER.to_string());
+    assert_eq!(TargetType::Gamma.identifier(), GAMMA_IDENTIFIER.to_string());
+    assert_eq!(TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0)).identifier(), MEMORY_CELL_IDENTIFIER.to_string());
+    assert_eq!(TargetType::MemoryCell("h1".to_string()).identifier(), MEMORY_CELL_IDENTIFIER.to_string());
+}
+
+#[test]
+fn test_comparison_identifier() {
+    assert_eq!(Comparison::Eq.identifier(), COMPARISON_IDENTIFIER);
+}
+
+#[test]
+fn test_operation_identifier() {
+    assert_eq!(Operation::Add.identifier(), OPERATOR_IDENTIFIER);
+}
+
+#[test]
+fn test_instruction_identifier() {
+    assert_eq!(Instruction::Assign(TargetType::Accumulator(0), Value::Accumulator(0)).identifier(), "A := A".to_string());
+    assert_eq!(Instruction::Calc(TargetType::MemoryCell("h1".to_string()), Value::Constant(5), Operation::Add, Value::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0))).identifier(), "M := C OP M".to_string());
+    assert_eq!(Instruction::Call("label".to_string()).identifier(), "call".to_string());
+    assert_eq!(Instruction::Goto("loop".to_string()).identifier(), "goto".to_string());
+    assert_eq!(Instruction::JumpIf(Value::Gamma, Comparison::Gt, Value::MemoryCell("h1".to_string()), "label".to_string()).identifier(), "if Y CMP M then goto".to_string());
+    assert_eq!(Instruction::Noop.identifier(), "NOOP".to_string());
+    assert_eq!(Instruction::Pop.identifier(), "pop".to_string());
+    assert_eq!(Instruction::Push.identifier(), "push".to_string());
+    assert_eq!(Instruction::Return.identifier(), "return".to_string());
+    assert_eq!(Instruction::StackOp(Operation::Add).identifier(), "stackOP".to_string());
 }
 
 #[test]

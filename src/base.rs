@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::runtime::error_handling::{CalcError, RuntimeErrorType};
+use crate::{runtime::error_handling::{CalcError, RuntimeErrorType}, instructions::{InstructionWhitelist, OPERATOR_IDENTIFIER, COMPARISON_IDENTIFIER}};
 
 /// A single accumulator, represents "Akkumulator/Alpha" from SysInf lecture.
 #[allow(clippy::doc_markdown)]
@@ -131,6 +131,12 @@ impl Display for Comparison {
     }
 }
 
+impl InstructionWhitelist for Comparison {
+    fn identifier(&self) -> String {
+        COMPARISON_IDENTIFIER.to_string()
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Hash, Copy)]
 pub enum Operation {
     Add,
@@ -214,6 +220,12 @@ impl Display for Operation {
             Self::Div => write!(f, "/"),
             Self::Mod => write!(f, "%"),
         }
+    }
+}
+
+impl InstructionWhitelist for Operation {
+    fn identifier(&self) -> String {
+        OPERATOR_IDENTIFIER.to_string()
     }
 }
 

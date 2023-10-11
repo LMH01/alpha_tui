@@ -18,6 +18,15 @@ mod parsing;
 #[cfg(test)]
 mod tests;
 
+// These constants are used to set the value with which instruction parts can be compared.
+// This is used to get the instruction whitelist to work.
+const ACCUMULATOR_IDENTIFIER: &str = "A";
+const MEMORY_CELL_IDENTIFIER: &str = "M";
+const GAMMA_IDENTIFIER: &str = "Y";
+const CONSTANT_IDENTIFIER: &str = "C";
+pub const OPERATOR_IDENTIFIER: &str = "OP";
+pub const COMPARISON_IDENTIFIER: &str = "CMP";
+
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub enum Instruction {
     Assign(TargetType, Value),
@@ -73,6 +82,23 @@ impl Display for Instruction {
             Self::Push => write!(f, "push"),
             Self::Return => write!(f, "return"),
             Self::StackOp(op) => write!(f, "stack{op}"),
+        }
+    }
+}
+
+impl InstructionWhitelist for Instruction {
+    fn identifier(&self) -> String {
+        match self {
+            Self::Assign(t, v) => format!("{} := {}", t.identifier(), v.identifier()),
+            Self::Calc(t, v, op, v2) => format!("{} := {} {} {}", t.identifier(), v.identifier(), op.identifier(), v2.identifier()),
+            Self::Call(_) => format!("call"),
+            Self::Goto(_) => format!("goto"),
+            Self::JumpIf(v, cmp, v2, _) => format!("if {} {} {} then goto", v.identifier(), cmp.identifier(), v2.identifier()),
+            Self::Noop => format!("NOOP"),
+            Self::Pop => format!("pop"),
+            Self::Push => format!("push"),
+            Self::Return => format!("return"),
+            Self::StackOp(op) => format!("stack{}", op.identifier()),
         }
     }
 }
@@ -368,6 +394,17 @@ fn assign_index_memory_cell_from_value(
     Ok(())
 }
 
+/// This trait is used to be easily able to compare instructions with one another.
+/// 
+/// This is needed when checking if instructions are allowed because the `Eq` implementation determines that `TargetType::Accumulator(0)``
+/// is not equal to `TargetType::Accumulator(1)`` even though they are basically the same type of command.
+pub trait InstructionWhitelist {// TODO determine better name...
+
+    /// Returns the identifier for this instruction (put together from the identifiers of the different instruction components)
+    /// under which it is resolved when placed in the allowed instruction list.
+    fn identifier(&self) -> String;
+}
+
 /// Specifies the location where the index memory cell should look for the value of the index of the index memory cell
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum IndexMemoryCellIndexType {
@@ -433,6 +470,16 @@ impl Display for TargetType {
             Self::Gamma => write!(f, "y"),
             Self::MemoryCell(n) => write!(f, "p({n})"),
             Self::IndexMemoryCell(t) => write!(f, "p({t})"),
+        }
+    }
+}
+
+impl InstructionWhitelist for TargetType {
+    fn identifier(&self) -> String {
+        match self {
+            Self::Accumulator(_) => ACCUMULATOR_IDENTIFIER.to_string(),
+            Self::Gamma => GAMMA_IDENTIFIER.to_string(),
+            Self::IndexMemoryCell(_) | Self::MemoryCell(_) => MEMORY_CELL_IDENTIFIER.to_string(),
         }
     }
 }
@@ -523,6 +570,17 @@ impl Display for Value {
             Self::Gamma => write!(f, "y"),
             Self::MemoryCell(n) => write!(f, "p({n})"),
             Self::IndexMemoryCell(t) => write!(f, "p({t})"),
+        }
+    }
+}
+
+impl InstructionWhitelist for Value {
+    fn identifier(&self) -> String {
+        match self {
+            Self::Accumulator(_) => ACCUMULATOR_IDENTIFIER.to_string(),
+            Self::Constant(_) => CONSTANT_IDENTIFIER.to_string(),
+            Self::Gamma => GAMMA_IDENTIFIER.to_string(),
+            Self::MemoryCell(_) | Self::IndexMemoryCell(_) => MEMORY_CELL_IDENTIFIER.to_string(),
         }
     }
 }
