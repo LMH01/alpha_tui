@@ -1,4 +1,4 @@
-use std::{io, process::exit, collections::HashSet};
+use std::{io, process::exit};
 
 use ::ratatui::{backend::CrosstermBackend, Terminal};
 use clap::Parser;
@@ -15,7 +15,7 @@ use crate::{
     cli::Commands,
     runtime::builder::RuntimeBuilder,
     tui::App,
-    utils::{pretty_format_instructions, write_file, build_instructions_with_whitelist}, instructions::Instruction,
+    utils::{build_instructions_with_whitelist, pretty_format_instructions, write_file},
 };
 
 /// Contains all required data types used to run programs
@@ -53,7 +53,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn cmd_check(cli: &Cli, instructions: &Vec<String>, input: &str) {
+fn cmd_check(cli: &Cli, instructions: &[String], input: &str) {
     println!("Building program");
     let mut rb = match RuntimeBuilder::from_args(cli) {
         Ok(rb) => rb,
@@ -69,21 +69,20 @@ fn cmd_check(cli: &Cli, instructions: &Vec<String>, input: &str) {
     };
 
     if let Some(file) = cli.allowed_instructions_file.as_ref() {
-        match build_instructions_with_whitelist(&mut rb, &instructions, input, file) {
+        match build_instructions_with_whitelist(&mut rb, instructions, input, file) {
             Ok(_) => (),
             Err(e) => {
                 println!("Check unsuccessful: {:?}", miette!("Unable to create RuntimeBuilder, allowed instructions could not be loaded from file:\n{e}"));
             }
         }
-    } else {
-        if let Err(e) = rb.build_instructions(&instructions.iter().map(String::as_str).collect(), input)
-        {
-            println!(
-                "Check unsuccessful, program did not compile.\nError: {:?}",
-                Report::new(e)
-            );
-            exit(1);
-        }
+    } else if let Err(e) =
+        rb.build_instructions(&instructions.iter().map(String::as_str).collect(), input)
+    {
+        println!(
+            "Check unsuccessful, program did not compile.\nError: {:?}",
+            Report::new(e)
+        );
+        exit(1);
     }
     println!("Check successful");
 }

@@ -285,7 +285,7 @@ pub fn parse_memory_cell(
             s.to_string(),
         ));
     }
-    if name.chars().any(|c| matches!(c, 'a'..='z' | 'A'..='Z')) {
+    if name.chars().any(|c| c.is_ascii_alphabetic()) {
         if !name.chars().all(|c| matches!(c, 'a'..='z' | 'A'..='Z' | '0'..='9')) {
             return Err(InstructionParseError::InvalidExpression(
                 (part_range.0 + 2, part_range.1 - 1),

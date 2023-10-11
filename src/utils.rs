@@ -5,7 +5,7 @@ use std::{
 
 use miette::{IntoDiagnostic, Result, miette, NamedSource, SourceSpan, SourceOffset};
 
-use crate::{instructions::{Instruction, error_handling::{InstructionParseError, BuildProgramError, BuildProgramErrorTypes, BuildAllowedInstructionsError}}, runtime::builder::RuntimeBuilder};
+use crate::{instructions::{Instruction, error_handling::{InstructionParseError, BuildAllowedInstructionsError}}, runtime::builder::RuntimeBuilder};
 
 /// How many spaces should be between labels, instructions and comments when pretty formatting them
 const SPACING: usize = 2;
@@ -177,11 +177,11 @@ pub fn get_comment(instruction: &str) -> Option<String> {
 }
 
 /// Builds instructions by checking if all used instructions are allowed
-pub fn build_instructions_with_whitelist(rb: &mut RuntimeBuilder, instructions: &Vec<String>, file: &str, whitelist_file: &str) -> Result<()> {
+pub fn build_instructions_with_whitelist(rb: &mut RuntimeBuilder, instructions: &[String], file: &str, whitelist_file: &str) -> Result<()> {
     // Instruction whitelist is provided
-    let whitelisted_instructions_file_contents = match read_file(&whitelist_file) {
+    let whitelisted_instructions_file_contents = match read_file(whitelist_file) {
         Ok(i) => i,
-        Err(e) => return Err(miette!("Unable to read whitelisted instruction file [{}]: {}", &whitelist_file, e)),
+        Err(e) => return Err(miette!("Unable to read whitelisted instruction file [{}]: {}", whitelist_file, e)),
     };
     let mut whitelisted_instructions = HashSet::new();
     for (idx, s) in whitelisted_instructions_file_contents.iter().enumerate() {
@@ -222,7 +222,7 @@ pub fn build_instructions_with_whitelist(rb: &mut RuntimeBuilder, instructions: 
             }
         }
     }
-    rb.build_instructions_whitelist(&instructions.iter().map(String::as_str).collect(), &file, &whitelisted_instructions)?;
+    rb.build_instructions_whitelist(&instructions.iter().map(String::as_str).collect::<Vec<&str>>(), file, &whitelisted_instructions)?;
     Ok(())
 }
 

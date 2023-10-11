@@ -6,7 +6,6 @@ use crate::{
     base::{Accumulator, MemoryCell},
     cli::Cli,
     instructions::{
-        self,
         error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
         IndexMemoryCellIndexType, Instruction, TargetType, Value,
     },
@@ -127,7 +126,7 @@ impl RuntimeBuilder {
     /// This function was written to outsource the common code from `RuntimeBuilder::build_instructions` and `RuntimeBuilder::build_instructions_whitelist`.
     fn build_instructions_internal(
         &mut self,
-        instructions_input: &Vec<&str>,
+        instructions_input: &[&str],
         file_name: &str,
     ) -> Result<Vec<Instruction>, BuildProgramError> {
         self.control_flow.reset();
@@ -241,7 +240,7 @@ impl RuntimeBuilder {
     /// `RuntimeBuilder::check_instructions()` is used for the check if instructions are allowed.
     pub fn build_instructions_whitelist(
         &mut self,
-        instructions_input: &Vec<&str>,
+        instructions_input: &[&str],
         file_name: &str,
         whitelist: &HashSet<Instruction>,
     ) -> Result<(), BuildProgramError> {
@@ -253,7 +252,7 @@ impl RuntimeBuilder {
 
     /// Checks instructions that are set by comparing them with the provided whitelist of instructions.
     /// If this runtime builder contains instructions that are not contained within the whitelist, an error is returned.
-    pub fn check_instructions(&self, instructions: &Vec<Instruction>, whitelist: &HashSet<Instruction>) -> Result<(), BuildProgramError> {
+    pub fn check_instructions(&self, instructions: &[Instruction], whitelist: &HashSet<Instruction>) -> Result<(), BuildProgramError> {
         for (idx, i) in instructions.iter().enumerate() {
             if !whitelist.contains(i) {
                 // Instruction found, that is forbidden
