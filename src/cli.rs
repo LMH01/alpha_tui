@@ -64,7 +64,7 @@ pub struct Cli {
     #[arg(
         long = "allowed-instructions",
         help = "Load allowed instructions from file",
-        long_help = "Load allowed instructions from file.\nIf set, only these instructions are allowed, if the program\ncontains any instructions not contained in the file, it will fail to build.\n\nFor more help see https://github.com/LMH01/alpha_tui/blob/master/README.md", //TODO Update link to point to correct doc file
+        long_help = "Load allowed instructions from file.\nIf set, only these instructions are allowed, if the program\ncontains any instructions not contained in the file, it will fail to build.\n\nFor more help see https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md",
         global = true
     )]
     pub allowed_instructions_file: Option<String>,
