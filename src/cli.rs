@@ -166,7 +166,11 @@ mod tests {
     #[test]
     fn test_cmd_check_compile_with_allowed_instructions_2() {
         println!("Current directory: {:?}", env::current_dir());
-        snapbox::cmd::Command::new("./target/debug/alpha_tui").arg("check")
+        let path = match env::current_dir().unwrap().display().to_string().as_str() {
+            "/home/runner/work/alpha_tui/alpha_tui" => "./alpha_tui",
+            _ => "./target/debug/alpha_tui",
+        };
+        snapbox::cmd::Command::new(path).arg("check")
             .arg("tests/test_cmd_check_compile_with_allowed_instructions_2/program.alpha")
             .arg("compile")
             .arg("--allowed-instructions")
