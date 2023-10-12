@@ -143,8 +143,6 @@ pub enum CheckCommands {
 
 #[cfg(test)]
 mod tests {
-    use std::env;
-
     use assert_cmd::Command;
 
     #[test]
@@ -165,17 +163,14 @@ mod tests {
 
     #[test]
     fn test_cmd_check_compile_with_allowed_instructions_2() {
-        println!("Current directory: {:?}", env::current_dir());
-        let path = match env::current_dir().unwrap().display().to_string().as_str() {
-            "/home/runner/work/alpha_tui/alpha_tui" => "./alpha_tui",
-            _ => "./target/debug/alpha_tui",
-        };
-        snapbox::cmd::Command::new(path).arg("check")
+        let mut cmd = Command::cargo_bin("alpha_tui").unwrap();
+        let assert = cmd
+            .arg("check")
             .arg("tests/test_cmd_check_compile_with_allowed_instructions_2/program.alpha")
             .arg("compile")
             .arg("--allowed-instructions")
             .arg("tests/test_cmd_check_compile_with_allowed_instructions_2/instructions.txt")
-            .assert().success();
-        //assert.success();
+            .assert();
+        assert.success();
     }
 }
