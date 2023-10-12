@@ -28,22 +28,6 @@ fn test_bai_error() {
     );
 }
 
-//#[test]
-//fn test_bpe_comparison_not_allowed() {
-//
-//    let mut cmd = Command::cargo_bin("alpha_tui");
-//    let assert = cmd
-//        .arg("load")
-//        .arg("tests/input/test_bpe_comparison_not_allowed/program.alpha")
-//        .arg("--allowed-comparisons")
-//        .arg("le")
-//        .assert();
-//    assert.stderr(
-//        r#""#,
-//    );
-//
-//}
-
 #[test]
 fn test_bpe_operation_not_allowed() {
 
