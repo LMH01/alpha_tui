@@ -15,11 +15,19 @@ use self::error_handling::{RuntimeError, RuntimeErrorType};
 pub mod builder;
 pub mod error_handling;
 
+const MAX_CALL_STACK_SIZE: usize = u16::MAX as usize;
+const MAX_INSTRUCTION_RUNS: usize = 1000000;
+
 #[derive(Debug, PartialEq)]
 pub struct Runtime {
     runtime_args: RuntimeArgs,
     instructions: Vec<Instruction>,
     control_flow: ControlFlow,
+    /// Used to count how many instructions where executed.
+    /// 
+    /// If the `MAX_INSTRUCTION_RUNS` instruction has been executed a runtime error is thrown to indicate
+    /// that the runtime has reached its design limit. This is among other things to protect from misuse and infinite loops.
+    instruction_runs: usize,
 }
 
 impl Runtime {
@@ -45,10 +53,27 @@ impl Runtime {
                     line_number: current_instruction + 1,
                 })?;
             }
+            self.verify(current_instruction + 1)?;
+            self.instruction_runs += 1;
         } else {
             return Ok(true);
         }
         Ok(false)
+    }
+
+    /// Verifies that the current runtime is legal.
+    /// 
+    /// The runtime is illegal, if specific conditions are met:
+    /// - The maximum stack size is exceeded
+    /// - 1mil instructions where executed (this is to protect from infinite loops and because the runtime is to build to run so many instructions)
+    fn verify(&self, line_number: usize) -> Result<(), RuntimeError> {
+        if self.control_flow.call_stack.len() >= MAX_CALL_STACK_SIZE {
+            return Err(RuntimeError { reason: RuntimeErrorType::StackOverflowError, line_number})
+        }
+        if self.instruction_runs > MAX_INSTRUCTION_RUNS {
+            return Err(RuntimeError { reason: RuntimeErrorType::DesignLimitReached(MAX_INSTRUCTION_RUNS), line_number})
+        }
+        Ok(())
     }
 
     /// Sets the instruction that should be executed next.
@@ -127,9 +152,6 @@ impl ControlFlow {
     /// Returns `StackOverflowError` when call stack exceeds size of `i16::max` elements (= the maximum size is ~2MB).
     pub fn call_function(&mut self, label: &str) -> Result<(), RuntimeErrorType> {
         self.call_stack.push(self.next_instruction_index);
-        if self.call_stack.len() > i16::MAX as usize {
-            return Err(RuntimeErrorType::StackOverflowError);
-        }
         self.next_instruction_index(label)?;
         Ok(())
     }

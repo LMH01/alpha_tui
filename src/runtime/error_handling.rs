@@ -177,6 +177,13 @@ pub enum RuntimeErrorType {
         #[diagnostic_source]
         cause: CalcError,
     },
+
+    #[error("Design limit reached")]
+    #[diagnostic(
+        code("runtime_error::design_limit_reached"),
+        help("You have run over {0} instructions, this tool is not build for that.\nIf you know exactly what you are doing and would like to circumvent this limit use the 'TODO' option") //TODO Add option to circumvent limit
+    )]
+    DesignLimitReached(usize),
 }
 
 #[derive(Debug, Clone, PartialEq, Error, Diagnostic)]
@@ -204,7 +211,7 @@ mod tests {
         runtime::{
             builder::RuntimeBuilder,
             error_handling::{CalcError, RuntimeBuildError, RuntimeErrorType},
-            ControlFlow, RuntimeArgs, Settings,
+            ControlFlow, RuntimeArgs, Settings, MAX_INSTRUCTION_RUNS,
         },
     };
 
@@ -631,6 +638,26 @@ mod tests {
             Err(RuntimeErrorType::IllegalCalculation {
                 cause: CalcError::AttemptToDivideByZero()
             })
+        );
+    }
+
+    #[test]
+    fn test_re_design_limit_reached() {
+        let ra = RuntimeArgs::new(
+            1,
+            vec!["a".to_string()],
+            None,
+            true,
+            Settings::new_default(),
+        );
+        let mut rb = RuntimeBuilder::new();
+        rb.set_runtime_args(ra);
+        let instructions = vec!["loop: goto loop"];
+        rb.build_instructions(&instructions, "test").unwrap();
+        let mut rt = rb.build().unwrap();
+        assert_eq!(
+            rt.run().unwrap_err().reason,
+            RuntimeErrorType::DesignLimitReached(MAX_INSTRUCTION_RUNS)
         );
     }
 }

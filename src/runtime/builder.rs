@@ -99,6 +99,7 @@ impl RuntimeBuilder {
             runtime_args: self.runtime_args.clone().unwrap(),
             instructions: self.instructions.clone().unwrap(),
             control_flow: self.control_flow.clone(),
+            instruction_runs: 0,
         })
     }
 

@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use assert_cmd::Command;
-
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
     instructions::{

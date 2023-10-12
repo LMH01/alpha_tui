@@ -6,6 +6,10 @@
 - Added new cli option: `--allowed-instructions`
     - This allows to limit the available instructions, more can be found here: https://github.com/LMH01/alpha_tui/blob/limit_instructions/docs/cli.md
 
+### Other
+- Implemented a limit that limits how many instructions can be run at max (currently 1 million)
+    - This ensures that the program will not freeze when an infinite loop is executed
+
 ## v1.0.1
 
 ### Other

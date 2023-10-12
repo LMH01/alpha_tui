@@ -114,7 +114,7 @@ impl App {
                                 .unwrap();
                             self.instruction_list_states.set_instruction(idx - 1);
                             self.runtime.set_next_instruction(idx);
-                            self.step();
+                            _ = self.step();
                         }
                     }
                     KeyCode::Char('q') => match &self.state {
@@ -145,17 +145,21 @@ impl App {
                                     .set_start(self.runtime.next_instruction_index() as i32);
                             }
                             self.set_state(State::Running);
-                            self.step();
+                            _ = self.step();
                         }
                     }
                     KeyCode::Char('n') => {
                         // run to the next breakpoint
                         if self.state == State::Running {
-                            self.step();
+                            _ = self.step();
                             while !self.instruction_list_states.is_breakpoint() {
-                                if self.step() {
-                                    break;
+                                match self.step() {
+                                    Ok(bool) => if bool {
+                                        break;
+                                    },
+                                    Err(_) => break,
                                 }
+                                
                             }
                         }
                     }
@@ -198,10 +202,11 @@ impl App {
     }
 
     /// returns true when the execution finished in this step
-    fn step(&mut self) -> bool {
+    fn step(&mut self) -> Result<bool, ()> {
         let res = self.runtime.step();
         if let Err(e) = res {
             self.set_state(State::Errored(e));
+            return Err(())
         }
         self.instruction_list_states
             .set(self.runtime.next_instruction_index() as i32);
@@ -212,9 +217,9 @@ impl App {
                     self.set_state(State::Finished(true));
                 }
             }
-            return true;
+            return Ok(true);
         }
-        false
+        Ok(false)
     }
 
     /// Set whether the keybind hint should be shown or not.
