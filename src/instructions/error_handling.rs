@@ -115,14 +115,14 @@ pub enum BuildProgramErrorTypes {
         code("build_program::comparison_not_allowed_error"),
         help("Make sure that you include this comparison ('{1}') in the allowed comparisons or use a different instruction.\nTo mark this comparison as allowed you can use: '--allowed-comparisons \"{2}\"'"),
     )]
-    ComparisonNotAllowed(usize, String, String), //TODO add test
+    ComparisonNotAllowed(usize, String, String),
 
     #[error("operation '{1}' in line '{0}' is not allowed")]
     #[diagnostic(
         code("build_program::operation_not_allowed_error"),
         help("Make sure that you include this operation ('{1}') in the allowed operations or use a different instruction.\nTo mark this operation as allowed you can use: '--allowed-operations \"{2}\"'"),
     )]
-    OperationNotAllowed(usize, String, String), // TODO add test
+    OperationNotAllowed(usize, String, String),
 }
 
 #[allow(clippy::match_same_arms)]

@@ -181,7 +181,7 @@ pub enum RuntimeErrorType {
     #[error("Design limit reached")]
     #[diagnostic(
         code("runtime_error::design_limit_reached"),
-        help("You have run over {0} instructions, this tool is not build for that.\nIf you know exactly what you are doing and would like to circumvent this limit use the '--disable-instruction-limit' option\nWarning: This can cause the program to freeze!") //TODO Add option to circumvent limit
+        help("You have run over {0} instructions, this tool is not build for that.\nIf you know exactly what you are doing and would like to circumvent this limit use the '--disable-instruction-limit' option\nWarning: This can cause the program to freeze!")
     )]
     DesignLimitReached(usize),
 }

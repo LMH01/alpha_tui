@@ -58,7 +58,7 @@ pub struct Cli {
     #[arg(
         long,
         help = "Set allowed comparisons",
-        long_help = "Set allowed comparisons. If set, comparisons not listed here will not be allowed.\nIf they are used anyway, they will lead to a TODO error.", //TODO specify error that is returned
+        long_help = "Set allowed comparisons. If set, comparisons not listed here will not be allowed.\nIf they are used anyway, they will lead to a build_program_error.",
         value_delimiter = ',',
         global = true,
     )]
@@ -67,7 +67,7 @@ pub struct Cli {
     #[arg(
         long,
         help = "Set allowed operations",
-        long_help = "Set allowed operations. If set, operations not listed here will be allowed.\nIf they are used anyway, they will lead to a TODO error.",
+        long_help = "Set allowed operations. If set, operations not listed here will be allowed.\nIf they are used anyway, they will lead to a build_program_error.",
         value_delimiter = ',',
         global = true,
     )]
