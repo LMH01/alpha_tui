@@ -15,4 +15,3 @@ text_align = "0.3.1"
 
 [dev-dependencies]
 assert_cmd = "2.0.12"
-snapbox = "0.4.14"

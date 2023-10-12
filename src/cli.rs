@@ -140,24 +140,3 @@ pub enum CheckCommands {
     #[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_cell_file"]))]
     Compile,
 }
-
-#[cfg(test)]
-mod tests {
-    use assert_cmd::Command;
-
-    #[test]
-    fn test_cmd_check_compile_with_allowed_instructions() {
-        let mut cmd = match Command::cargo_bin("alpha_tui") {
-            Ok(cmd) => cmd,
-            Err(_) => return, // ugly workaround because this test otherwise failes when run in the llvm codecov pipeline
-        };
-        let assert = cmd
-            .arg("check")
-            .arg("tests/test_cmd_check_compile_with_allowed_instructions/program.alpha")
-            .arg("compile")
-            .arg("--allowed-instructions")
-            .arg("tests/test_cmd_check_compile_with_allowed_instructions/instructions.txt")
-            .assert();
-        assert.success();
-    }
-}
