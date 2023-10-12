@@ -167,3 +167,8 @@ pub enum CheckCommands {
     #[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_cell_file"]))]
     Compile,
 }
+
+pub trait CliHint {
+
+    fn cli_hint(&self) -> String;
+}

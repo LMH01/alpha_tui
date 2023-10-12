@@ -4,7 +4,7 @@ use clap::{ValueEnum, builder::PossibleValue};
 
 use crate::{
     instructions::{Identifier, COMPARISON_IDENTIFIER, OPERATOR_IDENTIFIER},
-    runtime::error_handling::{CalcError, RuntimeErrorType},
+    runtime::error_handling::{CalcError, RuntimeErrorType}, cli::CliHint,
 };
 
 /// A single accumulator, represents "Akkumulator/Alpha" from SysInf lecture.
@@ -149,12 +149,25 @@ impl ValueEnum for Comparison {
 
     fn to_possible_value(&self) -> Option<clap::builder::PossibleValue> {
         match self {
-            Self::Lt => Some(PossibleValue::new("<")),
-            Self::Le => Some(PossibleValue::new("<=")),
-            Self::Eq => Some(PossibleValue::new("==")),
-            Self::Neq => Some(PossibleValue::new("!=")),
-            Self::Ge => Some(PossibleValue::new(">=")),
-            Self::Gt => Some(PossibleValue::new(">")),
+            Self::Lt => Some(PossibleValue::new("lt")),
+            Self::Le => Some(PossibleValue::new("le")),
+            Self::Eq => Some(PossibleValue::new("eq")),
+            Self::Neq => Some(PossibleValue::new("neq")),
+            Self::Ge => Some(PossibleValue::new("ge")),
+            Self::Gt => Some(PossibleValue::new("gt")),
+        }
+    }
+}
+
+impl CliHint for Comparison {
+    fn cli_hint(&self) -> String {
+        match self{
+            Self::Lt => String::from("lt"),
+            Self::Le => String::from("le"),
+            Self::Eq => String::from("eq"),
+            Self::Neq => String::from("neq"),
+            Self::Ge => String::from("ge"),
+            Self::Gt => String::from("gt"),
         }
     }
 }
@@ -273,18 +286,30 @@ impl ValueEnum for Operation {
 
     fn to_possible_value(&self) -> Option<PossibleValue> {
         match self {
-            Self::Add => Some(PossibleValue::new("+")),
-            Self::Sub => Some(PossibleValue::new("-")),
-            Self::Mul => Some(PossibleValue::new("*")),
-            Self::Div => Some(PossibleValue::new("/")),
-            Self::Mod => Some(PossibleValue::new("%")),
+            Self::Add => Some(PossibleValue::new("add")),
+            Self::Sub => Some(PossibleValue::new("sub")),
+            Self::Mul => Some(PossibleValue::new("mul")),
+            Self::Div => Some(PossibleValue::new("div")),
+            Self::Mod => Some(PossibleValue::new("mod")),
+        }
+    }
+}
+
+impl CliHint for Operation {
+    fn cli_hint(&self) -> String {
+        match self {
+            Self::Add => String::from("add"),
+            Self::Sub => String::from("sub"),
+            Self::Mul => String::from("mul"),
+            Self::Div => String::from("div"),
+            Self::Mod => String::from("mod"),
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::base::{Comparison, MemoryCell, Operation};
+    use crate::{base::{Comparison, MemoryCell, Operation}, cli::CliHint};
 
     use super::Accumulator;
 
@@ -346,6 +371,16 @@ mod tests {
     }
 
     #[test]
+    fn test_comparison_cli_hint() {
+        assert_eq!(Comparison::Lt.cli_hint(), "lt".to_string());
+        assert_eq!(Comparison::Le.cli_hint(), "le".to_string());
+        assert_eq!(Comparison::Eq.cli_hint(), "eq".to_string());
+        assert_eq!(Comparison::Neq.cli_hint(), "neq".to_string());
+        assert_eq!(Comparison::Ge.cli_hint(), "ge".to_string());
+        assert_eq!(Comparison::Gt.cli_hint(), "gt".to_string());
+    }
+
+    #[test]
     fn test_operation() {
         assert_eq!(Operation::Add.calc(20, 5).unwrap(), 25);
         assert_eq!(Operation::Sub.calc(20, 5).unwrap(), 15);
@@ -373,5 +408,14 @@ mod tests {
         assert_eq!(format!("{}", Operation::Mul), "*".to_string());
         assert_eq!(format!("{}", Operation::Div), "/".to_string());
         assert_eq!(format!("{}", Operation::Mod), "%".to_string());
+    }
+
+    #[test]
+    fn test_operation_cli_hint() {
+        assert_eq!(Operation::Add.cli_hint(), "add".to_string());
+        assert_eq!(Operation::Sub.cli_hint(), "sub".to_string());
+        assert_eq!(Operation::Mul.cli_hint(), "mul".to_string());
+        assert_eq!(Operation::Div.cli_hint(), "div".to_string());
+        assert_eq!(Operation::Mod.cli_hint(), "mod".to_string());
     }
 }

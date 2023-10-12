@@ -4,3 +4,4 @@ examples/programs/debug.alpha
 .rustup/
 .cargo/
 *.tape
+output.txt

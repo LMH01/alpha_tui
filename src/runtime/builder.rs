@@ -4,7 +4,7 @@ use miette::{NamedSource, Result, SourceOffset, SourceSpan};
 
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
-    cli::Cli,
+    cli::{Cli, CliHint},
     instructions::{
         error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
         Identifier, IndexMemoryCellIndexType, Instruction, TargetType, Value,
@@ -380,6 +380,7 @@ impl RuntimeBuilder {
                             reason: BuildProgramErrorTypes::ComparisonNotAllowed(
                                 idx + 1,
                                 c.to_string(),
+                                c.cli_hint(),
                             ),
                         });
                     }
@@ -393,6 +394,7 @@ impl RuntimeBuilder {
                             reason: BuildProgramErrorTypes::OperationNotAllowed(
                                 idx + 1,
                                 o.to_string(),
+                                o.cli_hint(),
                             ),
                         });
                     }

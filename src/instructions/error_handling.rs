@@ -113,16 +113,16 @@ pub enum BuildProgramErrorTypes {
     #[error("comparison '{1}' in line '{0}' is not allowed")]
     #[diagnostic(
         code("build_program::comparison_not_allowed_error"),
-        help("Make sure that you include this comparison ('{1}') in the allowed comparisons or use a different instruction.\nTo mark this comparison as allowed you can use: '--allowed-comparisons \"{1}\"'"),
+        help("Make sure that you include this comparison ('{1}') in the allowed comparisons or use a different instruction.\nTo mark this comparison as allowed you can use: '--allowed-comparisons \"{2}\"'"),
     )]
-    ComparisonNotAllowed(usize, String), //TODO add test
+    ComparisonNotAllowed(usize, String, String), //TODO add test
 
     #[error("operation '{1}' in line '{0}' is not allowed")]
     #[diagnostic(
         code("build_program::operation_not_allowed_error"),
-        help("Make sure that you include this operation ('{1}') in the allowed operations or use a different instruction.\nTo mark this operation as allowed you can use: '--allowed-operations \"{1}\"'"),
+        help("Make sure that you include this operation ('{1}') in the allowed operations or use a different instruction.\nTo mark this operation as allowed you can use: '--allowed-operations \"{2}\"'"),
     )]
-    OperationNotAllowed(usize, String), // TODO add test
+    OperationNotAllowed(usize, String, String), // TODO add test
 }
 
 #[allow(clippy::match_same_arms)]
@@ -175,7 +175,7 @@ pub struct BuildAllowedInstructionsError {
 mod tests {
     use std::collections::HashSet;
 
-    use clap::{FromArgMatches, Parser};
+    use clap::Parser;
 
     use crate::{
         cli::Cli,
@@ -424,7 +424,7 @@ mod tests {
             "load",
             "some_file.alpha",
             "--allowed-comparisons",
-            ">",
+            "ge",
         ]))
         .unwrap();
 
@@ -432,7 +432,7 @@ mod tests {
         assert_eq!(
             rb.build_instructions(&instructions_input, "test"),
             Err(BuildProgramError {
-                reason: BuildProgramErrorTypes::ComparisonNotAllowed(1, "==".to_string())
+                reason: BuildProgramErrorTypes::ComparisonNotAllowed(1, "==".to_string(), "eq".to_string())
             })
         );
     }
@@ -444,7 +444,7 @@ mod tests {
             "load",
             "some_file.alpha",
             "--allowed-operations",
-            "*",
+            "mul",
         ]))
         .unwrap();
 
@@ -452,7 +452,7 @@ mod tests {
         assert_eq!(
             rb.build_instructions(&instructions_input, "test"),
             Err(BuildProgramError {
-                reason: BuildProgramErrorTypes::OperationNotAllowed(1, "+".to_string())
+                reason: BuildProgramErrorTypes::OperationNotAllowed(1, "+".to_string(), "add".to_string())
             })
         );
     }
