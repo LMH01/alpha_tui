@@ -2,10 +2,7 @@ use assert_cmd::Command;
 
 #[test]
 fn test_bai_error() {
-    let mut cmd = match Command::cargo_bin("alpha_tui") {
-        Ok(cmd) => cmd,
-        Err(_) => return, // ugly workaround because this test otherwise failes when run in the llvm codecov pipeline
-    };
+    let mut cmd = Command::cargo_bin("alpha_tui").unwrap();
     let assert = cmd
         .arg("load")
         .arg("tests/input/test_bai_error/program.alpha")
@@ -34,10 +31,7 @@ fn test_bai_error() {
 //#[test]
 //fn test_bpe_comparison_not_allowed() {
 //
-//    let mut cmd = match Command::cargo_bin("alpha_tui") {
-//        Ok(cmd) => cmd,
-//        Err(_) => return, // ugly workaround because this test otherwise failes when run in the llvm codecov pipeline
-//    };
+//    let mut cmd = Command::cargo_bin("alpha_tui");
 //    let assert = cmd
 //        .arg("load")
 //        .arg("tests/input/test_bpe_comparison_not_allowed/program.alpha")
@@ -53,10 +47,7 @@ fn test_bai_error() {
 #[test]
 fn test_bpe_operation_not_allowed() {
 
-    let mut cmd = match Command::cargo_bin("alpha_tui") {
-        Ok(cmd) => cmd,
-        Err(_) => return, // ugly workaround because this test otherwise failes when run in the llvm codecov pipeline
-    };
+    let mut cmd = Command::cargo_bin("alpha_tui").unwrap();
     let assert = cmd
         .arg("load")
         .arg("tests/input/test_bpe_operation_not_allowed/program.alpha")
