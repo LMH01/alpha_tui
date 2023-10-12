@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.1.0
+## v1.1.0 (current version)
 
 ### New feature
 - Added new cli option: `--allowed-instructions` (fr #15)
