@@ -280,6 +280,9 @@ impl App {
                 self.set_keybind_hint('r', true);
                 self.set_keybind_hint('s', true);
                 self.set_keybind_hint('n', true);
+                if self.instruction_list_states.count_breakpoints() == 0 {
+                    self.set_keybind_message('n', "Run to end");
+                }
                 self.set_keybind_message('r', "Run next instruction");
             }
             State::DebugSelect(_s, _i) => {
@@ -310,6 +313,7 @@ impl App {
             hint.1.enabled = false;
         }
         self.set_keybind_message('d', "Enter debug select mode");
+        self.set_keybind_message('n', "Next breakpoint");
     }
 }
 
