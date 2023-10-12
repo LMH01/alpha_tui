@@ -1,1 +1,1 @@
-This folder contains files that are required for some integration tests.
+This folder contains all tests and required input files for them.
