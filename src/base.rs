@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use clap::{ValueEnum, builder::PossibleValue};
+
 use crate::{
     instructions::{Identifier, COMPARISON_IDENTIFIER, OPERATOR_IDENTIFIER},
     runtime::error_handling::{CalcError, RuntimeErrorType},
@@ -140,6 +142,23 @@ impl Identifier for Comparison {
     }
 }
 
+impl ValueEnum for Comparison {
+    fn value_variants<'a>() -> &'a [Self] {
+        &[Comparison::Lt, Comparison::Le, Comparison::Eq, Comparison::Neq, Comparison::Ge, Comparison::Gt]
+    }
+
+    fn to_possible_value(&self) -> Option<clap::builder::PossibleValue> {
+        match self {
+            Self::Lt => Some(PossibleValue::new("<")),
+            Self::Le => Some(PossibleValue::new("<=")),
+            Self::Eq => Some(PossibleValue::new("==")),
+            Self::Neq => Some(PossibleValue::new("!=")),
+            Self::Ge => Some(PossibleValue::new(">=")),
+            Self::Gt => Some(PossibleValue::new(">")),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Hash, Copy)]
 pub enum Operation {
     Add,
@@ -243,6 +262,22 @@ impl TryFrom<&str> for Operation {
             "/" | "÷" => Ok(Operation::Div),
             "%" => Ok(Operation::Mod),
             _ => Err(()),
+        }
+    }
+}
+
+impl ValueEnum for Operation {
+    fn value_variants<'a>() -> &'a [Self] {
+        &[Operation::Add, Operation::Sub, Operation::Mul, Operation::Div, Operation::Mod]
+    }
+
+    fn to_possible_value(&self) -> Option<PossibleValue> {
+        match self {
+            Self::Add => Some(PossibleValue::new("+")),
+            Self::Sub => Some(PossibleValue::new("-")),
+            Self::Mul => Some(PossibleValue::new("*")),
+            Self::Div => Some(PossibleValue::new("/")),
+            Self::Mod => Some(PossibleValue::new("%")),
         }
     }
 }

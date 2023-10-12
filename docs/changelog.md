@@ -5,6 +5,10 @@
 ### New feature
 - Added new cli option: `--allowed-instructions` (fr #15)
     - This allows to limit the available instructions, more can be found here: https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md
+- Added new cli option: `--allowed-comparisons` (fr #17)
+    - This allows to limit the available comparisons, more can be found here: https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md
+- Added new cli option: `--allowed-operations` (fr #16)
+    - This allows to limit the available operations, more can be found here: https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md
 
 ### Other
 - Implemented a limit that limits how many instructions can be run at max (currently 1 million)

@@ -19,6 +19,19 @@ const TEST_MEMORY_CELL_LABELS: &[&str] = &[
 ];
 
 #[test]
+fn test_instruction_comparison() {
+    assert_eq!(Instruction::JumpIf(Value::Constant(0), Comparison::Eq, Value::Constant(0), "label".to_string()).comparison(), Some(&Comparison::Eq));
+    assert_eq!(Instruction::Assign(TargetType::Gamma, Value::Constant(0)).comparison(), None);
+}
+
+#[test]
+fn test_instruction_operation() {
+    assert_eq!(Instruction::Calc(TargetType::Gamma, Value::Constant(0), Operation::Add, Value::Constant(0)).operation(), Some(&Operation::Add));
+    assert_eq!(Instruction::StackOp(Operation::Add).operation(), Some(&Operation::Add));
+    assert_eq!(Instruction::Assign(TargetType::Gamma, Value::Constant(0)).operation(), None);
+}
+
+#[test]
 fn test_parse_assign_accumulator_from_constant() {
     assert_eq!(
         Instruction::try_from("a0 := 5"),

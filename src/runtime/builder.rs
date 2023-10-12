@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use miette::{NamedSource, Result, SourceOffset, SourceSpan};
 
 use crate::{
-    base::{Accumulator, MemoryCell},
+    base::{Accumulator, Comparison, MemoryCell, Operation},
     cli::Cli,
     instructions::{
         error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
@@ -19,7 +19,7 @@ use super::{
 
 /// Type that is used to build a new runtime environment.
 ///
-/// This runtime can be configured to only allow a selected amount of accumulators and memory cells.
+/// This runtime can be configured to only allow a selected amount of accumulators memory cells, operations and comparisons.
 /// When a runtime is build from this builder compatibility checks are performed.
 #[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]
@@ -28,6 +28,10 @@ pub struct RuntimeBuilder {
     instructions: Option<Vec<Instruction>>,
     control_flow: ControlFlow,
     add_missing: bool,
+    /// If set to `None` all comparisons are allowed.
+    limit_comparisons_to: Option<Vec<Comparison>>,
+    /// If set to 'None' all operations are allowed.
+    limit_operations_to: Option<Vec<Operation>>,
 }
 
 impl RuntimeBuilder {
@@ -39,6 +43,8 @@ impl RuntimeBuilder {
             instructions: None,
             control_flow: ControlFlow::new(),
             add_missing: false,
+            limit_comparisons_to: None,
+            limit_operations_to: None,
         }
     }
 
@@ -49,6 +55,8 @@ impl RuntimeBuilder {
             instructions: None,
             control_flow: ControlFlow::new(),
             add_missing: !args.disable_memory_detection,
+            limit_comparisons_to: args.allowed_comparisons.clone(),
+            limit_operations_to: args.allowed_operations.clone(),
         })
     }
 
@@ -60,6 +68,8 @@ impl RuntimeBuilder {
             instructions: None,
             control_flow: ControlFlow::new(),
             add_missing: false,
+            limit_comparisons_to: None,
+            limit_operations_to: None,
         }
     }
 
@@ -232,6 +242,7 @@ impl RuntimeBuilder {
         file_name: &str,
     ) -> Result<(), BuildProgramError> {
         let instructions = self.build_instructions_internal(instructions_input, file_name)?;
+        self.check_instructions(&instructions, None)?;
         self.instructions = Some(instructions);
         Ok(())
     }
@@ -249,7 +260,7 @@ impl RuntimeBuilder {
         whitelist: &HashSet<String>,
     ) -> Result<(), BuildProgramError> {
         let instructions = self.build_instructions_internal(instructions_input, file_name)?;
-        check_instructions(&instructions, whitelist)?;
+        self.check_instructions(&instructions, Some(whitelist))?;
         self.instructions = Some(instructions);
         Ok(())
     }
@@ -325,6 +336,67 @@ impl RuntimeBuilder {
                     value_b.check(self.runtime_args.as_mut().unwrap(), add_missing)?;
                 }
                 _ => (),
+            }
+        }
+        Ok(())
+    }
+
+    /// Checks instructions that are set by comparing them with the provided whitelist of instructions.
+    /// It is also checked if any comparisons or operations are used that are not allowed.
+    /// If this runtime builder contains instructions that are not contained within the whitelist or comparisons
+    /// or operations that are not allowed, an error is returned.
+    ///
+    /// The whitelist contains the return value of `Instruction::identifier()`.
+    pub fn check_instructions(
+        //TODO if I rework the builder pattern this function should be called when the runtime is build and when the instructions are added
+        &self,
+        instructions: &[Instruction],
+        whitelist: Option<&HashSet<String>>,
+    ) -> Result<(), BuildProgramError> {
+        for (idx, i) in instructions.iter().enumerate() {
+            if let Some(whitelist) = whitelist {
+                if !whitelist.contains(&i.identifier()) {
+                    // Instruction found, that is forbidden
+                    let mut allowed_instructions = whitelist
+                        .iter()
+                        .map(String::to_string)
+                        .collect::<Vec<String>>();
+                    allowed_instructions.sort();
+                    return Err(BuildProgramError {
+                        reason: BuildProgramErrorTypes::InstructionNotAllowed(
+                            idx + 1,
+                            format!("{i}"),
+                            i.identifier(),
+                            allowed_instructions.join("\n").to_string(),
+                        ),
+                    });
+                }
+            }
+            // Check if all comparisons are allowed
+            if let Some(ac) = &self.limit_comparisons_to {
+                if let Some(c) = i.comparison() {
+                    if !ac.contains(c) {
+                        return Err(BuildProgramError {
+                            reason: BuildProgramErrorTypes::ComparisonNotAllowed(
+                                idx + 1,
+                                c.to_string(),
+                            ),
+                        });
+                    }
+                }
+            }
+            // Check if all operations are allowed
+            if let Some(ao) = &self.limit_operations_to {
+                if let Some(o) = i.operation() {
+                    if !ao.contains(o) {
+                        return Err(BuildProgramError {
+                            reason: BuildProgramErrorTypes::OperationNotAllowed(
+                                idx + 1,
+                                o.to_string(),
+                            ),
+                        });
+                    }
+                }
             }
         }
         Ok(())
@@ -422,35 +494,6 @@ pub fn check_gamma(
             return Ok(());
         }
         return Err(RuntimeBuildError::GammaDisabled);
-    }
-    Ok(())
-}
-
-/// Checks instructions that are set by comparing them with the provided whitelist of instructions.
-/// If this runtime builder contains instructions that are not contained within the whitelist, an error is returned.
-///
-/// The whitelist contains the return value of `Instruction::identifier()`.
-pub fn check_instructions(
-    instructions: &[Instruction],
-    whitelist: &HashSet<String>,
-) -> Result<(), BuildProgramError> {
-    for (idx, i) in instructions.iter().enumerate() {
-        if !whitelist.contains(&i.identifier()) {
-            // Instruction found, that is forbidden
-            let mut allowed_instructions = whitelist
-                .iter()
-                .map(String::to_string)
-                .collect::<Vec<String>>();
-            allowed_instructions.sort();
-            return Err(BuildProgramError {
-                reason: BuildProgramErrorTypes::InstructionNotAllowed(
-                    idx + 1,
-                    format!("{i}"),
-                    i.identifier(),
-                    allowed_instructions.join("\n").to_string(),
-                ),
-            });
-        }
     }
     Ok(())
 }

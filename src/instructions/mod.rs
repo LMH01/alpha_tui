@@ -67,6 +67,23 @@ impl Instruction {
         }
         Ok(())
     }
+
+    /// If an comparison is used in this instruction it is returned
+    pub fn comparison(&self) -> Option<&Comparison> {
+        match self {
+            Self::JumpIf(_, cmp, _, _) => Some(cmp),
+            _ => None,
+        }
+    }
+
+    /// If an operation is used in this instruction it is returned
+    pub fn operation(&self) -> Option<&Operation> {
+        match self {
+            Self::Calc(_, _, op, _) => Some(op),
+            Self::StackOp(op) => Some(op),
+            _ => None,
+        }
+    }
 }
 
 impl Display for Instruction {

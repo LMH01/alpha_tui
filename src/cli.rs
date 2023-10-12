@@ -1,5 +1,7 @@
 use clap::{ArgGroup, Args, Parser, Subcommand};
 
+use crate::base::{Operation, Comparison};
+
 #[derive(Parser, Debug)]
 #[command(
     author = "LMH01",
@@ -52,6 +54,24 @@ pub struct Cli {
         global = true,
     )]
     pub disable_memory_detection: bool,
+
+    #[arg(
+        long,
+        help = "Set allowed comparisons",
+        long_help = "Set allowed comparisons. If set, comparisons not listed here will not be allowed.\nIf they are used anyway, they will lead to a TODO error.", //TODO specify error that is returned
+        value_delimiter = ',',
+        global = true,
+    )]
+    pub allowed_comparisons: Option<Vec<Comparison>>,
+
+    #[arg(
+        long,
+        help = "Set allowed operations",
+        long_help = "Set allowed operations. If set, operations not listed here will be allowed.\nIf they are used anyway, they will lead to a TODO error.",
+        value_delimiter = ',',
+        global = true,
+    )]
+    pub allowed_operations: Option<Vec<Operation>>,
 
     #[arg(
         long,

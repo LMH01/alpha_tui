@@ -109,6 +109,20 @@ pub enum BuildProgramErrorTypes {
         help("Make sure that you include this type ('{2}') of instruction in the whitelist or use a different instruction.\nThese types of instructions are allowed:\n\n{3}")
     )]
     InstructionNotAllowed(usize, String, String, String),
+
+    #[error("comparison '{1}' in line '{0}' is not allowed")]
+    #[diagnostic(
+        code("build_program::comparison_not_allowed_error"),
+        help("Make sure that you include this comparison ('{1}') in the allowed comparisons or use a different instruction.\nTo mark this comparison as allowed you can use: '--allowed-comparisons \"{1}\"'"),
+    )]
+    ComparisonNotAllowed(usize, String),//TODO add test
+
+    #[error("operation '{1}' in line '{0}' is not allowed")]
+    #[diagnostic(
+        code("build_program::operation_not_allowed_error"),
+        help("Make sure that you include this operation ('{1}') in the allowed operations or use a different instruction.\nTo mark this operation as allowed you can use: '--allowed-operations \"{1}\"'"),
+    )]
+    OperationNotAllowed(usize, String),// TODO add test
 }
 
 #[allow(clippy::match_same_arms)]
