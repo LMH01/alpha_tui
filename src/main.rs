@@ -162,3 +162,5 @@ fn cmd_load(cli: &Cli, instructions: Vec<String>, input: String) -> Result<()> {
     res?;
     Ok(())
 }
+
+//TODO Check if I can replace assert_cmd tests with snapbox (to maybe get llvm codecov to work)
