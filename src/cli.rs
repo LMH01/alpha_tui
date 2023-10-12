@@ -143,6 +143,8 @@ pub enum CheckCommands {
 
 #[cfg(test)]
 mod tests {
+    use std::env;
+
     use assert_cmd::Command;
 
     #[test]
@@ -163,6 +165,7 @@ mod tests {
 
     #[test]
     fn test_cmd_check_compile_with_allowed_instructions_2() {
+        println!("Current directory: {:?}", env::current_dir());
         snapbox::cmd::Command::new("./target/debug/alpha_tui").arg("check")
             .arg("tests/test_cmd_check_compile_with_allowed_instructions_2/program.alpha")
             .arg("compile")
