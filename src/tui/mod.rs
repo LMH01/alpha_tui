@@ -154,12 +154,13 @@ impl App {
                             _ = self.step();
                             while !self.instruction_list_states.is_breakpoint() {
                                 match self.step() {
-                                    Ok(bool) => if bool {
-                                        break;
-                                    },
+                                    Ok(bool) => {
+                                        if bool {
+                                            break;
+                                        }
+                                    }
                                     Err(_) => break,
                                 }
-                                
                             }
                         }
                     }
@@ -206,7 +207,7 @@ impl App {
         let res = self.runtime.step();
         if let Err(e) = res {
             self.set_state(State::Errored(e));
-            return Err(())
+            return Err(());
         }
         self.instruction_list_states
             .set(self.runtime.next_instruction_index() as i32);

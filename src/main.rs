@@ -40,7 +40,9 @@ fn main() -> Result<()> {
     };
 
     if cli.disable_instruction_limit {
-        println!("Warning: instruction limit is disabled, this might lead to performance problems!");
+        println!(
+            "Warning: instruction limit is disabled, this might lead to performance problems!"
+        );
     }
 
     let instructions = match read_file(&input) {

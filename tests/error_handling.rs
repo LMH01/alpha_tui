@@ -30,7 +30,6 @@ fn test_bai_error() {
 
 #[test]
 fn test_bpe_operation_not_allowed() {
-
     let mut cmd = Command::cargo_bin("alpha_tui").unwrap();
     let assert = cmd
         .arg("load")
@@ -54,5 +53,4 @@ fn test_bpe_operation_not_allowed() {
 
 "#,
     );
-
 }

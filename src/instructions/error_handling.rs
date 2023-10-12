@@ -413,7 +413,14 @@ mod tests {
         let instructions_input = vec!["a := 5"];
         assert_eq!(
             rb.build_instructions_whitelist(&instructions_input, "test", &whitelist),
-            Err(BuildProgramError { reason: BuildProgramErrorTypes::InstructionNotAllowed(1, "a0 := 5".to_string(), "A := C".to_string(), "A := H".to_string()) })
+            Err(BuildProgramError {
+                reason: BuildProgramErrorTypes::InstructionNotAllowed(
+                    1,
+                    "a0 := 5".to_string(),
+                    "A := C".to_string(),
+                    "A := H".to_string()
+                )
+            })
         );
     }
 
@@ -432,7 +439,11 @@ mod tests {
         assert_eq!(
             rb.build_instructions(&instructions_input, "test"),
             Err(BuildProgramError {
-                reason: BuildProgramErrorTypes::ComparisonNotAllowed(1, "==".to_string(), "eq".to_string())
+                reason: BuildProgramErrorTypes::ComparisonNotAllowed(
+                    1,
+                    "==".to_string(),
+                    "eq".to_string()
+                )
             })
         );
     }
@@ -452,7 +463,11 @@ mod tests {
         assert_eq!(
             rb.build_instructions(&instructions_input, "test"),
             Err(BuildProgramError {
-                reason: BuildProgramErrorTypes::OperationNotAllowed(1, "+".to_string(), "add".to_string())
+                reason: BuildProgramErrorTypes::OperationNotAllowed(
+                    1,
+                    "+".to_string(),
+                    "add".to_string()
+                )
             })
         );
     }

@@ -1,10 +1,11 @@
 use std::fmt::Display;
 
-use clap::{ValueEnum, builder::PossibleValue};
+use clap::{builder::PossibleValue, ValueEnum};
 
 use crate::{
+    cli::CliHint,
     instructions::{Identifier, COMPARISON_IDENTIFIER, OPERATOR_IDENTIFIER},
-    runtime::error_handling::{CalcError, RuntimeErrorType}, cli::CliHint,
+    runtime::error_handling::{CalcError, RuntimeErrorType},
 };
 
 /// A single accumulator, represents "Akkumulator/Alpha" from SysInf lecture.
@@ -144,7 +145,14 @@ impl Identifier for Comparison {
 
 impl ValueEnum for Comparison {
     fn value_variants<'a>() -> &'a [Self] {
-        &[Comparison::Lt, Comparison::Le, Comparison::Eq, Comparison::Neq, Comparison::Ge, Comparison::Gt]
+        &[
+            Comparison::Lt,
+            Comparison::Le,
+            Comparison::Eq,
+            Comparison::Neq,
+            Comparison::Ge,
+            Comparison::Gt,
+        ]
     }
 
     fn to_possible_value(&self) -> Option<clap::builder::PossibleValue> {
@@ -161,7 +169,7 @@ impl ValueEnum for Comparison {
 
 impl CliHint for Comparison {
     fn cli_hint(&self) -> String {
-        match self{
+        match self {
             Self::Lt => String::from("lt"),
             Self::Le => String::from("le"),
             Self::Eq => String::from("eq"),
@@ -281,7 +289,13 @@ impl TryFrom<&str> for Operation {
 
 impl ValueEnum for Operation {
     fn value_variants<'a>() -> &'a [Self] {
-        &[Operation::Add, Operation::Sub, Operation::Mul, Operation::Div, Operation::Mod]
+        &[
+            Operation::Add,
+            Operation::Sub,
+            Operation::Mul,
+            Operation::Div,
+            Operation::Mod,
+        ]
     }
 
     fn to_possible_value(&self) -> Option<PossibleValue> {
@@ -309,7 +323,10 @@ impl CliHint for Operation {
 
 #[cfg(test)]
 mod tests {
-    use crate::{base::{Comparison, MemoryCell, Operation}, cli::CliHint};
+    use crate::{
+        base::{Comparison, MemoryCell, Operation},
+        cli::CliHint,
+    };
 
     use super::Accumulator;
 

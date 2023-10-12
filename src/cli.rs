@@ -1,6 +1,6 @@
 use clap::{ArgGroup, Args, Parser, Subcommand};
 
-use crate::base::{Operation, Comparison};
+use crate::base::{Comparison, Operation};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -60,7 +60,7 @@ pub struct Cli {
         help = "Set allowed comparisons",
         long_help = "Set allowed comparisons. If set, comparisons not listed here will not be allowed.\nIf they are used anyway, they will lead to a build_program_error.",
         value_delimiter = ',',
-        global = true,
+        global = true
     )]
     pub allowed_comparisons: Option<Vec<Comparison>>,
 
@@ -69,7 +69,7 @@ pub struct Cli {
         help = "Set allowed operations",
         long_help = "Set allowed operations. If set, operations not listed here will be allowed.\nIf they are used anyway, they will lead to a build_program_error.",
         value_delimiter = ',',
-        global = true,
+        global = true
     )]
     pub allowed_operations: Option<Vec<Operation>>,
 
@@ -89,11 +89,7 @@ pub struct Cli {
     )]
     pub allowed_instructions_file: Option<String>,
 
-    #[arg(
-        long = "disable-instruction-limit",
-        hide = true,
-        global = true,
-    )]
+    #[arg(long = "disable-instruction-limit", hide = true, global = true)]
     pub disable_instruction_limit: bool,
 
     #[command(subcommand)]
@@ -170,6 +166,5 @@ pub enum CheckCommands {
 
 #[allow(clippy::module_name_repetitions)]
 pub trait CliHint {
-
     fn cli_hint(&self) -> String;
 }

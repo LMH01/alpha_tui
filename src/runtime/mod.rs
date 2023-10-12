@@ -24,7 +24,7 @@ pub struct Runtime {
     instructions: Vec<Instruction>,
     control_flow: ControlFlow,
     /// Used to count how many instructions where executed.
-    /// 
+    ///
     /// If the `MAX_INSTRUCTION_RUNS` instruction has been executed a runtime error is thrown to indicate
     /// that the runtime has reached its design limit. This is among other things to protect from misuse and infinite loops.
     instruction_runs: usize,
@@ -62,16 +62,24 @@ impl Runtime {
     }
 
     /// Verifies that the current runtime is legal.
-    /// 
+    ///
     /// The runtime is illegal, if specific conditions are met:
     /// - The maximum stack size is exceeded
     /// - 1mil instructions where executed (this is to protect from infinite loops and because the runtime is to build to run so many instructions)
     fn verify(&self, line_number: usize) -> Result<(), RuntimeError> {
         if self.control_flow.call_stack.len() >= MAX_CALL_STACK_SIZE {
-            return Err(RuntimeError { reason: RuntimeErrorType::StackOverflowError, line_number})
+            return Err(RuntimeError {
+                reason: RuntimeErrorType::StackOverflowError,
+                line_number,
+            });
         }
-        if !self.runtime_args.settings.disable_instruction_limit && self.instruction_runs > MAX_INSTRUCTION_RUNS {
-            return Err(RuntimeError { reason: RuntimeErrorType::DesignLimitReached(MAX_INSTRUCTION_RUNS), line_number})
+        if !self.runtime_args.settings.disable_instruction_limit
+            && self.instruction_runs > MAX_INSTRUCTION_RUNS
+        {
+            return Err(RuntimeError {
+                reason: RuntimeErrorType::DesignLimitReached(MAX_INSTRUCTION_RUNS),
+                line_number,
+            });
         }
         Ok(())
     }
