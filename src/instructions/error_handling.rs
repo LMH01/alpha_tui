@@ -173,6 +173,8 @@ pub struct BuildAllowedInstructionsError {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
     use clap::{FromArgMatches, Parser};
 
     use crate::{
@@ -392,6 +394,27 @@ mod tests {
                 reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes
             })
         )
+    }
+
+    #[test]
+    fn test_bpe_instruction_not_allowed() {
+        let mut rb = RuntimeBuilder::from_args(&Cli::parse_from([
+            "alpha_tui",
+            "load",
+            "some_file.alpha",
+            "--allowed-instructions",
+            "some_file.txt",
+        ]))
+        .unwrap();
+
+        let mut whitelist = HashSet::new();
+        whitelist.insert("A := H".to_string());
+
+        let instructions_input = vec!["a := 5"];
+        assert_eq!(
+            rb.build_instructions_whitelist(&instructions_input, "test", &whitelist),
+            Err(BuildProgramError { reason: BuildProgramErrorTypes::InstructionNotAllowed(1, "a0 := 5".to_string(), "A := C".to_string(), "A := H".to_string()) })
+        );
     }
 
     #[test]
