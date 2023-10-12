@@ -75,9 +75,46 @@ if a == p(h) then goto label
 ```
 to be used in the program.
 
-**It is important to understand that only the type of instruction is limited by this option, to specifically limit what memory locations are available you can use the options `-a`, `-m` and `--memory-cell-file`. This means that even though you might write `p(h1)` in the allowed instructions file, all available memory cells are allowed in this position, not just `p(h1)`!**
+**It is important to understand that only the type of instruction is limited by this option, to specifically limit what memory locations or what comparisons/operations are available you can use the options `-a`, `-m` or `--memory-cell-file` and `--allowed-comparisons` and `--allowed-operations` . This means that even though you might write `p(h1)` in the allowed instructions file, all available memory cells are allowed in this position, not just `p(h1)`!**
 
 An example file can be found here: [examples/allowed_instructions.txt](../examples/allowed_instructions.txt);
+
+### Allowed comparisons
+
+You can use the option `--allowed-comparisons` to specify all comparisons that should be allowed. If this option is not set, all comparisons are allowed.
+
+The comparisons that can be specified are:
+
+| Comparison | Token | Meaning |
+| - | - | - |
+| < | lt | lower than |
+| <= | le | lower equal |
+| == | eq | equal |
+| != | neq | not equal |
+| >= | ge | greater equal |
+| > | gt | greater than |
+
+For example to only allow equal and not equal comparisons you can use this option: `--allowed-comparisons "eq,neq"`
+
+**Note**: At least one comparison needs to be specified, if you would like to prevent the use of any comparison you can use `--allowed-instructions` to limit the available instructions into only allowing instructions which don't take any comparisons.
+
+### Allowed operations
+
+You can use the option `--allowed-operations` to specify all operations that should be allowed. If this option is not set, all operations are allowed.
+
+The operations that can be specified are:
+
+| Operation | Token | Meaning |
+| - | - | - |
+| + | add | addition |
+| - | sub | subtraction |
+| * | mul | multiplication |
+| / | div | division |
+| % | mod | modulo |
+
+For example to only allow addition and subtraction you can use this option: `--allowed-operations "add,sub"`
+
+**Note**: At least one operation needs to be specified, if you would like to prevent the use of any operation you can use `--allowed-instructions` to limit the available instructions into only allowing instructions which don't take any operations.
 
 ## Check command
 
@@ -101,3 +138,22 @@ The main command to compile and run a program is the `load` command, it takes th
 By default the code that is read will be formatted to be easier to read, this can be disabled by using the `--disable-alignment` flag. If you however would like to write the formatted code into the source file you can use the `--write-alignment` flag.
 
 Predetermined breakpoints can be loaded by using the `--breakpoints` flag, it takes multiple line numbers as parameter. Example: `alpha_tui load examples/programs/faculty.alpha -b 5`.
+
+## Examples
+
+### Maximum limitation
+
+If you would like to limit what instructions, comparisons/operations and memory locations are available you can do something like this:
+
+```
+alpha_tui load program.alpha
+    --disable-memory-detection      // Disable automatic memory detection
+    --accumulators 2                // Enable two accumulators (a0 and a1)
+    --memory-cells "h1,h2"          // Enable memory cells h1 and h2
+    --allowed-comparisons "eq,neq"  // Allow equal and not equal comparisons
+    --allowed-operations "add,sub"  // Allow addition and subtraction operations
+    --allowed-instructions          // Allow some specific instructions
+```
+(The different options have been written each in a new line for better understanding, in the correct command you would write them in one line.)
+
+If run, all programs that don't fulfill these requirements will fail to build.
