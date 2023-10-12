@@ -16,7 +16,7 @@ pub mod builder;
 pub mod error_handling;
 
 const MAX_CALL_STACK_SIZE: usize = u16::MAX as usize;
-const MAX_INSTRUCTION_RUNS: usize = 1000000;
+const MAX_INSTRUCTION_RUNS: usize = 1_000_000;
 
 #[derive(Debug, PartialEq)]
 pub struct Runtime {

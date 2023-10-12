@@ -168,6 +168,7 @@ pub enum CheckCommands {
     Compile,
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub trait CliHint {
 
     fn cli_hint(&self) -> String;

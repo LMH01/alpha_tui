@@ -79,8 +79,7 @@ impl Instruction {
     /// If an operation is used in this instruction it is returned
     pub fn operation(&self) -> Option<&Operation> {
         match self {
-            Self::Calc(_, _, op, _) => Some(op),
-            Self::StackOp(op) => Some(op),
+            Self::Calc(_, _, op, _) | Self::StackOp(op) => Some(op),
             _ => None,
         }
     }
