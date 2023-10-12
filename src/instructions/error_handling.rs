@@ -115,14 +115,14 @@ pub enum BuildProgramErrorTypes {
         code("build_program::comparison_not_allowed_error"),
         help("Make sure that you include this comparison ('{1}') in the allowed comparisons or use a different instruction.\nTo mark this comparison as allowed you can use: '--allowed-comparisons \"{1}\"'"),
     )]
-    ComparisonNotAllowed(usize, String),//TODO add test
+    ComparisonNotAllowed(usize, String), //TODO add test
 
     #[error("operation '{1}' in line '{0}' is not allowed")]
     #[diagnostic(
         code("build_program::operation_not_allowed_error"),
         help("Make sure that you include this operation ('{1}') in the allowed operations or use a different instruction.\nTo mark this operation as allowed you can use: '--allowed-operations \"{1}\"'"),
     )]
-    OperationNotAllowed(usize, String),// TODO add test
+    OperationNotAllowed(usize, String), // TODO add test
 }
 
 #[allow(clippy::match_same_arms)]
@@ -173,7 +173,10 @@ pub struct BuildAllowedInstructionsError {
 
 #[cfg(test)]
 mod tests {
+    use clap::{FromArgMatches, Parser};
+
     use crate::{
+        cli::Cli,
         instructions::{
             error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
             Instruction,
@@ -389,5 +392,45 @@ mod tests {
                 reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes
             })
         )
+    }
+
+    #[test]
+    fn test_bpe_comparison_not_allowed() {
+        let mut rb = RuntimeBuilder::from_args(&Cli::parse_from([
+            "alpha_tui",
+            "load",
+            "some_file.alpha",
+            "--allowed-comparisons",
+            ">",
+        ]))
+        .unwrap();
+
+        let instructions_input = vec!["if a == a then goto loop"];
+        assert_eq!(
+            rb.build_instructions(&instructions_input, "test"),
+            Err(BuildProgramError {
+                reason: BuildProgramErrorTypes::ComparisonNotAllowed(1, "==".to_string())
+            })
+        );
+    }
+
+    #[test]
+    fn test_bpe_operation_not_allowed() {
+        let mut rb = RuntimeBuilder::from_args(&Cli::parse_from([
+            "alpha_tui",
+            "load",
+            "some_file.alpha",
+            "--allowed-operations",
+            "*",
+        ]))
+        .unwrap();
+
+        let instructions_input = vec!["a := a + p(h1)"];
+        assert_eq!(
+            rb.build_instructions(&instructions_input, "test"),
+            Err(BuildProgramError {
+                reason: BuildProgramErrorTypes::OperationNotAllowed(1, "+".to_string())
+            })
+        );
     }
 }
