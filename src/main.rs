@@ -39,6 +39,10 @@ fn main() -> Result<()> {
         Commands::Check(ref args) => args.file.clone(),
     };
 
+    if cli.disable_instruction_limit {
+        println!("Warning: instruction limit is disabled, this might lead to performance problems!");
+    }
+
     let instructions = match read_file(&input) {
         Ok(i) => i,
         Err(e) => {
@@ -162,5 +166,3 @@ fn cmd_load(cli: &Cli, instructions: Vec<String>, input: String) -> Result<()> {
     res?;
     Ok(())
 }
-
-//TODO Check if I can replace assert_cmd tests with snapbox (to maybe get llvm codecov to work)

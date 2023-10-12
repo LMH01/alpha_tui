@@ -9,6 +9,7 @@
 ### Other
 - Implemented a limit that limits how many instructions can be run at max (currently 1 million)
     - This ensures that the program will not freeze when an infinite loop is executed
+    - Added option `--disable-instruction-limit` with which this limit can be circumvented
 
 ## v1.0.1
 

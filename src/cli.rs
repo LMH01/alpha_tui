@@ -69,6 +69,13 @@ pub struct Cli {
     )]
     pub allowed_instructions_file: Option<String>,
 
+    #[arg(
+        long = "disable-instruction-limit",
+        hide = true,
+        global = true,
+    )]
+    pub disable_instruction_limit: bool,
+
     #[command(subcommand)]
     pub command: Commands,
 }

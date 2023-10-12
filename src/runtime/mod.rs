@@ -70,7 +70,7 @@ impl Runtime {
         if self.control_flow.call_stack.len() >= MAX_CALL_STACK_SIZE {
             return Err(RuntimeError { reason: RuntimeErrorType::StackOverflowError, line_number})
         }
-        if self.instruction_runs > MAX_INSTRUCTION_RUNS {
+        if !self.runtime_args.settings.disable_instruction_limit && self.instruction_runs > MAX_INSTRUCTION_RUNS {
             return Err(RuntimeError { reason: RuntimeErrorType::DesignLimitReached(MAX_INSTRUCTION_RUNS), line_number})
         }
         Ok(())
@@ -343,12 +343,14 @@ pub struct Settings {
     ///
     /// If false, they will not be generated and a runtime error is thrown.
     pub enable_imc_auto_creation: bool,
+    pub disable_instruction_limit: bool,
 }
 
 impl Settings {
     fn new_default() -> Self {
         Self {
             enable_imc_auto_creation: true,
+            disable_instruction_limit: false,
         }
     }
 }
@@ -357,6 +359,7 @@ impl From<&Cli> for Settings {
     fn from(value: &Cli) -> Self {
         Self {
             enable_imc_auto_creation: !value.disable_memory_detection,
+            disable_instruction_limit: value.disable_instruction_limit,
         }
     }
 }
