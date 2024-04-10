@@ -50,6 +50,16 @@ pub fn write_file(contet: &Vec<String>, path: &str) -> Result<()> {
     Ok(())
 }
 
+/// Writes the specified line to the end of the file.
+pub fn write_line_to_file(line: &str, path: &str) -> Result<()> {
+    let mut content = match read_file(path) {
+        Ok(content) => content,
+        Err(e) => return Err(miette!("Unable to read file: {e}")),
+    };
+    content.push(line.to_string());
+    write_file(&content, path)
+}
+
 pub fn pretty_format_instructions(instructions: &[String]) -> Vec<String> {
     // determine spacings
     let mut max_label_length = 0;

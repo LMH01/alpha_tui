@@ -193,9 +193,9 @@ fn cmd_load(
     // create app
     let mut app = match cli.command {
         Commands::Load(ref args) => {
-            App::from_runtime(rt, input, &instructions, &args.breakpoints, command_history)
+            App::from_runtime(rt, input, &instructions, &args.breakpoints, command_history, args.command_history_file.clone())
         }
-        _ => App::from_runtime(rt, input, &instructions, &None, command_history),
+        _ => App::from_runtime(rt, input, &instructions, &None, command_history, None),
     };
     let res = app.run(&mut terminal);
 

@@ -12,7 +12,7 @@ use ratatui::{
 
 use crate::{
     instructions::Instruction,
-    runtime::{error_handling::RuntimeError, Runtime},
+    runtime::{error_handling::RuntimeError, Runtime}, utils,
 };
 
 use self::{
@@ -81,6 +81,7 @@ pub struct App {
     jump_to_line_used: bool,
     /// Contains instructions that where already executed using the custom instructions feature.
     executed_custom_instructions: Vec<String>,
+    command_history_file: Option<String>,
 }
 
 #[allow(clippy::cast_possible_wrap)]
@@ -98,6 +99,7 @@ impl App {
         instructions: &[String], // The content of this array is purely cosmetical, it is just used to print the instructions inside the ui
         set_breakpoints: &Option<Vec<usize>>,
         custom_instructions: Option<Vec<String>>,
+        command_history_file: Option<String>,
     ) -> App {
         let mlm = MemoryListsManager::new(runtime.runtime_args());
         Self {
@@ -113,6 +115,7 @@ impl App {
             state: State::Default,
             jump_to_line_used: false,
             executed_custom_instructions: custom_instructions.unwrap_or(Vec::new()),
+            command_history_file,
         }
     }
 
@@ -251,7 +254,7 @@ impl App {
                     KeyCode::Right => self.right_key(),
                     KeyCode::Down => self.down_key(),
                     KeyCode::Up => self.up_key(),
-                    KeyCode::Enter => self.enter_key(),
+                    KeyCode::Enter => self.enter_key()?,
                     _ => (),
                 }
             }
@@ -459,7 +462,7 @@ impl App {
     ///
     /// CustomInstruction: Try to parse the text currently stored in the input field as instruction and run it
     /// CustomInstructionError: App state is set to running
-    fn enter_key(&mut self) {
+    fn enter_key(&mut self) -> Result<()> {
         match &self.state {
             State::CustomInstruction(state) => {
                 let instruction_str = match state.allowed_values_state.selected() {
@@ -468,18 +471,18 @@ impl App {
                 };
                 // check if something is entered
                 if instruction_str.is_empty() {
-                    return;
+                    return Ok(());
                 }
                 let instruction = match Instruction::try_from(instruction_str.as_str()) {
                     Ok(instruction) => instruction,
                     Err(e) => {
                         self.state = State::CustomInstructionError(format!("{}", e));
-                        return;
+                        return Ok(());
                     }
                 };
                 if let Err(e) = self.runtime.run_foreign_instruction(instruction) {
                     self.state = State::RuntimeError(e);
-                    return;
+                    return Ok(());
                 }
                 // instruction was executed successfully
                 let instruction_run = state.input.clone();
@@ -488,6 +491,10 @@ impl App {
                 if !self.executed_custom_instructions.contains(&instruction_run)
                     && !instruction_run.is_empty()
                 {
+                    // write instruction to file, if it is set
+                    if let Some(path) = &self.command_history_file {
+                        utils::write_line_to_file(&instruction_run, &path)?;
+                    }
                     self.executed_custom_instructions.push(instruction_run);
                 }
             }
@@ -496,6 +503,7 @@ impl App {
             }
             _ => (),
         }
+        Ok(())
     }
 }
 
