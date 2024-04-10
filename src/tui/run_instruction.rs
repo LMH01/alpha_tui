@@ -52,7 +52,8 @@ impl SingleInstruction {
         let outer_block = Block::default()
             .title("Run custom instruction")
             .title_alignment(Alignment::Center)
-            .borders(Borders::ALL);
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(super::CUSTOM_INSTRUCTION_ACCENT_FG));
         f.render_widget(outer_block, area);
         f.render_widget(input, chunks[0]);
         f.set_cursor(
