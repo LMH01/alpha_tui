@@ -185,6 +185,11 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         f.render_widget(Clear, area); //this clears out the background
         f.render_widget(text, area);
     }
+
+    // Draw custom instruction popup if it is active
+    if let State::CustomInstruction(single_instruction) = &mut app.state {
+        single_instruction.draw(f, global_chunks[0])
+    }
 }
 
 /// helper function to create a centered rect using up certain percentage of the available rect `r`.

@@ -147,6 +147,7 @@ impl KeybindingHints {
                 self.set_state("r", 1)?;
                 self.show("s");
                 self.show("n");
+                self.show("i");
                 if *breakpoint_set {
                     self.set_state("n", 1)?;
                 }
@@ -168,6 +169,11 @@ impl KeybindingHints {
                 self.hide("r");
                 self.hide("d");
                 self.show("s");
+            }
+            State::CustomInstruction(_) => {
+                self.hide("r");
+                self.hide("d");
+                self.hide("q");
             }
             _ => (),
         }
@@ -222,7 +228,7 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     );
     hints.insert(
         "t".to_string(),
-        KeybindingHint::new(9, "t", "Toggle breakpoint", true, false),
+        KeybindingHint::new(8, "t", "Toggle breakpoint", true, false),
     );
     hints.insert(
         "j".to_string(),
@@ -235,6 +241,10 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     hints.insert(
         KeySymbol::ArrowDown.to_string(),
         KeybindingHint::new(12, &KeySymbol::ArrowDown.to_string(), "Down", true, false),
+    );
+    hints.insert(
+        "i".to_string(),
+        KeybindingHint::new(9, "i", "run custom instruction", true, false),
     );
     Ok(hints)
 }

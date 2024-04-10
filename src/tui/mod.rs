@@ -1,14 +1,21 @@
-use std::{ops::Deref, thread, time::Duration};
+use std::{borrow::BorrowMut, ops::Deref, thread, time::Duration};
 
 use crossterm::event::{self, Event, KeyCode};
 use miette::{miette, IntoDiagnostic, Result};
-use ratatui::{backend::Backend, style::Color, Terminal};
+use ratatui::{
+    backend::Backend,
+    layout::{Constraint, Layout, Rect},
+    style::Color,
+    widgets::ListState,
+    Terminal,
+};
 
 use crate::runtime::{error_handling::RuntimeError, Runtime};
 
 use self::{
     content::{InstructionListStates, MemoryListsManager},
     keybindings::KeybindingHints,
+    run_instruction::SingleInstruction,
     ui::draw,
 };
 
@@ -16,6 +23,8 @@ use self::{
 mod content;
 /// Everything related to keybindings.
 mod keybindings;
+/// Everything related to running a single instruction while a program is loaded.
+mod run_instruction;
 /// Drawing of the ui.
 mod ui;
 
@@ -37,6 +46,7 @@ pub enum State {
     ///
     /// Boolean value is true, if at least one breakpoint is set.
     Running(bool),
+    CustomInstruction(SingleInstruction),
     // 0 = state to restore to when debug mode is exited
     // 1 = index of instruction that was selected before debug mode was started
     DebugSelect(Box<State>, Option<usize>),
@@ -56,11 +66,12 @@ pub struct App {
     keybinding_hints: KeybindingHints,
     /// Manages accumulators, memory_cells and stack in the ui.
     memory_lists_manager: MemoryListsManager,
-    // Don't set state directly, use set_state() to also update keybind hints
     state: State,
     /// Stores if the jump to line feature has been used, if it is used, a different error message is displayed,
     /// when a runtime error occurs and the option to reset the runtime is given.
     jump_to_line_used: bool,
+    /// Contains instructions that where already executed using the custom instructions feature.
+    executed_custom_instructions: Vec<String>,
 }
 
 #[allow(clippy::cast_possible_wrap)]
@@ -91,6 +102,7 @@ impl App {
             memory_lists_manager: mlm,
             state: State::Default,
             jump_to_line_used: false,
+            executed_custom_instructions: Vec::new(),
         }
     }
 
@@ -98,107 +110,139 @@ impl App {
         loop {
             terminal.draw(|f| draw(f, self)).into_diagnostic()?;
             if let Event::Key(key) = event::read().into_diagnostic()? {
-                match key.code {
-                    KeyCode::Up => {
-                        if let State::DebugSelect(_s, _i) = &self.state {
-                            self.instruction_list_states.set_prev_visual();
-                        }
-                    }
-                    KeyCode::Down => {
-                        if let State::DebugSelect(_s, _i) = &self.state {
-                            self.instruction_list_states.set_next_visual();
-                        }
-                    }
-                    KeyCode::Char('t') => {
-                        if let State::DebugSelect(_, _) = &self.state {
-                            self.instruction_list_states.toggle_breakpoint();
-                        }
-                    }
-                    KeyCode::Char('j') => {
-                        if let State::DebugSelect(_, _) = &self.state {
-                            self.jump_to_line_used = true;
-                            self.state =
-                                State::Running(self.instruction_list_states.breakpoints_set());
-                            let idx = self
-                                .instruction_list_states
-                                .instruction_list_state_mut()
-                                .selected()
-                                .unwrap();
-                            self.instruction_list_states.set_instruction(idx - 1);
-                            self.runtime.set_next_instruction(idx);
-                            _ = self.step();
-                        }
-                    }
-                    KeyCode::Char('q') => match &self.state {
-                        State::Errored(e) => Err(e.clone())?,
-                        _ => return Ok(()),
+                match &self.state {
+                    State::CustomInstruction(_) => match key.code {
+                        KeyCode::Char(to_insert) => self.any_char(to_insert),
+                        _ => (),
                     },
-                    KeyCode::Char('w') => {
-                        if let State::DebugSelect(_, _) = self.state {
-                            self.instruction_list_states.set_prev_visual();
-                        }
-                    }
-                    KeyCode::Char('s') => match self.state {
-                        State::Running(_) | State::Finished(_) => self.reset(),
-                        State::Errored(_) => {
-                            if self.jump_to_line_used {
-                                self.reset();
-                            }
-                        }
-                        State::DebugSelect(_, _) => {
-                            self.instruction_list_states.set_next_visual();
-                        }
-                        State::Default => (),
-                    },
-                    KeyCode::Char('r') => {
-                        if self.state == State::Default
-                            || self.state == State::Running(true)
-                            || self.state == State::Running(false)
-                        {
-                            if self.state != State::Running(true)
-                                && self.state != State::Running(false)
-                            {
-                                self.instruction_list_states
-                                    .set_start(self.runtime.next_instruction_index() as i32);
-                            }
-                            self.state =
-                                State::Running(self.instruction_list_states.breakpoints_set());
-                            _ = self.step();
-                        }
-                    }
-                    KeyCode::Char('n') => {
-                        // run to the next breakpoint
-                        if self.state == State::Running(true) || self.state == State::Running(false)
-                        {
-                            _ = self.step();
-                            while !self.instruction_list_states.is_breakpoint() {
-                                match self.step() {
-                                    Ok(bool) => {
-                                        if bool {
-                                            break;
-                                        }
-                                    }
-                                    Err(_) => break,
+                    _ => {
+                        match key.code {
+                            KeyCode::Up => {
+                                if let State::DebugSelect(_s, _i) = &self.state {
+                                    self.instruction_list_states.set_prev_visual();
                                 }
                             }
+                            KeyCode::Down => {
+                                if let State::DebugSelect(_s, _i) = &self.state {
+                                    self.instruction_list_states.set_next_visual();
+                                }
+                            }
+                            KeyCode::Char('t') => {
+                                if let State::DebugSelect(_, _) = &self.state {
+                                    self.instruction_list_states.toggle_breakpoint();
+                                }
+                            }
+                            KeyCode::Char('j') => {
+                                if let State::DebugSelect(_, _) = &self.state {
+                                    self.jump_to_line_used = true;
+                                    self.state = State::Running(
+                                        self.instruction_list_states.breakpoints_set(),
+                                    );
+                                    let idx = self
+                                        .instruction_list_states
+                                        .instruction_list_state_mut()
+                                        .selected()
+                                        .unwrap();
+                                    self.instruction_list_states.set_instruction(idx - 1);
+                                    self.runtime.set_next_instruction(idx);
+                                    _ = self.step();
+                                }
+                            }
+                            KeyCode::Char('i') => match self.state {
+                                State::Running(_) => {
+                                    self.state = State::CustomInstruction(SingleInstruction::new(
+                                        &self.executed_custom_instructions,
+                                    ))
+                                }
+                                _ => (),
+                            },
+                            KeyCode::Char('q') => match &self.state {
+                                State::Errored(e) => Err(e.clone())?,
+                                State::CustomInstruction(_) => (),
+                                _ => return Ok(()),
+                            },
+                            KeyCode::Char('w') => {
+                                if let State::DebugSelect(_, _) = self.state {
+                                    self.instruction_list_states.set_prev_visual();
+                                }
+                            }
+                            KeyCode::Char('s') => match self.state {
+                                State::Running(_) | State::Finished(_) => self.reset(),
+                                State::Errored(_) => {
+                                    if self.jump_to_line_used {
+                                        self.reset();
+                                    }
+                                }
+                                State::DebugSelect(_, _) => {
+                                    self.instruction_list_states.set_next_visual();
+                                }
+                                State::Default | State::CustomInstruction(_) => (),
+                            },
+                            KeyCode::Char('r') => {
+                                if self.state == State::Default
+                                    || self.state == State::Running(true)
+                                    || self.state == State::Running(false)
+                                {
+                                    if self.state != State::Running(true)
+                                        && self.state != State::Running(false)
+                                    {
+                                        self.instruction_list_states
+                                    .set_start(self.runtime.next_instruction_index() as i32);
+                                    }
+                                    self.state = State::Running(
+                                        self.instruction_list_states.breakpoints_set(),
+                                    );
+                                    _ = self.step();
+                                }
+                            }
+                            KeyCode::Char('n') => {
+                                // run to the next breakpoint
+                                if self.state == State::Running(true)
+                                    || self.state == State::Running(false)
+                                {
+                                    _ = self.step();
+                                    while !self.instruction_list_states.is_breakpoint() {
+                                        match self.step() {
+                                            Ok(bool) => {
+                                                if bool {
+                                                    break;
+                                                }
+                                            }
+                                            Err(_) => break,
+                                        }
+                                    }
+                                }
+                            }
+                            KeyCode::Char('d') => match &self.state {
+                                State::DebugSelect(s, i) => {
+                                    self.instruction_list_states.set_instruction_list_state(*i);
+                                    self.state = s.deref().clone();
+                                }
+                                State::Default | State::Running(_) => {
+                                    self.start_debug_select_mode()
+                                }
+                                State::Finished(b) => {
+                                    if *b {
+                                        self.state = State::Finished(false);
+                                    }
+                                }
+                                State::Errored(_) | State::CustomInstruction(_) => (),
+                            },
+                            _ => (),
                         }
                     }
-                    KeyCode::Char('d') => match &self.state {
-                        State::DebugSelect(s, i) => {
-                            self.instruction_list_states.set_instruction_list_state(*i);
-                            self.state = s.deref().clone();
-                        }
-                        State::Default | State::Running(_) => self.start_debug_select_mode(),
-                        State::Finished(b) => {
-                            if *b {
-                                self.state = State::Finished(false);
-                            }
-                        }
-                        State::Errored(_) => (),
-                    },
+                }
+                // keybinding actions that are always checked
+                match key.code {
+                    KeyCode::Esc => self.escape_key(),
+                    KeyCode::Backspace => self.backspace_key(),
+                    KeyCode::Delete => self.delete_key(),
+                    KeyCode::Left => self.left_key(),
+                    KeyCode::Right => self.right_key(),
                     _ => (),
                 }
             }
+
             self.memory_lists_manager
                 .update(self.runtime.runtime_args());
             thread::sleep(Duration::from_millis(30));
@@ -252,4 +296,158 @@ impl App {
         self.instruction_list_states.deselect();
         self.state = State::Default;
     }
+
+    fn escape_key(&mut self) {
+        match self.state {
+            State::CustomInstruction(_) => {
+                self.state = State::Running(self.instruction_list_states.breakpoints_set())
+            }
+            _ => (),
+        }
+    }
+
+    /// Performs an action. Action depends on current app state.
+    ///
+    /// CustomInstruction: Enter a char
+    fn any_char(&mut self, to_insert: char) {
+        match self.state.borrow_mut() {
+            State::CustomInstruction(state) => {
+                insert_char_at_index(&mut state.input, state.cursor_position, to_insert);
+                self.right_key();
+            }
+            _ => (),
+        }
+    }
+
+    /// Performs an action. Action depends on current app state.
+    ///
+    /// CustomInstruction: Deletes a char
+    fn backspace_key(&mut self) {
+        match self.state.borrow_mut() {
+            State::CustomInstruction(state) => {
+                let is_not_cursor_leftmost = state.cursor_position != 0;
+                if is_not_cursor_leftmost {
+                    // Method "remove" is not used on the saved text for deleting the selected char.
+                    // Reason: Using remove on String works on bytes instead of the chars.
+                    // Using remove would require special care because of char boundaries.
+
+                    let current_index = state.cursor_position;
+                    let from_left_to_current_index = current_index - 1;
+
+                    // Getting all characters before the selected character.
+                    let before_char_to_delete =
+                        state.input.chars().take(from_left_to_current_index);
+                    // Getting all characters after selected character.
+                    let after_char_to_delete = state.input.chars().skip(current_index);
+
+                    // Put all characters together except for the selected one.
+                    // By leaving the selected one out, it is forgotten and therefore deleted.
+                    state.input = before_char_to_delete.chain(after_char_to_delete).collect();
+                    self.left_key()
+                }
+            }
+            _ => (),
+        }
+    }
+
+    /// Performs an action. Action depends on current app state.
+    ///
+    /// CustomInstruction: Deletes the char behind the cursor.
+    fn delete_key(&mut self) {
+        match self.state.borrow_mut() {
+            State::CustomInstruction(state) => {
+                // Method "remove" is not used on the saved text for deleting the selected char.
+                // Reason: Using remove on String works on bytes instead of the chars.
+                // Using remove would require special care because of char boundaries.
+
+                let current_index = state.cursor_position;
+                let from_left_to_current_index = current_index;
+
+                // Getting all characters before the selected character.
+                let before_char_to_delete = state.input.chars().take(from_left_to_current_index);
+                // Getting all characters after selected character.
+                let after_char_to_delete = state.input.chars().skip(current_index + 1);
+
+                // Put all characters together except for the selected one.
+                // By leaving the selected one out, it is forgotten and therefore deleted.
+                state.input = before_char_to_delete.chain(after_char_to_delete).collect();
+            }
+            _ => (),
+        }
+    }
+
+    /// Performs an action. Action depends on current app state.
+    ///
+    /// CustomInstruction: Move the cursor to the left.
+    fn left_key(&mut self) {
+        match self.state.borrow_mut() {
+            State::CustomInstruction(state) => {
+                let cursor_moved_left = state.cursor_position.saturating_sub(1);
+                state.cursor_position = cursor_moved_left.clamp(0, state.input.len());
+            }
+            _ => (),
+        }
+    }
+
+    /// Performs an action. Action depends on current app state.
+    ///
+    /// CustomInstruction: Move the cursor to the right.
+    fn right_key(&mut self) {
+        match self.state.borrow_mut() {
+            State::CustomInstruction(state) => {
+                let cursor_moved_right = state.cursor_position.saturating_add(1);
+                state.cursor_position = cursor_moved_right.clamp(0, state.input.len());
+            }
+            _ => (),
+        }
+    }
+}
+
+/// helper function to create a centered rect using up certain percentage of the available rect `r`.
+pub fn centered_rect(percent_x: u16, percent_y: u16, height: Option<u16>, r: Rect) -> Rect {
+    let center_constraint = match height {
+        Some(value) => Constraint::Length(value),
+        None => Constraint::Percentage(percent_y),
+    };
+    let popup_layout = Layout::vertical([
+        Constraint::Percentage((100 - percent_y) / 2),
+        center_constraint,
+        Constraint::Percentage((100 - percent_y) / 2),
+    ])
+    .split(r);
+
+    Layout::horizontal([
+        Constraint::Percentage((100 - percent_x) / 2),
+        Constraint::Percentage(percent_x),
+        Constraint::Percentage((100 - percent_x) / 2),
+    ])
+    .split(popup_layout[1])[1]
+}
+
+/// Scrolls the provided list down.
+pub fn list_down(state: &mut ListState, len: &usize) {
+    if let Some(idx) = state.selected() {
+        // check if we are at the bottom of the list
+        if idx != len - 1 {
+            state.select(Some(idx + 1));
+        }
+    } else if len > &0 {
+        state.select(Some(0));
+    }
+}
+
+/// Scrolls the provided list up.
+pub fn list_up(state: &mut ListState) {
+    if let Some(idx) = state.selected() {
+        // check if we are at the top of the list
+        if idx > 0 {
+            state.select(Some(idx - 1));
+        }
+    }
+}
+
+pub fn insert_char_at_index(s: &mut String, idx: usize, to_insert: char) {
+    let mut chars = s.chars().collect::<Vec<char>>();
+    chars.insert(idx, to_insert);
+    *s = chars.into_iter().collect()
 }
