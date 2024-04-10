@@ -34,7 +34,7 @@ pub enum InstructionParseError {
     #[error("invalid expression '{1}'")]
     #[diagnostic(
         code("parse_instruction::invalid_expression"),
-        url("https://github.com/LMH01/alpha_tui/blob/master/instructions.md"),
+        url("https://github.com/LMH01/alpha_tui/blob/master/docs/instructions.md"),
         help("Make sure that you use a supported instruction.")
     )]
     InvalidExpression((usize, usize), String),
@@ -43,7 +43,7 @@ pub enum InstructionParseError {
     #[error("unknown instruction '{1}'")]
     #[diagnostic(
         code("parse_instruction::unknown_instruction"),
-        url("https://github.com/LMH01/alpha_tui/blob/master/instructions.md"),
+        url("https://github.com/LMH01/alpha_tui/blob/master/docs/instructions.md"),
         help("Make sure that you use a supported instruction.")
     )]
     UnknownInstruction((usize, usize), String),
@@ -51,7 +51,7 @@ pub enum InstructionParseError {
     #[error("missing expression")]
     #[diagnostic(
         code("parse_instruction::missing_expression"),
-        url("https://github.com/LMH01/alpha_tui/blob/master/instructions.md")
+        url("https://github.com/LMH01/alpha_tui/blob/master/docs/instructions.md")
     )]
     MissingExpression {
         range: (usize, usize),

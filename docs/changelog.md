@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.2.0
+
+### Other
+- Updated dependencies
+
+### Bug fixes
+- Fixed URL in errors `InvalidExpression`, `UnknownInstruction` and `MissingExpression` to point to the correct page
+
 ## v1.1.0 (latest version)
 
 ### New feature
