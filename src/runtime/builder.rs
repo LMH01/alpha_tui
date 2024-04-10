@@ -208,7 +208,7 @@ impl RuntimeBuilder {
                                     index + 1,
                                     e.range().0 + 1,
                                 ),
-                                SourceOffset::from(end_range),
+                                end_range,
                             ),
                             reason: e,
                         },

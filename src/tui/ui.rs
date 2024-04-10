@@ -1,5 +1,5 @@
 use ratatui::{
-    prelude::{Alignment, Backend, Constraint, Direction, Layout, Rect},
+    prelude::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Modifier, Style},
     text::Text,
     widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph, Tabs},
@@ -14,7 +14,7 @@ use super::{
 
 /// Draw the ui
 #[allow(clippy::too_many_lines)]
-pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
+pub fn draw(f: &mut Frame, app: &mut App) {
     let global_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Percentage(99), Constraint::Percentage(1)])

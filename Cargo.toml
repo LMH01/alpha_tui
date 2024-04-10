@@ -6,12 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ratatui = { version = "0.22.0", features = ["all-widgets"]}
-crossterm = "0.25"
-clap = { version = "4.3.23", features = ["derive", "color"] }
-thiserror = "1.0.47"
-miette = { version = "5.10.0", features = ["fancy"] }
+ratatui = { version = "0.26", features = ["all-widgets"]}
+crossterm = "0.27"
+clap = { version = "4.3", features = ["derive", "color"] }
+thiserror = "1"
+miette = { version = "7.2", features = ["fancy"] }
 text_align = "0.3.1"
 
 [dev-dependencies]
-assert_cmd = "2.0.12"
+assert_cmd = "2"

@@ -4,8 +4,8 @@ if α1 > 0 then goto rec
 return 
 rec: α := α1 
 push 
-α1 := α1 - 1 
-call fac 
+α1 := α1 - 1
+call fac
 pop 
 α2 :=  α * α2
 return

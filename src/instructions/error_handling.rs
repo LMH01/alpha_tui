@@ -80,7 +80,7 @@ pub enum BuildProgramErrorTypes {
     #[diagnostic(code(build_program::parse_error))]
     ParseError {
         #[source_code]
-        src: NamedSource,
+        src: NamedSource<String>,
         #[label("here")]
         bad_bit: SourceSpan,
         #[source]
@@ -163,7 +163,7 @@ pub struct BuildProgramError {
 )]
 pub struct BuildAllowedInstructionsError {
     #[source_code]
-    pub src: NamedSource,
+    pub src: NamedSource<String>,
     #[label("here")]
     pub bad_bit: SourceSpan,
     #[source]
