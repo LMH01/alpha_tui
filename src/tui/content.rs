@@ -138,15 +138,14 @@ impl InstructionListStates {
         // self.instructions[self.instruction_list_state.selected().unwrap()].2
     }
 
-    /// Returns the number of breakpoints set
-    pub fn count_breakpoints(&self) -> usize {
-        let mut counter = 0;
+    /// Returns true if at least one breakpoint is set.
+    pub fn breakpoints_set(&self) -> bool {
         for state in &self.instructions {
             if state.2 {
-                counter += 1;
+                return true;
             }
         }
-        counter
+        false
     }
 
     pub fn selected_line(&self) -> Option<usize> {

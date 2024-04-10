@@ -79,7 +79,7 @@ impl KeybindingHints {
     /// Use to enable a keybinding hint.
     ///
     /// Does nothing if the key is not associated to a keybinding.
-    pub fn enable(&mut self, key: &str) {
+    pub fn _enable(&mut self, key: &str) {
         if let Some(bind) = self.hints.get_mut(key) {
             bind.enabled = true;
         }
@@ -90,7 +90,7 @@ impl KeybindingHints {
     /// Disabled keybinding hints are still displayed but grayed out.
     ///
     /// Does nothing if the key is not associated to a keybinding.
-    pub fn disable(&mut self, key: &str) {
+    pub fn _disable(&mut self, key: &str) {
         if let Some(bind) = self.hints.get_mut(key) {
             bind.enabled = false;
         }
@@ -108,7 +108,7 @@ impl KeybindingHints {
     /// Use to hide a keybinding hint.
     ///
     /// Does nothing if the key is not associated to a binding.
-    pub fn _hide(&mut self, key: &str) {
+    pub fn hide(&mut self, key: &str) {
         if let Some(bind) = self.hints.get_mut(key) {
             bind.shown = false;
         }
@@ -117,7 +117,7 @@ impl KeybindingHints {
     /// Checks the status of the keybinding hint.
     ///
     /// Returns `true` if the keybinding hint is shown or `false` if the keybinding hint is hidden or was not found.
-    pub fn status(&self, key: &str) -> bool {
+    pub fn _status(&self, key: &str) -> bool {
         if let Some(bind) = self.hints.get(key) {
             bind.shown
         } else {
@@ -143,9 +143,31 @@ impl KeybindingHints {
 
         // set more specific keybinding hints
         match state {
-            State::Running => {
+            State::Running(breakpoint_set) => {
                 self.set_state("r", 1)?;
-                self.enable("s");
+                self.show("s");
+                self.show("n");
+                if *breakpoint_set {
+                    self.set_state("n", 1)?;
+                }
+            }
+            State::DebugSelect(_, _) => {
+                self.hide("r");
+                self.show("t");
+                self.show("j");
+                self.show(&KeySymbol::ArrowUp.to_string());
+                self.show(&KeySymbol::ArrowDown.to_string());
+                self.set_state("d", 1)?;
+            }
+            State::Finished(_) => {
+                self.hide("r");
+                self.show("s");
+                self.set_state("d", 2)?;
+            }
+            State::Errored(_) => {
+                self.hide("r");
+                self.hide("d");
+                self.show("s");
             }
             _ => (),
         }
@@ -162,22 +184,22 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     );
     hints.insert(
         "s".to_string(),
-        KeybindingHint::new(1, "s", "Reset", false, true),
+        KeybindingHint::new(1, "s", "Reset", true, false),
     );
     hints.insert(
         "n".to_string(),
         KeybindingHint::new_many(
-            vec![4, 4],
+            vec![2, 2],
             "n",
-            vec!["Next breakpoint", "Run to end"],
-            false,
+            vec!["Run to end", "Next breakpoint"],
             true,
+            false,
         )?,
     );
     hints.insert(
         "r".to_string(),
         KeybindingHint::new_many(
-            vec![2, 2],
+            vec![4, 4],
             "r",
             vec!["Run", "Run next instruction"],
             true,
@@ -200,19 +222,19 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     );
     hints.insert(
         "t".to_string(),
-        KeybindingHint::new(9, "t", "Toggle breakpoint", false, true),
+        KeybindingHint::new(9, "t", "Toggle breakpoint", true, false),
     );
     hints.insert(
         "j".to_string(),
-        KeybindingHint::new(10, "j", "Jump to line", false, true),
+        KeybindingHint::new(10, "j", "Jump to line", true, false),
     );
     hints.insert(
         KeySymbol::ArrowUp.to_string(),
-        KeybindingHint::new(11, &KeySymbol::ArrowUp.to_string(), "Up", false, true),
+        KeybindingHint::new(11, &KeySymbol::ArrowUp.to_string(), "Up", true, false),
     );
     hints.insert(
         KeySymbol::ArrowDown.to_string(),
-        KeybindingHint::new(12, &KeySymbol::ArrowDown.to_string(), "Down", false, true),
+        KeybindingHint::new(12, &KeySymbol::ArrowDown.to_string(), "Down", true, false),
     );
     Ok(hints)
 }
@@ -298,8 +320,6 @@ impl KeybindingHint {
 }
 
 pub enum KeySymbol {
-    ArrowLeft,
-    ArrowRight,
     ArrowUp,
     ArrowDown,
 }
@@ -307,8 +327,6 @@ pub enum KeySymbol {
 impl ToString for KeySymbol {
     fn to_string(&self) -> String {
         match self {
-            KeySymbol::ArrowLeft => "\u{2190}".to_string(),
-            KeySymbol::ArrowRight => "\u{2192}".to_string(),
             KeySymbol::ArrowUp => "\u{2191}".to_string(),
             KeySymbol::ArrowDown => "\u{2193}".to_string(),
         }
@@ -366,14 +384,14 @@ mod tests {
     #[test]
     fn test_keybinding_hints_enable() {
         let mut hints = test_keybinding_hints();
-        hints.enable("b");
+        hints._enable("b");
         assert!(hints.hints.get("b").unwrap().enabled);
     }
 
     #[test]
     fn test_keybinding_hints_disable() {
         let mut hints = test_keybinding_hints();
-        hints.disable("a");
+        hints._disable("a");
         assert!(!hints.active_keybinds().contains(&KeybindingHint::new(
             0,
             "a",
@@ -386,9 +404,9 @@ mod tests {
     #[test]
     fn test_keybinding_hints_status() {
         let hints = test_keybinding_hints();
-        assert!(hints.status("a"));
-        assert!(!hints.status("b"));
-        assert!(!hints.status("e"));
+        assert!(hints._status("a"));
+        assert!(!hints._status("b"));
+        assert!(!hints._status("e"));
     }
 
     #[test]
@@ -463,7 +481,7 @@ mod tests {
             false,
             true
         )));
-        hints._hide("d");
+        hints.hide("d");
         assert!(!hints.active_keybinds().contains(&KeybindingHint::new(
             0,
             "d",
