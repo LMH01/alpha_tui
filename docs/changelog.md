@@ -12,6 +12,7 @@
 - Updated dependencies
 - Reworked how keybinding hints are displayed, they now automatically wrap into a new line, if the space in one line is not enough to fit all active keybinding hints
 - Removed distinction between runtime errors where jump line was used and where it was not
+- Updated message when runtime error occurs to give hint that further information on the error is available when program is closed
 
 ### Bug fixes
 - Fixed URL in errors `InvalidExpression`, `UnknownInstruction` and `MissingExpression` to point to the correct page

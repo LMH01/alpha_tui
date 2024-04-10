@@ -1,7 +1,7 @@
 use miette::{Diagnostic, NamedSource, SourceOffset, SourceSpan};
 use thiserror::Error;
 
-#[derive(Debug, PartialEq, Diagnostic, Error)]
+#[derive(Debug, PartialEq, Diagnostic, Error, Clone)]
 pub enum InstructionParseError {
     /// Indicates that the specified operation does not exist.
     /// Argument specifies the character index at which the error occurred.
