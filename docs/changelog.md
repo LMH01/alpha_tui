@@ -2,6 +2,9 @@
 
 ## v1.2.0
 
+### New feature
+- Added way to run a single custom instruction while program is running (fr #24 and #25) (error information here is however not as useful as the errors displayed while the program is being build initially)
+
 ### Other
 - Updated dependencies
 - Reworked how keybinding hints are displayed, they now automatically wrap into a new line, if the space in one line is not enough to fit all active keybinding hints
