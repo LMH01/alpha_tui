@@ -201,7 +201,7 @@ impl RuntimeBuilder {
                     let file_contents = instructions_input.join("\n");
                     Err(BuildProgramError {
                         reason: BuildProgramErrorTypes::ParseError {
-                            src: NamedSource::new(file_name, instructions_input.clone().join("\n")),
+                            src: NamedSource::new(file_name, instructions_input.join("\n")),
                             bad_bit: SourceSpan::new(
                                 SourceOffset::from_location(
                                     file_contents.clone(),
