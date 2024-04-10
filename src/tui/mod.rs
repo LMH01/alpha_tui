@@ -1,7 +1,7 @@
 use std::{borrow::BorrowMut, ops::Deref, thread, time::Duration};
 
 use crossterm::event::{self, Event, KeyCode};
-use miette::{miette, IntoDiagnostic, Result};
+use miette::{miette, Error, IntoDiagnostic, Result};
 use ratatui::{
     backend::Backend,
     layout::{Constraint, Layout, Rect},
@@ -421,7 +421,7 @@ impl App {
                 let instruction = match Instruction::try_from(state.input.as_str()) {
                     Ok(instruction) => instruction,
                     Err(e) => {
-                        self.state = State::CustomInstructionError(e.to_string());
+                        self.state = State::CustomInstructionError(format!("{}", e));
                         return;
                     }
                 };
@@ -432,8 +432,10 @@ impl App {
                 // instruction was executed successfully
                 let instruction_run = state.input.clone();
                 self.state = State::Running(self.instruction_list_states.breakpoints_set());
-                // add instruction to executed instructions
-                self.executed_custom_instructions.push(instruction_run);
+                // add instruction to executed instructions, if it is not contained already
+                if !self.executed_custom_instructions.contains(&instruction_run) {
+                    self.executed_custom_instructions.push(instruction_run);
+                }
             }
             State::CustomInstructionError(_) => {
                 self.state = State::Running(self.instruction_list_states.breakpoints_set());

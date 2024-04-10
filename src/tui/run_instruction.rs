@@ -82,8 +82,11 @@ impl SingleInstruction {
             builder.push(instruction);
         }
 
+        if self.input.is_empty() {
+            return self.executed_instructions.clone();
+        }
         let trie = builder.build();
-        trie.common_prefix_search(&self.input.as_bytes())
+        trie.predictive_search(&self.input.as_bytes())
             .iter()
             .map(|u8s| {
                 std::str::from_utf8(u8s)
