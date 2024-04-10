@@ -116,6 +116,22 @@ impl Runtime {
     pub fn initial_instruction_index(&self) -> usize {
         self.control_flow.initial_instruction
     }
+
+    /// Runs the provided instruction in this runtime.
+    ///
+    /// Warning: depending on the instruction this may break things.
+    pub fn run_foreign_instruction(
+        &mut self,
+        instruction: Instruction,
+    ) -> Result<(), RuntimeError> {
+        if let Err(e) = instruction.run(&mut self.runtime_args, &mut self.control_flow) {
+            return Err(RuntimeError {
+                reason: e,
+                line_number: self.control_flow.next_instruction_index,
+            })?;
+        }
+        Ok(())
+    }
 }
 
 /// Used to control what instruction should be executed next.

@@ -10,7 +10,10 @@ use ratatui::{
     Terminal,
 };
 
-use crate::runtime::{error_handling::RuntimeError, Runtime};
+use crate::{
+    instructions::Instruction,
+    runtime::{error_handling::RuntimeError, Runtime},
+};
 
 use self::{
     content::{InstructionListStates, MemoryListsManager},
@@ -47,12 +50,17 @@ pub enum State {
     /// Boolean value is true, if at least one breakpoint is set.
     Running(bool),
     CustomInstruction(SingleInstruction),
+    /// Indicates that parsing of the instruction failed.
+    ///
+    /// String contains the reason why it failed.
+    CustomInstructionError(String),
     // 0 = state to restore to when debug mode is exited
     // 1 = index of instruction that was selected before debug mode was started
     DebugSelect(Box<State>, Option<usize>),
     // 0 = stores if the popup window is open
     Finished(bool),
-    Errored(RuntimeError),
+    /// Indicates that an irrecoverable error occurred while a program was running.
+    RuntimeError(RuntimeError),
 }
 
 /// App holds the state of the application
@@ -157,7 +165,7 @@ impl App {
                                 _ => (),
                             },
                             KeyCode::Char('q') => match &self.state {
-                                State::Errored(e) => Err(e.clone())?,
+                                State::RuntimeError(e) => Err(e.clone())?,
                                 State::CustomInstruction(_) => (),
                                 _ => return Ok(()),
                             },
@@ -168,7 +176,7 @@ impl App {
                             }
                             KeyCode::Char('s') => match self.state {
                                 State::Running(_) | State::Finished(_) => self.reset(),
-                                State::Errored(_) => {
+                                State::RuntimeError(_) => {
                                     if self.jump_to_line_used {
                                         self.reset();
                                     }
@@ -176,7 +184,7 @@ impl App {
                                 State::DebugSelect(_, _) => {
                                     self.instruction_list_states.set_next_visual();
                                 }
-                                State::Default | State::CustomInstruction(_) => (),
+                                _ => (),
                             },
                             KeyCode::Char('r') => {
                                 if self.state == State::Default
@@ -226,7 +234,7 @@ impl App {
                                         self.state = State::Finished(false);
                                     }
                                 }
-                                State::Errored(_) | State::CustomInstruction(_) => (),
+                                _ => (),
                             },
                             _ => (),
                         }
@@ -239,6 +247,7 @@ impl App {
                     KeyCode::Delete => self.delete_key(),
                     KeyCode::Left => self.left_key(),
                     KeyCode::Right => self.right_key(),
+                    KeyCode::Enter => self.enter_key(),
                     _ => (),
                 }
             }
@@ -257,14 +266,14 @@ impl App {
     fn step(&mut self) -> Result<bool, ()> {
         let res = self.runtime.step();
         if let Err(e) = res {
-            self.state = State::Errored(e);
+            self.state = State::RuntimeError(e);
             return Err(());
         }
         self.instruction_list_states
             .set(self.runtime.next_instruction_index() as i32);
         if self.runtime.finished() {
             match self.state {
-                State::Errored(_) => (),
+                State::RuntimeError(_) => (),
                 _ => {
                     self.state = State::Finished(true);
                 }
@@ -397,6 +406,37 @@ impl App {
             State::CustomInstruction(state) => {
                 let cursor_moved_right = state.cursor_position.saturating_add(1);
                 state.cursor_position = cursor_moved_right.clamp(0, state.input.len());
+            }
+            _ => (),
+        }
+    }
+
+    /// Performs an action. Action depends on current app state.
+    ///
+    /// CustomInstruction: Try to parse the text currently stored in the input field as instruction and run it
+    /// CustomInstructionError: App state is set to running
+    fn enter_key(&mut self) {
+        match &self.state {
+            State::CustomInstruction(state) => {
+                let instruction = match Instruction::try_from(state.input.as_str()) {
+                    Ok(instruction) => instruction,
+                    Err(e) => {
+                        self.state = State::CustomInstructionError(e.to_string());
+                        return;
+                    }
+                };
+                if let Err(e) = self.runtime.run_foreign_instruction(instruction) {
+                    self.state = State::RuntimeError(e);
+                    return;
+                }
+                // instruction was executed successfully
+                let instruction_run = state.input.clone();
+                self.state = State::Running(self.instruction_list_states.breakpoints_set());
+                // add instruction to executed instructions
+                self.executed_custom_instructions.push(instruction_run);
+            }
+            State::CustomInstructionError(_) => {
+                self.state = State::Running(self.instruction_list_states.breakpoints_set());
             }
             _ => (),
         }

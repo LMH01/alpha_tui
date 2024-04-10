@@ -1,5 +1,5 @@
 use ratatui::{
-    prelude::{Alignment, Constraint, Direction, Layout, Rect},
+    prelude::{Alignment, Constraint, Direction, Layout},
     style::{Modifier, Style},
     text::Text,
     widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph},
@@ -53,7 +53,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         .borders(Borders::ALL)
         .title_alignment(Alignment::Left)
         .border_type(BorderType::Rounded);
-    if let State::Errored(_) = app.state {
+    if let State::RuntimeError(_) = app.state {
         code_area = code_area.border_style(Style::default().fg(ERROR_COLOR));
     } else if let State::DebugSelect(_, _) = app.state {
         code_area = code_area
@@ -157,7 +157,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             .title("Execution finished!")
             .borders(Borders::ALL)
             .border_style(Style::default().fg(EXECUTION_FINISHED_POPUP_COLOR));
-        let area = centered_rect(60, 20, f.size());
+        let area = super::centered_rect(60, 20, None, f.size());
         let text = Paragraph::new(
             "Press [q] to exit.\nPress [s] to reset to start.\nPress [d] to dismiss this message.",
         )
@@ -167,12 +167,12 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     }
 
     // Popup if runtime error
-    if let State::Errored(e) = &app.state {
+    if let State::RuntimeError(e) = &app.state {
         let block = Block::default()
             .title("Runtime error!")
             .borders(Borders::ALL)
             .border_style(Style::default().fg(ERROR_COLOR));
-        let area = centered_rect(60, 30, f.size());
+        let area = super::centered_rect(60, 30, None, f.size());
         let text = if app.jump_to_line_used {
             Paragraph::new(format!(
                 "Execution can not continue due to the following problem:\n{}\n\nPress [q] to exit.\nPress [s] to reset to start.",
@@ -186,36 +186,24 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         f.render_widget(text, area);
     }
 
+    // Draw error when instruction could not be parsed
+    if let State::CustomInstructionError(reason) = &app.state {
+        let block = Block::default()
+            .title(format!("Error: unable to parse instruction"))
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(ERROR_COLOR));
+        let area = super::centered_rect(60, 30, Some(6), f.size());
+        let text = Paragraph::new(format!(
+            "{}\n\nPress [q] to exit.\nPress [ENTER] to close.",
+            reason
+        ))
+        .block(block);
+        f.render_widget(Clear, area); //this clears out the background
+        f.render_widget(text, area);
+    }
+
     // Draw custom instruction popup if it is active
     if let State::CustomInstruction(single_instruction) = &mut app.state {
         single_instruction.draw(f, global_chunks[0])
     }
-}
-
-/// helper function to create a centered rect using up certain percentage of the available rect `r`.
-/// Copied from tui examples.
-fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
-    let popup_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(
-            [
-                Constraint::Percentage((100 - percent_y) / 2),
-                Constraint::Percentage(percent_y),
-                Constraint::Percentage((100 - percent_y) / 2),
-            ]
-            .as_ref(),
-        )
-        .split(r);
-
-    Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(
-            [
-                Constraint::Percentage((100 - percent_x) / 2),
-                Constraint::Percentage(percent_x),
-                Constraint::Percentage((100 - percent_x) / 2),
-            ]
-            .as_ref(),
-        )
-        .split(popup_layout[1])[1]
 }
