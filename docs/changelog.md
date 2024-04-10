@@ -4,6 +4,9 @@
 
 ### New feature
 - Added way to run a single custom instruction while program is running (fr #24 and #25) (error information here is however not as useful as the errors displayed while the program is being build initially)
+- Added new command line argument `--custom-instruction-history-file` for subcommand `load`
+    - This command allows loading of instructions from a file that are used to fill the instruction history when running a custom instruction
+    - If this is set, instructions not yet included in this file are written to it, when entered in the tui
 
 ### Other
 - Updated dependencies
