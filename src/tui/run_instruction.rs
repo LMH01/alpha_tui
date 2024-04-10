@@ -32,7 +32,6 @@ impl SingleInstruction {
     }
 
     pub fn draw(&mut self, f: &mut ratatui::prelude::Frame, r: ratatui::prelude::Rect) {
-        // TODO set styles correctly
         let input = Paragraph::new(self.input.as_str())
             .style(Style::default())
             .block(
