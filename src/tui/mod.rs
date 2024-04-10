@@ -76,9 +76,6 @@ pub struct App {
     /// Manages accumulators, memory_cells and stack in the ui.
     memory_lists_manager: MemoryListsManager,
     state: State,
-    /// Stores if the jump to line feature has been used, if it is used, a different error message is displayed,
-    /// when a runtime error occurs and the option to reset the runtime is given.
-    jump_to_line_used: bool,
     /// Contains instructions that where already executed using the custom instructions feature.
     executed_custom_instructions: Vec<String>,
     command_history_file: Option<String>,
@@ -113,7 +110,6 @@ impl App {
                 .expect("Keybinding hints should be properly initialized"),
             memory_lists_manager: mlm,
             state: State::Default,
-            jump_to_line_used: false,
             executed_custom_instructions: custom_instructions.unwrap_or(Vec::new()),
             command_history_file,
         }
@@ -147,7 +143,6 @@ impl App {
                             }
                             KeyCode::Char('j') => {
                                 if let State::DebugSelect(_, _) = &self.state {
-                                    self.jump_to_line_used = true;
                                     self.state = State::Running(
                                         self.instruction_list_states.breakpoints_set(),
                                     );
@@ -181,10 +176,8 @@ impl App {
                             }
                             KeyCode::Char('s') => match self.state {
                                 State::Running(_) | State::Finished(_) => self.reset(),
-                                State::RuntimeError(_) => {
-                                    if self.jump_to_line_used {
-                                        self.reset();
-                                    }
+                                State::RuntimeError(_)  | State::CustomInstructionError(_) => {
+                                    self.reset();
                                 }
                                 State::DebugSelect(_, _) => {
                                     self.instruction_list_states.set_next_visual();

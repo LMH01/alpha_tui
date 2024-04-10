@@ -173,15 +173,9 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             .borders(Borders::ALL)
             .border_style(Style::default().fg(ERROR_COLOR));
         let area = super::centered_rect(60, 30, None, f.size());
-        let text = if app.jump_to_line_used {
-            Paragraph::new(format!(
-                "Execution can not continue due to the following problem:\n{}\n\nPress [q] to exit.\nPress [s] to reset to start.",
-                e.reason)).block(block)
-        } else {
-            Paragraph::new(format!(
-                "Execution can not continue due to the following problem:\n{}\n\nPress [q] to exit.",
-                e.reason)).block(block)
-        };
+        let text = Paragraph::new(format!(
+                "Execution can not continue due to the following problem:\n{}\n\nPress [q] to exit and view further information regarding this error.\nPress [s] to reset to start.",
+                e.reason)).block(block);
         f.render_widget(Clear, area); //this clears out the background
         f.render_widget(text, area);
     }
