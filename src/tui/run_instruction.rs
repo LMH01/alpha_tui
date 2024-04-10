@@ -83,7 +83,9 @@ impl SingleInstruction {
         }
 
         if self.input.is_empty() {
-            return self.executed_instructions.clone();
+            let mut to_display = self.executed_instructions.clone();
+            to_display.reverse();
+            return to_display;
         }
         let trie = builder.build();
         trie.predictive_search(&self.input.as_bytes())
