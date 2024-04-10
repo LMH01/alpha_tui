@@ -4,6 +4,7 @@
 
 ### Other
 - Updated dependencies
+- Reworked how keybinding hints are displayed, they now automatically wrap into a new line, if the space in one line is not enough to fit all active keybinding hints
 
 ### Bug fixes
 - Fixed URL in errors `InvalidExpression`, `UnknownInstruction` and `MissingExpression` to point to the correct page
