@@ -46,6 +46,22 @@ Press `[r]` to begin to run the program, subsequent instructions can also be run
 
 When the last instruction was executed the following window is displayed. You can restart by pressing `[s]` or exit the program by pressing `[q]`. ![Program finished example](media/gui_program_finished.png)
 
+### Custom instructions
+
+When in the normal run mode, you can press the `i` key to open up a popup window where a custom instruction can be entered, that should be executed at the current position in the program. You can use the `up` and `down` arrow keys to navigate the history of executed custom instructions. If an instruction is selected in that list, it is executed by pressing `enter`. By typing in the input field you can filter the list. To deselect the list and use the instruction newly written into the text field, press the `up` arrow key, until the list is no longer selected. Pressing `enter` will run the instruction written in the text field.
+
+The popup window can look like this: ![Run custom instruction](media/gui_program_custom_instruction.png)
+
+Or this if the command history contains elements: ![Run custom instruction with history elements](media/gui_program_custom_instruction_with_history.png)
+
+If the instruction could not be parsed a simple error is displayed, quit the program with `q` to receive further information on why the instruction could not be parsed.
+
+#### Pitfalls
+
+Using this feature may lead to some unexpected behavior, as the normal program flow is changed. The result might be that the program is broken and runtime errors occur.
+
+Another thing that might occur is, that if a `goto` or `call` instruction is used, the highlighted line might not be the line that was actually executed. This is a visual issue only, it does not effect what instruction is run. After 2-3 steps the highlighted instruction should match the executed instruction again.
+
 ### Debug features
 
 Some debug features require you to select a line in which a debug action should take place.
