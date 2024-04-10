@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.2.0
+## v1.2.0 (latest version)
 
 ### New feature
 - Added way to run a single custom instruction while program is running (fr #24 and #25) (error information here is however not as useful as the errors displayed while the program is being build initially)
@@ -17,7 +17,7 @@
 ### Bug fixes
 - Fixed URL in errors `InvalidExpression`, `UnknownInstruction` and `MissingExpression` to point to the correct page
 
-## v1.1.0 (latest version)
+## v1.1.0
 
 ### New feature
 - Added new cli option: `--allowed-instructions` (fr #15)
