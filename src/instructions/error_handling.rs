@@ -77,20 +77,11 @@ impl InstructionParseError {
         self,
         file_contents: String,
         file_name: &str,
-        line: usize
+        line: usize,
     ) -> BuildProgramError {
         // Workaround for wrong end_range value depending on error.
         // For the line to be printed when more then one character is affected for some reason the range needs to be increased by one.
-        let end_range = match self {
-            InstructionParseError::InvalidExpression(_, _) => self.range().1 - self.range().0 + 1,
-            InstructionParseError::UnknownInstruction(_, _) => self.range().1 - self.range().0 + 1,
-            InstructionParseError::NotANumber(_, _) => self.range().1 - self.range().0,
-            InstructionParseError::UnknownComparison(_, _) => self.range().1 - self.range().0,
-            InstructionParseError::UnknownOperation(_, _) => self.range().1 - self.range().0,
-            InstructionParseError::MissingExpression { range: _, help: _ } => {
-                self.range().1 - self.range().0
-            }
-        };
+        let end_range = self.end_range();
         BuildProgramError {
             reason: BuildProgramErrorTypes::ParseError {
                 src: NamedSource::new(file_name, file_contents.clone()),
@@ -102,9 +93,43 @@ impl InstructionParseError {
             },
         }
     }
+
+    pub fn to_parse_single_instruction_error(
+        self,
+        file_contents: String,
+        file_name: &str,
+        line: usize,
+    ) -> ParseSingleInstructionError {
+        // Workaround for wrong end_range value depending on error.
+        // For the line to be printed when more then one character is affected for some reason the range needs to be increased by one.
+        let end_range = self.end_range();
+        ParseSingleInstructionError {
+            src: NamedSource::new(file_name, file_contents.clone()),
+            bad_bit: SourceSpan::new(
+                SourceOffset::from_location(file_contents.clone(), line, self.range().0 + 1),
+                end_range,
+            ),
+            reason: self,
+        }
+    }
+
+    fn end_range(&self) -> usize {
+        // Workaround for wrong end_range value depending on error.
+        // For the line to be printed when more then one character is affected for some reason the range needs to be increased by one.
+        match self {
+            InstructionParseError::InvalidExpression(_, _) => self.range().1 - self.range().0 + 1,
+            InstructionParseError::UnknownInstruction(_, _) => self.range().1 - self.range().0 + 1,
+            InstructionParseError::NotANumber(_, _) => self.range().1 - self.range().0,
+            InstructionParseError::UnknownComparison(_, _) => self.range().1 - self.range().0,
+            InstructionParseError::UnknownOperation(_, _) => self.range().1 - self.range().0,
+            InstructionParseError::MissingExpression { range: _, help: _ } => {
+                self.range().1 - self.range().0
+            }
+        }
+    }
 }
 
-#[derive(Debug, Error, Diagnostic)]
+#[derive(Debug, Error, Diagnostic, Clone)]
 pub enum BuildProgramErrorTypes {
     #[error("when parsing instruction")]
     #[diagnostic(code(build_program::parse_error))]
@@ -177,7 +202,7 @@ impl PartialEq for BuildProgramErrorTypes {
     }
 }
 
-#[derive(Debug, Diagnostic, Error, PartialEq)]
+#[derive(Debug, Diagnostic, Error, PartialEq, Clone)]
 #[error("when building program")]
 #[diagnostic(code("build_program_error"))]
 pub struct BuildProgramError {
@@ -192,6 +217,19 @@ pub struct BuildProgramError {
     help("Maybe you wanted to use a token, make sure to use one of these: A, M, C, Y, OP, CMP\nFor more help take a look at the documentation: https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md")
 )]
 pub struct BuildAllowedInstructionsError {
+    #[source_code]
+    pub src: NamedSource<String>,
+    #[label("here")]
+    pub bad_bit: SourceSpan,
+    #[source]
+    #[diagnostic_source]
+    pub reason: InstructionParseError,
+}
+
+#[derive(Debug, Diagnostic, Error, Clone, PartialEq)]
+#[error("when parsing instruction")]
+#[diagnostic(code("parse_single_instruction_error"))]
+pub struct ParseSingleInstructionError {
     #[source_code]
     pub src: NamedSource<String>,
     #[label("here")]

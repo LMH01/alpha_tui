@@ -11,8 +11,12 @@ use ratatui::{
 };
 
 use crate::{
-    instructions::{error_handling::InstructionParseError, Instruction},
-    runtime::{error_handling::RuntimeError, Runtime}, utils,
+    instructions::{
+        error_handling::ParseSingleInstructionError,
+        Instruction,
+    },
+    runtime::{error_handling::RuntimeError, Runtime},
+    utils,
 };
 
 use self::{
@@ -54,7 +58,7 @@ pub enum State {
     /// Indicates that parsing of the instruction failed.
     ///
     /// String contains the reason why it failed.
-    CustomInstructionError(InstructionParseError),
+    CustomInstructionError(ParseSingleInstructionError),
     // 0 = state to restore to when debug mode is exited
     // 1 = index of instruction that was selected before debug mode was started
     DebugSelect(Box<State>, Option<usize>),
@@ -177,7 +181,7 @@ impl App {
                             }
                             KeyCode::Char('s') => match self.state {
                                 State::Running(_) | State::Finished(_) => self.reset(),
-                                State::RuntimeError(_)  | State::CustomInstructionError(_) => {
+                                State::RuntimeError(_) | State::CustomInstructionError(_) => {
                                     self.reset();
                                 }
                                 State::DebugSelect(_, _) => {
@@ -470,7 +474,11 @@ impl App {
                 let instruction = match Instruction::try_from(instruction_str.as_str()) {
                     Ok(instruction) => instruction,
                     Err(e) => {
-                        self.state = State::CustomInstructionError(e);
+                        self.state = State::CustomInstructionError(e.to_parse_single_instruction_error(
+                            instruction_str.to_string(),
+                            "input_field",
+                            1,
+                        ));
                         return Ok(());
                     }
                 };
