@@ -135,7 +135,7 @@ fn cmd_load(
             let instruction = splits.join(" ");
             if let Err(e) = Instruction::try_from(instruction.as_str()) {
                 return Err(e
-                    .to_build_program_error(content.join(""), &file, idx + 1)
+                    .to_build_program_error(content.join("\n"), &file, idx + 1)
                     .into());
             }
             // check if this instruction is not already contained
