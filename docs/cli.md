@@ -139,6 +139,8 @@ By default the code that is read will be formatted to be easier to read, this ca
 
 Predetermined breakpoints can be loaded by using the `--breakpoints` flag, it takes multiple line numbers as parameter. Example: `alpha_tui load examples/programs/faculty.alpha -b 5`.
 
+By using the `--custom-instruction-history-file` a file can be provided to the program that contains instructions that should be used to fill the instruction history inside the popup window, where a custom instruction can be entered. When this is supplied, the file is first checked if all instructions that are stored within it are valid. Custom instructions that are run which are not yet contained in this file will be added to it.
+
 ## Examples
 
 ### Maximum limitation
