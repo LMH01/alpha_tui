@@ -12,6 +12,7 @@ clap = { version = "4.3", features = ["derive", "color"] }
 thiserror = "1"
 miette = { version = "7.2", features = ["fancy"] }
 text_align = "0.3.1"
+anyhow = "1.0.82"
 
 [dev-dependencies]
 assert_cmd = "2"

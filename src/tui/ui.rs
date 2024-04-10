@@ -2,22 +2,29 @@ use ratatui::{
     prelude::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Modifier, Style},
     text::Text,
-    widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph, Tabs},
+    widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph},
     Frame,
 };
 use text_align::TextAlign;
 
 use super::{
     App, State, BREAKPOINT_ACCENT_COLOR, CODE_AREA_DEFAULT_COLOR, ERROR_COLOR,
-    EXECUTION_FINISHED_POPUP_COLOR, KEY_HINTS_COLOR, LIST_ITEM_HIGHLIGHT_COLOR,
+    EXECUTION_FINISHED_POPUP_COLOR, LIST_ITEM_HIGHLIGHT_COLOR,
 };
 
 /// Draw the ui
 #[allow(clippy::too_many_lines)]
 pub fn draw(f: &mut Frame, app: &mut App) {
+    let (keybinding_hints, keybinding_hints_height) = app
+        .keybinding_hints
+        .keybinding_hint_paragraph(f.size().width);
+
     let global_chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(99), Constraint::Percentage(1)])
+        .constraints([
+            Constraint::Fill(1),
+            Constraint::Length(keybinding_hints_height),
+        ])
         .split(f.size());
 
     let chunks = Layout::default()
@@ -33,11 +40,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         )
         .split(global_chunks[0]);
 
-    // Key hints
-    let key_hints = Tabs::new(app.active_keybind_hints())
-        .block(Block::default().borders(Borders::NONE))
-        .style(Style::default().fg(KEY_HINTS_COLOR));
-    f.render_widget(key_hints, global_chunks[1]);
+    // draw keybinding hints
+    f.render_widget(keybinding_hints, global_chunks[1]);
 
     let right_chunks = Layout::default()
         .direction(Direction::Vertical)

@@ -1,7 +1,7 @@
 use std::{collections::HashMap, ops::Deref, thread, time::Duration};
 
 use crossterm::event::{self, Event, KeyCode};
-use miette::{IntoDiagnostic, Result};
+use miette::{miette, IntoDiagnostic, Result};
 use ratatui::{
     backend::Backend,
     style::{Color, Style},
@@ -13,12 +13,15 @@ use crate::runtime::{error_handling::RuntimeError, Runtime};
 
 use self::{
     content::{InstructionListStates, MemoryListsManager},
+    keybindings::KeybindingHints,
     ui::draw,
 };
 
-/// Content used to fill the tui elements
+/// Content used to fill the tui elements.
 mod content;
-/// Drawing of the ui
+/// Everything related to keybindings.
+mod keybindings;
+/// Drawing of the ui.
 mod ui;
 
 // color config
@@ -28,9 +31,13 @@ const CODE_AREA_DEFAULT_COLOR: Color = Color::Green;
 const KEY_HINTS_COLOR: Color = Color::LightBlue;
 const LIST_ITEM_HIGHLIGHT_COLOR: Color = Color::Rgb(98, 114, 164);
 const EXECUTION_FINISHED_POPUP_COLOR: Color = Color::Green;
+const KEYBINDS_FG: Color = Color::White;
+const KEYBINDS_DISABLED_FG: Color = Color::DarkGray;
+const KEYBINDS_BG: Color = Color::Blue;
+const KEYBINDS_DISABLED_BG: Color = Color::Black;
 
 #[derive(Debug, PartialEq, Clone)]
-enum State {
+pub enum State {
     Default,
     Running,
     // 0 = state to restore to when debug mode is exited
@@ -48,8 +55,8 @@ pub struct App {
     filename: String,
     /// The code that is compiled and run
     instruction_list_states: InstructionListStates,
-    /// List of keybind hints displayed at the bottom of the terminal
-    keybind_hints: HashMap<char, KeybindHint>,
+    /// List of keybinding hints displayed at the bottom of the terminal
+    keybinding_hints: KeybindingHints,
     /// Manages accumulators, memory_cells and stack in the ui.
     memory_lists_manager: MemoryListsManager,
     // Don't set state directly, use set_state() to also update keybind hints
@@ -62,6 +69,12 @@ pub struct App {
 #[allow(clippy::cast_possible_wrap)]
 #[allow(clippy::cast_possible_truncation)]
 impl App {
+    /// Creates a new app from the provided runtime.
+    ///
+    /// ## Panics
+    ///
+    /// Panics when the keybinding hints are not properly initialized
+    /// (if this happens it is a hardcoded issue, that needs to be fixed in the code)
     pub fn from_runtime(
         runtime: Runtime,
         filename: String,
@@ -76,7 +89,8 @@ impl App {
                 instructions,
                 set_breakpoints.as_ref(),
             ),
-            keybind_hints: init_keybind_hints(),
+            keybinding_hints: KeybindingHints::new()
+                .expect("Keybinding hints should be properly initialized"),
             memory_lists_manager: mlm,
             state: State::Default,
             jump_to_line_used: false,
@@ -106,7 +120,7 @@ impl App {
                     KeyCode::Char('j') => {
                         if let State::DebugSelect(_, _) = &self.state {
                             self.jump_to_line_used = true;
-                            self.set_state(State::Running);
+                            self.state = State::Running;
                             let idx = self
                                 .instruction_list_states
                                 .instruction_list_state_mut()
@@ -144,7 +158,7 @@ impl App {
                                 self.instruction_list_states
                                     .set_start(self.runtime.next_instruction_index() as i32);
                             }
-                            self.set_state(State::Running);
+                            self.state = State::Running;
                             _ = self.step();
                         }
                     }
@@ -167,12 +181,12 @@ impl App {
                     KeyCode::Char('d') => match &self.state {
                         State::DebugSelect(s, i) => {
                             self.instruction_list_states.set_instruction_list_state(*i);
-                            self.set_state(s.deref().clone());
+                            self.state = s.deref().clone();
                         }
                         State::Default | State::Running => self.start_debug_select_mode(),
                         State::Finished(b) => {
                             if *b {
-                                self.set_state(State::Finished(false));
+                                self.state = State::Finished(false);
                             }
                         }
                         State::Errored(_) => (),
@@ -183,30 +197,18 @@ impl App {
             self.memory_lists_manager
                 .update(self.runtime.runtime_args());
             thread::sleep(Duration::from_millis(30));
-        }
-    }
-
-    fn active_keybind_hints(&self) -> Vec<Line> {
-        let mut spans = Vec::new();
-        let mut hints: Vec<&KeybindHint> = self.keybind_hints.values().collect();
-        hints.sort_by(|a, b| a.rank.cmp(&b.rank));
-        for v in hints {
-            if !v.enabled {
-                continue;
+            // update keybinding hints for next loop
+            if let Err(e) = self.keybinding_hints.update(&self.state) {
+                return Err(miette!("Error while updating keybinding hints:\n{e}"));
             }
-            spans.push(Line::from(vec![Span::styled(
-                format!("{} [{}]", v.action, v.key),
-                Style::default(),
-            )]));
         }
-        spans
     }
 
     /// returns true when the execution finished in this step
     fn step(&mut self) -> Result<bool, ()> {
         let res = self.runtime.step();
         if let Err(e) = res {
-            self.set_state(State::Errored(e));
+            self.state = State::Errored(e);
             return Err(());
         }
         self.instruction_list_states
@@ -215,26 +217,12 @@ impl App {
             match self.state {
                 State::Errored(_) => (),
                 _ => {
-                    self.set_state(State::Finished(true));
+                    self.state = State::Finished(true);
                 }
             }
             return Ok(true);
         }
         Ok(false)
-    }
-
-    /// Set whether the keybind hint should be shown or not.
-    fn set_keybind_hint(&mut self, key: char, value: bool) {
-        if let Some(h) = self.keybind_hints.get_mut(&key) {
-            h.enabled = value;
-        }
-    }
-
-    /// Sets the message for the keybind.
-    fn set_keybind_message(&mut self, key: char, message: &str) {
-        if let Some(h) = self.keybind_hints.get_mut(&key) {
-            h.action = message.to_string();
-        }
     }
 
     fn start_debug_select_mode(&mut self) {
@@ -250,72 +238,66 @@ impl App {
                     .force_set(self.runtime.initial_instruction_index());
             }
         }
-        self.set_state(state);
+        self.state = state;
     }
 
     fn reset(&mut self) {
         self.runtime.reset();
         self.instruction_list_states.set(-1);
         self.instruction_list_states.deselect();
-        self.set_state(State::Default);
+        self.state = State::Default;
     }
 
-    // Sets a new state and updates keybind hints
-    fn set_state(&mut self, state: State) {
-        self.state = state;
-        self.update_keybind_hints();
-    }
+    //fn update_keybind_hints(&mut self) {
+    //    self.reset_keybind_hints();
+    //    match &self.state {
+    //        State::Default => {
+    //            self.set_keybind_hint('q', true);
+    //            self.set_keybind_hint('d', true);
+    //            self.set_keybind_hint('r', true);
+    //            self.set_keybind_message('r', "Run");
+    //        }
+    //        State::Running => {
+    //            self.set_keybind_hint('q', true);
+    //            self.set_keybind_hint('d', true);
+    //            self.set_keybind_hint('r', true);
+    //            self.set_keybind_hint('s', true);
+    //            self.set_keybind_hint('n', true);
+    //            if self.instruction_list_states.count_breakpoints() == 0 {
+    //                self.set_keybind_message('n', "Run to end");
+    //            }
+    //            self.set_keybind_message('r', "Run next instruction");
+    //        }
+    //        State::DebugSelect(_s, _i) => {
+    //            self.set_keybind_hint('q', true);
+    //            self.set_keybind_hint('d', true);
+    //            self.set_keybind_hint('↑', true);
+    //            self.set_keybind_hint('↓', true);
+    //            self.set_keybind_hint('t', true);
+    //            self.set_keybind_hint('j', true);
+    //            self.set_keybind_message('t', "Toggle breakpoint");
+    //            self.set_keybind_message('d', "Exit debug select mode");
+    //        }
+    //        State::Finished(b) => {
+    //            self.set_keybind_hint('d', *b);
+    //            self.set_keybind_message('d', "Dismiss message");
+    //            self.set_keybind_hint('q', true);
+    //            self.set_keybind_hint('s', true);
+    //        }
+    //        State::Errored(_e) => {
+    //            self.set_keybind_hint('q', true);
+    //        }
+    //    }
+    //}
 
-    fn update_keybind_hints(&mut self) {
-        self.reset_keybind_hints();
-        match &self.state {
-            State::Default => {
-                self.set_keybind_hint('q', true);
-                self.set_keybind_hint('d', true);
-                self.set_keybind_hint('r', true);
-                self.set_keybind_message('r', "Run");
-            }
-            State::Running => {
-                self.set_keybind_hint('q', true);
-                self.set_keybind_hint('d', true);
-                self.set_keybind_hint('r', true);
-                self.set_keybind_hint('s', true);
-                self.set_keybind_hint('n', true);
-                if self.instruction_list_states.count_breakpoints() == 0 {
-                    self.set_keybind_message('n', "Run to end");
-                }
-                self.set_keybind_message('r', "Run next instruction");
-            }
-            State::DebugSelect(_s, _i) => {
-                self.set_keybind_hint('q', true);
-                self.set_keybind_hint('d', true);
-                self.set_keybind_hint('↑', true);
-                self.set_keybind_hint('↓', true);
-                self.set_keybind_hint('t', true);
-                self.set_keybind_hint('j', true);
-                self.set_keybind_message('t', "Toggle breakpoint");
-                self.set_keybind_message('d', "Exit debug select mode");
-            }
-            State::Finished(b) => {
-                self.set_keybind_hint('d', *b);
-                self.set_keybind_message('d', "Dismiss message");
-                self.set_keybind_hint('q', true);
-                self.set_keybind_hint('s', true);
-            }
-            State::Errored(_e) => {
-                self.set_keybind_hint('q', true);
-            }
-        }
-    }
-
-    // sets all keybind hints to disabled
-    fn reset_keybind_hints(&mut self) {
-        for hint in &mut self.keybind_hints {
-            hint.1.enabled = false;
-        }
-        self.set_keybind_message('d', "Enter debug select mode");
-        self.set_keybind_message('n', "Next breakpoint");
-    }
+    //// sets all keybind hints to disabled
+    //fn reset_keybind_hints(&mut self) {
+    //    for hint in &mut self.keybinding_hints {
+    //        hint.1.enabled = false;
+    //    }
+    //    self.set_keybind_message('d', "Enter debug select mode");
+    //    self.set_keybind_message('n', "Next breakpoint");
+    //}
 }
 
 /// Used organize hints to keybinds
