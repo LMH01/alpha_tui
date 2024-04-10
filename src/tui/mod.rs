@@ -11,10 +11,7 @@ use ratatui::{
 };
 
 use crate::{
-    instructions::{
-        error_handling::ParseSingleInstructionError,
-        Instruction,
-    },
+    instructions::{error_handling::ParseSingleInstructionError, Instruction},
     runtime::{error_handling::RuntimeError, Runtime},
     utils,
 };
@@ -474,11 +471,12 @@ impl App {
                 let instruction = match Instruction::try_from(instruction_str.as_str()) {
                     Ok(instruction) => instruction,
                     Err(e) => {
-                        self.state = State::CustomInstructionError(e.to_parse_single_instruction_error(
-                            instruction_str.to_string(),
-                            "input_field",
-                            1,
-                        ));
+                        self.state =
+                            State::CustomInstructionError(e.to_parse_single_instruction_error(
+                                instruction_str.to_string(),
+                                "input_field",
+                                1,
+                            ));
                         return Ok(());
                     }
                 };
