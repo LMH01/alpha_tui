@@ -256,7 +256,7 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     );
     hints.insert(
         "i".to_string(),
-        KeybindingHint::new(9, "i", "run custom instruction", true, false),
+        KeybindingHint::new(9, "i", "Run custom instruction", true, false),
     );
     hints.insert(
         KeySymbol::ArrowLeft.to_string(),
