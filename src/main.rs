@@ -2,7 +2,7 @@ use std::{io, process::exit};
 
 use ::ratatui::{backend::CrosstermBackend, Terminal};
 use clap::Parser;
-use cli::Cli;
+use cli::{Cli, LoadArgs};
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture},
     execute,
@@ -13,9 +13,12 @@ use utils::read_file;
 
 use crate::{
     cli::Commands,
+    instructions::Instruction,
     runtime::builder::RuntimeBuilder,
     tui::App,
-    utils::{build_instructions_with_whitelist, pretty_format_instructions, write_file},
+    utils::{
+        build_instructions_with_whitelist, pretty_format_instructions, remove_comment, write_file,
+    },
 };
 
 /// Contains all required data types used to run programs
@@ -52,9 +55,9 @@ fn main() -> Result<()> {
         }
     };
 
-    match cli.command {
+    match &cli.command {
         Commands::Check(_) => cmd_check(&cli, &instructions, &input),
-        Commands::Load(_) => cmd_load(&cli, instructions, input)?,
+        Commands::Load(args) => cmd_load(&cli, instructions, input, args.clone())?,
     }
     Ok(())
 }
@@ -98,7 +101,46 @@ fn cmd_check(cli: &Cli, instructions: &[String], input: &str) {
 }
 
 #[allow(clippy::match_wildcard_for_single_variants)]
-fn cmd_load(cli: &Cli, instructions: Vec<String>, input: String) -> Result<()> {
+fn cmd_load(
+    cli: &Cli,
+    instructions: Vec<String>,
+    input: String,
+    load_args: LoadArgs,
+) -> Result<()> {
+    // check if command history is set
+    let mut command_history = None;
+    if let Some(file) = load_args.command_history_file {
+        // load content of file
+        let content = match utils::read_file(&file) {
+            Ok(content) => content,
+            Err(e) => return Err(miette!("Unable to read command history file:\n{e}")),
+        };
+        println!("Command history provided, checking validity of provided instructions");
+        let mut checked_instructions = Vec::new();
+        for instruction in &content {
+            // remove comment
+            let instruction = remove_comment(instruction);
+            // remove label if it exists
+            let mut splits = instruction.split_whitespace().collect::<Vec<&str>>();
+            if splits.is_empty() {
+                continue;
+            }
+            if splits[0].ends_with(":") {
+                splits.remove(0);
+            }
+            let instruction = splits.join(" ");
+            if let Err(e) = Instruction::try_from(instruction.as_str()) {
+                return Err(e.into());
+            }
+            // check if this instruction is not already contained
+            if !checked_instructions.contains(&instruction) {
+                checked_instructions.push(instruction);
+            }
+        }
+        println!("Command history checked successfully");
+        command_history = Some(checked_instructions);
+    }
+
     println!("Building program");
     let mut rb = match RuntimeBuilder::from_args(cli) {
         Ok(rb) => rb,
@@ -150,8 +192,10 @@ fn cmd_load(cli: &Cli, instructions: Vec<String>, input: String) -> Result<()> {
 
     // create app
     let mut app = match cli.command {
-        Commands::Load(ref args) => App::from_runtime(rt, input, &instructions, &args.breakpoints),
-        _ => App::from_runtime(rt, input, &instructions, &None),
+        Commands::Load(ref args) => {
+            App::from_runtime(rt, input, &instructions, &args.breakpoints, command_history)
+        }
+        _ => App::from_runtime(rt, input, &instructions, &None, command_history),
     };
     let res = app.run(&mut terminal);
 

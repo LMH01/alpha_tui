@@ -97,6 +97,7 @@ impl App {
         filename: String,
         instructions: &[String], // The content of this array is purely cosmetical, it is just used to print the instructions inside the ui
         set_breakpoints: &Option<Vec<usize>>,
+        custom_instructions: Option<Vec<String>>,
     ) -> App {
         let mlm = MemoryListsManager::new(runtime.runtime_args());
         Self {
@@ -111,7 +112,7 @@ impl App {
             memory_lists_manager: mlm,
             state: State::Default,
             jump_to_line_used: false,
-            executed_custom_instructions: Vec::new(),
+            executed_custom_instructions: custom_instructions.unwrap_or(Vec::new()),
         }
     }
 

@@ -131,6 +131,13 @@ pub struct LoadArgs {
         global = true
     )]
     pub write_alignment: bool,
+    #[arg(
+        short,
+        long,
+        help = "File to load and save the command history to/from",
+        long_help = "File to load and save the command history to/from.\nIf set, the commands in this list will be analyzed and be made available in the custom instruction window. Instructions not yet contained in this file will be added to it."
+    )]
+    pub command_history_file: Option<String>,
 }
 
 #[derive(Args, Clone, Debug)]
