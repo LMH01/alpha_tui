@@ -324,6 +324,21 @@ impl App {
         match self.state.borrow_mut() {
             State::CustomInstruction(state) => {
                 insert_char_at_index(&mut state.input, state.cursor_position, to_insert);
+                // check if selected item is still available in list
+                if let Some(idx) = state.allowed_values_state.selected() {
+                    let available_items = state.items_to_display();
+                    if available_items.len() <= idx {
+                        // index needs to be updated
+                        if available_items.len() == 0 {
+                            state.allowed_values_state.select(None);
+                        } else {
+                            state
+                                .allowed_values_state
+                                .select(Some(available_items.len() - 1));
+                        }
+                    }
+                }
+
                 self.right_key();
             }
             _ => (),
