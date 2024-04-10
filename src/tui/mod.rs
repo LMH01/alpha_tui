@@ -23,12 +23,11 @@ mod ui;
 const BREAKPOINT_ACCENT_COLOR: Color = Color::Magenta;
 const ERROR_COLOR: Color = Color::Red;
 const CODE_AREA_DEFAULT_COLOR: Color = Color::Green;
-const KEY_HINTS_COLOR: Color = Color::LightBlue;
 const LIST_ITEM_HIGHLIGHT_COLOR: Color = Color::Rgb(98, 114, 164);
 const EXECUTION_FINISHED_POPUP_COLOR: Color = Color::Green;
 const KEYBINDS_FG: Color = Color::White;
 const KEYBINDS_DISABLED_FG: Color = Color::DarkGray;
-const KEYBINDS_BG: Color = Color::Blue;
+const KEYBINDS_BG: Color = Color::Rgb(98, 114, 164);
 const KEYBINDS_DISABLED_BG: Color = Color::Black;
 
 #[derive(Debug, PartialEq, Clone)]
