@@ -73,7 +73,7 @@ impl InstructionParseError {
         }
     }
 
-    pub fn to_build_program_error(
+    pub fn into_build_program_error(
         self,
         file_contents: String,
         file_name: &str,
@@ -94,7 +94,7 @@ impl InstructionParseError {
         }
     }
 
-    pub fn to_parse_single_instruction_error(
+    pub fn into_parse_single_instruction_error(
         self,
         file_contents: String,
         file_name: &str,

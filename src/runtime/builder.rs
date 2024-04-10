@@ -34,6 +34,7 @@ pub struct RuntimeBuilder {
     limit_operations_to: Option<Vec<Operation>>,
 }
 
+#[allow(clippy::result_large_err)]
 impl RuntimeBuilder {
     /// Creates a new runtime builder with no values set.
     #[allow(dead_code)]
@@ -182,7 +183,7 @@ impl RuntimeBuilder {
             match Instruction::try_from(&splits) {
                 Ok(i) => instructions.push(i),
                 Err(e) => {
-                    Err(e.to_build_program_error(
+                    Err(e.into_build_program_error(
                         instructions_input.join("\n"),
                         file_name,
                         index + 1,

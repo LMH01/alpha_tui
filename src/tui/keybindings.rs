@@ -68,7 +68,7 @@ impl KeybindingHints {
     /// Returns a list of keybinding hints that are currently active.
     pub fn active_keybinds(&self) -> Vec<KeybindingHint> {
         let mut hints = Vec::new();
-        for (_, hint) in &self.hints {
+        for hint in self.hints.values() {
             if hint.shown {
                 hints.push(hint.clone());
             }
@@ -355,11 +355,11 @@ impl KeybindingHint {
     /// Returns an error when the state is invalid. The state is invalid if it is to large to index orders and labels.
     fn set_state(&mut self, state: usize) -> Result<()> {
         if state > self.orders.len() {
-            return Err(anyhow!(
+            Err(anyhow!(
                 "State invalid! Should be between 0 and {}. Was {}.",
                 self.orders.len() - 1,
                 state
-            ));
+            ))
         } else {
             self.state = state;
             Ok(())

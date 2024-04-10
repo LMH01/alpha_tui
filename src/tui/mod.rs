@@ -111,20 +111,22 @@ impl App {
                 .expect("Keybinding hints should be properly initialized"),
             memory_lists_manager: mlm,
             state: State::Default,
-            executed_custom_instructions: custom_instructions.unwrap_or(Vec::new()),
+            executed_custom_instructions: custom_instructions.unwrap_or_default(),
             command_history_file,
         }
     }
 
+    #[allow(clippy::single_match)]
     pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<()> {
         loop {
             terminal.draw(|f| draw(f, self)).into_diagnostic()?;
             if let Event::Key(key) = event::read().into_diagnostic()? {
                 match &self.state {
-                    State::CustomInstruction(_) => match key.code {
-                        KeyCode::Char(to_insert) => self.any_char(to_insert),
-                        _ => (),
-                    },
+                    State::CustomInstruction(_) => {
+                        if let KeyCode::Char(to_insert) = key.code {
+                            self.any_char(to_insert)
+                        }
+                    }
                     _ => {
                         match key.code {
                             KeyCode::Up => {
@@ -308,6 +310,7 @@ impl App {
         self.state = State::Default;
     }
 
+    #[allow(clippy::single_match)]
     fn escape_key(&mut self) {
         match self.state {
             State::CustomInstruction(_) => {
@@ -320,6 +323,7 @@ impl App {
     /// Performs an action. Action depends on current app state.
     ///
     /// CustomInstruction: Enter a char
+    #[allow(clippy::single_match)]
     fn any_char(&mut self, to_insert: char) {
         match self.state.borrow_mut() {
             State::CustomInstruction(state) => {
@@ -329,7 +333,7 @@ impl App {
                     let available_items = state.items_to_display();
                     if available_items.len() <= idx {
                         // index needs to be updated
-                        if available_items.len() == 0 {
+                        if available_items.is_empty() {
                             state.allowed_values_state.select(None);
                         } else {
                             state
@@ -348,6 +352,7 @@ impl App {
     /// Performs an action. Action depends on current app state.
     ///
     /// CustomInstruction: Deletes a char
+    #[allow(clippy::single_match)]
     fn backspace_key(&mut self) {
         match self.state.borrow_mut() {
             State::CustomInstruction(state) => {
@@ -379,6 +384,7 @@ impl App {
     /// Performs an action. Action depends on current app state.
     ///
     /// CustomInstruction: Deletes the char behind the cursor.
+    #[allow(clippy::single_match)]
     fn delete_key(&mut self) {
         match self.state.borrow_mut() {
             State::CustomInstruction(state) => {
@@ -405,6 +411,7 @@ impl App {
     /// Performs an action. Action depends on current app state.
     ///
     /// CustomInstruction: Move the cursor to the left.
+    #[allow(clippy::single_match)]
     fn left_key(&mut self) {
         match self.state.borrow_mut() {
             State::CustomInstruction(state) => {
@@ -418,6 +425,7 @@ impl App {
     /// Performs an action. Action depends on current app state.
     ///
     /// CustomInstruction: Move the cursor to the right.
+    #[allow(clippy::single_match)]
     fn right_key(&mut self) {
         match self.state.borrow_mut() {
             State::CustomInstruction(state) => {
@@ -431,6 +439,7 @@ impl App {
     /// Performs an action. Action depends on current app state.
     ///
     /// CustomInstruction: If not item is selected: Select first item, otherwise move down one item
+    #[allow(clippy::single_match)]
     fn down_key(&mut self) {
         match self.state.borrow_mut() {
             State::CustomInstruction(state) => {
@@ -444,6 +453,7 @@ impl App {
     /// Performs an action. Action depends on current app state.
     ///
     /// CustomInstruction: Moves the list up one item.
+    #[allow(clippy::single_match)]
     fn up_key(&mut self) {
         match self.state.borrow_mut() {
             State::CustomInstruction(state) => {
@@ -472,7 +482,7 @@ impl App {
                     Ok(instruction) => instruction,
                     Err(e) => {
                         self.state =
-                            State::CustomInstructionError(e.to_parse_single_instruction_error(
+                            State::CustomInstructionError(e.into_parse_single_instruction_error(
                                 instruction_str.to_string(),
                                 "input_field",
                                 1,
@@ -493,7 +503,7 @@ impl App {
                 {
                     // write instruction to file, if it is set
                     if let Some(path) = &self.command_history_file {
-                        utils::write_line_to_file(&instruction_run, &path)?;
+                        utils::write_line_to_file(&instruction_run, path)?;
                     }
                     self.executed_custom_instructions.push(instruction_run);
                 }

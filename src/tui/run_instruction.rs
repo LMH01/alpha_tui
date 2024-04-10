@@ -22,12 +22,12 @@ pub struct SingleInstruction {
 
 impl SingleInstruction {
     /// Create a new single instruction.
-    pub fn new(executed_instructions: &Vec<String>) -> Self {
+    pub fn new(executed_instructions: &[String]) -> Self {
         Self {
             input: String::new(),
             cursor_position: 0,
             allowed_values_state: ListState::default(),
-            executed_instructions: executed_instructions.clone(),
+            executed_instructions: executed_instructions.to_owned(),
         }
     }
 
@@ -88,7 +88,7 @@ impl SingleInstruction {
             return to_display;
         }
         let trie = builder.build();
-        trie.predictive_search(&self.input.as_bytes())
+        trie.predictive_search(self.input.as_bytes())
             .iter()
             .map(|u8s| {
                 std::str::from_utf8(u8s)

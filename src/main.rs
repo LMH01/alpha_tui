@@ -129,13 +129,13 @@ fn cmd_load(
             if splits.is_empty() {
                 continue;
             }
-            if splits[0].ends_with(":") {
+            if splits[0].ends_with(':') {
                 splits.remove(0);
             }
             let instruction = splits.join(" ");
             if let Err(e) = Instruction::try_from(instruction.as_str()) {
                 return Err(e
-                    .to_build_program_error(content.join("\n"), &file, idx + 1)
+                    .into_build_program_error(content.join("\n"), &file, idx + 1)
                     .into());
             }
             // check if this instruction is not already contained

@@ -183,7 +183,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     // Draw error when instruction could not be parsed
     if let State::CustomInstructionError(reason) = &app.state {
         let block = Block::default()
-            .title(format!("Error: unable to parse instruction"))
+            .title("Error: unable to parse instruction".to_string())
             .borders(Borders::ALL)
             .border_style(Style::default().fg(ERROR_COLOR));
         let area = super::centered_rect(60, 30, Some(6), f.size());

@@ -374,7 +374,7 @@ pub fn whole_range(parts: &[String]) -> (usize, usize) {
 
 /// Returns error when the input vector does only contain `number` of elements.
 fn check_expression_missing(
-    parts: &Vec<String>,
+    parts: &[String],
     number: usize,
     suggestion: Option<&str>,
 ) -> Result<(), InstructionParseError> {
@@ -385,10 +385,10 @@ fn check_expression_missing(
             Some(s) => format!("{base_help}\nMaybe you are missing: {s}"),
             None => base_help,
         };
-        return Err(InstructionParseError::MissingExpression {
+        Err(InstructionParseError::MissingExpression {
             range: (pos, pos),
             help,
-        })?;
+        })?
     }
     Ok(())
 }
