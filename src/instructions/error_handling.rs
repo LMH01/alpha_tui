@@ -1,4 +1,4 @@
-use miette::{Diagnostic, NamedSource, SourceSpan};
+use miette::{Diagnostic, NamedSource, SourceOffset, SourceSpan};
 use thiserror::Error;
 
 #[derive(Debug, PartialEq, Diagnostic, Error)]
@@ -70,6 +70,36 @@ impl InstructionParseError {
             InstructionParseError::InvalidExpression(c, _) => *c,
             InstructionParseError::UnknownInstruction(c, _) => *c,
             InstructionParseError::MissingExpression { range: c, help: _ } => *c,
+        }
+    }
+
+    pub fn to_build_program_error(
+        self,
+        file_contents: String,
+        file_name: &str,
+        line: usize
+    ) -> BuildProgramError {
+        // Workaround for wrong end_range value depending on error.
+        // For the line to be printed when more then one character is affected for some reason the range needs to be increased by one.
+        let end_range = match self {
+            InstructionParseError::InvalidExpression(_, _) => self.range().1 - self.range().0 + 1,
+            InstructionParseError::UnknownInstruction(_, _) => self.range().1 - self.range().0 + 1,
+            InstructionParseError::NotANumber(_, _) => self.range().1 - self.range().0,
+            InstructionParseError::UnknownComparison(_, _) => self.range().1 - self.range().0,
+            InstructionParseError::UnknownOperation(_, _) => self.range().1 - self.range().0,
+            InstructionParseError::MissingExpression { range: _, help: _ } => {
+                self.range().1 - self.range().0
+            }
+        };
+        BuildProgramError {
+            reason: BuildProgramErrorTypes::ParseError {
+                src: NamedSource::new(file_name, file_contents.clone()),
+                bad_bit: SourceSpan::new(
+                    SourceOffset::from_location(file_contents.clone(), line, self.range().0 + 1),
+                    end_range,
+                ),
+                reason: self,
+            },
         }
     }
 }

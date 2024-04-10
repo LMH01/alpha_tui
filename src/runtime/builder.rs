@@ -1,12 +1,12 @@
 use std::collections::HashSet;
 
-use miette::{NamedSource, Result, SourceOffset, SourceSpan};
+use miette::Result;
 
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
     cli::{Cli, CliHint},
     instructions::{
-        error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
+        error_handling::{BuildProgramError, BuildProgramErrorTypes},
         Identifier, IndexMemoryCellIndexType, Instruction, TargetType, Value,
     },
     utils::remove_comment,
@@ -182,38 +182,11 @@ impl RuntimeBuilder {
             match Instruction::try_from(&splits) {
                 Ok(i) => instructions.push(i),
                 Err(e) => {
-                    // Workaround for wrong end_range value depending on error.
-                    // For the line to be printed when more then one character is affected for some reason the range needs to be increased by one.
-                    let end_range = match e {
-                        InstructionParseError::InvalidExpression(_, _) => {
-                            e.range().1 - e.range().0 + 1
-                        }
-                        InstructionParseError::UnknownInstruction(_, _) => {
-                            e.range().1 - e.range().0 + 1
-                        }
-                        InstructionParseError::NotANumber(_, _) => e.range().1 - e.range().0,
-                        InstructionParseError::UnknownComparison(_, _) => e.range().1 - e.range().0,
-                        InstructionParseError::UnknownOperation(_, _) => e.range().1 - e.range().0,
-                        InstructionParseError::MissingExpression { range: _, help: _ } => {
-                            e.range().1 - e.range().0
-                        }
-                    };
-                    let file_contents = instructions_input.join("\n");
-                    Err(BuildProgramError {
-                        reason: BuildProgramErrorTypes::ParseError {
-                            src: NamedSource::new(file_name, instructions_input.join("\n")),
-                            bad_bit: SourceSpan::new(
-                                SourceOffset::from_location(
-                                    file_contents.clone(),
-                                    index + 1,
-                                    e.range().0 + 1,
-                                ),
-                                end_range,
-                            ),
-                            reason: e,
-                        },
-                    })?;
-                    //})?
+                    Err(e.to_build_program_error(
+                        instructions_input.join("\n"),
+                        file_name,
+                        index + 1,
+                    ))?;
                 }
             }
         }

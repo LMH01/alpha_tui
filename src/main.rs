@@ -108,16 +108,20 @@ fn cmd_load(
     load_args: LoadArgs,
 ) -> Result<()> {
     // check if command history is set
-    let mut command_history = None;
-    if let Some(file) = load_args.command_history_file {
+    let mut instruction_history = None;
+    if let Some(file) = load_args.custom_instruction_history_file {
         // load content of file
         let content = match utils::read_file(&file) {
             Ok(content) => content,
-            Err(e) => return Err(miette!("Unable to read command history file:\n{e}")),
+            Err(e) => {
+                return Err(miette!(
+                    "Unable to read custom instruction history file:\n{e}"
+                ))
+            }
         };
-        println!("Command history provided, checking validity of provided instructions");
+        println!("Instruction history provided, checking validity of provided instructions");
         let mut checked_instructions = Vec::new();
-        for instruction in &content {
+        for (idx, instruction) in content.iter().enumerate() {
             // remove comment
             let instruction = remove_comment(instruction);
             // remove label if it exists
@@ -130,15 +134,17 @@ fn cmd_load(
             }
             let instruction = splits.join(" ");
             if let Err(e) = Instruction::try_from(instruction.as_str()) {
-                return Err(e.into());
+                return Err(e
+                    .to_build_program_error(content.join(""), &file, idx + 1)
+                    .into());
             }
             // check if this instruction is not already contained
             if !checked_instructions.contains(&instruction) {
                 checked_instructions.push(instruction);
             }
         }
-        println!("Command history checked successfully");
-        command_history = Some(checked_instructions);
+        println!("Instruction history checked successfully");
+        instruction_history = Some(checked_instructions);
     }
 
     println!("Building program");
@@ -192,10 +198,15 @@ fn cmd_load(
 
     // create app
     let mut app = match cli.command {
-        Commands::Load(ref args) => {
-            App::from_runtime(rt, input, &instructions, &args.breakpoints, command_history, args.command_history_file.clone())
-        }
-        _ => App::from_runtime(rt, input, &instructions, &None, command_history, None),
+        Commands::Load(ref args) => App::from_runtime(
+            rt,
+            input,
+            &instructions,
+            &args.breakpoints,
+            instruction_history,
+            args.custom_instruction_history_file.clone(),
+        ),
+        _ => App::from_runtime(rt, input, &instructions, &None, instruction_history, None),
     };
     let res = app.run(&mut terminal);
 
