@@ -70,12 +70,12 @@ impl SingleInstruction {
                     .style(Style::default()),
             )
             .style(Style::default())
-            .highlight_style(Style::default());
+            .highlight_style(Style::default().bg(super::LIST_ITEM_HIGHLIGHT_COLOR));
         // render list
         f.render_stateful_widget(possible_items, chunks[1], &mut self.allowed_values_state)
     }
 
-    fn items_to_display(&self) -> Vec<String> {
+    pub fn items_to_display(&self) -> Vec<String> {
         // Trie can not be set as variable in the struct, because it does not implement PartialEq
         let mut builder = TrieBuilder::new();
         for instruction in &self.executed_instructions {

@@ -1,7 +1,7 @@
 use std::{borrow::BorrowMut, ops::Deref, thread, time::Duration};
 
 use crossterm::event::{self, Event, KeyCode};
-use miette::{miette, Error, IntoDiagnostic, Result};
+use miette::{miette, IntoDiagnostic, Result};
 use ratatui::{
     backend::Backend,
     layout::{Constraint, Layout, Rect},
@@ -247,6 +247,8 @@ impl App {
                     KeyCode::Delete => self.delete_key(),
                     KeyCode::Left => self.left_key(),
                     KeyCode::Right => self.right_key(),
+                    KeyCode::Down => self.down_key(),
+                    KeyCode::Up => self.up_key(),
                     KeyCode::Enter => self.enter_key(),
                     _ => (),
                 }
@@ -413,12 +415,41 @@ impl App {
 
     /// Performs an action. Action depends on current app state.
     ///
+    /// CustomInstruction: If not item is selected: Select first item, otherwise move down one item
+    fn down_key(&mut self) {
+        match self.state.borrow_mut() {
+            State::CustomInstruction(state) => {
+                let len = state.items_to_display().len();
+                list_down(&mut state.allowed_values_state, &len);
+            }
+            _ => (),
+        }
+    }
+
+    /// Performs an action. Action depends on current app state.
+    ///
+    /// CustomInstruction: Moves the list up one item.
+    fn up_key(&mut self) {
+        match self.state.borrow_mut() {
+            State::CustomInstruction(state) => {
+                list_up(&mut state.allowed_values_state, true);
+            }
+            _ => (),
+        }
+    }
+
+    /// Performs an action. Action depends on current app state.
+    ///
     /// CustomInstruction: Try to parse the text currently stored in the input field as instruction and run it
     /// CustomInstructionError: App state is set to running
     fn enter_key(&mut self) {
         match &self.state {
             State::CustomInstruction(state) => {
-                let instruction = match Instruction::try_from(state.input.as_str()) {
+                let instruction_str = match state.allowed_values_state.selected() {
+                    Some(idx) => state.items_to_display()[idx].clone(),
+                    None => state.input.clone(),
+                };
+                let instruction = match Instruction::try_from(instruction_str.as_str()) {
                     Ok(instruction) => instruction,
                     Err(e) => {
                         self.state = State::CustomInstructionError(format!("{}", e));
@@ -432,8 +463,8 @@ impl App {
                 // instruction was executed successfully
                 let instruction_run = state.input.clone();
                 self.state = State::Running(self.instruction_list_states.breakpoints_set());
-                // add instruction to executed instructions, if it is not contained already
-                if !self.executed_custom_instructions.contains(&instruction_run) {
+                // add instruction to executed instructions, if it is not contained already and if it is not empty
+                if !self.executed_custom_instructions.contains(&instruction_run) && !instruction_run.is_empty() {
                     self.executed_custom_instructions.push(instruction_run);
                 }
             }
@@ -479,11 +510,13 @@ pub fn list_down(state: &mut ListState, len: &usize) {
 }
 
 /// Scrolls the provided list up.
-pub fn list_up(state: &mut ListState) {
+pub fn list_up(state: &mut ListState, deselect: bool) {
     if let Some(idx) = state.selected() {
         // check if we are at the top of the list
         if idx > 0 {
             state.select(Some(idx - 1));
+        } else if deselect {
+            state.select(None)
         }
     }
 }
