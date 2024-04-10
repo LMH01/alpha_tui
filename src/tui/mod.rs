@@ -464,6 +464,10 @@ impl App {
                     Some(idx) => state.items_to_display()[idx].clone(),
                     None => state.input.clone(),
                 };
+                // check if something is entered
+                if instruction_str.is_empty() {
+                    return;
+                }
                 let instruction = match Instruction::try_from(instruction_str.as_str()) {
                     Ok(instruction) => instruction,
                     Err(e) => {
@@ -479,7 +483,9 @@ impl App {
                 let instruction_run = state.input.clone();
                 self.state = State::Running(self.instruction_list_states.breakpoints_set());
                 // add instruction to executed instructions, if it is not contained already and if it is not empty
-                if !self.executed_custom_instructions.contains(&instruction_run) && !instruction_run.is_empty() {
+                if !self.executed_custom_instructions.contains(&instruction_run)
+                    && !instruction_run.is_empty()
+                {
                     self.executed_custom_instructions.push(instruction_run);
                 }
             }

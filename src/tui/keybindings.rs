@@ -90,7 +90,7 @@ impl KeybindingHints {
     /// Disabled keybinding hints are still displayed but grayed out.
     ///
     /// Does nothing if the key is not associated to a keybinding.
-    pub fn _disable(&mut self, key: &str) {
+    pub fn disable(&mut self, key: &str) {
         if let Some(bind) = self.hints.get_mut(key) {
             bind.enabled = false;
         }
@@ -170,10 +170,22 @@ impl KeybindingHints {
                 self.hide("d");
                 self.show("s");
             }
-            State::CustomInstruction(_) => {
+            State::CustomInstruction(state) => {
                 self.hide("r");
                 self.hide("d");
                 self.hide("q");
+                self.show(&KeySymbol::Enter.to_string());
+                self.show(&KeySymbol::Escape.to_string());
+                self.show(&KeySymbol::ArrowUp.to_string());
+                self.show(&KeySymbol::ArrowDown.to_string());
+                self.show(&KeySymbol::ArrowLeft.to_string());
+                self.show(&KeySymbol::ArrowRight.to_string());
+                if state.input.is_empty() && state.allowed_values_state.selected().is_none() {
+                    self.disable(&KeySymbol::Enter.to_string());
+                }
+                if state.allowed_values_state.selected().is_some() {
+                    self.set_state(&KeySymbol::Enter.to_string(), 1)?;
+                }
             }
             _ => (),
         }
@@ -236,15 +248,49 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     );
     hints.insert(
         KeySymbol::ArrowUp.to_string(),
-        KeybindingHint::new(11, &KeySymbol::ArrowUp.to_string(), "Up", true, false),
+        KeybindingHint::new(12, &KeySymbol::ArrowUp.to_string(), "Up", true, false),
     );
     hints.insert(
         KeySymbol::ArrowDown.to_string(),
-        KeybindingHint::new(12, &KeySymbol::ArrowDown.to_string(), "Down", true, false),
+        KeybindingHint::new(13, &KeySymbol::ArrowDown.to_string(), "Down", true, false),
     );
     hints.insert(
         "i".to_string(),
         KeybindingHint::new(9, "i", "run custom instruction", true, false),
+    );
+    hints.insert(
+        KeySymbol::ArrowLeft.to_string(),
+        KeybindingHint::new(
+            10,
+            &KeySymbol::ArrowLeft.to_string(),
+            "Cursor left",
+            true,
+            false,
+        ),
+    );
+    hints.insert(
+        KeySymbol::ArrowRight.to_string(),
+        KeybindingHint::new(
+            11,
+            &KeySymbol::ArrowRight.to_string(),
+            "Cursor right",
+            true,
+            false,
+        ),
+    );
+    hints.insert(
+        KeySymbol::Enter.to_string(),
+        KeybindingHint::new_many(
+            vec![5, 5],
+            &KeySymbol::Enter.to_string(),
+            vec!["Run entered instruction", "Run selected instruction"],
+            true,
+            false,
+        )?,
+    );
+    hints.insert(
+        KeySymbol::Escape.to_string(),
+        KeybindingHint::new(1, &KeySymbol::Escape.to_string(), "Cancel", true, false),
     );
     Ok(hints)
 }
@@ -332,6 +378,10 @@ impl KeybindingHint {
 pub enum KeySymbol {
     ArrowUp,
     ArrowDown,
+    ArrowLeft,
+    ArrowRight,
+    Enter,
+    Escape,
 }
 
 impl ToString for KeySymbol {
@@ -339,6 +389,10 @@ impl ToString for KeySymbol {
         match self {
             KeySymbol::ArrowUp => "\u{2191}".to_string(),
             KeySymbol::ArrowDown => "\u{2193}".to_string(),
+            KeySymbol::ArrowLeft => "\u{2190}".to_string(),
+            KeySymbol::ArrowRight => "\u{2192}".to_string(),
+            KeySymbol::Enter => "\u{23ce}".to_string(),
+            KeySymbol::Escape => "\u{238b}".to_string(),
         }
     }
 }
@@ -401,7 +455,7 @@ mod tests {
     #[test]
     fn test_keybinding_hints_disable() {
         let mut hints = test_keybinding_hints();
-        hints._disable("a");
+        hints.disable("a");
         assert!(!hints.active_keybinds().contains(&KeybindingHint::new(
             0,
             "a",
