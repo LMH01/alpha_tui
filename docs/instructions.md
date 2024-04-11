@@ -4,6 +4,10 @@ Indices are written directly after `a`/ $\alpha$, however you don't need an indi
 
 By jumping to the labels `END`, `ENDE`, `end` or `ende` you can end your program. Example: `goto END`
 
+You can use either `#` or `//` to mark inline or full-line comments.
+
+You can end instructions with `;`, it will be disregarded, when instructions are parsed.
+
 You can define a custom start point for your program with the labels `main` or `MAIN`.
 
 The following instructions are supported:
