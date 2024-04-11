@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.3.0
+
+### Other
+
+- Changed x size of custom instruction popup from 60% screen size to 43% 
+
 ## v1.2.0 (latest version)
 
 ### New feature
