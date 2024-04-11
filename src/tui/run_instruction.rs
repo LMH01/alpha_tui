@@ -39,7 +39,7 @@ impl SingleInstruction {
                     .borders(Borders::ALL)
                     .title("Enter instruction:"),
             );
-        let area = super::centered_rect(60, 40, None, r);
+        let area = super::centered_rect(43, 40, None, r);
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Length(3), Constraint::Fill(1)])
