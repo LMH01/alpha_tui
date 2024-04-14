@@ -26,6 +26,16 @@ Pull requests and bug reports are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md
 
 To compile the program from source the rust toolchain is needed. Once installed you can run the program by typing `cargo run`. To submit arguments you can use `--`, for example `cargo run -- -h` will print help.
 
+### NixOS (using flakes)
+
+This Repository provides a flake. If you have flakes enabled you can use
+
+```
+nix run github:lmh01/alpha_tui <COMMAND> <PARAMS>
+```
+
+to build and run the program.
+
 ## Instructions
 
 See [instructions](docs/instructions.md).
