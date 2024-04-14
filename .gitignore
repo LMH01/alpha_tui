@@ -5,5 +5,6 @@ examples/programs/debug.alpha
 .cargo/
 *.tape
 output.txt
+result
 
 tarpaulin-report.html
