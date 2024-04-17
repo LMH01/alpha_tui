@@ -9,7 +9,6 @@ use crate::base::{Comparison, Operation};
     about,
     long_about = "debugger and runtime environment for the alpha notation used in my Systemnahme Informatik lecture"
 )]
-#[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_config_file"]))]
 pub struct Cli {
     #[arg(
         short,
@@ -49,7 +48,6 @@ pub struct Cli {
         long,
         help = "Disable accumulator, gamma accumulator and memory_cell detection",
         long_help = "Set to disable accumulator, gamma accumulator and memory_cell detection.\nIf disabled, accumulators, gamma accumulator and memory cells won't be read from program,\ninstead they have to be specified using \"--accumulators\", \"--enable-gamma-accumulator\", \"--memory-cells\" and \"--index-memory-cells\" or \"--memory-config-file\"",
-        requires_all = [ "memory" ],
         global = true,
     )]
     pub disable_memory_detection: bool,
@@ -97,7 +95,6 @@ pub struct Cli {
 }
 
 #[derive(Args, Clone, Debug)]
-#[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_config_file"]))]
 pub struct LoadArgs {
     #[arg(
         long_help = "Specify the input file that contains the program",
@@ -141,7 +138,6 @@ pub struct LoadArgs {
 }
 
 #[derive(Args, Clone, Debug)]
-#[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_config_file"]))]
 pub struct CheckArgs {
     #[arg(
         long_help = "Specify the input file that contains the program",
@@ -167,7 +163,6 @@ pub enum Commands {
 #[derive(Subcommand, Clone, Debug)]
 pub enum CheckCommands {
     #[command(about = "Check if the program compiles")]
-    #[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_config_file"]))]
     Compile,
 }
 

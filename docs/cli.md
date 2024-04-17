@@ -5,7 +5,7 @@ For a full list of options and more explanation see `alpha_tui help`, `alpha_tui
 ## General options
 
 Accumulators and memory cells are automatically created when the input program is read.
-To circumvent that you can set the option `--disable-memory-detection`. You then need to specify the accumulators and memory_cells that should be created. The options `-a` and `-m` or `--memory-config-file` can be used to specify those values.
+To circumvent that you can set the option `--disable-memory-detection`. You then need to specify the accumulators and memory_cells that should be created. The options `-a` and `-m` or `--memory-config-file` can be used to specify those values. Note that it is not required to set these values but if a memory type is used that does not exist, the runtime will fail to build.
 
 If you require accumulators, the gamma accumulator or memory cells to be pre initialized you can use the option `--memory-config-file` to read in a file that contains information about this data. This file is formatted in json. To enable a specific memory type, create a new entry in the corresponding map. If the value is `null` the memory type is created but no value is set (does not apply to the gamma accumulator). The gamma accumulator can be enabled by setting the `enabled` field to `true`. Its value can be set by using the `value` field, set it to `null` to enable the gamma accumulator but to not assign it any value. An example for such file can be found [here](../examples/memory_config.json).
 

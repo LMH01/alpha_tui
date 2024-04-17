@@ -9,6 +9,7 @@
     - This memory config file can now be used to set the values of `--accumulators`, `--gamma_accumulator` in addition to the values of `--memory_cells` and `--index_memory_cells`.
     - `--memory-config-file` now conflicts with `--accumulators`, `--enable-gamma-accumulator`, `--memory-cells` and `--index-memory-cells`
     - Changed file data type to `json`
+- `--disable-memory-detection` no longer forces the usage of either `--accumulators` and `--memory-cells` or `--memory-config-file` (previously `--memory-cells-file`) (fr #30 and #31)
 - Changed x size of custom instruction popup from 60% screen size to 43%
 - Removed unnecessary 30ms sleep after key input
 - It is now allowed to write `=` instead of `:=` when writing assignment instructions. Note, however, that this is a deviation from the alpha notation standard (fr #27).
