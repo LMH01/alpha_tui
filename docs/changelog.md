@@ -4,6 +4,11 @@
 
 ### Other
 
+- Reworked how predetermined memory values are handled (fr #29):
+    - Renamed cli option `--memory-cells-file` to `--memory-config-file`
+    - This memory config file can now be used to set the values of `--accumulators`, `--gamma_accumulator` in addition to the values of `--memory_cells` and `--index_memory_cells`.
+    - `--memory-config-file` now conflicts with `--accumulators`, `--enable-gamma-accumulator`, `--memory-cells` and `--index-memory-cells`
+    - Changed file data type to `json`
 - Changed x size of custom instruction popup from 60% screen size to 43%
 - Removed unnecessary 30ms sleep after key input
 - It is now allowed to write `=` instead of `:=` when writing assignment instructions. Note, however, that this is a deviation from the alpha notation standard (fr #27).

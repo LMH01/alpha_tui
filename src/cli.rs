@@ -48,7 +48,7 @@ pub struct Cli {
     #[arg(
         long,
         help = "Disable accumulator, gamma accumulator and memory_cell detection",
-        long_help = "Set to disable accumulator, gamma accumulator and memory_cell detection.\nIf disabled, accumulators, gamma accumulator and memory cells won't be read from program,\ninstead they have to be specified using \"--accumulators\", \"--enable-gamma-accumulator\" and \"--memory-cells\" or \"--memory-cell-file\" and \"--index-memory-cells\" or \"--memory-cell-file\"",
+        long_help = "Set to disable accumulator, gamma accumulator and memory_cell detection.\nIf disabled, accumulators, gamma accumulator and memory cells won't be read from program,\ninstead they have to be specified using \"--accumulators\", \"--enable-gamma-accumulator\", \"--memory-cells\" and \"--index-memory-cells\" or \"--memory-config-file\"",
         requires_all = [ "memory" ],
         global = true,
     )]

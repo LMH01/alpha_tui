@@ -5,9 +5,9 @@ For a full list of options and more explanation see `alpha_tui help`, `alpha_tui
 ## General options
 
 Accumulators and memory cells are automatically created when the input program is read.
-To circumvent that you can set the option `--disable-memory-detection`. You then need to specify the accumulators and memory_cells that should be created. The options `-a`, `-m` and `--memory-cell-file` can be used to specify those values. `--memory-cell-file` can also be used to specify available memory cells, when automatic detection is disabled.
+To circumvent that you can set the option `--disable-memory-detection`. You then need to specify the accumulators and memory_cells that should be created. The options `-a` and `-m` or `--memory-config-file` can be used to specify those values.
 
-If you require memory cells to be pre initialized you can use the option `--memory-cell-file` to read in a file that contains memory cell information. An example for such file can be found [here](../examples/memory_cells.cells).
+If you require accumulators, the gamma accumulator or memory cells to be pre initialized you can use the option `--memory-config-file` to read in a file that contains information about this data. This file is formatted in json. To enable a specific memory type, create a new entry in the corresponding map. If the value is `null` the memory type is created but no value is set (does not apply to the gamma accumulator). The gamma accumulator can be enabled by setting the `enabled` field to `true`. Its value can be set by using the `value` field, set it to `null` to enable the gamma accumulator but to not assign it any value. An example for such file can be found [here](../examples/memory_config.json).
 
 ### Allowed instructions
 
@@ -75,7 +75,7 @@ if a == p(h) then goto label
 ```
 to be used in the program.
 
-**It is important to understand that only the type of instruction is limited by this option, to specifically limit what memory locations or what comparisons/operations are available you can use the options `-a`, `-m` or `--memory-cell-file` and `--allowed-comparisons` and `--allowed-operations` . This means that even though you might write `p(h1)` in the allowed instructions file, all available memory cells are allowed in this position, not just `p(h1)`!**
+**It is important to understand that only the type of instruction is limited by this option, to specifically limit what memory locations or what comparisons/operations are available you can use the options `-a`, `-m` or `--memory-config-file` and `--allowed-comparisons` and `--allowed-operations` . This means that even though you might write `p(h1)` in the allowed instructions file, all available memory cells are allowed in this position, not just `p(h1)`!**
 
 An example file can be found here: [examples/allowed_instructions.txt](../examples/allowed_instructions.txt);
 
