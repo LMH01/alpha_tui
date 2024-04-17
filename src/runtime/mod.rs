@@ -380,9 +380,15 @@ impl From<&Cli> for Settings {
 #[derive(PartialEq, Debug, Deserialize, Serialize)]
 struct MemoryConfig {
     pub accumulators: HashMap<usize, Option<i32>>,
-    pub gamma_accumulator: Option<Option<i32>>,
+    pub gamma_accumulator: MemoryConfigGammaAccumulator,
     pub memory_cells: HashMap<String, Option<i32>>,
     pub index_memory_cells: HashMap<usize, Option<i32>>,
+}
+
+#[derive(PartialEq, Debug, Deserialize, Serialize)]
+struct MemoryConfigGammaAccumulator {
+    enabled: bool,
+    value: Option<i32>,
 }
 
 impl MemoryConfig {
@@ -393,6 +399,14 @@ impl MemoryConfig {
         for (idx, value) in self.accumulators {
             accumulators.insert(idx, Accumulator {id: idx, data: value});
         }
+        let gamma = if self.gamma_accumulator.enabled {
+            match self.gamma_accumulator.value {
+                Some(value) => Some(Some(value)),
+                None => Some(None)
+            }
+        } else {
+            None
+        };
         let mut memory_cells = HashMap::new();
         for (name, value) in self.memory_cells {
             memory_cells.insert(name.clone(), MemoryCell {label: name, data: value});
@@ -403,7 +417,7 @@ impl MemoryConfig {
         }
         RuntimeArgs {
             accumulators,
-            gamma: self.gamma_accumulator,
+            gamma,
             memory_cells,
             index_memory_cells,
             stack: Vec::new(),

@@ -3,7 +3,10 @@
         "0": 10,
         "1": null
     },
-    "gamma_accumulator": 6,
+    "gamma_accumulator": {
+        "enabled": true,
+        "value": null
+    },
     "memory_cells": {
         "h2": null,
         "h1": 10
