@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use miette::Result;
+use miette::{miette, Result};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     base::{Accumulator, MemoryCell},
@@ -219,18 +220,23 @@ impl<'a> RuntimeArgs {
     /// Errors if option is set to parse memory cells from file and the parsing fails.
     pub fn from_args(args: &Cli) -> Result<Self, String> {
         if let Some(path) = &args.memory_config_file {
-            let config = match MemoryConfig::from_file_contents(&utils::read_file(path)?, path) {
+            let config = match serde_json::from_str::<MemoryConfigNew>(&utils::read_file(path)?.join("\n")) {
                 Ok(config) => config,
-                Err(e) => return Err(e),
+                Err(e) => return Err(format!("json parse error: {e}"))
             };
-            return Ok(Self {
-                accumulators: config.accumulators,
-                memory_cells: config.memory_cells,
-                index_memory_cells: config.index_memory_cells,
-                gamma: config.gamma_accumulator,
-                stack: Vec::new(),
-                settings: Settings::from(args)
-            });
+            return Ok(config.to_runtime_args(args))
+            //let config = match MemoryConfig::from_file_contents(&utils::read_file(path)?, path) {
+            //    Ok(config) => config,
+            //    Err(e) => return Err(e),
+            //};
+            //return Ok(Self {
+            //    accumulators: config.accumulators,
+            //    memory_cells: config.memory_cells,
+            //    index_memory_cells: config.index_memory_cells,
+            //    gamma: config.gamma_accumulator,
+            //    stack: Vec::new(),
+            //    settings: Settings::from(args)
+            //});
         }
         let accumulators = args.accumulators.unwrap_or(0);
         let memory_cells = match args.memory_cells.as_ref() {
@@ -367,6 +373,41 @@ impl From<&Cli> for Settings {
         Self {
             enable_imc_auto_creation: !value.disable_memory_detection,
             disable_instruction_limit: value.disable_instruction_limit,
+        }
+    }
+}
+
+#[derive(PartialEq, Debug, Deserialize, Serialize)]
+struct MemoryConfigNew {
+    pub accumulators: HashMap<usize, Option<i32>>,
+    pub gamma_accumulator: Option<Option<i32>>,
+    pub memory_cells: HashMap<String, Option<i32>>,
+    pub index_memory_cells: HashMap<usize, Option<i32>>,
+}
+
+impl MemoryConfigNew {
+
+    /// Creates runtime args from this memory config.
+    fn to_runtime_args(self, args: &Cli) -> RuntimeArgs {
+        let mut accumulators = HashMap::new();
+        for (idx, value) in self.accumulators {
+            accumulators.insert(idx, Accumulator {id: idx, data: value});
+        }
+        let mut memory_cells = HashMap::new();
+        for (name, value) in self.memory_cells {
+            memory_cells.insert(name.clone(), MemoryCell {label: name, data: value});
+        }
+        let mut index_memory_cells = HashMap::new();
+        for (idx, value) in self.index_memory_cells {
+            index_memory_cells.insert(idx, value);
+        }
+        RuntimeArgs {
+            accumulators,
+            gamma: self.gamma_accumulator,
+            memory_cells,
+            index_memory_cells,
+            stack: Vec::new(),
+            settings: Settings::from(args),
         }
     }
 }
@@ -571,7 +612,7 @@ mod tests {
         runtime::{builder::RuntimeBuilder, error_handling::RuntimeBuildError, parse_index},
     };
 
-    use super::{MemoryConfig, RuntimeArgs};
+    use super::{MemoryConfig, MemoryConfigNew, RuntimeArgs};
 
     /// Used to set the available memory cells during testing.
     const TEST_MEMORY_CELL_LABELS: &[&str] = &[
@@ -930,5 +971,33 @@ mod tests {
             Some(vec![(0, Some(1)), (1, Some(2)), (7, None)]),
         );
         assert_eq!(should, res);
+    }
+
+    #[test]
+    fn test_create_json_string() {
+
+        let mut accumulators = HashMap::new();
+        accumulators.insert(0, Some(10));
+        accumulators.insert(1, None);
+
+        let mut memory_cells = HashMap::new();
+        memory_cells.insert("h1".to_string(), Some(10));
+        memory_cells.insert("h2".to_string(), None);
+
+        let mut index_memory_cells = HashMap::new();
+        index_memory_cells.insert(0, Some(10));
+        index_memory_cells.insert(1, None);
+
+        let config = MemoryConfigNew {
+            accumulators,
+            gamma_accumulator: Some(Some(6)),
+            memory_cells,
+            index_memory_cells
+        };
+
+
+        let json_str = serde_json::to_string(&config).unwrap();
+
+        panic!("{json_str}");
     }
 }

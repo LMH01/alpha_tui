@@ -15,5 +15,9 @@ text_align = "0.3.1"
 anyhow = "1.0.82"
 trie-rs = "0.2.0"
 
+# serialization, used for memory config file
+serde = { version = "1.0.198", features = ["derive"] }
+serde_json = "1.0.116"
+
 [dev-dependencies]
 assert_cmd = "2"

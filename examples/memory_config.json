@@ -1,0 +1,15 @@
+{
+    "accumulators": {
+        "0": 10,
+        "1": null
+    },
+    "gamma_accumulator": 6,
+    "memory_cells": {
+        "h2": null,
+        "h1": 10
+    },
+    "index_memory_cells": {
+        "1": null,
+        "0": 10
+    }
+}
