@@ -391,6 +391,145 @@ impl From<&Cli> for Settings {
 type MemoryCells = HashMap<String, MemoryCell>;
 type IndexMemoryCells = HashMap<usize, Option<i32>>;
 
+/// Used to read in memory config from a file and then construct runtime args.
+#[derive(PartialEq, Debug)]
+struct MemoryConfig {
+    accumulators: HashMap<usize, Accumulator>,
+    /// The value of the gamma accumulator
+    ///
+    /// First option determines if gamma is active.
+    /// Inner option determine if gamma contains a value.
+    gamma_accumulator: Option<Option<i32>>,
+    memory_cells: HashMap<String, MemoryCell>,
+    index_memory_cells: HashMap<usize, Option<i32>>,
+}
+
+impl MemoryConfig {
+    /// Creates the memory configuration by taking the values in `contents`.
+    /// `path` is used to print a helpful error message.
+    ///
+    /// Supports empty values, to make it possible to declare existing memory locations with this file.
+    ///
+    /// Each line contains either a single memory cell, a single accumulator or the gamma accumulator:
+    ///
+    /// ## File formattings
+    ///
+    /// ### Accumulators
+    ///
+    /// a<ID>=VALUE or a<ID>=None
+    ///
+    /// ### Gamma
+    ///
+    /// y=None if gamma should be enabled but without a value or
+    /// y=VALUE if gamma should be enabled and contain a value
+    ///
+    /// If multiple gamma values are placed in the file, the last value in the file is used.
+    ///
+    /// ### Memory cell
+    ///
+    /// NAME=VALUE, NAME=None or [INDEX]=VALUE
+    fn from_file_contents(contents: &Vec<String>, path: &str) -> Result<MemoryConfig, String> {
+        let mut accumulators = HashMap::new();
+        let mut gamma_accumulator = None;
+        let mut memory_cells = HashMap::new();
+        let mut index_memory_cells = HashMap::new();
+        for (index, line) in contents.iter().enumerate() {
+            let chunks = line.split('=').collect::<Vec<&str>>();
+            let v = chunks.get(1);
+            let idx = parse_index(&chunks);
+            
+            // check if line is accumulator
+            if line.starts_with("a") && v.is_some() && !v.unwrap().is_empty() {
+                let v = v.unwrap();
+                let value = match v.parse::<i32>() {
+                    Ok(num) => num,
+                    Err(e) => {
+                        return Err(format!(
+                            "{}: [Line {}] Unable to parse int: {} \"{}\"",
+                            path,
+                            index + 1,
+                            e,
+                            v
+                        ))
+                    }
+                };
+                if let Some(idx) = idx {
+                    accumulators.insert(
+                        idx,
+                        Accumulator {
+                            id: idx,
+                            data: Some(value),
+                        },
+                    );
+                }
+                continue;
+            }
+
+            // check if line is gamma
+            if line.starts_with("y") && v.is_some() && !v.unwrap().is_empty() {
+                let v = v.unwrap();
+                if *v == "None" {
+                    // gamma is active, but without a value
+                    gamma_accumulator = Some(None);
+                    continue;
+                }
+                let value = match v.parse::<i32>() {
+                    Ok(num) => num,
+                    Err(e) => {
+                        return Err(format!(
+                            "{}: [Line {}] Unable to parse int: {} \"{}\"",
+                            path,
+                            index + 1,
+                            e,
+                            v
+                        ))
+                    }
+                };
+                gamma_accumulator = Some(Some(value));
+                continue;
+            }
+
+            // Check if line is index memory cell
+            if v.is_some() && !v.unwrap().is_empty() {
+                let v = v.unwrap();
+                let value = match v.parse::<i32>() {
+                    Ok(num) => num,
+                    Err(e) => {
+                        return Err(format!(
+                            "{}: [Line {}] Unable to parse int: {} \"{}\"",
+                            path,
+                            index + 1,
+                            e,
+                            v
+                        ))
+                    }
+                };
+                if let Some(idx) = idx {
+                    index_memory_cells.insert(idx, Some(value));
+                } else {
+                    memory_cells.insert(
+                        chunks[0].to_string(),
+                        MemoryCell {
+                            label: chunks[0].to_string(),
+                            data: Some(value),
+                        },
+                    );
+                }
+            } else if let Some(idx) = idx {
+                index_memory_cells.insert(idx, None);
+            } else {
+                memory_cells.insert(chunks[0].to_string(), MemoryCell::new(chunks[0]));
+            }
+        }
+        Ok(Self {
+            accumulators,
+            gamma_accumulator,
+            memory_cells,
+            index_memory_cells,
+        })
+    }
+}
+
 /// Reads memory cells from file and returns map of memory cells.
 ///
 /// Each line contains a single memory cell in the following formatting: NAME=VALUE or [INDEX]=VALUE
@@ -401,6 +540,7 @@ type IndexMemoryCells = HashMap<usize, Option<i32>>;
 ///
 /// Errors when file could not be read.
 #[allow(clippy::unnecessary_unwrap)]
+#[deprecated]
 fn read_memory_cells_from_file(path: &str) -> Result<(MemoryCells, IndexMemoryCells), String> {
     let contents = read_file(path)?;
     let mut memory_cells = HashMap::new();
@@ -454,6 +594,12 @@ fn parse_index(chunks: &[&str]) -> Option<usize> {
             if let Ok(idx) = idx.parse::<usize>() {
                 return Some(idx);
             }
+        } else if p1.starts_with("a") {
+            // accumulator index
+            let idx = p1.replace("a", "");
+            if let Ok(idx) = idx.parse::<usize>() {
+                return Some(idx);
+            }
         }
     }
     None
@@ -461,13 +607,15 @@ fn parse_index(chunks: &[&str]) -> Option<usize> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use crate::{
-        base::{Comparison, Operation},
+        base::{Accumulator, Comparison, MemoryCell, Operation},
         instructions::{Instruction, TargetType, Value},
         runtime::{builder::RuntimeBuilder, error_handling::RuntimeBuildError, parse_index},
     };
 
-    use super::RuntimeArgs;
+    use super::{MemoryConfig, RuntimeArgs};
 
     /// Used to set the available memory cells during testing.
     const TEST_MEMORY_CELL_LABELS: &[&str] = &[
@@ -615,5 +763,70 @@ mod tests {
     #[test]
     fn test_parse_index() {
         assert_eq!(parse_index(&vec!["[10]"]), Some(10));
+    }
+
+    /// Constructs a memory config for testing purposes
+    fn test_memory_config(
+        accumulators: Option<Vec<(usize, Option<i32>)>>,
+        gamma_accumulator: Option<Option<i32>>,
+        memory_cells: Option<Vec<(String, Option<i32>)>>,
+        index_memory_cells: Option<Vec<(usize, Option<i32>)>>,
+    ) -> MemoryConfig {
+        let accumulators = match accumulators {
+            Some(values) => {
+                let mut accumulators = HashMap::new();
+                for value in values {
+                    accumulators.insert(
+                        value.0,
+                        Accumulator {
+                            id: value.0,
+                            data: value.1,
+                        },
+                    );
+                }
+                accumulators
+            }
+            None => HashMap::new(),
+        };
+        let memory_cells = match memory_cells {
+            Some(values) => {
+                let mut memory_cells = HashMap::new();
+                for value in values {
+                    memory_cells.insert(
+                        value.0.clone(),
+                        MemoryCell {
+                            label: value.0,
+                            data: value.1,
+                        },
+                    );
+                }
+                memory_cells
+            }
+            None => HashMap::new(),
+        };
+        let index_memory_cells = match index_memory_cells {
+            Some(values) => {
+                let mut index_memory_cells = HashMap::new();
+                for value in values {
+                    index_memory_cells.insert(value.0, value.1);
+                }
+                index_memory_cells
+            }
+            None => HashMap::new(),
+        };
+        MemoryConfig {
+            accumulators,
+            gamma_accumulator,
+            memory_cells,
+            index_memory_cells,
+        }
+    }
+
+    #[test]
+    fn test_memory_config_from_file_contents_accumulator() {
+        let content = vec!["a0=5".to_string(), "a20=30".to_string()];
+        let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
+        let should = test_memory_config(Some(vec![(0, Some(5)), (20, Some(30))]), None, None, None);
+        assert_eq!(should, res);
     }
 }
