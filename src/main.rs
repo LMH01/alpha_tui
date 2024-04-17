@@ -70,7 +70,7 @@ fn cmd_check(cli: &Cli, instructions: &[String], input: &str) {
             println!(
                 "Check unsuccessful: {:?}",
                 miette!(
-                "Unable to create RuntimeBuilder, memory cells could not be loaded from file:\n{e}"
+                "Unable to create RuntimeBuilder, memory config could not be loaded from file:\n{e}"
             )
             );
             exit(10);
@@ -152,7 +152,7 @@ fn cmd_load(
         Ok(rb) => rb,
         Err(e) => {
             return Err(miette!(
-                "Unable to create RuntimeBuilder, memory cells could not be loaded from file:\n{e}"
+                "Unable to create RuntimeBuilder, memory config could not be loaded from file:\n{e}"
             ));
         }
     };
