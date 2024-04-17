@@ -224,7 +224,7 @@ impl<'a> RuntimeArgs {
                 Ok(config) => config,
                 Err(e) => return Err(format!("json parse error: {e}"))
             };
-            return Ok(config.to_runtime_args(args))
+            return Ok(config.into_runtime_args(args))
             //let config = match MemoryConfig::from_file_contents(&utils::read_file(path)?, path) {
             //    Ok(config) => config,
             //    Err(e) => return Err(e),
@@ -394,7 +394,7 @@ struct MemoryConfigGammaAccumulator {
 impl MemoryConfig {
 
     /// Creates runtime args from this memory config.
-    fn to_runtime_args(self, args: &Cli) -> RuntimeArgs {
+    fn into_runtime_args(self, args: &Cli) -> RuntimeArgs {
         let mut accumulators = HashMap::new();
         for (idx, value) in self.accumulators {
             accumulators.insert(idx, Accumulator {id: idx, data: value});
