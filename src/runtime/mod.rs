@@ -416,18 +416,18 @@ impl MemoryConfig {
     ///
     /// ### Accumulators
     ///
-    /// a<ID>=VALUE or a<ID>=None
+    /// a<ID>=VALUE or a<ID>=
     ///
     /// ### Gamma
     ///
-    /// y=None if gamma should be enabled but without a value or
+    /// y= if gamma should be enabled but without a value or
     /// y=VALUE if gamma should be enabled and contain a value
     ///
     /// If multiple gamma values are placed in the file, the last value in the file is used.
     ///
     /// ### Memory cell
     ///
-    /// NAME=VALUE, NAME=None or [INDEX]=VALUE
+    /// NAME=VALUE, NAME=, [INDEX]=VALUE or [INDEX]=
     fn from_file_contents(contents: &Vec<String>, path: &str) -> Result<MemoryConfig, String> {
         let mut accumulators = HashMap::new();
         let mut gamma_accumulator = None;
@@ -439,7 +439,7 @@ impl MemoryConfig {
             let idx = parse_index(&chunks);
 
             // check if line is accumulator
-            if line.starts_with("a") && v.is_some() && !v.unwrap().is_empty() {
+            if line.starts_with("a") && v.is_some() {
                 let v = v.unwrap();
                 let idx = match idx {
                     Some(idx) => idx,
@@ -452,7 +452,7 @@ impl MemoryConfig {
                         ))
                     }
                 };
-                if *v == "None" {
+                if v.is_empty() {
                     accumulators.insert(idx, Accumulator::new(idx));
                     continue;
                 }
@@ -479,9 +479,9 @@ impl MemoryConfig {
             }
 
             // check if line is gamma
-            if line.starts_with("y") && v.is_some() && !v.unwrap().is_empty() {
+            if line.starts_with("y") && v.is_some() {
                 let v = v.unwrap();
-                if *v == "None" {
+                if v.is_empty() {
                     // gamma is active, but without a value
                     gamma_accumulator = Some(None);
                     continue;
@@ -505,7 +505,7 @@ impl MemoryConfig {
             // Check if line is index memory cell
             if v.is_some() && !v.unwrap().is_empty() {
                 let v = v.unwrap();
-                if *v == "None" {
+                if v.is_empty() {
                     memory_cells.insert(
                         chunks[0].to_string(),
                         MemoryCell {
@@ -855,7 +855,7 @@ mod tests {
 
     #[test]
     fn test_memory_config_from_file_contents_accumulator_none() {
-        let content = vec!["a0=None".to_string(), "a5=None".to_string()];
+        let content = vec!["a0=".to_string(), "a5=".to_string()];
         let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
         let should = test_memory_config(Some(vec![(0, None), (5, None)]), None, None, None);
         assert_eq!(should, res);
@@ -868,7 +868,7 @@ mod tests {
         let should = test_memory_config(None, Some(Some(5)), None, None);
         assert_eq!(should, res);
     }
-    
+
     #[test]
     fn test_memory_config_from_file_contents_gamma_accumulator_last_value() {
         let content = vec!["y=5".to_string(), "y=8".to_string()];
@@ -876,20 +876,82 @@ mod tests {
         let should = test_memory_config(None, Some(Some(8)), None, None);
         assert_eq!(should, res);
     }
-    
+
     #[test]
     fn test_memory_config_from_file_contents_gamma_accumulator_no_value() {
-        let content = vec!["y=None".to_string()];
+        let content = vec!["y=".to_string()];
         let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
         let should = test_memory_config(None, Some(None), None, None);
         assert_eq!(should, res);
     }
-    
+
     #[test]
     fn test_memory_config_from_file_contents_gamma_accumulator_not_enabled() {
         let content = Vec::new();
         let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
-        let should = test_memory_config(None, Some(None), None, None);
+        let should = test_memory_config(None, None, None, None);
         assert_eq!(should, res);
+    }
+
+    #[test]
+    fn test_memory_config_from_file_contents_memory_cell() {
+        let content = vec!["h1=10".to_string(), "hello=121".to_string()];
+        let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
+        let should = test_memory_config(
+            None,
+            None,
+            Some(vec![
+                ("h1".to_string(), Some(10)),
+                ("hello".to_string(), Some(121)),
+            ]),
+            None,
+        );
+        assert_eq!(should, res);
+    }
+
+    #[test]
+    fn test_memory_config_from_file_contents_memory_cell_none() {
+        let content = vec!["h1=".to_string()];
+        let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
+        let should = test_memory_config(
+            None,
+            None,
+            Some(vec![
+                ("h1".to_string(), None),
+            ]),
+            None,
+        );
+        assert_eq!(should, res);
+    }
+
+    #[test]
+    fn test_memory_config_from_file_contents_index_memory_cell() {
+        let content = vec!["[0]=10".to_string(), "[30]=214".to_string()];
+        let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
+        let should = test_memory_config(
+            None,
+            None,
+            None,
+            Some(vec![(0, Some(10)), (30, Some(214))]),
+        );
+        assert_eq!(should, res);
+    }
+
+    #[test]
+    fn test_memory_config_from_file_contents_index_memory_cell_none() {
+        let content = vec!["[0]=".to_string(), "[30]=".to_string()];
+        let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
+        let should = test_memory_config(
+            None,
+            None,
+            None,
+            Some(vec![(0, None), (30, None)]),
+        );
+        assert_eq!(should, res);
+    }
+
+    #[test]
+    fn test_memory_config_from_file_contents() {
+        let content = vec![""];
     }
 }
