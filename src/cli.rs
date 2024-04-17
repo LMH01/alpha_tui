@@ -9,7 +9,7 @@ use crate::base::{Comparison, Operation};
     about,
     long_about = "debugger and runtime environment for the alpha notation used in my Systemnahme Informatik lecture"
 )]
-#[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_cell_file"]))]
+#[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_config_file"]))]
 pub struct Cli {
     #[arg(
         short,
@@ -40,12 +40,12 @@ pub struct Cli {
     pub index_memory_cells: Option<Vec<usize>>,
     #[arg(
         long,
-        help = "Load memory cells from a file",
-        long_help = "Load memory cell values from a file.\nEach line contains a single memory cell in the following formatting: NAME=VALUE\nExample: h1=5\nEmpty cells can be set with: NAME\nExample: h2\n\nIndex memory cells can be set by using the following formatting: [INDEX]=VALUE\nExample: [0]=5",
-        conflicts_with_all = [ "memory_cells", "index_memory_cells" ],
+        help = "Load memory config from a file",
+        long_help = "Load accumulators, gamma accumulator and memory cell values from a file.\nEach line contains a single memory entry. Can also be used to specify that a memory value should exist.\n\nWhat the file can contain:\n\nAccumulators:\n\na<ID>=VALUE or a<ID>\nExamples:\na1=5\na2\n\nGamma accumulator:\n\ny if gamma should be enabled without a value\ny=VALUE if gamma should  be enabled and contain a value\n\nIf multiple gamma values are placed in the file, the last value in the file is used.\n\nMemory cells:\n\nNAME=VALUE\nExample: h1=5\nEmpty cells can be set with: NAME\nExample: h2\n\nIndex memory cells can be set by using the following formatting: [INDEX]=VALUE\nExample: [0]=5\n\nFurther help can be found here: https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md.",
+        conflicts_with_all = [ "memory_cells", "index_memory_cells", "accumulators", "enable_gamma_accumulator" ],
         global = true,
     )]
-    pub memory_cell_file: Option<String>,
+    pub memory_config_file: Option<String>,
     #[arg(
         long,
         help = "Disable accumulator, gamma accumulator and memory_cell detection",
@@ -77,6 +77,7 @@ pub struct Cli {
         long,
         help = "Enable the gamma accumulator",
         long_help = "Enable the gamma accumulator, can be used to enable gamma accumulator when automatic detection is disabled by \"--disable-memory-detection\".",
+        conflicts_with = "memory_config_file",
         global = true
     )]
     pub enable_gamma_accumulator: bool,
@@ -97,7 +98,7 @@ pub struct Cli {
 }
 
 #[derive(Args, Clone, Debug)]
-#[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_cell_file"]))]
+#[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_config_file"]))]
 pub struct LoadArgs {
     #[arg(
         long_help = "Specify the input file that contains the program",
@@ -141,7 +142,7 @@ pub struct LoadArgs {
 }
 
 #[derive(Args, Clone, Debug)]
-#[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_cell_file"]))]
+#[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_config_file"]))]
 pub struct CheckArgs {
     #[arg(
         long_help = "Specify the input file that contains the program",
@@ -167,7 +168,7 @@ pub enum Commands {
 #[derive(Subcommand, Clone, Debug)]
 pub enum CheckCommands {
     #[command(about = "Check if the program compiles")]
-    #[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_cell_file"]))]
+    #[clap(group = ArgGroup::new("memory").args(["memory_cells", "memory_config_file"]))]
     Compile,
 }
 

@@ -5,8 +5,7 @@ use miette::Result;
 use crate::{
     base::{Accumulator, MemoryCell},
     cli::Cli,
-    instructions::Instruction,
-    utils::read_file,
+    instructions::Instruction, utils,
 };
 
 use self::error_handling::{RuntimeError, RuntimeErrorType};
@@ -219,35 +218,19 @@ impl<'a> RuntimeArgs {
     ///
     /// Errors if option is set to parse memory cells from file and the parsing fails.
     pub fn from_args(args: &Cli) -> Result<Self, String> {
-        if let Some(path) = &args.memory_cell_file {
-            match read_memory_cells_from_file(path) {
-                Ok(memory_cells) => {
-                    let accumulators = match args.accumulators {
-                        None => HashMap::new(),
-                        Some(v) => {
-                            let mut accumulators = HashMap::new();
-                            for i in 0..v {
-                                accumulators.insert(i as usize, Accumulator::new(i as usize));
-                            }
-                            accumulators
-                        }
-                    };
-                    let gamma = if args.enable_gamma_accumulator {
-                        Some(None)
-                    } else {
-                        None
-                    };
-                    return Ok(Self {
-                        accumulators,
-                        gamma,
-                        memory_cells: memory_cells.0,
-                        index_memory_cells: memory_cells.1,
-                        stack: Vec::new(),
-                        settings: Settings::from(args),
-                    });
-                }
+        if let Some(path) = &args.memory_config_file {
+            let config = match MemoryConfig::from_file_contents(&utils::read_file(path)?, path) {
+                Ok(config) => config,
                 Err(e) => return Err(e),
             };
+            return Ok(Self {
+                accumulators: config.accumulators,
+                memory_cells: config.memory_cells,
+                index_memory_cells: config.index_memory_cells,
+                gamma: config.gamma_accumulator,
+                stack: Vec::new(),
+                settings: Settings::from(args)
+            });
         }
         let accumulators = args.accumulators.unwrap_or(0);
         let memory_cells = match args.memory_cells.as_ref() {
@@ -388,20 +371,17 @@ impl From<&Cli> for Settings {
     }
 }
 
-type MemoryCells = HashMap<String, MemoryCell>;
-type IndexMemoryCells = HashMap<usize, Option<i32>>;
-
 /// Used to read in memory config from a file and then construct runtime args.
 #[derive(PartialEq, Debug)]
 struct MemoryConfig {
-    accumulators: HashMap<usize, Accumulator>,
+    pub accumulators: HashMap<usize, Accumulator>,
     /// The value of the gamma accumulator
     ///
     /// First option determines if gamma is active.
     /// Inner option determine if gamma contains a value.
-    gamma_accumulator: Option<Option<i32>>,
-    memory_cells: HashMap<String, MemoryCell>,
-    index_memory_cells: HashMap<usize, Option<i32>>,
+    pub gamma_accumulator: Option<Option<i32>>,
+    pub memory_cells: HashMap<String, MemoryCell>,
+    pub index_memory_cells: HashMap<usize, Option<i32>>,
 }
 
 impl MemoryConfig {
@@ -558,60 +538,6 @@ impl MemoryConfig {
             index_memory_cells,
         })
     }
-}
-
-/// Reads memory cells from file and returns map of memory cells.
-///
-/// Each line contains a single memory cell in the following formatting: NAME=VALUE or [INDEX]=VALUE
-///
-/// If value is missing an empty memory cell will be created.
-///
-/// Tuple value 0 is the list of normal memory cells, tuple value 1 is the list of index memory cells.
-///
-/// Errors when file could not be read.
-#[allow(clippy::unnecessary_unwrap)]
-#[deprecated]
-fn read_memory_cells_from_file(path: &str) -> Result<(MemoryCells, IndexMemoryCells), String> {
-    let contents = read_file(path)?;
-    let mut memory_cells = HashMap::new();
-    let mut index_memory_cells = HashMap::new();
-    for (index, line) in contents.iter().enumerate() {
-        let chunks = line.split('=').collect::<Vec<&str>>();
-        let v = chunks.get(1);
-        // Check if line is index memory cell
-        let idx = parse_index(&chunks);
-        if v.is_some() && !v.unwrap().is_empty() {
-            let v = v.unwrap();
-            let value = match v.parse::<i32>() {
-                Ok(num) => num,
-                Err(e) => {
-                    return Err(format!(
-                        "{}: [Line {}] Unable to parse int: {} \"{}\"",
-                        path,
-                        index + 1,
-                        e,
-                        v
-                    ))
-                }
-            };
-            if let Some(idx) = idx {
-                index_memory_cells.insert(idx, Some(value));
-            } else {
-                memory_cells.insert(
-                    chunks[0].to_string(),
-                    MemoryCell {
-                        label: chunks[0].to_string(),
-                        data: Some(value),
-                    },
-                );
-            }
-        } else if let Some(idx) = idx {
-            index_memory_cells.insert(idx, None);
-        } else {
-            memory_cells.insert(chunks[0].to_string(), MemoryCell::new(chunks[0]));
-        }
-    }
-    Ok((memory_cells, index_memory_cells))
 }
 
 /// Tries to parse an index from the first chunk.
