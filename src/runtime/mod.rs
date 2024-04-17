@@ -416,18 +416,20 @@ impl MemoryConfig {
     ///
     /// ### Accumulators
     ///
-    /// a<ID>=VALUE or a<ID>=
+    /// a<ID>=VALUE or a<ID>
     ///
     /// ### Gamma
     ///
-    /// y= if gamma should be enabled but without a value or
+    /// y if gamma should be enabled but without a value or
     /// y=VALUE if gamma should be enabled and contain a value
     ///
     /// If multiple gamma values are placed in the file, the last value in the file is used.
     ///
     /// ### Memory cell
     ///
-    /// NAME=VALUE, NAME=, [INDEX]=VALUE or [INDEX]=
+    /// NAME=VALUE, NAME, [INDEX]=VALUE or [INDEX]
+    ///
+    /// Memory cells can not be named y or begin with a because these are used to identify accumulators and the gamma accumulator.
     fn from_file_contents(contents: &Vec<String>, path: &str) -> Result<MemoryConfig, String> {
         let mut accumulators = HashMap::new();
         let mut gamma_accumulator = None;
@@ -444,8 +446,7 @@ impl MemoryConfig {
             }
 
             // check if line is accumulator
-            if line.starts_with("a") && v.is_some() {
-                let v = v.unwrap();
+            if line.starts_with("a") {
                 let idx = match idx {
                     Some(idx) => idx,
                     None => {
@@ -457,10 +458,11 @@ impl MemoryConfig {
                         ))
                     }
                 };
-                if v.is_empty() {
+                if v.is_none() || v.unwrap().is_empty() {
                     accumulators.insert(idx, Accumulator::new(idx));
                     continue;
                 }
+                let v = v.unwrap();
                 let value = match v.parse::<i32>() {
                     Ok(num) => num,
                     Err(e) => {
@@ -484,13 +486,13 @@ impl MemoryConfig {
             }
 
             // check if line is gamma
-            if line.starts_with("y") && v.is_some() {
-                let v = v.unwrap();
-                if v.is_empty() {
+            if line.starts_with("y") {
+                if v.is_none() || v.unwrap().is_empty() {
                     // gamma is active, but without a value
                     gamma_accumulator = Some(None);
                     continue;
                 }
+                let v = v.unwrap();
                 let value = match v.parse::<i32>() {
                     Ok(num) => num,
                     Err(e) => {
@@ -860,7 +862,7 @@ mod tests {
 
     #[test]
     fn test_memory_config_from_file_contents_accumulator_none() {
-        let content = vec!["a0=".to_string(), "a5=".to_string()];
+        let content = vec!["a0".to_string(), "a5".to_string()];
         let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
         let should = test_memory_config(Some(vec![(0, None), (5, None)]), None, None, None);
         assert_eq!(should, res);
@@ -884,7 +886,7 @@ mod tests {
 
     #[test]
     fn test_memory_config_from_file_contents_gamma_accumulator_no_value() {
-        let content = vec!["y=".to_string()];
+        let content = vec!["y".to_string()];
         let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
         let should = test_memory_config(None, Some(None), None, None);
         assert_eq!(should, res);
@@ -916,7 +918,7 @@ mod tests {
 
     #[test]
     fn test_memory_config_from_file_contents_memory_cell_none() {
-        let content = vec!["h1=".to_string()];
+        let content = vec!["h1".to_string()];
         let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
         let should = test_memory_config(None, None, Some(vec![("h1".to_string(), None)]), None);
         assert_eq!(should, res);
@@ -933,7 +935,7 @@ mod tests {
 
     #[test]
     fn test_memory_config_from_file_contents_index_memory_cell_none() {
-        let content = vec!["[0]=".to_string(), "[30]=".to_string()];
+        let content = vec!["[0]".to_string(), "[30]".to_string()];
         let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
         let should = test_memory_config(None, None, None, Some(vec![(0, None), (30, None)]));
         assert_eq!(should, res);
@@ -966,13 +968,13 @@ mod tests {
         
             # accumulators
             a0=1
-            a1=
+            a1
         
             # gamma accumulator
             # use this to set a value
             y=5
             # use this to just enable the accumulator
-            y=
+            y
         
             # memory cells
             h1=5
