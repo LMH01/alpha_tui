@@ -220,7 +220,7 @@ impl<'a> RuntimeArgs {
     /// Errors if option is set to parse memory cells from file and the parsing fails.
     pub fn from_args(args: &Cli) -> Result<Self, String> {
         if let Some(path) = &args.memory_config_file {
-            let config = match serde_json::from_str::<MemoryConfigNew>(&utils::read_file(path)?.join("\n")) {
+            let config = match serde_json::from_str::<MemoryConfig>(&utils::read_file(path)?.join("\n")) {
                 Ok(config) => config,
                 Err(e) => return Err(format!("json parse error: {e}"))
             };
@@ -378,14 +378,14 @@ impl From<&Cli> for Settings {
 }
 
 #[derive(PartialEq, Debug, Deserialize, Serialize)]
-struct MemoryConfigNew {
+struct MemoryConfig {
     pub accumulators: HashMap<usize, Option<i32>>,
     pub gamma_accumulator: Option<Option<i32>>,
     pub memory_cells: HashMap<String, Option<i32>>,
     pub index_memory_cells: HashMap<usize, Option<i32>>,
 }
 
-impl MemoryConfigNew {
+impl MemoryConfig {
 
     /// Creates runtime args from this memory config.
     fn to_runtime_args(self, args: &Cli) -> RuntimeArgs {
