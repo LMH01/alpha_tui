@@ -1,0 +1,23 @@
+# left value is the memory type that should be assigned
+# if no value is assigned, the memory type is just enabled
+
+# accumulators
+a0=1
+a1=
+
+# gamma accumulator
+# use this to set a value
+y=5
+# use this to just enable the accumulator
+y=
+
+# memory cells
+h1=5
+h2=10
+h3
+h4
+
+# index memory cells
+[0]=1
+[1]=2
+[7]

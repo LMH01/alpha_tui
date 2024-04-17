@@ -438,6 +438,11 @@ impl MemoryConfig {
             let v = chunks.get(1);
             let idx = parse_index(&chunks);
 
+            // check if line is a comment or empty
+            if line.is_empty() || line.starts_with("//") || line.starts_with("#") {
+                continue;
+            }
+
             // check if line is accumulator
             if line.starts_with("a") && v.is_some() {
                 let v = v.unwrap();
@@ -913,14 +918,7 @@ mod tests {
     fn test_memory_config_from_file_contents_memory_cell_none() {
         let content = vec!["h1=".to_string()];
         let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
-        let should = test_memory_config(
-            None,
-            None,
-            Some(vec![
-                ("h1".to_string(), None),
-            ]),
-            None,
-        );
+        let should = test_memory_config(None, None, Some(vec![("h1".to_string(), None)]), None);
         assert_eq!(should, res);
     }
 
@@ -928,12 +926,8 @@ mod tests {
     fn test_memory_config_from_file_contents_index_memory_cell() {
         let content = vec!["[0]=10".to_string(), "[30]=214".to_string()];
         let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
-        let should = test_memory_config(
-            None,
-            None,
-            None,
-            Some(vec![(0, Some(10)), (30, Some(214))]),
-        );
+        let should =
+            test_memory_config(None, None, None, Some(vec![(0, Some(10)), (30, Some(214))]));
         assert_eq!(should, res);
     }
 
@@ -941,17 +935,72 @@ mod tests {
     fn test_memory_config_from_file_contents_index_memory_cell_none() {
         let content = vec!["[0]=".to_string(), "[30]=".to_string()];
         let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
-        let should = test_memory_config(
-            None,
-            None,
-            None,
-            Some(vec![(0, None), (30, None)]),
-        );
+        let should = test_memory_config(None, None, None, Some(vec![(0, None), (30, None)]));
+        assert_eq!(should, res);
+    }
+
+    #[test]
+    fn test_memory_config_from_file_contents_comments() {
+        let content = vec![
+            "# this is a comment".to_string(),
+            "// this is also a comment".to_string(),
+        ];
+        let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
+        let should = test_memory_config(None, None, None, None);
+        assert_eq!(should, res);
+    }
+
+    #[test]
+    fn test_memory_config_from_file_contents_empty_line() {
+        let content = vec!["".to_string(), "".to_string()];
+        let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
+        let should = test_memory_config(None, None, None, None);
         assert_eq!(should, res);
     }
 
     #[test]
     fn test_memory_config_from_file_contents() {
-        let content = vec![""];
+        let content = r#"
+            # left value is the memory type that should be assigned
+            # if no value is assigned, the memory type is just enabled
+        
+            # accumulators
+            a0=1
+            a1=
+        
+            # gamma accumulator
+            # use this to set a value
+            y=5
+            # use this to just enable the accumulator
+            y=
+        
+            # memory cells
+            h1=5
+            h2=10
+            h3
+            h4
+        
+            # index memory cells
+            [0]=1
+            [1]=2
+            [7] 
+        "#
+        .lines()
+        .map(|f| f.trim().to_string())
+        .collect::<Vec<String>>();
+
+        let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
+        let should = test_memory_config(
+            Some(vec![(0, Some(1)), (1, None)]),
+            Some(None),
+            Some(vec![
+                ("h1".to_string(), Some(5)),
+                ("h2".to_string(), Some(10)),
+                ("h3".to_string(), None),
+                ("h4".to_string(), None),
+            ]),
+            Some(vec![(0, Some(1)), (1, Some(2)), (7, None)]),
+        );
+        assert_eq!(should, res);
     }
 }
