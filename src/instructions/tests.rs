@@ -863,6 +863,26 @@ fn test_parsing_with_semicolon() {
 }
 
 #[test]
+fn test_alternative_assignment_parsing() {
+    assert_eq!(
+        Instruction::try_from("a = 5;"),
+        Ok(Instruction::Assign(
+            TargetType::Accumulator(0),
+            Value::Constant(5)
+        ))
+    );
+    assert_eq!(
+        Instruction::try_from("a = 5 * 5;"),
+        Ok(Instruction::Calc(
+            TargetType::Accumulator(0),
+            Value::Constant(5),
+            Operation::Mul,
+            Value::Constant(5)
+        ))
+    );
+}
+
+#[test]
 fn test_example_program_memory_cells() {
     let mut runtime_args = RuntimeArgs::new_debug(TEST_MEMORY_CELL_LABELS);
     for _i in 1..=4 {

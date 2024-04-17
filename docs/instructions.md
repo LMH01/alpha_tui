@@ -72,6 +72,8 @@ The following symbols can be substituted to make writing programs easier
 | $\ne$ | != |
 | $\ge$ | >= |
 
+You are also allowed to write `=` instead of `:=` when writing assignment instructions. Note, however, that this is a deviation from the alpha notation standard.
+
 ## Examples
 
 Example programs can be found [here](../examples/programs/).

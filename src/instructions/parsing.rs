@@ -115,7 +115,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
             });
         }
 
-        if parts[1] != ":=" {
+        if parts[1] != ":=" && parts[1] != "=" {
             return Err(InstructionParseError::UnknownInstruction(
                 whole_range(&parts),
                 parts.join(" "),

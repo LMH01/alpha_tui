@@ -6,6 +6,7 @@
 
 - Changed x size of custom instruction popup from 60% screen size to 43%
 - Removed unnecessary 30ms sleep after key input
+- It is now allowed to write `=` instead of `:=` when writing assignment instructions. Note, however, that this is a deviation from the alpha notation standard (fr #27).
 
 ### Bug fixes
 
