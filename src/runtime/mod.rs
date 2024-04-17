@@ -437,10 +437,25 @@ impl MemoryConfig {
             let chunks = line.split('=').collect::<Vec<&str>>();
             let v = chunks.get(1);
             let idx = parse_index(&chunks);
-            
+
             // check if line is accumulator
             if line.starts_with("a") && v.is_some() && !v.unwrap().is_empty() {
                 let v = v.unwrap();
+                let idx = match idx {
+                    Some(idx) => idx,
+                    None => {
+                        return Err(format!(
+                            "{}: [Line {}] Unable to parse index: {}",
+                            path,
+                            index + 1,
+                            line
+                        ))
+                    }
+                };
+                if *v == "None" {
+                    accumulators.insert(idx, Accumulator::new(idx));
+                    continue;
+                }
                 let value = match v.parse::<i32>() {
                     Ok(num) => num,
                     Err(e) => {
@@ -453,15 +468,13 @@ impl MemoryConfig {
                         ))
                     }
                 };
-                if let Some(idx) = idx {
-                    accumulators.insert(
-                        idx,
-                        Accumulator {
-                            id: idx,
-                            data: Some(value),
-                        },
-                    );
-                }
+                accumulators.insert(
+                    idx,
+                    Accumulator {
+                        id: idx,
+                        data: Some(value),
+                    },
+                );
                 continue;
             }
 
@@ -492,6 +505,16 @@ impl MemoryConfig {
             // Check if line is index memory cell
             if v.is_some() && !v.unwrap().is_empty() {
                 let v = v.unwrap();
+                if *v == "None" {
+                    memory_cells.insert(
+                        chunks[0].to_string(),
+                        MemoryCell {
+                            label: chunks[0].to_string(),
+                            data: None,
+                        },
+                    );
+                    continue;
+                }
                 let value = match v.parse::<i32>() {
                     Ok(num) => num,
                     Err(e) => {
@@ -827,6 +850,46 @@ mod tests {
         let content = vec!["a0=5".to_string(), "a20=30".to_string()];
         let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
         let should = test_memory_config(Some(vec![(0, Some(5)), (20, Some(30))]), None, None, None);
+        assert_eq!(should, res);
+    }
+
+    #[test]
+    fn test_memory_config_from_file_contents_accumulator_none() {
+        let content = vec!["a0=None".to_string(), "a5=None".to_string()];
+        let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
+        let should = test_memory_config(Some(vec![(0, None), (5, None)]), None, None, None);
+        assert_eq!(should, res);
+    }
+
+    #[test]
+    fn test_memory_config_from_file_contents_gamma_accumulator() {
+        let content = vec!["y=5".to_string()];
+        let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
+        let should = test_memory_config(None, Some(Some(5)), None, None);
+        assert_eq!(should, res);
+    }
+    
+    #[test]
+    fn test_memory_config_from_file_contents_gamma_accumulator_last_value() {
+        let content = vec!["y=5".to_string(), "y=8".to_string()];
+        let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
+        let should = test_memory_config(None, Some(Some(8)), None, None);
+        assert_eq!(should, res);
+    }
+    
+    #[test]
+    fn test_memory_config_from_file_contents_gamma_accumulator_no_value() {
+        let content = vec!["y=None".to_string()];
+        let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
+        let should = test_memory_config(None, Some(None), None, None);
+        assert_eq!(should, res);
+    }
+    
+    #[test]
+    fn test_memory_config_from_file_contents_gamma_accumulator_not_enabled() {
+        let content = Vec::new();
+        let res = MemoryConfig::from_file_contents(&content, "test").unwrap();
+        let should = test_memory_config(None, Some(None), None, None);
         assert_eq!(should, res);
     }
 }
