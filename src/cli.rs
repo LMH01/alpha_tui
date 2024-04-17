@@ -16,7 +16,6 @@ pub struct Cli {
         long,
         help = "Number of available accumulators",
         long_help = "Number of available accumulators.\nIf the value is too large it can happen that accumulators are not displayed in the tui.",
-        required_if_eq("disable_memory_detection", "true"),
         global = true
     )]
     pub accumulators: Option<u8>,
@@ -40,8 +39,8 @@ pub struct Cli {
     pub index_memory_cells: Option<Vec<usize>>,
     #[arg(
         long,
-        help = "Load memory config from a file",
-        long_help = "Load accumulators, gamma accumulator and memory cell values from a file.\nEach line contains a single memory entry. Can also be used to specify that a memory value should exist.\n\nWhat the file can contain:\n\nAccumulators:\n\na<ID>=VALUE or a<ID>\nExamples:\na1=5\na2\n\nGamma accumulator:\n\ny if gamma should be enabled without a value\ny=VALUE if gamma should  be enabled and contain a value\n\nIf multiple gamma values are placed in the file, the last value in the file is used.\n\nMemory cells:\n\nNAME=VALUE\nExample: h1=5\nEmpty cells can be set with: NAME\nExample: h2\n\nIndex memory cells can be set by using the following formatting: [INDEX]=VALUE\nExample: [0]=5\n\nFurther help can be found here: https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md.",
+        help = "Load memory config from a json file",
+        long_help = "Load accumulators, gamma accumulator and memory cell values from a json file.\n\nFurther help can be found here: https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md.",
         conflicts_with_all = [ "memory_cells", "index_memory_cells", "accumulators", "enable_gamma_accumulator" ],
         global = true,
     )]
