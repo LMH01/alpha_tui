@@ -1,6 +1,6 @@
-use std::{borrow::BorrowMut, ops::Deref, thread, time::Duration};
+use std::{borrow::BorrowMut, ops::Deref};
 
-use crossterm::event::{self, Event, KeyCode};
+use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use miette::{miette, IntoDiagnostic, Result};
 use ratatui::{
     backend::Backend,
@@ -121,6 +121,10 @@ impl App {
         loop {
             terminal.draw(|f| draw(f, self)).into_diagnostic()?;
             if let Event::Key(key) = event::read().into_diagnostic()? {
+                if key.kind == KeyEventKind::Release {
+                    // ignore when key is released, to prevent dual input
+                    continue;
+                }
                 match &self.state {
                     State::CustomInstruction(_) => {
                         if let KeyCode::Char(to_insert) = key.code {

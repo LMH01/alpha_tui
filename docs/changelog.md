@@ -4,7 +4,12 @@
 
 ### Other
 
-- Changed x size of custom instruction popup from 60% screen size to 43% 
+- Changed x size of custom instruction popup from 60% screen size to 43%
+- Removed unnecessary 30ms sleep after key input
+
+### Bug fixes
+
+- [Windows] fixed double key input (#35)
 
 ## v1.2.0 (latest version)
 

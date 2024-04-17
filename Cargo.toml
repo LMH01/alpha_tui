@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 ratatui = { version = "0.26", features = ["all-widgets"]}
-crossterm = "0.27"
+crossterm = { version = "0.27", features = ["events"] }
 clap = { version = "4.3", features = ["derive", "color"] }
 thiserror = "1"
 miette = { version = "7.2", features = ["fancy"] }
