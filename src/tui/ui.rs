@@ -8,8 +8,7 @@ use ratatui::{
 use text_align::TextAlign;
 
 use super::{
-    App, State, BREAKPOINT_ACCENT_COLOR, CODE_AREA_DEFAULT_COLOR, ERROR_COLOR,
-    EXECUTION_FINISHED_POPUP_COLOR, LIST_ITEM_HIGHLIGHT_COLOR, NEXT_INSTRUCTION_BLOCK_BORDER_FG,
+    App, State, BREAKPOINT_ACCENT_COLOR, CODE_AREA_DEFAULT_COLOR, ERROR_COLOR, EXECUTION_FINISHED_POPUP_COLOR, INTERNAL_MEMORY_BLOCK_BORDER_FG, LIST_ITEM_HIGHLIGHT_COLOR, MEMORY_BLOCK_BORDER_FG
 };
 
 /// Draw the ui
@@ -140,7 +139,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         .borders(Borders::ALL)
         .title("Accumulators")
         .title_alignment(Alignment::Center)
-        .border_type(BorderType::Rounded);
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(MEMORY_BLOCK_BORDER_FG));
     let accumulator_list =
         List::new(app.memory_lists_manager.accumulator_list()).block(accumulator);
     f.render_widget(accumulator_list, right_chunks[0]);
@@ -150,7 +150,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         .borders(Borders::ALL)
         .title("Memory cells")
         .title_alignment(Alignment::Center)
-        .border_type(BorderType::Rounded);
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(MEMORY_BLOCK_BORDER_FG));
     let memory_cell_list =
         List::new(app.memory_lists_manager.memory_cell_list()).block(memory_cells);
     f.render_widget(memory_cell_list, right_chunks[1]);
@@ -161,7 +162,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         .title("Next instruction")
         .title_alignment(Alignment::Center)
         .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(NEXT_INSTRUCTION_BLOCK_BORDER_FG));
+        .border_style(Style::default().fg(INTERNAL_MEMORY_BLOCK_BORDER_FG));
     let next_instruction = Paragraph::new(format!("{}", app.runtime.next_instruction_index() + 1))
         .block(next_instruction_block);
     f.render_widget(next_instruction, right_chunks[2]);
@@ -171,7 +172,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         .borders(Borders::ALL)
         .title("Stack")
         .title_alignment(Alignment::Center)
-        .border_type(BorderType::Rounded);
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(MEMORY_BLOCK_BORDER_FG));
     let stack_list = List::new(app.memory_lists_manager.stack_list()).block(stack);
     f.render_widget(stack_list, stack_chunks[0]);
 
@@ -182,7 +184,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             .title("Call Stack")
             .title_alignment(Alignment::Center)
             .border_type(BorderType::Rounded)
-            .border_style(Style::default().fg(NEXT_INSTRUCTION_BLOCK_BORDER_FG));
+            .border_style(Style::default().fg(INTERNAL_MEMORY_BLOCK_BORDER_FG));
         let call_stack = List::new(app.memory_lists_manager.call_stack_list()).block(call_stack_block);
         f.render_widget(call_stack, stack_chunks[1]);
     }
