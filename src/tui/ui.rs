@@ -157,9 +157,14 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     f.render_widget(memory_cell_list, right_chunks[1]);
 
     // Next instruction block
+    let next_instruction_title = if right_chunks[2].width >= 18 {
+        "Next instruction"
+    } else {
+        "Next instr."
+    };
     let next_instruction_block = Block::default()
         .borders(Borders::ALL)
-        .title("Next instruction")
+        .title(next_instruction_title)
         .title_alignment(Alignment::Center)
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(INTERNAL_MEMORY_BLOCK_BORDER_FG));
@@ -179,9 +184,14 @@ pub fn draw(f: &mut Frame, app: &mut App) {
 
     // Render call stack if enabled
     if app.show_call_stack {
+        let call_stack_title = if stack_chunks[1].width >= 12 {
+            "Call Stack"
+        } else {
+            "CS"
+        };
         let call_stack_block = Block::default()
             .borders(Borders::ALL)
-            .title("Call Stack")
+            .title(call_stack_title)
             .title_alignment(Alignment::Center)
             .border_type(BorderType::Rounded)
             .border_style(Style::default().fg(INTERNAL_MEMORY_BLOCK_BORDER_FG));
