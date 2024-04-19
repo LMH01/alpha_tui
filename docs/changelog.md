@@ -2,6 +2,11 @@
 
 ## v1.3.0
 
+### New feature
+
+- Next instruction is now displayed in the tui (fr #34)
+- The call stack can now be displayed in the tui. Its default state is determined if a call instruction is used. If it is used, it is shown, if such instruction is absent, it is hidden. With the `c` key this display can be hidden or shown manually (fr #34).
+
 ### Other
 
 - Reworked how predetermined memory values are handled (fr #29):
