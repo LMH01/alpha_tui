@@ -143,7 +143,7 @@ impl App {
                                     self.instruction_list_states.set_next_visual();
                                 }
                             }
-                            KeyCode::Char('t') => {
+                            KeyCode::Char('b') => {
                                 if let State::DebugSelect(_, _) = &self.state {
                                     self.instruction_list_states.toggle_breakpoint();
                                 }
@@ -182,7 +182,7 @@ impl App {
                                     self.instruction_list_states.set_prev_visual();
                                 }
                             }
-                            KeyCode::Char('s') => match self.state {
+                            KeyCode::Char('t') => match self.state {
                                 State::Running(_) | State::Finished(_) => self.reset(),
                                 State::RuntimeError(_) | State::CustomInstructionError(_) => {
                                     self.reset();
@@ -192,24 +192,29 @@ impl App {
                                 }
                                 _ => (),
                             },
-                            KeyCode::Char('r') => {
-                                if self.state == State::Default
-                                    || self.state == State::Running(true)
-                                    || self.state == State::Running(false)
-                                {
-                                    if self.state != State::Running(true)
-                                        && self.state != State::Running(false)
-                                    {
-                                        self.instruction_list_states
-                                    .set_start(self.runtime.next_instruction_index() as i32);
-                                    }
+                            KeyCode::Char('s') => match self.state {
+                                State::Default => {
+                                    self.instruction_list_states
+                                        .set_start(self.runtime.next_instruction_index() as i32);
                                     self.state = State::Running(
                                         self.instruction_list_states.breakpoints_set(),
                                     );
                                     _ = self.step();
                                 }
-                            }
+                                State::DebugSelect(_, _) => {
+                                    self.instruction_list_states.set_next_visual();
+                                }
+                                _ => (),
+                            },
                             KeyCode::Char('n') => {
+                                match self.state {
+                                    State::Running(_) => {
+                                        _ = self.step();
+                                    }
+                                    _ => (),
+                                };
+                            }
+                            KeyCode::Char('r') => {
                                 // run to the next breakpoint
                                 if self.state == State::Running(true)
                                     || self.state == State::Running(false)

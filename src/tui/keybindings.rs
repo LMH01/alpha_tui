@@ -144,34 +144,35 @@ impl KeybindingHints {
         // set more specific keybinding hints
         match state {
             State::Running(breakpoint_set) => {
-                self.set_state("r", 1)?;
-                self.show("s");
+                self.hide("s");
+                self.show("r");
+                self.show("t");
                 self.show("n");
                 self.show("i");
                 if *breakpoint_set {
-                    self.set_state("n", 1)?;
+                    self.set_state("r", 1)?;
                 }
             }
             State::DebugSelect(_, _) => {
-                self.hide("r");
-                self.show("t");
+                self.hide("s");
+                self.show("b");
                 self.show("j");
                 self.show(&KeySymbol::ArrowUp.to_string());
                 self.show(&KeySymbol::ArrowDown.to_string());
                 self.set_state("d", 1)?;
             }
             State::Finished(_) => {
-                self.hide("r");
-                self.show("s");
+                self.hide("s");
+                self.show("t");
                 self.set_state("d", 2)?;
             }
             State::RuntimeError(_) => {
-                self.hide("r");
+                self.hide("s");
                 self.hide("d");
-                self.show("s");
+                self.show("t");
             }
             State::CustomInstruction(state) => {
-                self.hide("r");
+                self.hide("s");
                 self.hide("d");
                 self.hide("q");
                 self.show(&KeySymbol::Enter.to_string());
@@ -202,14 +203,14 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     );
     hints.insert(
         "s".to_string(),
-        KeybindingHint::new(1, "s", "Reset", true, false),
+        KeybindingHint::new(4, "s", "Start", true, true),
     );
     hints.insert(
         "n".to_string(),
         KeybindingHint::new_many(
-            vec![2, 2],
+            vec![4],
             "n",
-            vec!["Run to end", "Next breakpoint"],
+            vec!["Run next instruction"],
             true,
             false,
         )?,
@@ -217,11 +218,11 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     hints.insert(
         "r".to_string(),
         KeybindingHint::new_many(
-            vec![4, 4],
+            vec![2, 2],
             "r",
-            vec!["Run", "Run next instruction"],
+            vec!["Run to end", "Run to next breakpoint"],
             true,
-            true,
+            false,
         )?,
     );
     hints.insert(
@@ -240,7 +241,11 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     );
     hints.insert(
         "t".to_string(),
-        KeybindingHint::new(8, "t", "Toggle breakpoint", true, false),
+        KeybindingHint::new(1, "t", "Reset", true, false),
+    );
+    hints.insert(
+        "b".to_string(),
+        KeybindingHint::new(8, "b", "Toggle breakpoint", true, false),
     );
     hints.insert(
         "j".to_string(),
