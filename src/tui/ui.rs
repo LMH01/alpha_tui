@@ -30,7 +30,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         .direction(Direction::Horizontal)
         .constraints(
             [
-                Constraint::Percentage(5),
+                Constraint::Length(5),
                 Constraint::Percentage(65),
                 Constraint::Percentage(20),
                 Constraint::Percentage(10),
