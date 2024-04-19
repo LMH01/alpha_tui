@@ -210,13 +210,7 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     );
     hints.insert(
         "n".to_string(),
-        KeybindingHint::new_many(
-            vec![4],
-            "n",
-            vec!["Run next instruction"],
-            true,
-            false,
-        )?,
+        KeybindingHint::new_many(vec![4], "n", vec!["Run next instruction"], true, false)?,
     );
     hints.insert(
         "r".to_string(),
@@ -268,13 +262,7 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     );
     hints.insert(
         "c".to_string(),
-        KeybindingHint::new(
-            10,
-            "c",
-            "Toggle call stack",
-            true,
-            true,
-        ),
+        KeybindingHint::new(10, "c", "Toggle call stack", true, true),
     );
     hints.insert(
         KeySymbol::ArrowLeft.to_string(),

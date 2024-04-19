@@ -85,7 +85,7 @@ pub struct App {
     executed_custom_instructions: Vec<String>,
     command_history_file: Option<String>,
     /// Determines if the call stack should be displayed in the tui
-    show_call_stack: bool
+    show_call_stack: bool,
 }
 
 #[allow(clippy::cast_possible_wrap)]
@@ -265,9 +265,9 @@ impl App {
                             KeyCode::Char('c') => match &self.state {
                                 State::Default | State::Running(_) | State::DebugSelect(_, _) => {
                                     self.show_call_stack = !self.show_call_stack;
-                                },
+                                }
                                 _ => (),
-                            }
+                            },
                             _ => (),
                         }
                     }
@@ -286,8 +286,7 @@ impl App {
                 }
             }
 
-            self.memory_lists_manager
-                .update(&self.runtime);
+            self.memory_lists_manager.update(&self.runtime);
             // update keybinding hints for next loop
             if let Err(e) = self.keybinding_hints.update(&self.state) {
                 return Err(miette!("Error while updating keybinding hints:\n{e}"));

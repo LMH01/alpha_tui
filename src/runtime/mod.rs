@@ -150,7 +150,6 @@ impl Runtime {
         }
         res
     }
-
 }
 
 /// Used to control what instruction should be executed next.

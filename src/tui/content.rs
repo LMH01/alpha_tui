@@ -305,7 +305,8 @@ impl MemoryListsManager {
         }
         // Update stack
         let stack_changed = self.stack.len() != runtime.runtime_args().stack.len();
-        let mut new_stack: Vec<ListItem<'_>> = runtime.runtime_args()
+        let mut new_stack: Vec<ListItem<'_>> = runtime
+            .runtime_args()
             .stack
             .iter()
             .map(|f| ListItem::new(f.to_string()))
@@ -320,7 +321,8 @@ impl MemoryListsManager {
         self.stack = new_stack;
         // update call stack
         let call_stack_changed = self.call_stack.len() != runtime.control_flow().call_stack.len();
-        let mut new_call_stack: Vec<ListItem<'_>> = runtime.control_flow()
+        let mut new_call_stack: Vec<ListItem<'_>> = runtime
+            .control_flow()
             .call_stack
             .iter()
             .map(|f| ListItem::new(format!("{}", f + 1)))
