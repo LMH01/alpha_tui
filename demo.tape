@@ -22,107 +22,107 @@ Enter
 
 Sleep 500ms
 
-Type "r"
+Type "s"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 Sleep 500ms
 
-Type "r"
+Type "n"
 
 # Admire the output for a bit.
 Sleep 3s
@@ -169,7 +169,7 @@ Up
 
 Sleep 500ms
 
-Type "t"
+Type "b"
 
 Sleep 500ms
 
@@ -189,7 +189,7 @@ Up
 
 Sleep 500ms
 
-Type "t"
+Type "b"
 
 Sleep 500ms
 
@@ -213,7 +213,7 @@ Up
 
 Sleep 500ms
 
-Type "t"
+Type "b"
 
 Sleep 500ms
 
@@ -221,86 +221,86 @@ Type "d"
 
 Sleep 500ms
 
+Type "s"
+
+Sleep 500ms
+
 Type "r"
 
 Sleep 500ms
 
-Type "n"
+Type "r"
 
 Sleep 500ms
 
-Type "n"
+Type "r"
 
 Sleep 500ms
 
-Type "n"
+Type "r"
 
 Sleep 500ms
 
-Type "n"
+Type "r"
 
 Sleep 500ms
 
-Type "n"
+Type "r"
 
 Sleep 500ms
 
-Type "n"
+Type "r"
 
 Sleep 500ms
 
-Type "n"
+Type "r"
 
 Sleep 500ms
 
-Type "n"
+Type "r"
 
 Sleep 500ms
 
-Type "n"
+Type "r"
 
 Sleep 500ms
 
-Type "n"
+Type "r"
 
 Sleep 500ms
 
-Type "n"
+Type "r"
 
 Sleep 500ms
 
-Type "n"
+Type "r"
 
 Sleep 500ms
 
-Type "n"
+Type "r"
 
 Sleep 500ms
 
-Type "n"
+Type "r"
 
 Sleep 500ms
 
-Type "n"
+Type "r"
 
 Sleep 500ms
 
-Type "n"
+Type "r"
 
 Sleep 500ms
 
-Type "n"
+Type "r"
 
 Sleep 500ms
 
-Type "n"
+Type "r"
 
 Sleep 500ms
 
-Type "n"
-
-Sleep 500ms
-
-Type "n"
+Type "r"
 
 Sleep 3s

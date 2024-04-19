@@ -60,6 +60,7 @@
                 rustfmt
                 clippy
                 cargo-tarpaulin
+                vhs
               ];
 
               # Certain Rust tools won't work without this
