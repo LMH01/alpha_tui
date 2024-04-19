@@ -8,7 +8,9 @@ use ratatui::{
 use text_align::TextAlign;
 
 use super::{
-    App, State, BREAKPOINT_ACCENT_COLOR, CODE_AREA_DEFAULT_COLOR, ERROR_COLOR, EXECUTION_FINISHED_POPUP_COLOR, INTERNAL_MEMORY_BLOCK_BORDER_FG, LIST_ITEM_HIGHLIGHT_COLOR, MEMORY_BLOCK_BORDER_FG
+    App, State, BREAKPOINT_ACCENT_COLOR, CODE_AREA_DEFAULT_COLOR, ERROR_COLOR,
+    EXECUTION_FINISHED_POPUP_COLOR, INTERNAL_MEMORY_BLOCK_BORDER_FG, LIST_ITEM_HIGHLIGHT_COLOR,
+    MEMORY_BLOCK_BORDER_FG,
 };
 
 /// Draw the ui
@@ -60,6 +62,16 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         .constraints(stack_chunks_constraints)
         .split(chunks[3]);
 
+    // central big part
+    let mut central_constraints = vec![Constraint::Fill(1)];
+    if let State::Sandbox(_) = app.state {
+        central_constraints.push(Constraint::Percentage(30));
+    }
+    let central_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(central_constraints)
+        .split(chunks[1]);
+
     // Code area
     let mut code_area = Block::default()
         .borders(Borders::ALL)
@@ -94,7 +106,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     // We can now render the item list
     f.render_stateful_widget(
         items,
-        chunks[1],
+        central_chunks[0],
         app.instruction_list_states.instruction_list_state_mut(),
     );
 
@@ -195,7 +207,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             .title_alignment(Alignment::Center)
             .border_type(BorderType::Rounded)
             .border_style(Style::default().fg(INTERNAL_MEMORY_BLOCK_BORDER_FG));
-        let call_stack = List::new(app.memory_lists_manager.call_stack_list()).block(call_stack_block);
+        let call_stack =
+            List::new(app.memory_lists_manager.call_stack_list()).block(call_stack_block);
         f.render_widget(call_stack, stack_chunks[1]);
     }
 
@@ -244,8 +257,11 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         f.render_widget(text, area);
     }
 
-    // Draw custom instruction popup if it is active
+    // Draw custom instruction popup/window
     if let State::CustomInstruction(single_instruction) = &mut app.state {
-        single_instruction.draw(f, global_chunks[0])
+        single_instruction.draw(f, global_chunks[0], false)
+    }
+    if let State::Sandbox(single_instruction) = &mut app.state {
+        single_instruction.draw(f, central_chunks[1], false);
     }
 }

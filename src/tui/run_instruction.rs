@@ -31,7 +31,16 @@ impl SingleInstruction {
         }
     }
 
-    pub fn draw(&mut self, f: &mut ratatui::prelude::Frame, r: ratatui::prelude::Rect) {
+    /// Draws this single instruction.
+    ///
+    /// If `floating` is set, a centered area is created inside `r`, where this window is drawn.
+    /// If it is false, the whole input area is used to draw the contents.
+    pub fn draw(
+        &mut self,
+        f: &mut ratatui::prelude::Frame,
+        r: ratatui::prelude::Rect,
+        floating: bool,
+    ) {
         let input = Paragraph::new(self.input.as_str())
             .style(Style::default())
             .block(
@@ -39,7 +48,11 @@ impl SingleInstruction {
                     .borders(Borders::ALL)
                     .title("Enter instruction:"),
             );
-        let area = super::centered_rect(43, 40, None, r);
+        let area = if floating {
+            super::centered_rect(43, 40, None, r)
+        } else {
+            r
+        };
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Length(3), Constraint::Fill(1)])

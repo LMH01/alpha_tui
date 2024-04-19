@@ -65,6 +65,8 @@ pub enum State {
     Finished(bool),
     /// Indicates that an irrecoverable error occurred while a program was running.
     RuntimeError(RuntimeError),
+    /// Indicates that this app is in sandbox mode.
+    Sandbox(SingleInstruction),
 }
 
 /// App holds the state of the application
@@ -102,9 +104,16 @@ impl App {
         set_breakpoints: &Option<Vec<usize>>,
         custom_instructions: Option<Vec<String>>,
         command_history_file: Option<String>,
+        sandbox: bool,
     ) -> App {
         let mlm = MemoryListsManager::new(runtime.runtime_args());
         let show_call_stack = runtime.contains_call_instruction();
+        let executed_custom_instructions = custom_instructions.unwrap_or_default();
+        let state = if sandbox {
+            State::Sandbox(SingleInstruction::new(&executed_custom_instructions))
+        } else {
+            State::Default
+        };
         Self {
             runtime,
             filename,
@@ -115,8 +124,8 @@ impl App {
             keybinding_hints: KeybindingHints::new()
                 .expect("Keybinding hints should be properly initialized"),
             memory_lists_manager: mlm,
-            state: State::Default,
-            executed_custom_instructions: custom_instructions.unwrap_or_default(),
+            state,
+            executed_custom_instructions,
             command_history_file,
             show_call_stack,
         }
