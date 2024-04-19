@@ -32,6 +32,16 @@ pub struct Runtime {
 }
 
 impl Runtime {
+    /// Creates a new runtime that should only be used for the sandbox mode.
+    pub fn new_sandbox(runtime_args: RuntimeArgs) -> Runtime {
+        Self {
+            runtime_args,
+            instructions: Vec::new(),
+            control_flow: ControlFlow::new(),
+            instruction_runs: 0,
+        }
+    }
+
     /// Runs the complete program.
     #[allow(dead_code)]
     pub fn run(&mut self) -> Result<bool, RuntimeError> {
@@ -294,7 +304,7 @@ impl<'a> RuntimeArgs {
         }
     }
 
-    fn new(
+    pub fn new(
         acc: usize,
         m_cells: Vec<String>,
         idx_m_cells: Option<Vec<usize>>,

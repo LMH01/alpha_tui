@@ -1,17 +1,8 @@
-use std::io;
-
-use crossterm::{
-    event::{DisableMouseCapture, EnableMouseCapture},
-    execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
-};
-use miette::{miette, Context, IntoDiagnostic, Result};
-use ratatui::{backend::CrosstermBackend, Terminal};
+use miette::{Context, Result};
 
 use crate::{
     cli::{Cli, Commands, LoadArgs},
     commands::load_instruction_history,
-    runtime::builder::RuntimeBuilder,
     tui::App,
     utils::{build_instructions_with_whitelist, pretty_format_instructions, write_file},
 };
@@ -24,17 +15,10 @@ pub fn load(
     load_args: LoadArgs,
 ) -> Result<()> {
     // check if command history is set
-    let instruction_history = load_instruction_history(&load_args)?;
+    let instruction_history = load_instruction_history(&load_args.custom_instruction_history_file)?;
 
     println!("Building program");
-    let mut rb = match RuntimeBuilder::from_args(cli) {
-        Ok(rb) => rb,
-        Err(e) => {
-            return Err(miette!(
-                "Unable to create RuntimeBuilder, memory config could not be loaded from file:\n{e}"
-            ));
-        }
-    };
+    let mut rb = super::create_runtime_builder(cli)?;
 
     if let Some(file) = cli.allowed_instructions_file.as_ref() {
         build_instructions_with_whitelist(&mut rb, &instructions, &input, file)?;
@@ -68,12 +52,7 @@ pub fn load(
     // tui
     // setup terminal
     println!("Ready to run, launching tui");
-    enable_raw_mode().into_diagnostic()?;
-    let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen, EnableMouseCapture).into_diagnostic()?;
-    let stdout = io::stdout();
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend).unwrap();
+    let mut terminal = super::setup_terminal()?;
 
     // create app
     let mut app = match cli.command {
@@ -99,14 +78,7 @@ pub fn load(
     let res = app.run(&mut terminal);
 
     // restore terminal
-    disable_raw_mode().into_diagnostic()?;
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )
-    .into_diagnostic()?;
-    terminal.show_cursor().into_diagnostic()?;
+    super::restore_terminal(&mut terminal)?;
 
     res?;
     Ok(())
