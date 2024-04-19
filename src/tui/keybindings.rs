@@ -163,15 +163,18 @@ impl KeybindingHints {
             }
             State::Finished(_) => {
                 self.hide("s");
+                self.hide("c");
                 self.show("t");
                 self.set_state("d", 2)?;
             }
             State::RuntimeError(_) => {
+                self.hide("c");
                 self.hide("s");
                 self.hide("d");
                 self.show("t");
             }
             State::CustomInstruction(state) => {
+                self.hide("c");
                 self.hide("s");
                 self.hide("d");
                 self.hide("q");
@@ -249,7 +252,7 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     );
     hints.insert(
         "j".to_string(),
-        KeybindingHint::new(10, "j", "Jump to line", true, false),
+        KeybindingHint::new(11, "j", "Jump to line", true, false),
     );
     hints.insert(
         KeySymbol::ArrowUp.to_string(),
@@ -262,6 +265,16 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     hints.insert(
         "i".to_string(),
         KeybindingHint::new(9, "i", "Run custom instruction", true, false),
+    );
+    hints.insert(
+        "c".to_string(),
+        KeybindingHint::new(
+            10,
+            "c",
+            "Toggle call stack",
+            true,
+            true,
+        ),
     );
     hints.insert(
         KeySymbol::ArrowLeft.to_string(),

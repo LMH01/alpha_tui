@@ -253,6 +253,12 @@ impl App {
                                 }
                                 _ => (),
                             },
+                            KeyCode::Char('c') => match &self.state {
+                                State::Default | State::Running(_) | State::DebugSelect(_, _) => {
+                                    self.show_call_stack = !self.show_call_stack;
+                                },
+                                _ => (),
+                            }
                             _ => (),
                         }
                     }
