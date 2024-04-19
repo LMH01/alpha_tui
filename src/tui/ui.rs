@@ -9,7 +9,7 @@ use text_align::TextAlign;
 
 use super::{
     App, State, BREAKPOINT_ACCENT_COLOR, CODE_AREA_DEFAULT_COLOR, ERROR_COLOR,
-    EXECUTION_FINISHED_POPUP_COLOR, LIST_ITEM_HIGHLIGHT_COLOR,
+    EXECUTION_FINISHED_POPUP_COLOR, LIST_ITEM_HIGHLIGHT_COLOR, NEXT_INSTRUCTION_BLOCK_BORDER_FG,
 };
 
 /// Draw the ui
@@ -45,7 +45,11 @@ pub fn draw(f: &mut Frame, app: &mut App) {
 
     let right_chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
+        .constraints([
+            Constraint::Percentage(30),
+            Constraint::Fill(1),
+            Constraint::Length(3),
+        ])
         .split(chunks[2]);
 
     // Code area
@@ -141,6 +145,17 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     let memory_cell_list =
         List::new(app.memory_lists_manager.memory_cell_list()).block(memory_cells);
     f.render_widget(memory_cell_list, right_chunks[1]);
+
+    // Next instruction block
+    let next_instruction_block = Block::default()
+        .borders(Borders::ALL)
+        .title("Next instruction")
+        .title_alignment(Alignment::Center)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(NEXT_INSTRUCTION_BLOCK_BORDER_FG));
+    let next_instruction = Paragraph::new(format!("{}", app.runtime.next_instruction_index() + 1))
+        .block(next_instruction_block);
+    f.render_widget(next_instruction, right_chunks[2]);
 
     // Stack block
     let stack = Block::default()

@@ -43,6 +43,7 @@ const KEYBINDS_DISABLED_FG: Color = Color::DarkGray;
 const KEYBINDS_BG: Color = Color::Rgb(98, 114, 164);
 const KEYBINDS_DISABLED_BG: Color = Color::Black;
 const CUSTOM_INSTRUCTION_ACCENT_FG: Color = Color::Cyan;
+const NEXT_INSTRUCTION_BLOCK_BORDER_FG: Color = Color::Yellow;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum State {
