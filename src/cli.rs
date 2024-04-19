@@ -149,6 +149,17 @@ pub struct CheckArgs {
     command: CheckCommands,
 }
 
+#[derive(Args, Clone, Debug)]
+pub struct SandboxArgs {
+    #[arg(
+        short,
+        long,
+        help = "File to load and save the custom instruction history to/from",
+        long_help = "File to load and save the custom instruction history to/from.\nIf set, the instructions in this list will be analyzed and be made available in the custom instruction window. Instructions not yet contained in this file will be added to it."
+    )]
+    pub custom_instruction_history_file: Option<String>,
+}
+
 #[derive(Subcommand, Clone, Debug)]
 pub enum Commands {
     #[command(about = "Load an alpha notation program")]
@@ -158,6 +169,11 @@ pub enum Commands {
         long_about = "Perform different checks on the program.\nReturn values:\n\n 0 - Check successful\n 1 - Compilation error\n 2 - Runtime error\n10 - IO error"
     )]
     Check(CheckArgs),
+    #[command(
+        about = "Start the tool in sandbox mode",
+        long_about = "Start the tool in sandbox mode. This allows for custom commands to be run."
+    )]
+    Sandbox(SandboxArgs),
 }
 
 #[derive(Subcommand, Clone, Debug)]

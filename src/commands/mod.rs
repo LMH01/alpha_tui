@@ -10,6 +10,8 @@ use crate::{
 pub mod check;
 /// Load command
 pub mod load;
+/// Sandbox command
+pub mod sandbox;
 
 fn load_instruction_history(load_args: &LoadArgs) -> Result<Option<Vec<String>>> {
     let mut instruction_history = None;
