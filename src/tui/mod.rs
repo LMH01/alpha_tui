@@ -81,6 +81,8 @@ pub struct App {
     /// Contains instructions that where already executed using the custom instructions feature.
     executed_custom_instructions: Vec<String>,
     command_history_file: Option<String>,
+    /// Determines if the call stack should be displayed in the tui
+    show_call_stack: bool
 }
 
 #[allow(clippy::cast_possible_wrap)]
@@ -101,6 +103,7 @@ impl App {
         command_history_file: Option<String>,
     ) -> App {
         let mlm = MemoryListsManager::new(runtime.runtime_args());
+        let show_call_stack = runtime.contains_call_instruction();
         Self {
             runtime,
             filename,
@@ -114,6 +117,7 @@ impl App {
             state: State::Default,
             executed_custom_instructions: custom_instructions.unwrap_or_default(),
             command_history_file,
+            show_call_stack,
         }
     }
 

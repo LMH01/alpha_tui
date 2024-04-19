@@ -52,6 +52,15 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         ])
         .split(chunks[2]);
 
+    let mut stack_chunks_constraints = vec![Constraint::Fill(1)];
+    if app.show_call_stack {
+        stack_chunks_constraints.push(Constraint::Percentage(30));
+    }
+    let stack_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(stack_chunks_constraints)
+        .split(chunks[3]);
+
     // Code area
     let mut code_area = Block::default()
         .borders(Borders::ALL)
@@ -164,7 +173,19 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         .title_alignment(Alignment::Center)
         .border_type(BorderType::Rounded);
     let stack_list = List::new(app.memory_lists_manager.stack_list()).block(stack);
-    f.render_widget(stack_list, chunks[3]);
+    f.render_widget(stack_list, stack_chunks[0]);
+
+    // Render call stack if enabled
+    if app.show_call_stack {
+        let call_stack_block = Block::default()
+            .borders(Borders::ALL)
+            .title("Call Stack")
+            .title_alignment(Alignment::Center)
+            .border_type(BorderType::Rounded)
+            .border_style(Style::default().fg(NEXT_INSTRUCTION_BLOCK_BORDER_FG));
+        let call_stack = List::new(app.runtime.call_stack_list()).block(call_stack_block);
+        f.render_widget(call_stack, stack_chunks[1]);
+    }
 
     // Popup if execution has finished
     if app.state == State::Finished(true) {

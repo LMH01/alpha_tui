@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 
 use miette::Result;
+use ratatui::widgets::ListItem;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     base::{Accumulator, MemoryCell},
     cli::Cli,
-    instructions::Instruction, utils,
+    instructions::Instruction,
+    utils,
 };
 
 use self::error_handling::{RuntimeError, RuntimeErrorType};
@@ -132,6 +134,30 @@ impl Runtime {
         }
         Ok(())
     }
+
+    /// Checks if this runtime contains at least one call instruction.
+    pub fn contains_call_instruction(&self) -> bool {
+        let mut res = false;
+        for instruction in &self.instructions {
+            match instruction {
+                Instruction::Call(_) => res = true,
+                _ => (),
+            }
+        }
+        res
+    }
+
+    /// Returns a vector of list items for each call stack entry.
+    /// 
+    /// Top most value is inserted first
+    pub fn call_stack_list(&self) -> Vec<ListItem<'static>> {
+        let mut items = Vec::new();
+        for item in &self.control_flow.call_stack {
+            items.push(ListItem::new(format!("{}", item + 1)));
+        }
+        items.reverse();
+        items
+    }
 }
 
 /// Used to control what instruction should be executed next.
@@ -220,11 +246,12 @@ impl<'a> RuntimeArgs {
     /// Errors if option is set to parse memory cells from file and the parsing fails.
     pub fn from_args(args: &Cli) -> Result<Self, String> {
         if let Some(path) = &args.memory_config_file {
-            let config = match serde_json::from_str::<MemoryConfig>(&utils::read_file(path)?.join("\n")) {
-                Ok(config) => config,
-                Err(e) => return Err(format!("json parse error: {e}"))
-            };
-            return Ok(config.into_runtime_args(args))
+            let config =
+                match serde_json::from_str::<MemoryConfig>(&utils::read_file(path)?.join("\n")) {
+                    Ok(config) => config,
+                    Err(e) => return Err(format!("json parse error: {e}")),
+                };
+            return Ok(config.into_runtime_args(args));
             //let config = match MemoryConfig::from_file_contents(&utils::read_file(path)?, path) {
             //    Ok(config) => config,
             //    Err(e) => return Err(e),
@@ -392,24 +419,35 @@ struct MemoryConfigGammaAccumulator {
 }
 
 impl MemoryConfig {
-
     /// Creates runtime args from this memory config.
     fn into_runtime_args(self, args: &Cli) -> RuntimeArgs {
         let mut accumulators = HashMap::new();
         for (idx, value) in self.accumulators {
-            accumulators.insert(idx, Accumulator {id: idx, data: value});
+            accumulators.insert(
+                idx,
+                Accumulator {
+                    id: idx,
+                    data: value,
+                },
+            );
         }
         let gamma = if self.gamma_accumulator.enabled {
             match self.gamma_accumulator.value {
                 Some(value) => Some(Some(value)),
-                None => Some(None)
+                None => Some(None),
             }
         } else {
             None
         };
         let mut memory_cells = HashMap::new();
         for (name, value) in self.memory_cells {
-            memory_cells.insert(name.clone(), MemoryCell {label: name, data: value});
+            memory_cells.insert(
+                name.clone(),
+                MemoryCell {
+                    label: name,
+                    data: value,
+                },
+            );
         }
         let mut index_memory_cells = HashMap::new();
         for (idx, value) in self.index_memory_cells {
@@ -578,5 +616,4 @@ mod tests {
             assert_eq!(b, Err(RuntimeBuildError::MemoryCellMissing(s.to_string())));
         }
     }
-
 }
