@@ -271,7 +271,7 @@ impl App {
             }
 
             self.memory_lists_manager
-                .update(self.runtime.runtime_args());
+                .update(&self.runtime);
             // update keybinding hints for next loop
             if let Err(e) = self.keybinding_hints.update(&self.state) {
                 return Err(miette!("Error while updating keybinding hints:\n{e}"));

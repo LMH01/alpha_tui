@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use miette::Result;
-use ratatui::widgets::ListItem;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -108,6 +107,11 @@ impl Runtime {
         &self.runtime_args
     }
 
+    /// Returns a reference to **`control_flow`**.
+    pub fn control_flow(&self) -> &ControlFlow {
+        &self.control_flow
+    }
+
     /// Resets the current runtime to defaults, resets instruction pointer.
     pub fn reset(&mut self) {
         self.control_flow.reset_soft();
@@ -147,17 +151,6 @@ impl Runtime {
         res
     }
 
-    /// Returns a vector of list items for each call stack entry.
-    /// 
-    /// Top most value is inserted first
-    pub fn call_stack_list(&self) -> Vec<ListItem<'static>> {
-        let mut items = Vec::new();
-        for item in &self.control_flow.call_stack {
-            items.push(ListItem::new(format!("{}", item + 1)));
-        }
-        items.reverse();
-        items
-    }
 }
 
 /// Used to control what instruction should be executed next.

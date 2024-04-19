@@ -183,7 +183,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             .title_alignment(Alignment::Center)
             .border_type(BorderType::Rounded)
             .border_style(Style::default().fg(NEXT_INSTRUCTION_BLOCK_BORDER_FG));
-        let call_stack = List::new(app.runtime.call_stack_list()).block(call_stack_block);
+        let call_stack = List::new(app.memory_lists_manager.call_stack_list()).block(call_stack_block);
         f.render_widget(call_stack, stack_chunks[1]);
     }
 

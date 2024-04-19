@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{ListItem, ListState},
 };
 
-use crate::runtime::RuntimeArgs;
+use crate::runtime::{Runtime, RuntimeArgs};
 
 use super::LIST_ITEM_HIGHLIGHT_COLOR;
 
@@ -201,13 +201,14 @@ fn list_prev(list_state: &mut ListState, max_index: usize) {
     list_state.select(Some(i));
 }
 
-/// Used to update and set the lists for accumulators, memory cells and stack.
+/// Used to update and set the lists for accumulators, memory cells, stack and call stack.
 pub struct MemoryListsManager {
     accumulators: HashMap<usize, (String, bool)>,
     gamma: Option<(Option<i32>, bool)>,
     memory_cells: HashMap<String, (String, bool)>,
     index_memory_cells: HashMap<usize, (String, bool)>,
     stack: Vec<ListItem<'static>>,
+    call_stack: Vec<ListItem<'static>>,
 }
 
 impl MemoryListsManager {
@@ -237,15 +238,18 @@ impl MemoryListsManager {
             memory_cells,
             index_memory_cells,
             stack: Vec::new(),
+            call_stack: Vec::new(),
         }
     }
 
     /// Updates the lists values.
     /// The old values are compared against the new values, if a value has changed the background color
     /// of that list item is changed.
-    pub fn update(&mut self, runtime_args: &RuntimeArgs) {
+    ///
+    /// `control_flow` is used to update call stack values.
+    pub fn update(&mut self, runtime: &Runtime) {
         // Update accumulators
-        for acc in &runtime_args.accumulators {
+        for acc in &runtime.runtime_args().accumulators {
             let a = self.accumulators.get_mut(acc.0).unwrap();
             let update = format!("{}", acc.1);
             if update == *a.0 {
@@ -255,7 +259,7 @@ impl MemoryListsManager {
             }
         }
         // Update memory_cells
-        for cell in &runtime_args.memory_cells {
+        for cell in &runtime.runtime_args().memory_cells {
             let a = self.memory_cells.get_mut(&cell.1.label).unwrap();
             let update = format!("{}", cell.1);
             if update == *a.0 {
@@ -265,7 +269,7 @@ impl MemoryListsManager {
             }
         }
         // Update index memory cells
-        for cell in &runtime_args.index_memory_cells {
+        for cell in &runtime.runtime_args().index_memory_cells {
             if !self.index_memory_cells.contains_key(cell.0) {
                 if let Some(v) = cell.1 {
                     self.index_memory_cells
@@ -288,7 +292,7 @@ impl MemoryListsManager {
             }
         }
         // Update gamma
-        if let Some(update) = runtime_args.gamma {
+        if let Some(update) = runtime.runtime_args().gamma {
             if let Some(value) = self.gamma.as_mut() {
                 if update == value.0 {
                     value.1 = false;
@@ -300,8 +304,8 @@ impl MemoryListsManager {
             }
         }
         // Update stack
-        let stack_changed = self.stack.len() != runtime_args.stack.len();
-        let mut new_stack: Vec<ListItem<'_>> = runtime_args
+        let stack_changed = self.stack.len() != runtime.runtime_args().stack.len();
+        let mut new_stack: Vec<ListItem<'_>> = runtime.runtime_args()
             .stack
             .iter()
             .map(|f| ListItem::new(f.to_string()))
@@ -314,6 +318,21 @@ impl MemoryListsManager {
             new_stack.push(last_stack);
         }
         self.stack = new_stack;
+        // update call stack
+        let call_stack_changed = self.call_stack.len() != runtime.control_flow().call_stack.len();
+        let mut new_call_stack: Vec<ListItem<'_>> = runtime.control_flow()
+            .call_stack
+            .iter()
+            .map(|f| ListItem::new(format!("{}", f + 1)))
+            .collect();
+        if call_stack_changed && !new_call_stack.is_empty() {
+            let last_stack = new_call_stack
+                .pop()
+                .unwrap()
+                .style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
+            new_call_stack.push(last_stack);
+        }
+        self.call_stack = new_call_stack;
     }
 
     /// Returns the current accumulators as list
@@ -378,6 +397,13 @@ impl MemoryListsManager {
     /// Returns the stack items as list
     pub fn stack_list(&self) -> Vec<ListItem<'static>> {
         let mut list = self.stack.clone();
+        list.reverse();
+        list
+    }
+
+    /// Returns the call stack items as list
+    pub fn call_stack_list(&self) -> Vec<ListItem<'static>> {
+        let mut list = self.call_stack.clone();
         list.reverse();
         list
     }
