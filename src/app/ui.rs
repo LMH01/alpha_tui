@@ -72,10 +72,11 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         .split(chunks[if is_sandbox { 2 } else { 3 }]);
 
     // central big part
-    let mut central_constraints = vec![Constraint::Percentage(60)];
-    if is_sandbox {
-        central_constraints.push(Constraint::Min(8));
-    }
+    let central_constraints = if is_sandbox {
+        vec![Constraint::Percentage(60), Constraint::Min(8)]
+    } else {
+        vec![Constraint::Fill(1)]
+    };
     let central_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints(central_constraints)
