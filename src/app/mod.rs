@@ -576,13 +576,13 @@ impl App {
         }
         // set new state
         if is_sandbox {
-            self.state = State::Sandbox(SingleInstruction::new(&self.executed_custom_instructions))
+            // if in sandbox mode, add instruction to main window
+            self.instruction_list_states
+                .add_instruction(instruction_str);
+            self.state = State::Sandbox(SingleInstruction::new(&self.executed_custom_instructions));
         } else {
             self.state = State::Running(self.instruction_list_states.breakpoints_set());
         }
-        // if in sandbox mode, add instruction to main window
-        self.instruction_list_states
-            .add_instruction(instruction_str);
         Ok(())
     }
 }
