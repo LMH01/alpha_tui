@@ -1,4 +1,4 @@
-use std::io::{self, Stdout};
+use std::{fs::File, io::{self, Stdout}, path::Path};
 
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture},
@@ -26,6 +26,12 @@ fn load_instruction_history(
 ) -> Result<Option<Vec<String>>> {
     let mut instruction_history = None;
     if let Some(file) = custom_instruction_history_file {
+        let path = Path::new(file);
+        if !path.exists() {
+            // create file
+            File::create(path).into_diagnostic()?;
+        }
+
         // load content of file
         let content = match utils::read_file(file) {
             Ok(content) => content,
