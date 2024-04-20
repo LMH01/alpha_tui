@@ -205,6 +205,18 @@ impl KeybindingHints {
                 if state.input.is_empty() && state.allowed_values_state.selected().is_none() {
                     self.disable(&KeySymbol::Enter.to_string());
                 }
+                if state.input.is_empty() {
+                    self.disable(&KeySymbol::ArrowLeft.to_string());
+                    self.disable(&KeySymbol::ArrowRight.to_string());
+                }
+                if state.items_to_display().is_empty() {
+                    self.disable(&KeySymbol::ArrowDown.to_string());
+                }
+                if let Some(idx) = state.allowed_values_state.selected() {
+                    if state.items_to_display().len() == idx + 1 {
+                        self.disable(&KeySymbol::ArrowDown.to_string());
+                    }
+                }
                 if state.allowed_values_state.selected().is_some() {
                     self.set_state(&KeySymbol::Enter.to_string(), 1)?;
                     self.enable(&KeySymbol::Tab.to_string())
@@ -226,9 +238,23 @@ impl KeybindingHints {
                 if state.input.is_empty() && state.allowed_values_state.selected().is_none() {
                     self.disable(&KeySymbol::Enter.to_string());
                 }
+                if state.input.is_empty() {
+                    self.disable(&KeySymbol::ArrowLeft.to_string());
+                    self.disable(&KeySymbol::ArrowRight.to_string());
+                }
+                if state.items_to_display().is_empty() {
+                    self.disable(&KeySymbol::ArrowDown.to_string());
+                }
+                if let Some(idx) = state.allowed_values_state.selected() {
+                    if state.items_to_display().len() == idx + 1 {
+                        self.disable(&KeySymbol::ArrowDown.to_string());
+                    }
+                }
                 if state.allowed_values_state.selected().is_some() {
                     self.set_state(&KeySymbol::Enter.to_string(), 1)?;
-                    self.enable(&KeySymbol::Tab.to_string())
+                    self.enable(&KeySymbol::Tab.to_string());
+                } else {
+                    self.disable(&KeySymbol::ArrowUp.to_string());
                 }
             }
             _ => (),
