@@ -517,6 +517,7 @@ impl App {
                     let selected = &state.items_to_display()[idx];
                     state.input = selected.clone();
                     state.cursor_position = selected.len();
+                    state.allowed_values_state.select(None);
                 }
             },
             _ => (),
