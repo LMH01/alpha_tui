@@ -171,9 +171,13 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     }
 
     // Accumulator block
+    let accumulator_title = match right_chunks[0].width {
+        0..=13 => "Accs",
+        14..=u16::MAX => "Accumulators",
+    };
     let accumulator = Block::default()
         .borders(Borders::ALL)
-        .title("Accumulators")
+        .title(accumulator_title)
         .title_alignment(Alignment::Center)
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(MEMORY_BLOCK_BORDER_FG));
@@ -182,9 +186,14 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     f.render_widget(accumulator_list, right_chunks[0]);
 
     // Memory cell block
+    let memory_cells_title = match right_chunks[1].width {
+        0..=10 => "MCs",
+        11..=13 => "Mem cells",
+        14..=u16::MAX => "Memory cells",
+    };
     let memory_cells = Block::default()
         .borders(Borders::ALL)
-        .title("Memory cells")
+        .title(memory_cells_title)
         .title_alignment(Alignment::Center)
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(MEMORY_BLOCK_BORDER_FG));
@@ -195,10 +204,9 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     // Next instruction block
     if !is_sandbox {
         // draw next instruction block only, if no in sandbox mode
-        let next_instruction_title = if right_chunks[2].width >= 18 {
-            "Next instruction"
-        } else {
-            "Next instr."
+        let next_instruction_title = match right_chunks[2].width {
+            0..=17 => "Next instr.",
+            18..=u16::MAX => "Next instruction",
         };
         let next_instruction_block = Block::default()
             .borders(Borders::ALL)
@@ -213,9 +221,13 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     }
 
     // Stack block
+    let stack_title = match stack_chunks[0].width {
+        0..=6 => "Stck",
+        7..=u16::MAX => "Stack",
+    };
     let stack = Block::default()
         .borders(Borders::ALL)
-        .title("Stack")
+        .title(stack_title)
         .title_alignment(Alignment::Center)
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(MEMORY_BLOCK_BORDER_FG));
