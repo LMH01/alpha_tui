@@ -167,11 +167,24 @@ impl KeybindingHints {
                 self.show("t");
                 self.set_state("d", 2)?;
             }
-            State::RuntimeError(_, _) => {
+            State::RuntimeError(_, is_sandbox) => {
                 self.hide("c");
                 self.hide("s");
                 self.hide("d");
-                self.show("t");
+                if *is_sandbox {
+                    self.set_state(&KeySymbol::Enter.to_string(), 2)?;
+                    self.show(&KeySymbol::Enter.to_string());
+                } else {
+                    self.show("t");
+                }
+            }
+            State::CustomInstructionError(_, _) => {
+                self.hide("s");
+                self.hide("d");
+                self.hide("c");
+                self.show(&KeySymbol::Enter.to_string());
+                self.set_state(&KeySymbol::Enter.to_string(), 2)?;
+                self.show(&KeySymbol::Enter.to_string());
             }
             State::CustomInstruction(state) => {
                 self.hide("c");
@@ -306,16 +319,26 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     hints.insert(
         KeySymbol::Enter.to_string(),
         KeybindingHint::new_many(
-            vec![5, 5],
+            vec![5, 5, 5],
             &KeySymbol::Enter.to_string(),
-            vec!["Run entered instruction", "Run selected instruction"],
+            vec![
+                "Run entered instruction",
+                "Run selected instruction",
+                "Close",
+            ],
             true,
             false,
         )?,
     );
     hints.insert(
         KeySymbol::Escape.to_string(),
-        KeybindingHint::new_many(vec![1, 1], &KeySymbol::Escape.to_string(), vec!["Cancel", "Exit"], true, false)?,
+        KeybindingHint::new_many(
+            vec![1, 1],
+            &KeySymbol::Escape.to_string(),
+            vec!["Cancel", "Exit"],
+            true,
+            false,
+        )?,
     );
     Ok(hints)
 }
