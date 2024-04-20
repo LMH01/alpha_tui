@@ -95,7 +95,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             Alignment::Left
         })
         .border_type(BorderType::Rounded);
-    if let State::RuntimeError(_, _) = app.state {
+    if let State::RuntimeError(_, false) = app.state {
         code_area = code_area.border_style(Style::default().fg(ERROR_COLOR));
     } else if let State::DebugSelect(_, _) = app.state {
         code_area = code_area
