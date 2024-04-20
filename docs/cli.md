@@ -1,6 +1,8 @@
-# CLI Commands and options
+# CLI Options
 
-For a full list of options and more explanation see `alpha_tui help`, `alpha_tui load help` or `alpha_tui check help`.
+For a full list of options and more explanation see `alpha_tui help`, `alpha_tui help load`, `alpha_tui help sandbox` or `alpha_tui help check`.
+
+For an explanation of the available commands see [interface and usage](interface_and_usage.md).
 
 ## General options
 
@@ -17,7 +19,7 @@ This makes it possible to challenge yourself into working with only a limited in
 
 #### How it works
 
-All commands that are understood by the program can be used to specify what instructions should be allowed, in addition to that there are some shortcuts available:
+All instructions that are understood by the program can be used to specify what instructions should be allowed, in addition to that there are some shortcuts available:
 
 | Shortcut | Explanation |
 | - | - |
@@ -115,31 +117,6 @@ The operations that can be specified are:
 For example to only allow addition and subtraction you can use this option: `--allowed-operations "add,sub"`
 
 **Note**: At least one operation needs to be specified, if you would like to prevent the use of any operation you can use `--allowed-instructions` to limit the available instructions into only allowing instructions which don't take any operations.
-
-## Check command
-
-The `check` subcommand can be used to perform checks on the program. It is currently only supported to check if the program compiles. For example the command `alpha_tui check examples/programs/faculty.alpha compile` will check if the program compiles and return `0` if it did. Otherwise an error code is returned, see below for the meaning.
-
-### Return values
-
-These are the different return values of the check command:
-
-| value | meaning |
-| -: | - |
-| 0 | check was successful |
-| 1 | compilation error |
-| 2 | runtime error |
-| 10 | io error |
-
-## Load command
-
-The main command to compile and run a program is the `load` command, it takes the file as first parameter. Example: `alpha_tui load examples/programs/faculty.alpha`.
-
-By default the code that is read will be formatted to be easier to read, this can be disabled by using the `--disable-alignment` flag. If you however would like to write the formatted code into the source file you can use the `--write-alignment` flag.
-
-Predetermined breakpoints can be loaded by using the `--breakpoints` flag, it takes multiple line numbers as parameter. Example: `alpha_tui load examples/programs/faculty.alpha -b 5`.
-
-By using the `--custom-instruction-history-file` a file can be provided to the program that contains instructions that should be used to fill the instruction history inside the popup window, where a custom instruction can be entered. When this is supplied, the file is first checked if all instructions that are stored within it are valid. Custom instructions that are run which are not yet contained in this file will be added to it.
 
 ## Examples
 
