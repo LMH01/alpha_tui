@@ -165,10 +165,13 @@ impl KeybindingHints {
                 self.show(&KeySymbol::ArrowDown.to_string());
                 self.set_state("d", 1)?;
             }
-            State::Finished(_) => {
+            State::Finished(message_shown) => {
                 self.hide("s");
                 self.hide("c");
                 self.show("t");
+                if !*message_shown {
+                    self.hide("d");
+                }
                 self.set_state("d", 2)?;
             }
             State::RuntimeError(_, is_sandbox) => {

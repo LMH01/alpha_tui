@@ -41,6 +41,7 @@
 - Fixed wrong keybinding hints being displayed when runtime error occurred
 - Fixed cli argument `--memory-cells` allowing values that contain numbers only, as these values are conflicting with index memory cells
 - Fixed wrong line highlighted when custom call instruction was run
+- Fixed dismiss run completed popup message keybinding hint not vanishing when message was dismissed
 - [Windows] fixed double key input (#35)
 
 ## v1.2.0 (latest version)
