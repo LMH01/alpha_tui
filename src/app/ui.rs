@@ -8,9 +8,7 @@ use ratatui::{
 use text_align::TextAlign;
 
 use super::{
-    App, State, BREAKPOINT_ACCENT_COLOR, CODE_AREA_DEFAULT_COLOR, ERROR_COLOR,
-    EXECUTION_FINISHED_POPUP_COLOR, INTERNAL_MEMORY_BLOCK_BORDER_FG, LIST_ITEM_HIGHLIGHT_COLOR,
-    MEMORY_BLOCK_BORDER_FG,
+    run_instruction::SingleInstruction, App, State, BREAKPOINT_ACCENT_COLOR, CODE_AREA_DEFAULT_COLOR, ERROR_COLOR, EXECUTION_FINISHED_POPUP_COLOR, INTERNAL_MEMORY_BLOCK_BORDER_FG, LIST_ITEM_HIGHLIGHT_COLOR, MEMORY_BLOCK_BORDER_FG
 };
 
 /// Draw the ui
@@ -73,7 +71,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
 
     // central big part
     let mut central_constraints = vec![Constraint::Fill(1)];
-    if let State::Sandbox(_) = app.state {
+    if is_sandbox {
         central_constraints.push(Constraint::Percentage(30));
     }
     let central_chunks = Layout::default()
@@ -289,7 +287,13 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     if let State::CustomInstruction(single_instruction) = &mut app.state {
         single_instruction.draw(f, global_chunks[0], true)
     }
-    if let State::Sandbox(single_instruction) = &mut app.state {
-        single_instruction.draw(f, central_chunks[1], false);
+    match &mut app.state {
+        State::Sandbox(single_instruction) => {
+            single_instruction.draw(f, central_chunks[1], false);
+        },
+        State::CustomInstructionError(_, true) | State::RuntimeError(_, true) => {
+            SingleInstruction::new(&app.executed_custom_instructions).draw(f, central_chunks[1], false);
+        }
+        _ => (),
     }
 }
