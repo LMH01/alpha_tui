@@ -27,7 +27,7 @@ fn load_instruction_history(
     let mut instruction_history = None;
     if let Some(file) = custom_instruction_history_file {
         // load content of file
-        let content = match utils::read_file(&file) {
+        let content = match utils::read_file(file) {
             Ok(content) => content,
             Err(e) => {
                 return Err(miette!(
@@ -51,7 +51,7 @@ fn load_instruction_history(
             let instruction = splits.join(" ");
             if let Err(e) = Instruction::try_from(instruction.as_str()) {
                 return Err(e
-                    .into_build_program_error(content.join("\n"), &file, idx + 1)
+                    .into_build_program_error(content.join("\n"), file, idx + 1)
                     .into());
             }
             // check if this instruction is not already contained

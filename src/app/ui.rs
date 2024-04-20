@@ -105,7 +105,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         code_area = code_area
             .border_style(Style::default().fg(CODE_AREA_DEFAULT_COLOR))
             .title(if is_sandbox {
-                format!("Executed instructions")
+                "Executed instructions".to_string()
             } else {
                 format!("File: {}", app.filename.clone())
             });
@@ -334,7 +334,7 @@ fn paragraph_with_line_wrap(text: String, width: u16) -> Paragraph<'static> {
     for line in lines {
         let mut styled_line = Vec::new();
         let words = line
-            .split(" ")
+            .split(' ')
             .map(|f| f.to_string())
             .collect::<Vec<String>>();
         let mut width_used = 0;

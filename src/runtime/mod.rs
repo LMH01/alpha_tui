@@ -153,10 +153,9 @@ impl Runtime {
     pub fn contains_call_instruction(&self) -> bool {
         let mut res = false;
         for instruction in &self.instructions {
-            match instruction {
-                Instruction::Call(_) => res = true,
-                _ => (),
-            }
+            if let Instruction::Call(_) = instruction {
+                res = true
+            };
         }
         res
     }

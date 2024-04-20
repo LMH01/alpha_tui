@@ -40,13 +40,13 @@ fn main() -> Result<()> {
         Commands::Check(check_args) => commands::check::check(
             &cli.global_args,
             check_args,
-            &read_file(&input_file.as_ref().unwrap())?,
+            &read_file(input_file.as_ref().unwrap())?,
             &input_file.unwrap(),
         ),
         Commands::Load(load_args) => commands::load::load(
             &cli.global_args,
             load_args,
-            read_file(&input_file.as_ref().unwrap())?,
+            read_file(input_file.as_ref().unwrap())?,
             input_file.unwrap(),
         )?,
         Commands::Sandbox(sandbox_args) => {
@@ -57,7 +57,7 @@ fn main() -> Result<()> {
 }
 
 fn read_file(path: &str) -> Result<Vec<String>> {
-    match utils::read_file(&path) {
+    match utils::read_file(path) {
         Ok(i) => Ok(i),
         Err(e) => Err(miette::miette!("Unable to read file [{}]: {}", &path, e)),
     }
