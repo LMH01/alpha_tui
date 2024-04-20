@@ -1,7 +1,7 @@
 use ratatui::{
     prelude::{Alignment, Constraint, Direction, Layout},
     style::{Modifier, Style},
-    text::Text,
+    text::{Line, Span, Text},
     widgets::{Block, BorderType, Borders, Clear, List, ListDirection, ListItem, Paragraph},
     Frame,
 };
@@ -247,8 +247,10 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             .borders(Borders::ALL)
             .border_style(Style::default().fg(EXECUTION_FINISHED_POPUP_COLOR));
         let area = super::centered_rect(60, 20, None, f.size());
-        let text = Paragraph::new(
-            "Press [q] to exit.\nPress [t] to reset to start.\nPress [d] to dismiss this message.",
+        let text = paragraph_with_line_wrap(
+            "Press [q] to exit.\nPress [t] to reset to start.\nPress [d] to dismiss this message."
+                .to_string(),
+            area.width,
         )
         .block(block);
         f.render_widget(Clear, area); //this clears out the background
@@ -262,9 +264,9 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             .borders(Borders::ALL)
             .border_style(Style::default().fg(ERROR_COLOR));
         let area = super::centered_rect(60, 30, None, f.size());
-        let text = Paragraph::new(if is_sandbox {format!("This instruction could not be executed due to the following problem:\n{}\n\nPress [q] to exit and to view further information regarding this error.\nPress [ENTER] to close.", e.reason)} else {format!(
+        let text = paragraph_with_line_wrap(if is_sandbox {format!("This instruction could not be executed due to the following problem:\n{}\n\nPress [q] to exit and to view further information regarding this error.\nPress [ENTER] to close.", e.reason)} else {format!(
                 "Execution can not continue due to the following problem:\n{}\n\nPress [q] to exit and to view further information regarding this error.\nPress [t] to reset to start.",
-                e.reason)}).block(block);
+                e.reason)}, area.width - 2).block(block);
         f.render_widget(Clear, area); //this clears out the background
         f.render_widget(text, area);
     }
@@ -276,10 +278,10 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             .borders(Borders::ALL)
             .border_style(Style::default().fg(ERROR_COLOR));
         let area = super::centered_rect(60, 30, Some(6), f.size());
-        let text = Paragraph::new(format!(
+        let text = paragraph_with_line_wrap(format!(
             "{}\n\nPress [q] to exit and to view further information regarding this error.\nPress [ENTER] to close.",
             reason
-        ))
+        ), area.width)
         .block(block);
         f.render_widget(Clear, area); //this clears out the background
         f.render_widget(text, area);
@@ -302,4 +304,35 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         }
         _ => (),
     }
+}
+
+/// Creates a paragraph from the input text, where a new line is created when the space is to little
+/// to fit the whole text in one line.
+fn paragraph_with_line_wrap(text: String, width: u16) -> Paragraph<'static> {
+    let lines = text
+        .split('\n')
+        .map(|f| f.to_string())
+        .collect::<Vec<String>>();
+    let mut styled_lines = Vec::new();
+    for line in lines {
+        let mut styled_line = Vec::new();
+        let words = line
+            .split(" ")
+            .map(|f| f.to_string())
+            .collect::<Vec<String>>();
+        let mut width_used = 0;
+        for word in words {
+            if word.len() + width_used > width as usize {
+                styled_lines.push(Line::from(styled_line));
+                styled_line = Vec::new();
+                width_used = 0;
+            }
+            width_used += word.len() + 1;
+            styled_line.push(Span::from(format!("{} ", word)));
+        }
+        if !styled_line.is_empty() {
+            styled_lines.push(Line::from(styled_line));
+        }
+    }
+    Paragraph::new(styled_lines)
 }
