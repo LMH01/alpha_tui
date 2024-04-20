@@ -205,7 +205,7 @@ impl App {
                             }
                             KeyCode::Char('t') => match self.state {
                                 State::Running(_) | State::Finished(_) => self.reset(),
-                                State::RuntimeError(_, _) | State::CustomInstructionError(_, _) => {
+                                State::RuntimeError(_, false) | State::CustomInstructionError(_, false) => {
                                     self.reset();
                                 }
                                 State::DebugSelect(_, _) => {
@@ -516,6 +516,9 @@ impl App {
                 } else {
                     self.state = State::Running(self.instruction_list_states.breakpoints_set());
                 }
+            }
+            State::RuntimeError(_, true) => {
+                self.state = State::Sandbox(SingleInstruction::new(&self.executed_custom_instructions));
             }
             _ => (),
         }
