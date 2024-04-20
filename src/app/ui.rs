@@ -82,7 +82,11 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     // Code area
     let mut code_area = Block::default()
         .borders(Borders::ALL)
-        .title_alignment(Alignment::Left)
+        .title_alignment(if is_sandbox {
+            Alignment::Center
+        } else {
+            Alignment::Left
+        })
         .border_type(BorderType::Rounded);
     if let State::RuntimeError(_) = app.state {
         code_area = code_area.border_style(Style::default().fg(ERROR_COLOR));
@@ -93,7 +97,11 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     } else {
         code_area = code_area
             .border_style(Style::default().fg(CODE_AREA_DEFAULT_COLOR))
-            .title(format!("File: {}", app.filename.clone()));
+            .title(if is_sandbox {
+                format!("Executed instructions")
+            } else {
+                format!("File: {}", app.filename.clone())
+            });
     }
 
     // Create a List from all instructions and highlight current instruction
