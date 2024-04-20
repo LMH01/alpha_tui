@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     base::{Accumulator, MemoryCell},
-    cli::Cli,
+    cli::{GlobalArgs, InstructionLimitingArgs},
     instructions::Instruction,
     utils,
 };
@@ -246,8 +246,8 @@ impl<'a> RuntimeArgs {
     /// Creates a new runtimes args struct with empty lists.
     ///
     /// Errors if option is set to parse memory cells from file and the parsing fails.
-    pub fn from_args(args: &Cli) -> Result<Self, String> {
-        Self::from_args_with_defaults(args, 0, 0, false)
+    pub fn from_args(args: &GlobalArgs, ila: &InstructionLimitingArgs) -> Result<Self, String> {
+        Self::from_args_with_defaults(args, ila, 0, 0, false)
     }
 
     /// Creates a new runtime args struct using the cli arguments.
@@ -256,43 +256,49 @@ impl<'a> RuntimeArgs {
     ///
     /// Memory cells are named h1, ..., hn.
     pub fn from_args_with_defaults(
-        args: &Cli,
-        accumulators: u8,
-        memory_cells: u32,
-        enable_gamma: bool,
+        global_args: &GlobalArgs,
+        ila: &InstructionLimitingArgs,
+        accumulators_default: u8,
+        memory_cells_default: u32,
+        enable_gamma_default: bool,
     ) -> Result<Self, String> {
         // check if memory config file is set and use those values if set
-        if let Some(path) = &args.memory_config_file {
+        if let Some(path) = &global_args.memory_config_file {
             let config =
                 match serde_json::from_str::<MemoryConfig>(&utils::read_file(path)?.join("\n")) {
                     Ok(config) => config,
                     Err(e) => return Err(format!("json parse error: {e}")),
                 };
-            return Ok(config.into_runtime_args(args));
+            return Ok(config.into_runtime_args(global_args, ila));
         }
 
-        let accumulators = args.accumulators.unwrap_or(accumulators);
-        let memory_cells = match args.memory_cells.as_ref() {
+        let accumulators = global_args.accumulators.unwrap_or(accumulators_default);
+        let memory_cells = match global_args.memory_cells.as_ref() {
             None => {
                 let mut memory_cell_names = Vec::new();
-                for i in 0..memory_cells {
+                for i in 0..memory_cells_default {
                     memory_cell_names.push(format!("h{i}"));
                 }
                 memory_cell_names
             }
             Some(value) => value.clone(),
         };
-        let idx_memory_cells = args.index_memory_cells.as_ref().cloned();
-        let enable_gamma = match args.enable_gamma_accumulator {
+        let idx_memory_cells = global_args.index_memory_cells.as_ref().cloned();
+
+        let enable_gamma = match ila.enable_gamma_accumulator {
             Some(enable_gamma) => enable_gamma,
-            None => enable_gamma,
+            None => enable_gamma_default,
         };
+
         Ok(Self::new(
             accumulators as usize,
             memory_cells,
             idx_memory_cells,
             enable_gamma,
-            Settings::from(args),
+            Settings::new(
+                !ila.disable_memory_detection,
+                global_args.disable_instruction_limit,
+            ),
         ))
     }
 
@@ -403,19 +409,17 @@ pub struct Settings {
 }
 
 impl Settings {
+    fn new(enable_imc_auto_creation: bool, disable_instruction_limit: bool) -> Self {
+        Self {
+            enable_imc_auto_creation,
+            disable_instruction_limit,
+        }
+    }
+
     fn new_default() -> Self {
         Self {
             enable_imc_auto_creation: true,
             disable_instruction_limit: false,
-        }
-    }
-}
-
-impl From<&Cli> for Settings {
-    fn from(value: &Cli) -> Self {
-        Self {
-            enable_imc_auto_creation: !value.disable_memory_detection,
-            disable_instruction_limit: value.disable_instruction_limit,
         }
     }
 }
@@ -436,7 +440,7 @@ struct MemoryConfigGammaAccumulator {
 
 impl MemoryConfig {
     /// Creates runtime args from this memory config.
-    fn into_runtime_args(self, args: &Cli) -> RuntimeArgs {
+    fn into_runtime_args(self, args: &GlobalArgs, ila: &InstructionLimitingArgs) -> RuntimeArgs {
         let mut accumulators = HashMap::new();
         for (idx, value) in self.accumulators {
             accumulators.insert(
@@ -475,7 +479,10 @@ impl MemoryConfig {
             memory_cells,
             index_memory_cells,
             stack: Vec::new(),
-            settings: Settings::from(args),
+            settings: Settings::new(
+                !ila.disable_memory_detection,
+                args.disable_instruction_limit,
+            ),
         }
     }
 }

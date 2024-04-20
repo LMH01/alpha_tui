@@ -12,6 +12,15 @@ use crate::base::{Comparison, Operation};
     long_about = "debugger and runtime environment for the alpha notation used in my Systemnahme Informatik lecture"
 )]
 pub struct Cli {
+    #[command(subcommand)]
+    pub command: Commands,
+
+    #[command(flatten)]
+    pub global_args: GlobalArgs,
+}
+
+#[derive(Args, Debug, Clone)]
+pub struct GlobalArgs {
     #[arg(
         short,
         long,
@@ -42,10 +51,109 @@ pub struct Cli {
         long,
         help = "Load memory config from a json file",
         long_help = "Load accumulators, gamma accumulator and memory cell values from a json file.\n\nFurther help can be found here: https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md.",
-        conflicts_with_all = [ "memory_cells", "index_memory_cells", "accumulators", "enable_gamma_accumulator" ],
+        conflicts_with_all = [ "memory_cells", "index_memory_cells", "accumulators" ],
         global = true,
     )]
     pub memory_config_file: Option<String>,
+
+    #[arg(long = "disable-instruction-limit", hide = true, global = true)]
+    pub disable_instruction_limit: bool,
+}
+
+#[derive(Args, Clone, Debug)]
+pub struct LoadArgs {
+    
+    #[command(flatten)]
+    pub instruction_limiting_args: InstructionLimitingArgs,
+
+    #[arg(
+        long_help = "Specify the input file that contains the program",
+        required = true
+    )]
+    pub file: String,
+
+    #[arg(
+        long,
+        short,
+        help = "Enable predetermined breakpoints",
+        long_help = "Enable predetermined breakpoints.\nThe supplied element specifies the line in which the breakpoint should be set.\nExample: -b 1,7,8",
+        value_delimiter = ',',
+        global = true
+    )]
+    pub breakpoints: Option<Vec<usize>>,
+    #[arg(
+        short,
+        long,
+        help = "Disable alignment of labels, instructions and comments",
+        long_help = "Per default labels, instructions and comments are aligned in columns to make reading easier, this can be disabled by setting this flag.",
+        global = true
+    )]
+    pub disable_alignment: bool,
+    #[arg(
+        short,
+        long,
+        help = "Write the changed program file alignment to file",
+        long_help = "Write the changed program file alignment for better readability to the source file.",
+        conflicts_with = "disable_alignment",
+        global = true
+    )]
+    pub write_alignment: bool,
+    #[arg(
+        short,
+        long,
+        help = "File to load and save the custom instruction history to/from",
+        long_help = "File to load and save the custom instruction history to/from.\nIf set, the instructions in this list will be analyzed and be made available in the custom instruction window. Instructions not yet contained in this file will be added to it."
+    )]
+    pub custom_instruction_history_file: Option<String>,
+
+}
+
+#[derive(Args, Clone, Debug)]
+pub struct CheckArgs {
+
+    #[command(flatten)]
+    pub instruction_limiting_args: InstructionLimitingArgs,
+
+    #[arg(
+        long_help = "Specify the input file that contains the program",
+        required = true
+    )]
+    pub file: String,
+
+    #[command(subcommand)]
+    command: CheckCommands,
+}
+
+#[derive(Args, Clone, Debug)]
+pub struct SandboxArgs {
+
+    #[arg(
+        short,
+        long,
+        help = "File to load and save the custom instruction history to/from",
+        long_help = "File to load and save the custom instruction history to/from.\nIf set, the instructions in this list will be analyzed and be made available in the custom instruction window. Instructions not yet contained in this file will be added to it."
+    )]
+    pub custom_instruction_history_file: Option<String>,
+}
+
+#[derive(Subcommand, Clone, Debug)]
+pub enum Commands {
+    #[command(about = "Load an alpha notation program")]
+    Load(LoadArgs),
+    #[command(
+        about = "Perform different checks on the program",
+        long_about = "Perform different checks on the program.\nReturn values:\n\n 0 - Check successful\n 1 - Compilation error\n 2 - Runtime error\n10 - IO error"
+    )]
+    Check(CheckArgs),
+    #[command(
+        about = "Start the tool in sandbox mode",
+        long_about = "Start the tool in sandbox mode. This allows for custom commands to be run."
+    )]
+    Sandbox(SandboxArgs),
+}
+
+#[derive(Args, Debug, Clone, Default)]
+pub struct InstructionLimitingArgs {
     #[arg(
         long,
         help = "Disable accumulator, gamma accumulator and memory_cell detection",
@@ -88,94 +196,6 @@ pub struct Cli {
         global = true
     )]
     pub allowed_instructions_file: Option<String>,
-
-    #[arg(long = "disable-instruction-limit", hide = true, global = true)]
-    pub disable_instruction_limit: bool,
-
-    #[command(subcommand)]
-    pub command: Commands,
-}
-
-#[derive(Args, Clone, Debug)]
-pub struct LoadArgs {
-    #[arg(
-        long_help = "Specify the input file that contains the program",
-        required = true
-    )]
-    pub file: String,
-
-    #[arg(
-        long,
-        short,
-        help = "Enable predetermined breakpoints",
-        long_help = "Enable predetermined breakpoints.\nThe supplied element specifies the line in which the breakpoint should be set.\nExample: -b 1,7,8",
-        value_delimiter = ',',
-        global = true
-    )]
-    pub breakpoints: Option<Vec<usize>>,
-    #[arg(
-        short,
-        long,
-        help = "Disable alignment of labels, instructions and comments",
-        long_help = "Per default labels, instructions and comments are aligned in columns to make reading easier, this can be disabled by setting this flag.",
-        global = true
-    )]
-    pub disable_alignment: bool,
-    #[arg(
-        short,
-        long,
-        help = "Write the changed program file alignment to file",
-        long_help = "Write the changed program file alignment for better readability to the source file.",
-        conflicts_with = "disable_alignment",
-        global = true
-    )]
-    pub write_alignment: bool,
-    #[arg(
-        short,
-        long,
-        help = "File to load and save the custom instruction history to/from",
-        long_help = "File to load and save the custom instruction history to/from.\nIf set, the instructions in this list will be analyzed and be made available in the custom instruction window. Instructions not yet contained in this file will be added to it."
-    )]
-    pub custom_instruction_history_file: Option<String>,
-}
-
-#[derive(Args, Clone, Debug)]
-pub struct CheckArgs {
-    #[arg(
-        long_help = "Specify the input file that contains the program",
-        required = true
-    )]
-    pub file: String,
-
-    #[command(subcommand)]
-    command: CheckCommands,
-}
-
-#[derive(Args, Clone, Debug)]
-pub struct SandboxArgs {
-    #[arg(
-        short,
-        long,
-        help = "File to load and save the custom instruction history to/from",
-        long_help = "File to load and save the custom instruction history to/from.\nIf set, the instructions in this list will be analyzed and be made available in the custom instruction window. Instructions not yet contained in this file will be added to it."
-    )]
-    pub custom_instruction_history_file: Option<String>,
-}
-
-#[derive(Subcommand, Clone, Debug)]
-pub enum Commands {
-    #[command(about = "Load an alpha notation program")]
-    Load(LoadArgs),
-    #[command(
-        about = "Perform different checks on the program",
-        long_about = "Perform different checks on the program.\nReturn values:\n\n 0 - Check successful\n 1 - Compilation error\n 2 - Runtime error\n10 - IO error"
-    )]
-    Check(CheckArgs),
-    #[command(
-        about = "Start the tool in sandbox mode",
-        long_about = "Start the tool in sandbox mode. This allows for custom commands to be run."
-    )]
-    Sandbox(SandboxArgs),
 }
 
 #[derive(Subcommand, Clone, Debug)]
@@ -193,7 +213,7 @@ pub trait CliHint {
 ///
 /// This function is used to test some additional requirements, that can't be programmed into clap.
 pub fn validate_arguments(cli: &Cli) -> Result<()> {
-    if let Some(memory_cells) = &cli.memory_cells {
+    if let Some(memory_cells) = &cli.global_args.memory_cells {
         for cell in memory_cells {
             if cell.chars().any(|c| c.is_digit(10)) && !cell.chars().any(|c| c.is_alphabetic()) {
                 return Err(CliError::new(CliErrorType::MemoryCellsInvalid(cell.clone())).into());

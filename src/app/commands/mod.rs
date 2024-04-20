@@ -8,7 +8,7 @@ use miette::{miette, IntoDiagnostic, Result};
 use ratatui::{backend::CrosstermBackend, Terminal};
 
 use crate::{
-    cli::Cli,
+    cli::{GlobalArgs, InstructionLimitingArgs},
     instructions::Instruction,
     runtime::builder::RuntimeBuilder,
     utils::{self, remove_comment},
@@ -66,8 +66,8 @@ fn load_instruction_history(
 }
 
 /// Creates a runtime builder and returns miette error if it fails.
-fn create_runtime_builder(cli: &Cli) -> Result<RuntimeBuilder> {
-    match RuntimeBuilder::from_args(cli) {
+fn create_runtime_builder(global_args: &GlobalArgs, ila: &InstructionLimitingArgs) -> Result<RuntimeBuilder> {
+    match RuntimeBuilder::from_args(global_args, ila) {
         Ok(rb) => Ok(rb),
         Err(e) => Err(miette!(
             "Unable to create RuntimeBuilder, memory config could not be loaded from file:\n{e}"

@@ -30,25 +30,26 @@ fn main() -> Result<()> {
         Commands::Sandbox(_) => None,
     };
 
-    if cli.disable_instruction_limit {
+    if cli.global_args.disable_instruction_limit {
         println!(
             "Warning: instruction limit is disabled, this might lead to performance problems!"
         );
     }
 
     match &cli.command {
-        Commands::Check(_) => commands::check::check(
-            &cli,
+        Commands::Check(check_args) => commands::check::check(
+            &cli.global_args,
+            check_args,
             &read_file(&input_file.as_ref().unwrap())?,
             &input_file.unwrap(),
         ),
-        Commands::Load(args) => commands::load::load(
-            &cli,
+        Commands::Load(load_args) => commands::load::load(
+            &cli.global_args,
+            load_args,
             read_file(&input_file.as_ref().unwrap())?,
             input_file.unwrap(),
-            args.clone(),
         )?,
-        Commands::Sandbox(args) => commands::sandbox::sandbox(&cli, args)?,
+        Commands::Sandbox(sandbox_args) => commands::sandbox::sandbox(&cli.global_args, sandbox_args)?,
     }
     Ok(())
 }

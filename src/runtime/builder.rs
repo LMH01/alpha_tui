@@ -4,7 +4,7 @@ use miette::Result;
 
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
-    cli::{Cli, CliHint},
+    cli::{CliHint, GlobalArgs, InstructionLimitingArgs},
     instructions::{
         error_handling::{BuildProgramError, BuildProgramErrorTypes},
         Identifier, IndexMemoryCellIndexType, Instruction, TargetType, Value,
@@ -50,14 +50,14 @@ impl RuntimeBuilder {
     }
 
     /// Creates a new runtime builder from the cli arguments.
-    pub fn from_args(args: &Cli) -> Result<Self, String> {
+    pub fn from_args(global_args: &GlobalArgs, ila: &InstructionLimitingArgs) -> Result<Self, String> {
         Ok(Self {
-            runtime_args: Some(RuntimeArgs::from_args(args)?),
+            runtime_args: Some(RuntimeArgs::from_args(global_args, ila)?),
             instructions: None,
             control_flow: ControlFlow::new(),
-            add_missing: !args.disable_memory_detection,
-            limit_comparisons_to: args.allowed_comparisons.clone(),
-            limit_operations_to: args.allowed_operations.clone(),
+            add_missing: !ila.disable_memory_detection,
+            limit_comparisons_to: ila.allowed_comparisons.clone(),
+            limit_operations_to: ila.allowed_operations.clone(),
         })
     }
 

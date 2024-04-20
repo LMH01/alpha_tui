@@ -18,7 +18,7 @@
 - Blocks of memory cells, accumulator and stack are now colored light blue
 - Changed width of custom instruction popup from 60% screen size to 43%
 
-### Other
+### Command line arguments
 
 - Reworked how predetermined memory values are handled (fr #29):
     - Renamed cli option `--memory-cells-file` to `--memory-config-file`
@@ -26,6 +26,10 @@
     - `--memory-config-file` now conflicts with `--accumulators`, `--enable-gamma-accumulator`, `--memory-cells` and `--index-memory-cells`
     - Changed file data type to `json`
 - `--disable-memory-detection` no longer forces the usage of either `--accumulators` and `--memory-cells` or `--memory-config-file` (previously `--memory-cells-file`) (fr #30 and #31)
+- command line arguments `--disable-memory-detection`, `--allowed-comparisons`, `--allowed-operations`, `--enable-gamma-accumulator` and `--allowed-instructions-file` are no longer available for all commands because the new `sandbox` command does not make use of them. The are thus no longer displayed in `.\alpha_tui help`, instead they are now explained in either `.\alpha_tui help load` or `.\alpha_tui help check`.
+
+### Other
+
 - It is now allowed to write `=` instead of `:=` when writing assignment instructions. Note, however, that this is a deviation from the alpha notation standard (fr #27).
 - Removed unnecessary 30ms sleep after key input
 - Updated dependencies

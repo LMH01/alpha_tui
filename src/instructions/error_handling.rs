@@ -246,7 +246,7 @@ mod tests {
     use clap::Parser;
 
     use crate::{
-        cli::Cli,
+        cli::{Cli, Commands},
         instructions::{
             error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
             Instruction,
@@ -466,14 +466,19 @@ mod tests {
 
     #[test]
     fn test_bpe_instruction_not_allowed() {
-        let mut rb = RuntimeBuilder::from_args(&Cli::parse_from([
+        let cli = Cli::parse_from([
             "alpha_tui",
             "load",
             "some_file.alpha",
             "--allowed-instructions",
             "some_file.txt",
-        ]))
-        .unwrap();
+        ]);
+        let args = match cli.command {
+            Commands::Load(args) => args,
+            _ => panic!(""),
+        };
+        let mut rb =
+            RuntimeBuilder::from_args(&cli.global_args, &args.instruction_limiting_args).unwrap();
 
         let mut whitelist = HashSet::new();
         whitelist.insert("A := H".to_string());
@@ -494,14 +499,19 @@ mod tests {
 
     #[test]
     fn test_bpe_comparison_not_allowed() {
-        let mut rb = RuntimeBuilder::from_args(&Cli::parse_from([
+        let cli = Cli::parse_from([
             "alpha_tui",
             "load",
             "some_file.alpha",
             "--allowed-comparisons",
             "ge",
-        ]))
-        .unwrap();
+        ]);
+        let args = match cli.command {
+            Commands::Load(args) => args,
+            _ => panic!(""),
+        };
+        let mut rb =
+            RuntimeBuilder::from_args(&cli.global_args, &args.instruction_limiting_args).unwrap();
 
         let instructions_input = vec!["if a == a then goto loop"];
         assert_eq!(
@@ -518,14 +528,19 @@ mod tests {
 
     #[test]
     fn test_bpe_operation_not_allowed() {
-        let mut rb = RuntimeBuilder::from_args(&Cli::parse_from([
+        let cli = Cli::parse_from([
             "alpha_tui",
             "load",
             "some_file.alpha",
             "--allowed-operations",
             "mul",
-        ]))
-        .unwrap();
+        ]);
+        let args = match cli.command {
+            Commands::Load(args) => args,
+            _ => panic!(""),
+        };
+        let mut rb =
+            RuntimeBuilder::from_args(&cli.global_args, &args.instruction_limiting_args).unwrap();
 
         let instructions_input = vec!["a := a + p(h1)"];
         assert_eq!(

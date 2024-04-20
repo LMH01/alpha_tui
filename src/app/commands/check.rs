@@ -2,11 +2,20 @@ use std::process::exit;
 
 use miette::{miette, Report};
 
-use crate::{cli::Cli, runtime::builder::RuntimeBuilder, utils::build_instructions_with_whitelist};
+use crate::{
+    cli::{CheckArgs, GlobalArgs},
+    runtime::builder::RuntimeBuilder,
+    utils::build_instructions_with_whitelist,
+};
 
-pub fn check(cli: &Cli, instructions: &[String], input: &str) {
+pub fn check(
+    global_args: &GlobalArgs,
+    check_args: &CheckArgs,
+    instructions: &[String],
+    input: &str,
+) {
     println!("Building program");
-    let mut rb = match RuntimeBuilder::from_args(cli) {
+    let mut rb = match RuntimeBuilder::from_args(global_args, &check_args.instruction_limiting_args) {
         Ok(rb) => rb,
         Err(e) => {
             println!(
@@ -19,7 +28,7 @@ pub fn check(cli: &Cli, instructions: &[String], input: &str) {
         }
     };
 
-    if let Some(file) = cli.allowed_instructions_file.as_ref() {
+    if let Some(file) = check_args.instruction_limiting_args.allowed_instructions_file.as_ref() {
         match build_instructions_with_whitelist(&mut rb, instructions, input, file) {
             Ok(_) => (),
             Err(e) => {
