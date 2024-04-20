@@ -9,10 +9,12 @@
 
 ### TUI
 
-- Text inside popup messages now wraps into a new line, if not enough space is available
-- Made most block titles responsive, to change displayed text based on available space
+- Made TUI behave more dynamic, these changes include:
+    - Text inside popup messages now wraps into a new line, if not enough space is available
+    - Most block title change the displayed text based on available space
+    - Accumulators/Memory Cells column is now always at least 10 characters wide
+    - Locked width of breakpoint block to be always 5 characters wide
 - Blocks of memory cells, accumulator and stack are now colored light blue
-- Locked width of breakpoint block to be always 5 characters wide
 - Changed width of custom instruction popup from 60% screen size to 43%
 
 ### Other

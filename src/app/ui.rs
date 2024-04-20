@@ -43,7 +43,11 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         vec![Constraint::Length(5)]
     };
     chunk_constraints.push(Constraint::Fill(1));
-    chunk_constraints.push(Constraint::Percentage(20));
+    chunk_constraints.push(if global_chunks[0].width < 49 {
+        Constraint::Length(10)
+    } else {
+        Constraint::Percentage(20)
+    });
     chunk_constraints.push(Constraint::Percentage(10));
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
