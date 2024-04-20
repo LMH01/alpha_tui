@@ -185,7 +185,6 @@ impl App {
                                         .unwrap();
                                     self.runtime.set_next_instruction(idx);
                                     _ = self.step();
-                                    self.instruction_list_states.set_instruction(idx);
                                 }
                             }
                             KeyCode::Char('i') => match self.state {
@@ -312,6 +311,11 @@ impl App {
 
     /// returns true when the execution finished in this step
     fn step(&mut self) -> Result<bool, ()> {
+        // update instruction list states before running instruction to set the highlighted line correctly
+        // in case jump to line or a call instruction was executed
+        self.instruction_list_states
+            .set(self.runtime.next_instruction_index() as i32);
+
         let res = self.runtime.step();
         if let Err(e) = res {
             self.state = State::RuntimeError(e, false);

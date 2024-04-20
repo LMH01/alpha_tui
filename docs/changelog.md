@@ -40,6 +40,7 @@
 - Fixed panic when very little space is available in the terminal to display tui
 - Fixed wrong keybinding hints being displayed when runtime error occurred
 - Fixed cli argument `--memory-cells` allowing values that contain numbers only, as these values are conflicting with index memory cells
+- Fixed wrong line highlighted when custom call instruction was run
 - [Windows] fixed double key input (#35)
 
 ## v1.2.0 (latest version)
