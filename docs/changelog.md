@@ -7,6 +7,12 @@
 - Next instruction is now displayed in the tui (fr #34)
 - The call stack can now be displayed in the tui. Its default state is determined if a call instruction is used. If it is used, it is shown, if such instruction is absent, it is hidden. With the `c` key this display can be hidden or shown manually (fr #34).
 
+### TUI
+
+- Blocks of memory cells, accumulator and stack are now colored light blue
+- Locked width of breakpoint block to be always 5 characters wide
+- Changed width of custom instruction popup from 60% screen size to 43%
+
 ### Other
 
 - Reworked how predetermined memory values are handled (fr #29):
@@ -16,14 +22,12 @@
     - Changed file data type to `json`
 - `--disable-memory-detection` no longer forces the usage of either `--accumulators` and `--memory-cells` or `--memory-config-file` (previously `--memory-cells-file`) (fr #30 and #31)
 - It is now allowed to write `=` instead of `:=` when writing assignment instructions. Note, however, that this is a deviation from the alpha notation standard (fr #27).
-- Blocks of memory cells, accumulator and stack are now colored light blue
-- Locked width of breakpoint block to be always 5 characters wide
-- Changed width of custom instruction popup from 60% screen size to 43%
 - Removed unnecessary 30ms sleep after key input
 
 ### Bug fixes
 
 - Fixed panic when jump to line was used in the first line (#37)
+- Fixed wrong keybinding hints being displayed when runtime error occurred
 - [Windows] fixed double key input (#35)
 
 ## v1.2.0 (latest version)
