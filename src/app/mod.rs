@@ -297,6 +297,7 @@ impl App {
                     KeyCode::Down => self.down_key(),
                     KeyCode::Up => self.up_key(),
                     KeyCode::Enter => self.enter_key()?,
+                    KeyCode::Tab => self.tab_key(),
                     _ => (),
                 }
             }
@@ -502,6 +503,22 @@ impl App {
             State::CustomInstruction(state) | State::Sandbox(state) => {
                 list_up(&mut state.allowed_values_state, true);
             }
+            _ => (),
+        }
+    }
+
+    /// Performs an action. Action depends on current app state.
+    /// 
+    /// CustomInstruction | Sandbox: If an element is selected in the list, it is filled in to the text area
+    fn tab_key(&mut self) {
+        match self.state.borrow_mut() {
+            State::CustomInstruction(state) | State::Sandbox(state) =>  {
+                if let Some(idx) = state.allowed_values_state.selected() {
+                    let selected = &state.items_to_display()[idx];
+                    state.input = selected.clone();
+                    state.cursor_position = selected.len();
+                }
+            },
             _ => (),
         }
     }

@@ -83,7 +83,7 @@ impl KeybindingHints {
     /// Use to enable a keybinding hint.
     ///
     /// Does nothing if the key is not associated to a keybinding.
-    pub fn _enable(&mut self, key: &str) {
+    pub fn enable(&mut self, key: &str) {
         if let Some(bind) = self.hints.get_mut(key) {
             bind.enabled = true;
         }
@@ -201,11 +201,13 @@ impl KeybindingHints {
                 self.show(&KeySymbol::ArrowDown.to_string());
                 self.show(&KeySymbol::ArrowLeft.to_string());
                 self.show(&KeySymbol::ArrowRight.to_string());
+                self.show(&KeySymbol::Tab.to_string());
                 if state.input.is_empty() && state.allowed_values_state.selected().is_none() {
                     self.disable(&KeySymbol::Enter.to_string());
                 }
                 if state.allowed_values_state.selected().is_some() {
                     self.set_state(&KeySymbol::Enter.to_string(), 1)?;
+                    self.enable(&KeySymbol::Tab.to_string())
                 }
             }
             State::Sandbox(state) => {
@@ -219,12 +221,14 @@ impl KeybindingHints {
                 self.show(&KeySymbol::ArrowDown.to_string());
                 self.show(&KeySymbol::ArrowLeft.to_string());
                 self.show(&KeySymbol::ArrowRight.to_string());
+                self.show(&KeySymbol::Tab.to_string());
                 self.set_state(&KeySymbol::Escape.to_string(), 1)?;
                 if state.input.is_empty() && state.allowed_values_state.selected().is_none() {
                     self.disable(&KeySymbol::Enter.to_string());
                 }
                 if state.allowed_values_state.selected().is_some() {
                     self.set_state(&KeySymbol::Enter.to_string(), 1)?;
+                    self.enable(&KeySymbol::Tab.to_string())
                 }
             }
             _ => (),
@@ -344,6 +348,16 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
             false,
         )?,
     );
+    hints.insert(
+        KeySymbol::Tab.to_string(),
+        KeybindingHint::new(
+            9,
+            &KeySymbol::Tab.to_string(),
+            "Fill in selected",
+            false,
+            false,
+        ),
+    );
     Ok(hints)
 }
 
@@ -434,6 +448,7 @@ pub enum KeySymbol {
     ArrowRight,
     Enter,
     Escape,
+    Tab,
 }
 
 impl ToString for KeySymbol {
@@ -445,6 +460,7 @@ impl ToString for KeySymbol {
             KeySymbol::ArrowRight => "\u{2192}".to_string(),
             KeySymbol::Enter => "\u{23ce}".to_string(),
             KeySymbol::Escape => "\u{238b}".to_string(),
+            KeySymbol::Tab => "\u{21e5}".to_string(),
         }
     }
 }
@@ -500,7 +516,7 @@ mod tests {
     #[test]
     fn test_keybinding_hints_enable() {
         let mut hints = test_keybinding_hints();
-        hints._enable("b");
+        hints.enable("b");
         assert!(hints.hints.get("b").unwrap().enabled);
     }
 
