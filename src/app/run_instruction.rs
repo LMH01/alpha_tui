@@ -55,7 +55,7 @@ impl SingleInstruction {
         };
         let chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Length(3), Constraint::Fill(1)])
+            .constraints([Constraint::Length(3), Constraint::Min(3)])
             .margin(1)
             .split(area);
         // clear background
