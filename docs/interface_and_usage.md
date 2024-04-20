@@ -22,9 +22,9 @@ To see all arguments that are available with this command use `.\alpha_tui help 
 
 When a program is loaded it can look like this: ![Program loaded example](../media/gui_program_loaded.png)
 
-Press `[r]` to begin to run the program, subsequent instructions can also be run with `[r]`. Values that have changed and the line that was run last are highlighted.  This can look like this: ![Program running example](../media/gui_program_running.png)
+Press `[s]` to begin to run the program, subsequent instructions can be run with `[n]`. Values that have changed and the line that was run last are highlighted.  This can look like this: ![Program running example](../media/gui_program_running.png)
 
-When the last instruction was executed the following window is displayed. You can restart by pressing `[s]` or exit the program by pressing `[q]`. ![Program finished example](../media/gui_program_finished.png)
+When the last instruction was executed the following window is displayed. You can restart by pressing `[t]` or exit the program by pressing `[q]`. ![Program finished example](../media/gui_program_finished.png)
 
 Below the memory cells section the address of the instruction that is executed next is displayed.
 
@@ -58,11 +58,11 @@ Navigate by using the `arrow keys`, for ease of use `[w]` and `[s]` are also sup
 
 Breakpoints can be set to run all lines of code up until the line in which the breakpoint is set.
 
-To set a breakpoint enter `debug select mode` and press `[t]` in the line in which you want to set the breakpoint. A star to the left will indicate where a breakpoint is placed.
+To set a breakpoint enter `debug select mode` and press `[b]` in the line in which you want to set the breakpoint. A star to the left will indicate where a breakpoint is placed.
 
 A placed breakpoint can look like this: ![Breakpoint set](../media/gui_breakpoint_set.png)
 
-Press `[n]` when in run mode to make the program run automatically to the next breakpoint (note how the values to the right have been updated): ![Next breakpoint](../media/gui_breakpoint_mode_run.png)
+Press `[r]` when in run mode to make the program run automatically to the next breakpoint (note how the values to the right have been updated): ![Next breakpoint](../media/gui_breakpoint_mode_run.png)
 
 #### Jump to line
 
