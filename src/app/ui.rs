@@ -8,7 +8,9 @@ use ratatui::{
 use text_align::TextAlign;
 
 use super::{
-    run_instruction::SingleInstruction, App, State, BREAKPOINT_ACCENT_COLOR, CODE_AREA_DEFAULT_COLOR, ERROR_COLOR, EXECUTION_FINISHED_POPUP_COLOR, INTERNAL_MEMORY_BLOCK_BORDER_FG, LIST_ITEM_HIGHLIGHT_COLOR, MEMORY_BLOCK_BORDER_FG
+    run_instruction::SingleInstruction, App, State, BREAKPOINT_ACCENT_COLOR,
+    CODE_AREA_DEFAULT_COLOR, ERROR_COLOR, EXECUTION_FINISHED_POPUP_COLOR,
+    INTERNAL_MEMORY_BLOCK_BORDER_FG, LIST_ITEM_HIGHLIGHT_COLOR, MEMORY_BLOCK_BORDER_FG,
 };
 
 /// Draw the ui
@@ -290,9 +292,13 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     match &mut app.state {
         State::Sandbox(single_instruction) => {
             single_instruction.draw(f, central_chunks[1], false);
-        },
+        }
         State::CustomInstructionError(_, true) | State::RuntimeError(_, true) => {
-            SingleInstruction::new(&app.executed_custom_instructions).draw(f, central_chunks[1], false);
+            SingleInstruction::new(&app.executed_custom_instructions).draw(
+                f,
+                central_chunks[1],
+                false,
+            );
         }
         _ => (),
     }

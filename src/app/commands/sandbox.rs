@@ -1,7 +1,9 @@
 use miette::Result;
 
 use crate::{
-    cli::{Cli, SandboxArgs}, runtime::{Runtime, RuntimeArgs}, app::App
+    app::App,
+    cli::{Cli, SandboxArgs},
+    runtime::{Runtime, RuntimeArgs},
 };
 
 use super::load_instruction_history;
@@ -12,7 +14,7 @@ pub fn sandbox(cli: &Cli, sandbox_args: &SandboxArgs) -> Result<()> {
         load_instruction_history(&sandbox_args.custom_instruction_history_file)?;
 
     println!("Building runtime");
-    
+
     let runtime_args = match RuntimeArgs::from_args_with_defaults(cli, 4, 4, true) {
         Ok(runtime_args) => runtime_args,
         Err(e) => return Err(miette::miette!("Unable to build runtime for sandbox: {e}")),

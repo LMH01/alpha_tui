@@ -1,11 +1,17 @@
 use std::io::{self, Stdout};
 
-use crossterm::{event::{DisableMouseCapture, EnableMouseCapture}, terminal::{self, EnterAlternateScreen, LeaveAlternateScreen}};
+use crossterm::{
+    event::{DisableMouseCapture, EnableMouseCapture},
+    terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
+};
 use miette::{miette, IntoDiagnostic, Result};
 use ratatui::{backend::CrosstermBackend, Terminal};
 
 use crate::{
-    cli::Cli, instructions::Instruction, runtime::builder::RuntimeBuilder, utils::{self, remove_comment}
+    cli::Cli,
+    instructions::Instruction,
+    runtime::builder::RuntimeBuilder,
+    utils::{self, remove_comment},
 };
 
 /// Check command
@@ -15,7 +21,9 @@ pub mod load;
 /// Sandbox command
 pub mod sandbox;
 
-fn load_instruction_history(custom_instruction_history_file: &Option<String>) -> Result<Option<Vec<String>>> {
+fn load_instruction_history(
+    custom_instruction_history_file: &Option<String>,
+) -> Result<Option<Vec<String>>> {
     let mut instruction_history = None;
     if let Some(file) = custom_instruction_history_file {
         // load content of file
@@ -61,11 +69,9 @@ fn load_instruction_history(custom_instruction_history_file: &Option<String>) ->
 fn create_runtime_builder(cli: &Cli) -> Result<RuntimeBuilder> {
     match RuntimeBuilder::from_args(cli) {
         Ok(rb) => Ok(rb),
-        Err(e) => {
-            Err(miette!(
-                "Unable to create RuntimeBuilder, memory config could not be loaded from file:\n{e}"
-            ))
-        }
+        Err(e) => Err(miette!(
+            "Unable to create RuntimeBuilder, memory config could not be loaded from file:\n{e}"
+        )),
     }
 }
 

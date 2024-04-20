@@ -251,11 +251,16 @@ impl<'a> RuntimeArgs {
     }
 
     /// Creates a new runtime args struct using the cli arguments.
-    /// 
+    ///
     /// If a specific setting is not provided using the cli, the provided default value is used.
-    /// 
+    ///
     /// Memory cells are named h1, ..., hn.
-    pub fn from_args_with_defaults(args: &Cli, accumulators: u8, memory_cells: u32, enable_gamma: bool) -> Result<Self, String> {
+    pub fn from_args_with_defaults(
+        args: &Cli,
+        accumulators: u8,
+        memory_cells: u32,
+        enable_gamma: bool,
+    ) -> Result<Self, String> {
         // check if memory config file is set and use those values if set
         if let Some(path) = &args.memory_config_file {
             let config =
@@ -265,7 +270,7 @@ impl<'a> RuntimeArgs {
                 };
             return Ok(config.into_runtime_args(args));
         }
-        
+
         let accumulators = args.accumulators.unwrap_or(accumulators);
         let memory_cells = match args.memory_cells.as_ref() {
             None => {
@@ -274,7 +279,7 @@ impl<'a> RuntimeArgs {
                     memory_cell_names.push(format!("h{i}"));
                 }
                 memory_cell_names
-            },
+            }
             Some(value) => value.clone(),
         };
         let idx_memory_cells = args.index_memory_cells.as_ref().cloned();
@@ -287,7 +292,7 @@ impl<'a> RuntimeArgs {
             memory_cells,
             idx_memory_cells,
             enable_gamma,
-            Settings::from(args)
+            Settings::from(args),
         ))
     }
 

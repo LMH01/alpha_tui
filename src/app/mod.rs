@@ -572,7 +572,8 @@ impl App {
             self.state = State::Running(self.instruction_list_states.breakpoints_set());
         }
         // if in sandbox mode, add instruction to main window
-        self.instruction_list_states.add_instruction(instruction_str);
+        self.instruction_list_states
+            .add_instruction(instruction_str);
         Ok(())
     }
 }

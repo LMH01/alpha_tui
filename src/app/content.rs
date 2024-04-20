@@ -51,7 +51,11 @@ impl InstructionListStates {
             .instructions()
             .iter()
             .map(|i| {
-                let content = vec![Line::from(Span::raw(if is_sandbox {i.1.clone()} else {format!("{:2}: {}", i.0 + 1, i.1)}))];
+                let content = vec![Line::from(Span::raw(if is_sandbox {
+                    i.1.clone()
+                } else {
+                    format!("{:2}: {}", i.0 + 1, i.1)
+                }))];
                 ListItem::new(content).style(Style::default())
             })
             .collect();
