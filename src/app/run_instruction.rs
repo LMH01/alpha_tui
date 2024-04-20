@@ -97,7 +97,7 @@ impl SingleInstruction {
         // Trie can not be set as variable in the struct, because it does not implement PartialEq
         let mut builder = TrieBuilder::new();
         for instruction in &self.executed_instructions {
-            builder.push(instruction);
+            builder.push(instruction.trim());
         }
 
         if self.input.is_empty() {
