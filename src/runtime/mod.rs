@@ -247,6 +247,16 @@ impl<'a> RuntimeArgs {
     ///
     /// Errors if option is set to parse memory cells from file and the parsing fails.
     pub fn from_args(args: &Cli) -> Result<Self, String> {
+        Self::from_args_with_defaults(args, 0, 0, false)
+    }
+
+    /// Creates a new runtime args struct using the cli arguments.
+    /// 
+    /// If a specific setting is not provided using the cli, the provided default value is used.
+    /// 
+    /// Memory cells are named h1, ..., hn.
+    pub fn from_args_with_defaults(args: &Cli, accumulators: u8, memory_cells: u32, enable_gamma: bool) -> Result<Self, String> {
+        // check if memory config file is set and use those values if set
         if let Some(path) = &args.memory_config_file {
             let config =
                 match serde_json::from_str::<MemoryConfig>(&utils::read_file(path)?.join("\n")) {
@@ -254,31 +264,30 @@ impl<'a> RuntimeArgs {
                     Err(e) => return Err(format!("json parse error: {e}")),
                 };
             return Ok(config.into_runtime_args(args));
-            //let config = match MemoryConfig::from_file_contents(&utils::read_file(path)?, path) {
-            //    Ok(config) => config,
-            //    Err(e) => return Err(e),
-            //};
-            //return Ok(Self {
-            //    accumulators: config.accumulators,
-            //    memory_cells: config.memory_cells,
-            //    index_memory_cells: config.index_memory_cells,
-            //    gamma: config.gamma_accumulator,
-            //    stack: Vec::new(),
-            //    settings: Settings::from(args)
-            //});
         }
-        let accumulators = args.accumulators.unwrap_or(0);
+        
+        let accumulators = args.accumulators.unwrap_or(accumulators);
         let memory_cells = match args.memory_cells.as_ref() {
-            None => Vec::new(),
+            None => {
+                let mut memory_cell_names = Vec::new();
+                for i in 0..memory_cells {
+                    memory_cell_names.push(format!("h{i}"));
+                }
+                memory_cell_names
+            },
             Some(value) => value.clone(),
         };
         let idx_memory_cells = args.index_memory_cells.as_ref().cloned();
+        let enable_gamma = match args.enable_gamma_accumulator {
+            Some(enable_gamma) => enable_gamma,
+            None => enable_gamma,
+        };
         Ok(Self::new(
             accumulators as usize,
             memory_cells,
             idx_memory_cells,
-            args.enable_gamma_accumulator,
-            Settings::from(args),
+            enable_gamma,
+            Settings::from(args)
         ))
     }
 

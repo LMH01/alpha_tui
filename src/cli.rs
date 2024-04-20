@@ -77,7 +77,7 @@ pub struct Cli {
         conflicts_with = "memory_config_file",
         global = true
     )]
-    pub enable_gamma_accumulator: bool,
+    pub enable_gamma_accumulator: Option<bool>,
 
     #[arg(
         long = "allowed-instructions",
