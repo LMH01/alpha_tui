@@ -8,7 +8,7 @@
 
 ![Demo](docs/demo.gif)
 
-This is my attempt at writing a compiler and runtime environment for the Alpha-Notation used in my Systemnahe Informatik lecture at university.
+This is my attempt at writing a runtime environment and debugger for the Alpha-Notation used in my Systemnahe Informatik lecture at university.
 
 Programs are read in and then compiled, a terminal ui is then opened where you can run the program line by line or by using breakpoints.
 
