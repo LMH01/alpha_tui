@@ -143,7 +143,7 @@ impl App {
                     continue;
                 }
                 match &self.state {
-                    State::CustomInstruction(_) => {
+                    State::CustomInstruction(_) | State::Sandbox(_) => {
                         if let KeyCode::Char(to_insert) = key.code {
                             self.any_char(to_insert)
                         }
@@ -276,7 +276,11 @@ impl App {
                 }
                 // keybinding actions that are always checked
                 match key.code {
-                    KeyCode::Esc => self.escape_key(),
+                    KeyCode::Esc => {
+                        if self.escape_key() {
+                            return Ok(());
+                        }
+                    }
                     KeyCode::Backspace => self.backspace_key(),
                     KeyCode::Delete => self.delete_key(),
                     KeyCode::Left => self.left_key(),
@@ -340,23 +344,29 @@ impl App {
         self.state = State::Default;
     }
 
-    #[allow(clippy::single_match)]
-    fn escape_key(&mut self) {
+    /// Performs an action. Action depends on current app state.
+    ///
+    /// CustomInstruction: exit custom instruction popup and resume running state
+    /// Sandbox: exit the program
+    ///
+    /// Return value indicates if the program should be closed.
+    fn escape_key(&mut self) -> bool {
         match self.state {
             State::CustomInstruction(_) => {
                 self.state = State::Running(self.instruction_list_states.breakpoints_set())
             }
+            State::Sandbox(_) => return true,
             _ => (),
         }
+        false
     }
 
     /// Performs an action. Action depends on current app state.
     ///
     /// CustomInstruction: Enter a char
-    #[allow(clippy::single_match)]
     fn any_char(&mut self, to_insert: char) {
         match self.state.borrow_mut() {
-            State::CustomInstruction(state) => {
+            State::CustomInstruction(state) | State::Sandbox(state) => {
                 insert_char_at_index(&mut state.input, state.cursor_position, to_insert);
                 // check if selected item is still available in list
                 if let Some(idx) = state.allowed_values_state.selected() {
@@ -382,10 +392,9 @@ impl App {
     /// Performs an action. Action depends on current app state.
     ///
     /// CustomInstruction: Deletes a char
-    #[allow(clippy::single_match)]
     fn backspace_key(&mut self) {
         match self.state.borrow_mut() {
-            State::CustomInstruction(state) => {
+            State::CustomInstruction(state) | State::Sandbox(state) => {
                 let is_not_cursor_leftmost = state.cursor_position != 0;
                 if is_not_cursor_leftmost {
                     // Method "remove" is not used on the saved text for deleting the selected char.
@@ -414,10 +423,9 @@ impl App {
     /// Performs an action. Action depends on current app state.
     ///
     /// CustomInstruction: Deletes the char behind the cursor.
-    #[allow(clippy::single_match)]
     fn delete_key(&mut self) {
         match self.state.borrow_mut() {
-            State::CustomInstruction(state) => {
+            State::CustomInstruction(state) | State::Sandbox(state) => {
                 // Method "remove" is not used on the saved text for deleting the selected char.
                 // Reason: Using remove on String works on bytes instead of the chars.
                 // Using remove would require special care because of char boundaries.
@@ -441,10 +449,9 @@ impl App {
     /// Performs an action. Action depends on current app state.
     ///
     /// CustomInstruction: Move the cursor to the left.
-    #[allow(clippy::single_match)]
     fn left_key(&mut self) {
         match self.state.borrow_mut() {
-            State::CustomInstruction(state) => {
+            State::CustomInstruction(state) | State::Sandbox(state) => {
                 let cursor_moved_left = state.cursor_position.saturating_sub(1);
                 state.cursor_position = cursor_moved_left.clamp(0, state.input.len());
             }
@@ -455,10 +462,9 @@ impl App {
     /// Performs an action. Action depends on current app state.
     ///
     /// CustomInstruction: Move the cursor to the right.
-    #[allow(clippy::single_match)]
     fn right_key(&mut self) {
         match self.state.borrow_mut() {
-            State::CustomInstruction(state) => {
+            State::CustomInstruction(state) | State::Sandbox(state) => {
                 let cursor_moved_right = state.cursor_position.saturating_add(1);
                 state.cursor_position = cursor_moved_right.clamp(0, state.input.len());
             }
@@ -469,10 +475,9 @@ impl App {
     /// Performs an action. Action depends on current app state.
     ///
     /// CustomInstruction: If not item is selected: Select first item, otherwise move down one item
-    #[allow(clippy::single_match)]
     fn down_key(&mut self) {
         match self.state.borrow_mut() {
-            State::CustomInstruction(state) => {
+            State::CustomInstruction(state) | State::Sandbox(state) => {
                 let len = state.items_to_display().len();
                 list_down(&mut state.allowed_values_state, &len);
             }
@@ -483,10 +488,9 @@ impl App {
     /// Performs an action. Action depends on current app state.
     ///
     /// CustomInstruction: Moves the list up one item.
-    #[allow(clippy::single_match)]
     fn up_key(&mut self) {
         match self.state.borrow_mut() {
-            State::CustomInstruction(state) => {
+            State::CustomInstruction(state) | State::Sandbox(state) => {
                 list_up(&mut state.allowed_values_state, true);
             }
             _ => (),
