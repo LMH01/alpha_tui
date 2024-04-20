@@ -1,4 +1,6 @@
 use clap::{Args, Parser, Subcommand};
+use miette::{Diagnostic, Result};
+use thiserror::Error;
 
 use crate::base::{Comparison, Operation};
 
@@ -22,7 +24,7 @@ pub struct Cli {
         short,
         long,
         help = "List of available memory cells",
-        long_help = "List of available memory cells.\nIf a large number of memory cells is specified, it can happen that some are not displayed in the tui.\nExample: -a a,b,c,d",
+        long_help = "List of available memory cells.\nIf a large number of memory cells is specified, it can happen that some are not displayed in the tui.\nExample: -a a,b,c,d\n\nNote that memory cells named with numbers only are not allowed, as those would conflict with index memory cells.",
         value_delimiter = ',',
         global = true
     )]
@@ -185,4 +187,39 @@ pub enum CheckCommands {
 #[allow(clippy::module_name_repetitions)]
 pub trait CliHint {
     fn cli_hint(&self) -> String;
+}
+
+/// Validates if the provided arguments are allowed.
+///
+/// This function is used to test some additional requirements, that can't be programmed into clap.
+pub fn validate_arguments(cli: &Cli) -> Result<()> {
+    if let Some(memory_cells) = &cli.memory_cells {
+        for cell in memory_cells {
+            if cell.chars().any(|c| c.is_digit(10)) && !cell.chars().any(|c| c.is_alphabetic()) {
+                return Err(CliError::new(CliErrorType::MemoryCellsInvalid(cell.clone())).into());
+            }
+        }
+    }
+    Ok(())
+}
+
+#[derive(Debug, Diagnostic, Error)]
+#[error("while checking cli arguments")]
+pub struct CliError {
+    #[diagnostic_source]
+    reason: CliErrorType,
+}
+
+impl CliError {
+    fn new(reason: CliErrorType) -> Self {
+        Self { reason }
+    }
+}
+
+/// Provided cli arguments are not valid.
+#[derive(Debug, Diagnostic, Error)]
+pub enum CliErrorType {
+    #[error("memory cell found that has a name consisting of only numbers: {0}")]
+    #[diagnostic(code("cli::memory_cells_invalid"), help("Try adding a char: a{0}"))]
+    MemoryCellsInvalid(String),
 }

@@ -20,6 +20,10 @@ mod utils;
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
+
+    // perform additional validation checks on provided cli arguments
+    cli::validate_arguments(&cli)?;
+
     let input_file = match cli.command {
         Commands::Load(ref args) => Some(args.file.clone()),
         Commands::Check(ref args) => Some(args.file.clone()),
