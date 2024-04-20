@@ -38,7 +38,7 @@ pub fn sandbox(global_args: &GlobalArgs, sandbox_args: &SandboxArgs) -> Result<(
         &Vec::new(),
         &None,
         instruction_history,
-        None,
+        sandbox_args.custom_instruction_history_file.clone(),
         true,
     );
     let res = app.run(&mut terminal);
