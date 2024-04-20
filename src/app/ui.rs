@@ -42,7 +42,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     } else {
         vec![Constraint::Length(5)]
     };
-    chunk_constraints.push(Constraint::Percentage(65));
+    chunk_constraints.push(Constraint::Fill(1));
     chunk_constraints.push(Constraint::Percentage(20));
     chunk_constraints.push(Constraint::Percentage(10));
     let chunks = Layout::default()
