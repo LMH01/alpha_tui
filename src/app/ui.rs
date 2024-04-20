@@ -2,7 +2,7 @@ use ratatui::{
     prelude::{Alignment, Constraint, Direction, Layout},
     style::{Modifier, Style},
     text::Text,
-    widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph},
+    widgets::{Block, BorderType, Borders, Clear, List, ListDirection, ListItem, Paragraph},
     Frame,
 };
 use text_align::TextAlign;
@@ -107,7 +107,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     }
 
     // Create a List from all instructions and highlight current instruction
-    let items = List::new(app.instruction_list_states.as_list_items())
+    let items = List::new(app.instruction_list_states.as_list_items(is_sandbox))
         .block(code_area)
         .highlight_style(if let State::DebugSelect(_, _) = app.state {
             Style::default()
@@ -118,7 +118,12 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                 .bg(LIST_ITEM_HIGHLIGHT_COLOR)
                 .add_modifier(Modifier::BOLD)
         })
-        .highlight_symbol(">> ");
+        .highlight_symbol(">> ")
+        .direction(if is_sandbox {
+            ListDirection::BottomToTop
+        } else {
+            ListDirection::TopToBottom
+        });
 
     // We can now render the item list
     f.render_stateful_widget(

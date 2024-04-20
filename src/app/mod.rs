@@ -508,6 +508,7 @@ impl App {
     fn enter_key(&mut self) -> Result<()> {
         match &self.state.clone() {
             State::CustomInstruction(state) => self.custom_instruction_enter(state, false)?,
+            State::Sandbox(state) => self.custom_instruction_enter(state, true)?,
             State::CustomInstructionError(_, is_sandbox) => {
                 if *is_sandbox {
                     self.state =
@@ -543,18 +544,17 @@ impl App {
                         "input_field",
                         1,
                     ),
-                    false,
+                    is_sandbox,
                 );
                 return Ok(());
             }
         };
         if let Err(e) = self.runtime.run_foreign_instruction(instruction) {
-            self.state = State::RuntimeError(e, false);
+            self.state = State::RuntimeError(e, is_sandbox);
             return Ok(());
         }
         // instruction was executed successfully
         let instruction_run = state.input.clone();
-        self.state = State::Running(self.instruction_list_states.breakpoints_set());
         // add instruction to executed instructions, if it is not contained already and if it is not empty
         if !self.executed_custom_instructions.contains(&instruction_run)
             && !instruction_run.is_empty()
@@ -565,6 +565,14 @@ impl App {
             }
             self.executed_custom_instructions.push(instruction_run);
         }
+        // set new state
+        if is_sandbox {
+            self.state = State::Sandbox(SingleInstruction::new(&self.executed_custom_instructions))
+        } else {
+            self.state = State::Running(self.instruction_list_states.breakpoints_set());
+        }
+        // if in sandbox mode, add instruction to main window
+        self.instruction_list_states.add_instruction(instruction_str);
         Ok(())
     }
 }

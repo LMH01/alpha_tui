@@ -46,15 +46,18 @@ impl InstructionListStates {
     }
 
     /// Returns the instruction states as a vector of list items to be printed in the ui.
-    pub fn as_list_items(&self) -> Vec<ListItem<'static>> {
-        let items = self
+    pub fn as_list_items(&self, is_sandbox: bool) -> Vec<ListItem<'static>> {
+        let mut items: Vec<ListItem<'static>> = self
             .instructions()
             .iter()
             .map(|i| {
-                let content = vec![Line::from(Span::raw(format!("{:2}: {}", i.0 + 1, i.1)))];
+                let content = vec![Line::from(Span::raw(if is_sandbox {i.1.clone()} else {format!("{:2}: {}", i.0 + 1, i.1)}))];
                 ListItem::new(content).style(Style::default())
             })
             .collect();
+        if is_sandbox {
+            items.reverse();
+        }
         items
     }
 
@@ -162,6 +165,11 @@ impl InstructionListStates {
 
     pub fn breakpoint_list_state_mut(&mut self) -> &mut ListState {
         &mut self.breakpoint_list_state
+    }
+
+    /// Adds a new instruction to the list (display only)
+    pub fn add_instruction(&mut self, string: String) {
+        self.instructions.push((0, string, false))
     }
 }
 
