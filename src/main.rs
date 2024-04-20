@@ -3,7 +3,7 @@ use clap::Parser;
 use cli::Cli;
 use miette::Result;
 
-use crate::cli::Commands;
+use crate::cli::Command;
 
 /// The application itself
 mod app;
@@ -25,9 +25,9 @@ fn main() -> Result<()> {
     cli::validate_arguments(&cli)?;
 
     let input_file = match cli.command {
-        Commands::Load(ref args) => Some(args.file.clone()),
-        Commands::Check(ref args) => Some(args.file.clone()),
-        Commands::Sandbox(_) => None,
+        Command::Load(ref args) => Some(args.file.clone()),
+        Command::Check(ref args) => Some(args.file.clone()),
+        Command::Sandbox(_) => None,
     };
 
     if cli.global_args.disable_instruction_limit {
@@ -37,19 +37,19 @@ fn main() -> Result<()> {
     }
 
     match &cli.command {
-        Commands::Check(check_args) => commands::check::check(
+        Command::Check(check_args) => commands::check::check(
             &cli.global_args,
             check_args,
             &read_file(input_file.as_ref().unwrap())?,
             &input_file.unwrap(),
         ),
-        Commands::Load(load_args) => commands::load::load(
+        Command::Load(load_args) => commands::load::load(
             &cli.global_args,
             load_args,
             read_file(input_file.as_ref().unwrap())?,
             input_file.unwrap(),
         )?,
-        Commands::Sandbox(sandbox_args) => {
+        Command::Sandbox(sandbox_args) => {
             commands::sandbox::sandbox(&cli.global_args, sandbox_args)?
         }
     }

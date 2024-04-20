@@ -246,7 +246,7 @@ mod tests {
     use clap::Parser;
 
     use crate::{
-        cli::{Cli, Commands},
+        cli::{Cli, Command},
         instructions::{
             error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
             Instruction,
@@ -474,7 +474,7 @@ mod tests {
             "some_file.txt",
         ]);
         let args = match cli.command {
-            Commands::Load(args) => args,
+            Command::Load(args) => args,
             _ => panic!(""),
         };
         let mut rb =
@@ -507,7 +507,7 @@ mod tests {
             "ge",
         ]);
         let args = match cli.command {
-            Commands::Load(args) => args,
+            Command::Load(args) => args,
             _ => panic!(""),
         };
         let mut rb =
@@ -536,7 +536,7 @@ mod tests {
             "mul",
         ]);
         let args = match cli.command {
-            Commands::Load(args) => args,
+            Command::Load(args) => args,
             _ => panic!(""),
         };
         let mut rb =

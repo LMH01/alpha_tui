@@ -13,7 +13,7 @@ use crate::base::{Comparison, Operation};
 )]
 pub struct Cli {
     #[command(subcommand)]
-    pub command: Commands,
+    pub command: Command,
 
     #[command(flatten)]
     pub global_args: GlobalArgs,
@@ -118,7 +118,7 @@ pub struct CheckArgs {
     pub file: String,
 
     #[command(subcommand)]
-    command: CheckCommands,
+    command: CheckCommand,
 }
 
 #[derive(Args, Clone, Debug)]
@@ -133,7 +133,7 @@ pub struct SandboxArgs {
 }
 
 #[derive(Subcommand, Clone, Debug)]
-pub enum Commands {
+pub enum Command {
     #[command(about = "Load an alpha notation program")]
     Load(LoadArgs),
     #[command(
@@ -195,7 +195,7 @@ pub struct InstructionLimitingArgs {
 }
 
 #[derive(Subcommand, Clone, Debug)]
-pub enum CheckCommands {
+pub enum CheckCommand {
     #[command(about = "Check if the program compiles")]
     Compile,
 }
