@@ -59,14 +59,18 @@ pub enum State {
     /// Indicates that parsing of the instruction failed.
     ///
     /// String contains the reason why it failed.
-    CustomInstructionError(ParseSingleInstructionError),
+    /// 
+    /// Boolean value indicates if this error originates in the sandbox mode.
+    CustomInstructionError(ParseSingleInstructionError, bool),
     // 0 = state to restore to when debug mode is exited
     // 1 = index of instruction that was selected before debug mode was started
     DebugSelect(Box<State>, Option<usize>),
     // 0 = stores if the popup window is open
     Finished(bool),
     /// Indicates that an irrecoverable error occurred while a program was running.
-    RuntimeError(RuntimeError),
+    /// 
+    /// Boolean value indicates if this error originates in the sandbox mode.
+    RuntimeError(RuntimeError, bool),
     /// Indicates that this app is in sandbox mode.
     Sandbox(SingleInstruction),
 }
@@ -189,8 +193,8 @@ impl App {
                                 _ => (),
                             },
                             KeyCode::Char('q') => match &self.state {
-                                State::RuntimeError(e) => Err(e.clone())?,
-                                State::CustomInstructionError(e) => Err(e.clone())?,
+                                State::RuntimeError(e, _) => Err(e.clone())?,
+                                State::CustomInstructionError(e, _) => Err(e.clone())?,
                                 State::CustomInstruction(_) => (),
                                 _ => return Ok(()),
                             },
@@ -201,7 +205,7 @@ impl App {
                             }
                             KeyCode::Char('t') => match self.state {
                                 State::Running(_) | State::Finished(_) => self.reset(),
-                                State::RuntimeError(_) | State::CustomInstructionError(_) => {
+                                State::RuntimeError(_, _) | State::CustomInstructionError(_, _) => {
                                     self.reset();
                                 }
                                 State::DebugSelect(_, _) => {
@@ -304,14 +308,14 @@ impl App {
     fn step(&mut self) -> Result<bool, ()> {
         let res = self.runtime.step();
         if let Err(e) = res {
-            self.state = State::RuntimeError(e);
+            self.state = State::RuntimeError(e, false);
             return Err(());
         }
         self.instruction_list_states
             .set(self.runtime.next_instruction_index() as i32);
         if self.runtime.finished() {
             match self.state {
-                State::RuntimeError(_) => (),
+                State::RuntimeError(_, _) => (),
                 _ => {
                     self.state = State::Finished(true);
                 }
@@ -520,12 +524,12 @@ impl App {
                                 instruction_str.to_string(),
                                 "input_field",
                                 1,
-                            ));
+                            ), false);
                         return Ok(());
                     }
                 };
                 if let Err(e) = self.runtime.run_foreign_instruction(instruction) {
-                    self.state = State::RuntimeError(e);
+                    self.state = State::RuntimeError(e, false);
                     return Ok(());
                 }
                 // instruction was executed successfully
@@ -542,7 +546,7 @@ impl App {
                     self.executed_custom_instructions.push(instruction_run);
                 }
             }
-            State::CustomInstructionError(_) => {
+            State::CustomInstructionError(_, _) => {
                 self.state = State::Running(self.instruction_list_states.breakpoints_set());
             }
             _ => (),

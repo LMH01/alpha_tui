@@ -19,6 +19,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     // when the app is in sandbox mode, some things are rendered differently
     let is_sandbox = match app.state {
         State::Sandbox(_) => true,
+        State::RuntimeError(_, is_sandbox) => is_sandbox,
+        State::CustomInstructionError(_, is_sandbox) => is_sandbox,
         _ => false,
     };
 
@@ -88,7 +90,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             Alignment::Left
         })
         .border_type(BorderType::Rounded);
-    if let State::RuntimeError(_) = app.state {
+    if let State::RuntimeError(_, _) = app.state {
         code_area = code_area.border_style(Style::default().fg(ERROR_COLOR));
     } else if let State::DebugSelect(_, _) = app.state {
         code_area = code_area
@@ -249,7 +251,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     }
 
     // Popup if runtime error
-    if let State::RuntimeError(e) = &app.state {
+    if let State::RuntimeError(e, _) = &app.state {
         let block = Block::default()
             .title("Runtime error!")
             .borders(Borders::ALL)
@@ -263,7 +265,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     }
 
     // Draw error when instruction could not be parsed
-    if let State::CustomInstructionError(reason) = &app.state {
+    if let State::CustomInstructionError(reason, _) = &app.state {
         let block = Block::default()
             .title("Error: unable to parse instruction".to_string())
             .borders(Borders::ALL)

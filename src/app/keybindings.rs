@@ -167,7 +167,7 @@ impl KeybindingHints {
                 self.show("t");
                 self.set_state("d", 2)?;
             }
-            State::RuntimeError(_) => {
+            State::RuntimeError(_, _) => {
                 self.hide("c");
                 self.hide("s");
                 self.hide("d");
