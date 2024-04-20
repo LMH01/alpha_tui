@@ -67,6 +67,26 @@ Functions may also no longer be properly exited because of a misaligned call sta
 
 ## Sandbox command
 
+The `sandbox` subcommand can be used to start a sandbox session where instructions can be run. Note however that the instructions `CALL`, `GOTO` and `IF` are not supported in this environment, because these instructions require labels to be present.
+
+To start the program in sandbox mode, use the command `.\alpha_tui sandbox`. The following window will open:
+
+![Sandbox mode started](../media/gui_sandbox_mode_opened.png)
+
+Some accumulators and memory cells are automatically created, this can be overwritten by using the arguments `--accumulators` and `--memory-cells` or `--memory-config-file`, see [memory config file](cli.md#memory-config-file) for more.
+
+Type any valid instruction (see [instructions](instructions.md)) and press enter to execute it. The accumulator and memory cell values affected will be updated and highlighted.
+
+The central area labeled "Executed instructions" contains the instructions that have been executed, where the instruction, that was executed the latest, is displayed at the bottom.
+
+The area labeled "History" also contains a history of entered commands but this history can be loaded from a file (see [instruction history](cli.md#instruction-history)), is searchable and scrollable. If an element is selected in that list, the `ENTER` key can be pressed to execute it or the `TAB` key can be used to copy its text into the editable text area to modify it.
+
+If an instruction was entered, that could not be parsed, an error popup is displayed, this can look something like this:
+
+![Sandbox mode instruction parse error](../media/gui_sandbox_mode_instruction_parse_error.png)
+
+Unfortunately it is not possible to print the nice and informative error message into that window, to view it the `q` key needs to be pressed to exit the program. The error message is then displayed in the console. To simply close it, use the `ENTER` key.
+
 ## Check command
 
 The `check` subcommand can be used to perform checks on the program. It is currently only supported to check if the program compiles. For example the command `alpha_tui check examples/programs/faculty.alpha compile` will check if the program compiles and return `0` if it did. Otherwise an error code is returned, see below for the meaning.

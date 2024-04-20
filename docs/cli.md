@@ -118,6 +118,14 @@ For example to only allow addition and subtraction you can use this option: `--a
 
 **Note**: At least one operation needs to be specified, if you would like to prevent the use of any operation you can use `--allowed-instructions` to limit the available instructions into only allowing instructions which don't take any operations.
 
+## Memory config file
+
+// TODO write
+
+## Instruction history
+
+// TODO write
+
 ## Examples
 
 ### Maximum limitation
