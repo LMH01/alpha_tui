@@ -1,10 +1,7 @@
 use miette::{Context, Result};
 
 use crate::{
-    cli::{Cli, Commands, LoadArgs},
-    commands::load_instruction_history,
-    tui::App,
-    utils::{build_instructions_with_whitelist, pretty_format_instructions, write_file},
+    app::{commands::load_instruction_history, App}, cli::{Cli, Commands, LoadArgs}, utils::{build_instructions_with_whitelist, pretty_format_instructions, write_file}
 };
 
 #[allow(clippy::match_wildcard_for_single_variants)]

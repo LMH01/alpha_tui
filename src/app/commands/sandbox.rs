@@ -1,7 +1,7 @@
 use miette::Result;
 
 use crate::{
-    cli::{Cli, SandboxArgs}, runtime::{Runtime, RuntimeArgs}, tui::App
+    cli::{Cli, SandboxArgs}, runtime::{Runtime, RuntimeArgs}, app::App
 };
 
 use super::load_instruction_history;

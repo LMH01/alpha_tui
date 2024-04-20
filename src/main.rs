@@ -1,6 +1,6 @@
+use app::commands;
 use clap::Parser;
 use cli::Cli;
-use commands::{check, load, sandbox};
 use miette::Result;
 
 use crate::cli::Commands;
@@ -9,15 +9,12 @@ use crate::cli::Commands;
 mod base;
 /// Command line parsing
 mod cli;
-/// Contains all commands that this app can run
-mod commands;
 /// Supported instructions
 mod instructions;
-//mod instructions_new;
 /// Program execution
 mod runtime;
-/// Terminal user interface
-mod tui;
+/// The application itself
+mod app;
 /// Utility functions
 mod utils;
 
@@ -36,9 +33,9 @@ fn main() -> Result<()> {
     }
 
     match &cli.command {
-        Commands::Check(_) => check::check(&cli, &read_file(&input_file.as_ref().unwrap())?, &input_file.unwrap()),
-        Commands::Load(args) => load::load(&cli, read_file(&input_file.as_ref().unwrap())?, input_file.unwrap(), args.clone())?,
-        Commands::Sandbox(args) => sandbox::sandbox(&cli, args)?,
+        Commands::Check(_) => commands::check::check(&cli, &read_file(&input_file.as_ref().unwrap())?, &input_file.unwrap()),
+        Commands::Load(args) => commands::load::load(&cli, read_file(&input_file.as_ref().unwrap())?, input_file.unwrap(), args.clone())?,
+        Commands::Sandbox(args) => commands::sandbox::sandbox(&cli, args)?,
     }
     Ok(())
 }

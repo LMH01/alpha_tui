@@ -23,6 +23,8 @@ use self::{
     ui::draw,
 };
 
+/// Contains all commands that this app can run
+pub mod commands;
 /// Content used to fill the tui elements.
 mod content;
 /// Everything related to keybindings.
