@@ -39,7 +39,7 @@ impl SingleInstruction {
         &mut self,
         f: &mut ratatui::prelude::Frame,
         r: ratatui::prelude::Rect,
-        floating: bool,
+        is_sandbox: bool,
     ) {
         let input = Paragraph::new(self.input.as_str())
             .style(Style::default())
@@ -48,10 +48,10 @@ impl SingleInstruction {
                     .borders(Borders::ALL)
                     .title("Enter instruction:"),
             );
-        let area = if floating {
-            super::centered_rect(43, 40, None, r)
-        } else {
+        let area = if is_sandbox {
             r
+        } else {
+            super::centered_rect(43, 40, None, r)
         };
         let chunks = Layout::default()
             .direction(Direction::Vertical)
@@ -61,8 +61,13 @@ impl SingleInstruction {
         // clear background
         f.render_widget(Clear, area);
         // render surrounding block
+        let outer_block_title = if is_sandbox {
+            "Sandbox mode"
+        } else {
+            "Run custom instruction"
+        };
         let outer_block = Block::default()
-            .title("Run custom instruction")
+            .title(outer_block_title)
             .title_alignment(Alignment::Center)
             .borders(Borders::ALL)
             .border_style(Style::default().fg(super::CUSTOM_INSTRUCTION_ACCENT_FG));

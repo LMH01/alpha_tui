@@ -271,17 +271,17 @@ pub fn draw(f: &mut Frame, app: &mut App) {
 
     // Draw custom instruction popup/window
     if let State::CustomInstruction(single_instruction) = &mut app.state {
-        single_instruction.draw(f, global_chunks[0], true)
+        single_instruction.draw(f, global_chunks[0], false)
     }
     match &mut app.state {
         State::Sandbox(single_instruction) => {
-            single_instruction.draw(f, central_chunks[1], false);
+            single_instruction.draw(f, central_chunks[1], true);
         }
         State::CustomInstructionError(_, true) | State::RuntimeError(_, true) => {
             SingleInstruction::new(&app.executed_custom_instructions).draw(
                 f,
                 central_chunks[1],
-                false,
+                true,
             );
         }
         _ => (),
