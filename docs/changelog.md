@@ -23,6 +23,7 @@
 
 ### Bug fixes
 
+- Fixed panic when jump to line was used in the first line (#37)
 - [Windows] fixed double key input (#35)
 
 ## v1.2.0 (latest version)

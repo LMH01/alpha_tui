@@ -179,9 +179,9 @@ impl App {
                                         .instruction_list_state_mut()
                                         .selected()
                                         .unwrap();
-                                    self.instruction_list_states.set_instruction(idx - 1);
                                     self.runtime.set_next_instruction(idx);
                                     _ = self.step();
+                                    self.instruction_list_states.set_instruction(idx);
                                 }
                             }
                             KeyCode::Char('i') => match self.state {
