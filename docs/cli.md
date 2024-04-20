@@ -120,7 +120,30 @@ For example to only allow addition and subtraction you can use this option: `--a
 
 ## Memory config file
 
-// TODO write
+The option `--memory-config-file` can be used to specify the path to a `JSON` formatted file that contains information about accumulators, memory cells, index memory cells and the gamma accumulator. It can be used to specify values that should be available when the program is started and it can be used to specify what memory types should be available. To mark a type as available but not set any value yet, add its name to the file under the correct data type and set the value to `null`. An example file could look like this:
+
+```json
+{
+    "accumulators": {
+        "0": 10,
+        "1": null
+    },
+    "gamma_accumulator": {
+        "enabled": true,
+        "value": null
+    },
+    "memory_cells": {
+        "h2": null,
+        "h1": 10
+    },
+    "index_memory_cells": {
+        "1": null,
+        "0": 10
+    }
+}
+```
+
+This file can also be found [here](../examples/memory_config.json).
 
 ## Instruction history
 
