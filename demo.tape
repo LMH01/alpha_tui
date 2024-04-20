@@ -304,3 +304,141 @@ Sleep 500ms
 Type "r"
 
 Sleep 3s
+
+# start another run with sandbox mode
+
+Type "q"
+
+Sleep 500ms
+
+Type "./alpha_tui sandbox"
+
+Sleep 1s
+
+Enter
+
+Sleep 1s
+
+Type "a := 5"
+
+Sleep 1s
+
+Enter
+
+Sleep 1s
+
+Type "push"
+
+Sleep 1s
+
+Enter
+
+Sleep 1s
+
+Type "a := 10"
+
+Sleep 1s
+
+Enter
+
+Sleep 1s
+
+Type "push"
+
+Sleep 1s
+
+Enter
+
+Sleep 1s
+
+Type "a1 := 8"
+
+Sleep 1s
+
+Enter
+
+Sleep 1s
+
+Type "p(h0) := a0 + a1"
+
+Sleep 1s
+
+Enter
+
+Sleep 1s
+
+Type "a := p(h0)"
+
+Sleep 1s
+
+Enter
+
+Sleep 1s
+
+Down
+
+Sleep 500ms
+
+Down
+
+Sleep 500ms
+
+Down
+
+Sleep 500ms
+
+Down
+
+Sleep 500ms
+
+Down
+
+Sleep 500ms
+
+Tab
+
+Sleep 500ms
+
+Enter
+
+Sleep 1s
+
+Type "pop"
+
+Sleep 1s
+
+Enter
+
+Sleep 1s
+
+Type "a2 := a"
+
+Sleep 1s
+
+Enter
+
+Sleep 1s
+
+Type "stack *"
+
+Sleep 1s
+
+Enter
+
+Sleep 1s
+
+Type "p"
+
+Sleep 1s
+
+Down
+
+Sleep 1s
+
+Down
+
+Sleep 1s
+
+Enter
+
+Sleep 3s
