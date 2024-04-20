@@ -59,7 +59,7 @@ pub enum State {
     /// Indicates that parsing of the instruction failed.
     ///
     /// String contains the reason why it failed.
-    /// 
+    ///
     /// Boolean value indicates if this error originates in the sandbox mode.
     CustomInstructionError(ParseSingleInstructionError, bool),
     // 0 = state to restore to when debug mode is exited
@@ -68,7 +68,7 @@ pub enum State {
     // 0 = stores if the popup window is open
     Finished(bool),
     /// Indicates that an irrecoverable error occurred while a program was running.
-    /// 
+    ///
     /// Boolean value indicates if this error originates in the sandbox mode.
     RuntimeError(RuntimeError, bool),
     /// Indicates that this app is in sandbox mode.
@@ -506,50 +506,64 @@ impl App {
     /// CustomInstruction: Try to parse the text currently stored in the input field as instruction and run it
     /// CustomInstructionError: App state is set to running
     fn enter_key(&mut self) -> Result<()> {
-        match &self.state {
-            State::CustomInstruction(state) => {
-                let instruction_str = match state.allowed_values_state.selected() {
-                    Some(idx) => state.items_to_display()[idx].clone(),
-                    None => state.input.clone(),
-                };
-                // check if something is entered
-                if instruction_str.is_empty() {
-                    return Ok(());
+        match &self.state.clone() {
+            State::CustomInstruction(state) => self.custom_instruction_enter(state, false)?,
+            State::CustomInstructionError(_, is_sandbox) => {
+                if *is_sandbox {
+                    self.state =
+                        State::Sandbox(SingleInstruction::new(&self.executed_custom_instructions))
+                } else {
+                    self.state = State::Running(self.instruction_list_states.breakpoints_set());
                 }
-                let instruction = match Instruction::try_from(instruction_str.as_str()) {
-                    Ok(instruction) => instruction,
-                    Err(e) => {
-                        self.state =
-                            State::CustomInstructionError(e.into_parse_single_instruction_error(
-                                instruction_str.to_string(),
-                                "input_field",
-                                1,
-                            ), false);
-                        return Ok(());
-                    }
-                };
-                if let Err(e) = self.runtime.run_foreign_instruction(instruction) {
-                    self.state = State::RuntimeError(e, false);
-                    return Ok(());
-                }
-                // instruction was executed successfully
-                let instruction_run = state.input.clone();
-                self.state = State::Running(self.instruction_list_states.breakpoints_set());
-                // add instruction to executed instructions, if it is not contained already and if it is not empty
-                if !self.executed_custom_instructions.contains(&instruction_run)
-                    && !instruction_run.is_empty()
-                {
-                    // write instruction to file, if it is set
-                    if let Some(path) = &self.command_history_file {
-                        utils::write_line_to_file(&instruction_run, path)?;
-                    }
-                    self.executed_custom_instructions.push(instruction_run);
-                }
-            }
-            State::CustomInstructionError(_, _) => {
-                self.state = State::Running(self.instruction_list_states.breakpoints_set());
             }
             _ => (),
+        }
+        Ok(())
+    }
+
+    fn custom_instruction_enter(
+        &mut self,
+        state: &SingleInstruction,
+        is_sandbox: bool,
+    ) -> Result<()> {
+        let instruction_str = match state.allowed_values_state.selected() {
+            Some(idx) => state.items_to_display()[idx].clone(),
+            None => state.input.clone(),
+        };
+        // check if something is entered
+        if instruction_str.is_empty() {
+            return Ok(());
+        }
+        let instruction = match Instruction::try_from(instruction_str.as_str()) {
+            Ok(instruction) => instruction,
+            Err(e) => {
+                self.state = State::CustomInstructionError(
+                    e.into_parse_single_instruction_error(
+                        instruction_str.to_string(),
+                        "input_field",
+                        1,
+                    ),
+                    false,
+                );
+                return Ok(());
+            }
+        };
+        if let Err(e) = self.runtime.run_foreign_instruction(instruction) {
+            self.state = State::RuntimeError(e, false);
+            return Ok(());
+        }
+        // instruction was executed successfully
+        let instruction_run = state.input.clone();
+        self.state = State::Running(self.instruction_list_states.breakpoints_set());
+        // add instruction to executed instructions, if it is not contained already and if it is not empty
+        if !self.executed_custom_instructions.contains(&instruction_run)
+            && !instruction_run.is_empty()
+        {
+            // write instruction to file, if it is set
+            if let Some(path) = &self.command_history_file {
+                utils::write_line_to_file(&instruction_run, path)?;
+            }
+            self.executed_custom_instructions.push(instruction_run);
         }
         Ok(())
     }
