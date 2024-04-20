@@ -26,6 +26,10 @@ Press `[r]` to begin to run the program, subsequent instructions can also be run
 
 When the last instruction was executed the following window is displayed. You can restart by pressing `[s]` or exit the program by pressing `[q]`. ![Program finished example](../media/gui_program_finished.png)
 
+Below the memory cells section the address of the instruction that is executed next is displayed.
+
+When a program is loaded that contains at least one `CALL` function, the internal `Call stack` is automatically displayed at the right side of the tui. This call stack contains the addresses of instructions where the execution should continue when `return` is called. This window can be manually shown or hidden by using `[c]`.
+
 ### Custom instructions
 
 When in the normal run mode, you can press the `i` key to open up a popup window where a custom instruction can be entered, that should be executed at the current position in the program. You can use the `up` and `down` arrow keys to navigate the history of executed custom instructions. If an instruction is selected in that list, it is executed by pressing `enter`. By typing in the input field you can filter the list. To deselect the list and use the instruction newly written into the text field, press the `up` arrow key, until the list is no longer selected. Pressing `enter` will run the instruction written in the text field.
