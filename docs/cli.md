@@ -147,7 +147,11 @@ This file can also be found [here](../examples/memory_config.json).
 
 ## Instruction history
 
-// TODO write
+The option `--custom-instruction-history-file` can be used to specify a file that should be used to save the command history that is entered in `run custom instruction` popup and the sandbox mode. If instructions are already contained in that file, it is checked if they are valid, before the tui is opened. The contained instructions are then displayed in the `History` section and can be selected using the up and down arrow keys. 
+
+If a new instruction is written in the tui that is valid, it is added to the file.
+
+(If the file does not exist, a new file is created.) - needs to be implemented
 
 ## Examples
 
