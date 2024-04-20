@@ -101,7 +101,7 @@ pub struct LoadArgs {
         short,
         long,
         help = "File to load and save the custom instruction history to/from",
-        long_help = "File to load and save the custom instruction history to/from.\nIf set, the instructions in this list will be analyzed and be made available in the custom instruction window. Instructions not yet contained in this file will be added to it."
+        long_help = "File to load and save the custom instruction history to/from.\nIf set, the instructions in this list will be analyzed and be made available in the custom instruction window. Instructions not yet contained in this file will be added to it.\nIf the file does not exist, it is created."
     )]
     pub custom_instruction_history_file: Option<String>,
 }
