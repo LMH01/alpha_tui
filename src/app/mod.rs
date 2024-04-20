@@ -139,6 +139,10 @@ impl App {
 
     #[allow(clippy::single_match)]
     pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<()> {
+        // update keybinding hints one to make sure that start keybinding hints are displayed properly
+        if let Err(e) = self.keybinding_hints.update(&self.state) {
+            return Err(miette!("Error while updating keybinding hints:\n{e}"));
+        }
         loop {
             terminal.draw(|f| draw(f, self)).into_diagnostic()?;
             if let Event::Key(key) = event::read().into_diagnostic()? {
@@ -205,7 +209,8 @@ impl App {
                             }
                             KeyCode::Char('t') => match self.state {
                                 State::Running(_) | State::Finished(_) => self.reset(),
-                                State::RuntimeError(_, false) | State::CustomInstructionError(_, false) => {
+                                State::RuntimeError(_, false)
+                                | State::CustomInstructionError(_, false) => {
                                     self.reset();
                                 }
                                 State::DebugSelect(_, _) => {
@@ -518,7 +523,8 @@ impl App {
                 }
             }
             State::RuntimeError(_, true) => {
-                self.state = State::Sandbox(SingleInstruction::new(&self.executed_custom_instructions));
+                self.state =
+                    State::Sandbox(SingleInstruction::new(&self.executed_custom_instructions));
             }
             _ => (),
         }

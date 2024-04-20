@@ -191,6 +191,25 @@ impl KeybindingHints {
                     self.set_state(&KeySymbol::Enter.to_string(), 1)?;
                 }
             }
+            State::Sandbox(state) => {
+                self.hide("c");
+                self.hide("s");
+                self.hide("d");
+                self.hide("q");
+                self.show(&KeySymbol::Enter.to_string());
+                self.show(&KeySymbol::Escape.to_string());
+                self.show(&KeySymbol::ArrowUp.to_string());
+                self.show(&KeySymbol::ArrowDown.to_string());
+                self.show(&KeySymbol::ArrowLeft.to_string());
+                self.show(&KeySymbol::ArrowRight.to_string());
+                self.set_state(&KeySymbol::Escape.to_string(), 1)?;
+                if state.input.is_empty() && state.allowed_values_state.selected().is_none() {
+                    self.disable(&KeySymbol::Enter.to_string());
+                }
+                if state.allowed_values_state.selected().is_some() {
+                    self.set_state(&KeySymbol::Enter.to_string(), 1)?;
+                }
+            }
             _ => (),
         }
         Ok(())
@@ -296,7 +315,7 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     );
     hints.insert(
         KeySymbol::Escape.to_string(),
-        KeybindingHint::new(1, &KeySymbol::Escape.to_string(), "Cancel", true, false),
+        KeybindingHint::new_many(vec![1, 1], &KeySymbol::Escape.to_string(), vec!["Cancel", "Exit"], true, false)?,
     );
     Ok(hints)
 }
