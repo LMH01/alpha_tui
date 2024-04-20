@@ -25,6 +25,7 @@
 - `--disable-memory-detection` no longer forces the usage of either `--accumulators` and `--memory-cells` or `--memory-config-file` (previously `--memory-cells-file`) (fr #30 and #31)
 - It is now allowed to write `=` instead of `:=` when writing assignment instructions. Note, however, that this is a deviation from the alpha notation standard (fr #27).
 - Removed unnecessary 30ms sleep after key input
+- Updated dependencies
 
 ### Bug fixes
 

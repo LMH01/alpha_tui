@@ -106,13 +106,6 @@ impl SingleInstruction {
             return to_display;
         }
         let trie = builder.build();
-        trie.predictive_search(self.input.as_bytes())
-            .iter()
-            .map(|u8s| {
-                std::str::from_utf8(u8s)
-                    .expect("Input value should be u8")
-                    .to_string()
-            })
-            .collect()
+        trie.predictive_search(self.input.as_bytes()).collect()
     }
 }
