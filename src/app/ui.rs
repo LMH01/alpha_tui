@@ -51,13 +51,13 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     // draw keybinding hints
     f.render_widget(keybinding_hints, global_chunks[1]);
 
+    let mut right_chunk_constraints = vec![Constraint::Percentage(30), Constraint::Fill(1)];
+    if !is_sandbox {
+        right_chunk_constraints.push(Constraint::Length(3))
+    }
     let right_chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Percentage(30),
-            Constraint::Fill(1),
-            Constraint::Length(3),
-        ])
+        .constraints(right_chunk_constraints)
         .split(chunks[if is_sandbox { 1 } else { 2 }]);
 
     let mut stack_chunks_constraints = vec![Constraint::Fill(1)];
@@ -178,20 +178,24 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     f.render_widget(memory_cell_list, right_chunks[1]);
 
     // Next instruction block
-    let next_instruction_title = if right_chunks[2].width >= 18 {
-        "Next instruction"
-    } else {
-        "Next instr."
-    };
-    let next_instruction_block = Block::default()
-        .borders(Borders::ALL)
-        .title(next_instruction_title)
-        .title_alignment(Alignment::Center)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(INTERNAL_MEMORY_BLOCK_BORDER_FG));
-    let next_instruction = Paragraph::new(format!("{}", app.runtime.next_instruction_index() + 1))
-        .block(next_instruction_block);
-    f.render_widget(next_instruction, right_chunks[2]);
+    if !is_sandbox {
+        // draw next instruction block only, if no in sandbox mode
+        let next_instruction_title = if right_chunks[2].width >= 18 {
+            "Next instruction"
+        } else {
+            "Next instr."
+        };
+        let next_instruction_block = Block::default()
+            .borders(Borders::ALL)
+            .title(next_instruction_title)
+            .title_alignment(Alignment::Center)
+            .border_type(BorderType::Rounded)
+            .border_style(Style::default().fg(INTERNAL_MEMORY_BLOCK_BORDER_FG));
+        let next_instruction =
+            Paragraph::new(format!("{}", app.runtime.next_instruction_index() + 1))
+                .block(next_instruction_block);
+        f.render_widget(next_instruction, right_chunks[2]);
+    }
 
     // Stack block
     let stack = Block::default()
