@@ -13,10 +13,10 @@
 
 - Made TUI behave more dynamic, these changes include:
     - Text inside popup messages now wraps into a new line, if not enough space is available
-    - Most block title change the displayed text based on available space
+    - Most block titles change the displayed text based on available space
     - Accumulators/Memory Cells column is now always at least 10 characters wide
-    - Locked width of breakpoint block to be always 5 characters wide
-- Blocks of memory cells, accumulator and stack are now colored light blue
+    - Locked width of breakpoint block to always be 5 characters wide
+- Blocks of memory cells, accumulators and stack are now colored light blue
 - Changed width of custom instruction popup from 60% screen size to 43%
 
 ### Command line arguments
@@ -27,7 +27,7 @@
     - `--memory-config-file` now conflicts with `--accumulators`, `--enable-gamma-accumulator`, `--memory-cells` and `--index-memory-cells`
     - Changed file data type to `json`
 - `--disable-memory-detection` no longer forces the usage of either `--accumulators` and `--memory-cells` or `--memory-config-file` (previously `--memory-cells-file`) (fr #30 and #31)
-- command line arguments `--disable-memory-detection`, `--allowed-comparisons`, `--allowed-operations`, `--enable-gamma-accumulator` and `--allowed-instructions-file` are no longer available for all commands because the new `sandbox` command does not make use of them. The are thus no longer displayed in `.\alpha_tui help`, instead they are now explained in either `.\alpha_tui help load` or `.\alpha_tui help check`.
+- command line arguments `--disable-memory-detection`, `--allowed-comparisons`, `--allowed-operations`, `--enable-gamma-accumulator` and `--allowed-instructions-file` are no longer available for all commands because the new `sandbox` command does not make use of them. They are thus no longer displayed in `.\alpha_tui help`, instead they are now explained in either `.\alpha_tui help load` or `.\alpha_tui help check`.
 - the file pointed to by `--custom-instruction-history-file` is now created, if it did not exist
 
 ### Other
