@@ -62,7 +62,6 @@ pub struct GlobalArgs {
 
 #[derive(Args, Clone, Debug)]
 pub struct LoadArgs {
-    
     #[command(flatten)]
     pub instruction_limiting_args: InstructionLimitingArgs,
 
@@ -105,12 +104,10 @@ pub struct LoadArgs {
         long_help = "File to load and save the custom instruction history to/from.\nIf set, the instructions in this list will be analyzed and be made available in the custom instruction window. Instructions not yet contained in this file will be added to it."
     )]
     pub custom_instruction_history_file: Option<String>,
-
 }
 
 #[derive(Args, Clone, Debug)]
 pub struct CheckArgs {
-
     #[command(flatten)]
     pub instruction_limiting_args: InstructionLimitingArgs,
 
@@ -126,7 +123,6 @@ pub struct CheckArgs {
 
 #[derive(Args, Clone, Debug)]
 pub struct SandboxArgs {
-
     #[arg(
         short,
         long,

@@ -508,18 +508,18 @@ impl App {
     }
 
     /// Performs an action. Action depends on current app state.
-    /// 
+    ///
     /// CustomInstruction | Sandbox: If an element is selected in the list, it is filled in to the text area
     fn tab_key(&mut self) {
         match self.state.borrow_mut() {
-            State::CustomInstruction(state) | State::Sandbox(state) =>  {
+            State::CustomInstruction(state) | State::Sandbox(state) => {
                 if let Some(idx) = state.allowed_values_state.selected() {
                     let selected = &state.items_to_display()[idx];
                     state.input = selected.clone();
                     state.cursor_position = selected.len();
                     state.allowed_values_state.select(None);
                 }
-            },
+            }
             _ => (),
         }
     }

@@ -66,7 +66,10 @@ fn load_instruction_history(
 }
 
 /// Creates a runtime builder and returns miette error if it fails.
-fn create_runtime_builder(global_args: &GlobalArgs, ila: &InstructionLimitingArgs) -> Result<RuntimeBuilder> {
+fn create_runtime_builder(
+    global_args: &GlobalArgs,
+    ila: &InstructionLimitingArgs,
+) -> Result<RuntimeBuilder> {
     match RuntimeBuilder::from_args(global_args, ila) {
         Ok(rb) => Ok(rb),
         Err(e) => Err(miette!(

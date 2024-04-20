@@ -49,7 +49,9 @@ fn main() -> Result<()> {
             read_file(&input_file.as_ref().unwrap())?,
             input_file.unwrap(),
         )?,
-        Commands::Sandbox(sandbox_args) => commands::sandbox::sandbox(&cli.global_args, sandbox_args)?,
+        Commands::Sandbox(sandbox_args) => {
+            commands::sandbox::sandbox(&cli.global_args, sandbox_args)?
+        }
     }
     Ok(())
 }

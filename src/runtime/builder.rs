@@ -50,7 +50,10 @@ impl RuntimeBuilder {
     }
 
     /// Creates a new runtime builder from the cli arguments.
-    pub fn from_args(global_args: &GlobalArgs, ila: &InstructionLimitingArgs) -> Result<Self, String> {
+    pub fn from_args(
+        global_args: &GlobalArgs,
+        ila: &InstructionLimitingArgs,
+    ) -> Result<Self, String> {
         Ok(Self {
             runtime_args: Some(RuntimeArgs::from_args(global_args, ila)?),
             instructions: None,

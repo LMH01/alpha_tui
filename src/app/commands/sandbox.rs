@@ -15,7 +15,13 @@ pub fn sandbox(global_args: &GlobalArgs, sandbox_args: &SandboxArgs) -> Result<(
 
     println!("Building runtime");
 
-    let runtime_args = match RuntimeArgs::from_args_with_defaults(global_args, &InstructionLimitingArgs::default(), 4, 4, true) {
+    let runtime_args = match RuntimeArgs::from_args_with_defaults(
+        global_args,
+        &InstructionLimitingArgs::default(),
+        4,
+        4,
+        true,
+    ) {
         Ok(runtime_args) => runtime_args,
         Err(e) => return Err(miette::miette!("Unable to build runtime for sandbox: {e}")),
     };

@@ -15,7 +15,8 @@ pub fn check(
     input: &str,
 ) {
     println!("Building program");
-    let mut rb = match RuntimeBuilder::from_args(global_args, &check_args.instruction_limiting_args) {
+    let mut rb = match RuntimeBuilder::from_args(global_args, &check_args.instruction_limiting_args)
+    {
         Ok(rb) => rb,
         Err(e) => {
             println!(
@@ -28,7 +29,11 @@ pub fn check(
         }
     };
 
-    if let Some(file) = check_args.instruction_limiting_args.allowed_instructions_file.as_ref() {
+    if let Some(file) = check_args
+        .instruction_limiting_args
+        .allowed_instructions_file
+        .as_ref()
+    {
         match build_instructions_with_whitelist(&mut rb, instructions, input, file) {
             Ok(_) => (),
             Err(e) => {
