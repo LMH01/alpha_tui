@@ -110,8 +110,8 @@ These are the different return values of the check command:
 
 [Miette](https://github.com/zkat/miette) is used for error handling, this provides helpful error messages when a program can not be compiled due to an unknown instruction.
 
-Such error could look like this ![Miette error handling](media/miette_error.png)
+Such error could look like this ![Miette error handling](../media/miette_error.png)
 
 or this: 
 
-![Miette error handling](media/miette_error_2.png)
+![Miette error handling](../media/miette_error_2.png)
