@@ -115,3 +115,7 @@ Such error could look like this ![Miette error handling](../media/miette_error.p
 or this: 
 
 ![Miette error handling](../media/miette_error_2.png)
+
+If a program can not be build, because certain instructions are not allowed, the following error could be displayeD:
+
+![Instruction forbidden error](../media/miette_error_instruction_not_allowed.png)

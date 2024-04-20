@@ -81,6 +81,10 @@ to be used in the program.
 
 An example file can be found here: [examples/allowed_instructions.txt](../examples/allowed_instructions.txt);
 
+If a runtime can not be built, because certain instructions are not allowed, this could be the result:
+
+![Runtime build error because certain instructions are not allowed](../media/miette_error_instruction_not_allowed.png)
+
 ### Allowed comparisons
 
 You can use the option `--allowed-comparisons` to specify all comparisons that should be allowed. If this option is not set, all comparisons are allowed.
