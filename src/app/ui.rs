@@ -16,6 +16,12 @@ use super::{
 /// Draw the ui
 #[allow(clippy::too_many_lines)]
 pub fn draw(f: &mut Frame, app: &mut App) {
+    // when the app is in sandbox mode, some things are rendered differently
+    let is_sandbox = match app.state {
+        State::Sandbox(_) => true,
+        _ => false,
+    };
+
     let (keybinding_hints, keybinding_hints_height) = app
         .keybinding_hints
         .keybinding_hint_paragraph(f.size().width);
@@ -28,17 +34,18 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         ])
         .split(f.size());
 
+    let mut chunk_constraints = if is_sandbox {
+        // don't add chunk for breakpoints, when in sandbox mode
+        Vec::new()
+    } else {
+        vec![Constraint::Length(5)]
+    };
+    chunk_constraints.push(Constraint::Percentage(65));
+    chunk_constraints.push(Constraint::Percentage(20));
+    chunk_constraints.push(Constraint::Percentage(10));
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints(
-            [
-                Constraint::Length(5),
-                Constraint::Percentage(65),
-                Constraint::Percentage(20),
-                Constraint::Percentage(10),
-            ]
-            .as_ref(),
-        )
+        .constraints(chunk_constraints)
         .split(global_chunks[0]);
 
     // draw keybinding hints
@@ -51,7 +58,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             Constraint::Fill(1),
             Constraint::Length(3),
         ])
-        .split(chunks[2]);
+        .split(chunks[if is_sandbox { 1 } else { 2 }]);
 
     let mut stack_chunks_constraints = vec![Constraint::Fill(1)];
     if app.show_call_stack {
@@ -60,7 +67,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     let stack_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints(stack_chunks_constraints)
-        .split(chunks[3]);
+        .split(chunks[if is_sandbox { 2 } else { 3 }]);
 
     // central big part
     let mut central_constraints = vec![Constraint::Fill(1)];
@@ -70,7 +77,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     let central_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints(central_constraints)
-        .split(chunks[1]);
+        .split(chunks[if is_sandbox { 0 } else { 1 }]);
 
     // Code area
     let mut code_area = Block::default()
@@ -111,40 +118,42 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     );
 
     // Breakpoint list
-    let breakpoint_area = Block::default()
-        .borders(Borders::ALL)
-        .title("BPs")
-        .border_style(Style::default().fg(BREAKPOINT_ACCENT_COLOR))
-        .title_alignment(Alignment::Center)
-        .border_type(BorderType::Rounded);
+    if !is_sandbox {
+        // don't render breakpoint list, if we are in sandbox mode
+        let breakpoint_area = Block::default()
+            .borders(Borders::ALL)
+            .title("BPs")
+            .border_style(Style::default().fg(BREAKPOINT_ACCENT_COLOR))
+            .title_alignment(Alignment::Center)
+            .border_type(BorderType::Rounded);
 
-    // Create the items for the list
-    let breakpoint_list_items: Vec<ListItem> = app
-        .instruction_list_states
-        .instructions()
-        .iter()
-        .map(|f| {
-            let v = if f.2 {
-                "*".to_string()
-            } else {
-                " ".to_string()
-            };
-            ListItem::new(Text::styled(
-                v.center_align(chunks[0].width.saturating_sub(2) as usize),
-                Style::default().fg(BREAKPOINT_ACCENT_COLOR),
-            ))
-        })
-        .collect();
+        // Create the items for the list
+        let breakpoint_list_items: Vec<ListItem> = app
+            .instruction_list_states
+            .instructions()
+            .iter()
+            .map(|f| {
+                let v = if f.2 {
+                    "*".to_string()
+                } else {
+                    " ".to_string()
+                };
+                ListItem::new(Text::styled(
+                    v.center_align(chunks[0].width.saturating_sub(2) as usize),
+                    Style::default().fg(BREAKPOINT_ACCENT_COLOR),
+                ))
+            })
+            .collect();
 
-    // Create the list itself
-    let breakpoints = List::new(breakpoint_list_items).block(breakpoint_area);
+        // Create the list itself
+        let breakpoints = List::new(breakpoint_list_items).block(breakpoint_area);
 
-    f.render_stateful_widget(
-        breakpoints,
-        chunks[0],
-        app.instruction_list_states.breakpoint_list_state_mut(),
-    );
-    //f.render_widget(breakpoints, chunks[0]);
+        f.render_stateful_widget(
+            breakpoints,
+            chunks[0],
+            app.instruction_list_states.breakpoint_list_state_mut(),
+        );
+    }
 
     // Accumulator block
     let accumulator = Block::default()
