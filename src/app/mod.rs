@@ -520,7 +520,7 @@ impl App {
                 if let Some(idx) = state.allowed_values_state.selected() {
                     let selected = &state.items_to_display()[idx];
                     state.input = selected.clone();
-                    state.cursor_position = selected.len();
+                    state.cursor_position = selected.chars().count();
                     state.allowed_values_state.select(None);
                 }
             }
