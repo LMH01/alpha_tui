@@ -117,13 +117,23 @@ impl InstructionParseError {
         // Workaround for wrong end_range value depending on error.
         // For the line to be printed when more then one character is affected for some reason the range needs to be increased by one.
         match self {
-            InstructionParseError::InvalidExpression(_, _) => self.range().1 - self.range().0 + 1,
-            InstructionParseError::UnknownInstruction(_, _) => self.range().1 - self.range().0 + 1,
-            InstructionParseError::NotANumber(_, _) => self.range().1 - self.range().0,
-            InstructionParseError::UnknownComparison(_, _) => self.range().1 - self.range().0,
-            InstructionParseError::UnknownOperation(_, _) => self.range().1 - self.range().0,
+            InstructionParseError::InvalidExpression(_, _) => {
+                self.range().1.checked_sub(self.range().0 + 1).unwrap_or(0)
+            }
+            InstructionParseError::UnknownInstruction(_, _) => {
+                self.range().1.checked_sub(self.range().0 + 1).unwrap_or(0)
+            }
+            InstructionParseError::NotANumber(_, _) => {
+                self.range().1.checked_sub(self.range().0).unwrap_or(0)
+            }
+            InstructionParseError::UnknownComparison(_, _) => {
+                self.range().1.checked_sub(self.range().0).unwrap_or(0)
+            }
+            InstructionParseError::UnknownOperation(_, _) => {
+                self.range().1.checked_sub(self.range().0).unwrap_or(0)
+            }
             InstructionParseError::MissingExpression { range: _, help: _ } => {
-                self.range().1 - self.range().0
+                self.range().1.checked_sub(self.range().0).unwrap_or(0)
             }
         }
     }
