@@ -41,7 +41,7 @@ impl KeybindingHints {
                 line_length += 1;
             }
             let text = format!("{} [{}]", hint.label(), hint.key);
-            if line_length > width as usize - text.len() {
+            if line_length > (width as usize).saturating_sub(text.len()) {
                 line_length = 0;
                 styled_keybinds.push(Line::from(styled_keybinds_row));
                 styled_keybinds_row = Vec::new();
