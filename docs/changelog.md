@@ -4,7 +4,7 @@
 
 ### New feature
 
-- Added sandbox mode (run with `.\alpha_tui sandbox`)
+- Added playground mode (run with `.\alpha_tui playground`)(fr #33)
 - Next instruction is now displayed in the tui (fr #34)
 - The call stack can now be displayed in the tui. Its default state is determined if a call instruction is used. If it is used, it is shown, if such instruction is absent, it is hidden. With the `c` key this display can be hidden or shown manually (fr #34).
 - Run custom instruction: it is now possible to use the TAB key to fill in the selected value into the text field
@@ -27,7 +27,7 @@
     - `--memory-config-file` now conflicts with `--accumulators`, `--enable-gamma-accumulator`, `--memory-cells` and `--index-memory-cells`
     - Changed file data type to `json`
 - `--disable-memory-detection` no longer forces the usage of either `--accumulators` and `--memory-cells` or `--memory-config-file` (previously `--memory-cells-file`) (fr #30 and #31)
-- command line arguments `--disable-memory-detection`, `--allowed-comparisons`, `--allowed-operations`, `--enable-gamma-accumulator` and `--allowed-instructions-file` are no longer available for all commands because the new `sandbox` command does not make use of them. They are thus no longer displayed in `.\alpha_tui help`, instead they are now explained in either `.\alpha_tui help load` or `.\alpha_tui help check`.
+- command line arguments `--disable-memory-detection`, `--allowed-comparisons`, `--allowed-operations`, `--enable-gamma-accumulator` and `--allowed-instructions-file` are no longer available for all commands because the new `playground` command does not make use of them. They are thus no longer displayed in `.\alpha_tui help`, instead they are now explained in either `.\alpha_tui help load` or `.\alpha_tui help check`.
 - the file pointed to by `--custom-instruction-history-file` is now created, if it did not exist
 
 ### Other

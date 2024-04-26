@@ -27,7 +27,7 @@ fn main() -> Result<()> {
     let input_file = match cli.command {
         Command::Load(ref args) => Some(args.file.clone()),
         Command::Check(ref args) => Some(args.file.clone()),
-        Command::Sandbox(_) => None,
+        Command::Playground(_) => None,
     };
 
     if cli.global_args.disable_instruction_limit {
@@ -49,8 +49,8 @@ fn main() -> Result<()> {
             read_file(input_file.as_ref().unwrap())?,
             input_file.unwrap(),
         )?,
-        Command::Sandbox(sandbox_args) => {
-            commands::sandbox::sandbox(&cli.global_args, sandbox_args)?
+        Command::Playground(playground_args) => {
+            commands::playground::playground(&cli.global_args, playground_args)?
         }
     }
     Ok(())

@@ -16,11 +16,11 @@ use super::{
 /// Draw the ui
 #[allow(clippy::too_many_lines)]
 pub fn draw(f: &mut Frame, app: &mut App) {
-    // when the app is in sandbox mode, some things are rendered differently
-    let is_sandbox = match app.state {
-        State::Sandbox(_) => true,
-        State::RuntimeError(_, is_sandbox) => is_sandbox,
-        State::CustomInstructionError(_, is_sandbox) => is_sandbox,
+    // when the app is in playground mode, some things are rendered differently
+    let is_playground = match app.state {
+        State::Playground(_) => true,
+        State::RuntimeError(_, is_playground) => is_playground,
+        State::CustomInstructionError(_, is_playground) => is_playground,
         _ => false,
     };
 
@@ -36,8 +36,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         ])
         .split(f.size());
 
-    let mut chunk_constraints = if is_sandbox {
-        // don't add chunk for breakpoints, when in sandbox mode
+    let mut chunk_constraints = if is_playground {
+        // don't add chunk for breakpoints, when in playground mode
         Vec::new()
     } else {
         vec![Constraint::Length(5)]
@@ -58,13 +58,13 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     f.render_widget(keybinding_hints, global_chunks[1]);
 
     let mut right_chunk_constraints = vec![Constraint::Percentage(30), Constraint::Fill(1)];
-    if !is_sandbox {
+    if !is_playground {
         right_chunk_constraints.push(Constraint::Length(3))
     }
     let right_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints(right_chunk_constraints)
-        .split(chunks[if is_sandbox { 1 } else { 2 }]);
+        .split(chunks[if is_playground { 1 } else { 2 }]);
 
     let mut stack_chunks_constraints = vec![Constraint::Fill(1)];
     if app.show_call_stack {
@@ -73,10 +73,10 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     let stack_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints(stack_chunks_constraints)
-        .split(chunks[if is_sandbox { 2 } else { 3 }]);
+        .split(chunks[if is_playground { 2 } else { 3 }]);
 
     // central big part
-    let central_constraints = if is_sandbox {
+    let central_constraints = if is_playground {
         vec![Constraint::Percentage(60), Constraint::Min(8)]
     } else {
         vec![Constraint::Fill(1)]
@@ -84,12 +84,12 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     let central_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints(central_constraints)
-        .split(chunks[if is_sandbox { 0 } else { 1 }]);
+        .split(chunks[if is_playground { 0 } else { 1 }]);
 
     // Code area
     let mut code_area = Block::default()
         .borders(Borders::ALL)
-        .title_alignment(if is_sandbox {
+        .title_alignment(if is_playground {
             Alignment::Center
         } else {
             Alignment::Left
@@ -104,7 +104,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     } else {
         code_area = code_area
             .border_style(Style::default().fg(CODE_AREA_DEFAULT_COLOR))
-            .title(if is_sandbox {
+            .title(if is_playground {
                 "Executed instructions".to_string()
             } else {
                 format!("File: {}", app.filename.clone())
@@ -112,7 +112,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     }
 
     // Create a List from all instructions and highlight current instruction
-    let items = List::new(app.instruction_list_states.as_list_items(is_sandbox))
+    let items = List::new(app.instruction_list_states.as_list_items(is_playground))
         .block(code_area)
         .highlight_style(if let State::DebugSelect(_, _) = app.state {
             Style::default()
@@ -124,7 +124,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                 .add_modifier(Modifier::BOLD)
         })
         .highlight_symbol(">> ")
-        .direction(if is_sandbox {
+        .direction(if is_playground {
             ListDirection::BottomToTop
         } else {
             ListDirection::TopToBottom
@@ -138,8 +138,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     );
 
     // Breakpoint list
-    if !is_sandbox {
-        // don't render breakpoint list, if we are in sandbox mode
+    if !is_playground {
+        // don't render breakpoint list, if we are in playground mode
         let breakpoint_area = Block::default()
             .borders(Borders::ALL)
             .title("BPs")
@@ -207,8 +207,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     f.render_widget(memory_cell_list, right_chunks[1]);
 
     // Next instruction block
-    if !is_sandbox {
-        // draw next instruction block only, if no in sandbox mode
+    if !is_playground {
+        // draw next instruction block only, if no in playground mode
         let next_instruction_title = match right_chunks[2].width {
             0..=17 => "Next instr.",
             18..=u16::MAX => "Next instruction",
@@ -279,7 +279,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         single_instruction.draw(f, global_chunks[0], false)
     }
     match &mut app.state {
-        State::Sandbox(single_instruction) => {
+        State::Playground(single_instruction) => {
             single_instruction.draw(f, central_chunks[1], true);
         }
         State::CustomInstructionError(_, true) | State::RuntimeError(_, true) => {
@@ -299,7 +299,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             .borders(Borders::ALL)
             .border_style(Style::default().fg(ERROR_COLOR));
         let area = super::centered_rect(60, 30, None, f.size());
-        let text = paragraph_with_line_wrap(if is_sandbox {format!("This instruction could not be executed due to the following problem:\n{}\n\nPress [q] to exit and to view further information regarding this error.\nPress [ENTER] to close.", e.reason)} else {format!(
+        let text = paragraph_with_line_wrap(if is_playground {format!("This instruction could not be executed due to the following problem:\n{}\n\nPress [q] to exit and to view further information regarding this error.\nPress [ENTER] to close.", e.reason)} else {format!(
                 "Execution can not continue due to the following problem:\n{}\n\nPress [q] to exit and to view further information regarding this error.\nPress [t] to reset to start.",
                 e.reason)}, area.width - 2).block(block);
         f.render_widget(Clear, area); //this clears out the background

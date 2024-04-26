@@ -171,11 +171,11 @@ impl KeybindingHints {
                 }
                 self.set_state("d", 2)?;
             }
-            State::RuntimeError(_, is_sandbox) => {
+            State::RuntimeError(_, is_playground) => {
                 self.hide("c");
                 self.hide("s");
                 self.hide("d");
-                if *is_sandbox {
+                if *is_playground {
                     self.set_state(&KeySymbol::Enter.to_string(), 2)?;
                     self.show(&KeySymbol::Enter.to_string());
                 } else {
@@ -222,7 +222,7 @@ impl KeybindingHints {
                     self.enable(&KeySymbol::Tab.to_string())
                 }
             }
-            State::Sandbox(state) => {
+            State::Playground(state) => {
                 self.hide("c");
                 self.hide("s");
                 self.hide("d");

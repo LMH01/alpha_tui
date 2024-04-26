@@ -10,7 +10,7 @@
 
 This is my attempt at writing a runtime environment and debugger for the Alpha-Notation used in my Systemnahe Informatik lecture at university.
 
-Programs are read in and interpreted, a terminal ui is then opened where you can run the program line by line or by using breakpoints. It is also supported to start a sandbox environment by using the `sandbox` command.
+Programs are read in and interpreted, a terminal ui is then opened where you can run the program line by line or by using breakpoints. It is also supported to start a playground environment by using the `playground` command.
 
 Pull requests and bug reports are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for further details.
 
@@ -21,7 +21,7 @@ Pull requests and bug reports are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md
     - [NixOS (using flakes)](#nixos-using-flakes)
 2. [Interface and usage](docs/interface_and_usage.md)
     - [Load command](docs/interface_and_usage.md#load-command)
-    - [Sandbox command](docs/interface_and_usage.md#sandbox-command)
+    - [Playground command](docs/interface_and_usage.md#playground-command)
     - [Check command](docs/interface_and_usage.md#check-command)
     - [Error handling](docs/interface_and_usage.md#error-handling)
 3. [Instructions](docs/instructions.md)

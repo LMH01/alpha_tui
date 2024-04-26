@@ -18,8 +18,8 @@ use crate::{
 pub mod check;
 /// Load command
 pub mod load;
-/// Sandbox command
-pub mod sandbox;
+/// Playground command
+pub mod playground;
 
 fn load_instruction_history(
     custom_instruction_history_file: &Option<String>,

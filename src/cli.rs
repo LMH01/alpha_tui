@@ -122,7 +122,7 @@ pub struct CheckArgs {
 }
 
 #[derive(Args, Clone, Debug)]
-pub struct SandboxArgs {
+pub struct PlaygroundArgs {
     #[arg(
         short,
         long,
@@ -142,10 +142,10 @@ pub enum Command {
     )]
     Check(CheckArgs),
     #[command(
-        about = "Start the tool in sandbox mode",
-        long_about = "Start the tool in sandbox mode. This allows for custom commands to be run."
+        about = "Start the tool in playground mode",
+        long_about = "Start the tool in playground mode. This allows for custom commands to be run."
     )]
-    Sandbox(SandboxArgs),
+    Playground(PlaygroundArgs),
 }
 
 #[derive(Args, Debug, Clone, Default)]

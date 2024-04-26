@@ -32,8 +32,8 @@ pub struct Runtime {
 }
 
 impl Runtime {
-    /// Creates a new runtime that should only be used for the sandbox mode.
-    pub fn new_sandbox(runtime_args: RuntimeArgs) -> Runtime {
+    /// Creates a new runtime that should only be used for the playground mode.
+    pub fn new_playground(runtime_args: RuntimeArgs) -> Runtime {
         Self {
             runtime_args,
             instructions: Vec::new(),

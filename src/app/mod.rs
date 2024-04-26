@@ -60,7 +60,7 @@ pub enum State {
     ///
     /// String contains the reason why it failed.
     ///
-    /// Boolean value indicates if this error originates in the sandbox mode.
+    /// Boolean value indicates if this error originates in the playground mode.
     CustomInstructionError(ParseSingleInstructionError, bool),
     // 0 = state to restore to when debug mode is exited
     // 1 = index of instruction that was selected before debug mode was started
@@ -69,10 +69,10 @@ pub enum State {
     Finished(bool),
     /// Indicates that an irrecoverable error occurred while a program was running.
     ///
-    /// Boolean value indicates if this error originates in the sandbox mode.
+    /// Boolean value indicates if this error originates in the playground mode.
     RuntimeError(RuntimeError, bool),
-    /// Indicates that this app is in sandbox mode.
-    Sandbox(SingleInstruction),
+    /// Indicates that this app is in playground mode.
+    Playground(SingleInstruction),
 }
 
 /// App holds the state of the application
@@ -110,13 +110,13 @@ impl App {
         set_breakpoints: &Option<Vec<usize>>,
         custom_instructions: Option<Vec<String>>,
         command_history_file: Option<String>,
-        sandbox: bool,
+        playground: bool,
     ) -> App {
         let mlm = MemoryListsManager::new(runtime.runtime_args());
         let show_call_stack = runtime.contains_call_instruction();
         let executed_custom_instructions = custom_instructions.unwrap_or_default();
-        let state = if sandbox {
-            State::Sandbox(SingleInstruction::new(&executed_custom_instructions))
+        let state = if playground {
+            State::Playground(SingleInstruction::new(&executed_custom_instructions))
         } else {
             State::Default
         };
@@ -151,7 +151,7 @@ impl App {
                     continue;
                 }
                 match &self.state {
-                    State::CustomInstruction(_) | State::Sandbox(_) => {
+                    State::CustomInstruction(_) | State::Playground(_) => {
                         if let KeyCode::Char(to_insert) = key.code {
                             self.any_char(to_insert)
                         }
@@ -361,7 +361,7 @@ impl App {
     /// Performs an action. Action depends on current app state.
     ///
     /// CustomInstruction: exit custom instruction popup and resume running state
-    /// Sandbox: exit the program
+    /// Playground: exit the program
     ///
     /// Return value indicates if the program should be closed.
     fn escape_key(&mut self) -> bool {
@@ -369,7 +369,7 @@ impl App {
             State::CustomInstruction(_) => {
                 self.state = State::Running(self.instruction_list_states.breakpoints_set())
             }
-            State::Sandbox(_) => return true,
+            State::Playground(_) => return true,
             _ => (),
         }
         false
@@ -380,7 +380,7 @@ impl App {
     /// CustomInstruction: Enter a char
     fn any_char(&mut self, to_insert: char) {
         match self.state.borrow_mut() {
-            State::CustomInstruction(state) | State::Sandbox(state) => {
+            State::CustomInstruction(state) | State::Playground(state) => {
                 insert_char_at_index(&mut state.input, state.cursor_position, to_insert);
                 // check if selected item is still available in list
                 if let Some(idx) = state.allowed_values_state.selected() {
@@ -408,7 +408,7 @@ impl App {
     /// CustomInstruction: Deletes a char
     fn backspace_key(&mut self) {
         match self.state.borrow_mut() {
-            State::CustomInstruction(state) | State::Sandbox(state) => {
+            State::CustomInstruction(state) | State::Playground(state) => {
                 let is_not_cursor_leftmost = state.cursor_position != 0;
                 if is_not_cursor_leftmost {
                     // Method "remove" is not used on the saved text for deleting the selected char.
@@ -439,7 +439,7 @@ impl App {
     /// CustomInstruction: Deletes the char behind the cursor.
     fn delete_key(&mut self) {
         match self.state.borrow_mut() {
-            State::CustomInstruction(state) | State::Sandbox(state) => {
+            State::CustomInstruction(state) | State::Playground(state) => {
                 // Method "remove" is not used on the saved text for deleting the selected char.
                 // Reason: Using remove on String works on bytes instead of the chars.
                 // Using remove would require special care because of char boundaries.
@@ -465,7 +465,7 @@ impl App {
     /// CustomInstruction: Move the cursor to the left.
     fn left_key(&mut self) {
         match self.state.borrow_mut() {
-            State::CustomInstruction(state) | State::Sandbox(state) => {
+            State::CustomInstruction(state) | State::Playground(state) => {
                 let cursor_moved_left = state.cursor_position.saturating_sub(1);
                 state.cursor_position = cursor_moved_left.clamp(0, state.input.len());
             }
@@ -478,7 +478,7 @@ impl App {
     /// CustomInstruction: Move the cursor to the right.
     fn right_key(&mut self) {
         match self.state.borrow_mut() {
-            State::CustomInstruction(state) | State::Sandbox(state) => {
+            State::CustomInstruction(state) | State::Playground(state) => {
                 let cursor_moved_right = state.cursor_position.saturating_add(1);
                 state.cursor_position = cursor_moved_right.clamp(0, state.input.len());
             }
@@ -491,7 +491,7 @@ impl App {
     /// CustomInstruction: If not item is selected: Select first item, otherwise move down one item
     fn down_key(&mut self) {
         match self.state.borrow_mut() {
-            State::CustomInstruction(state) | State::Sandbox(state) => {
+            State::CustomInstruction(state) | State::Playground(state) => {
                 let len = state.items_to_display().len();
                 list_down(&mut state.allowed_values_state, &len);
             }
@@ -504,7 +504,7 @@ impl App {
     /// CustomInstruction: Moves the list up one item.
     fn up_key(&mut self) {
         match self.state.borrow_mut() {
-            State::CustomInstruction(state) | State::Sandbox(state) => {
+            State::CustomInstruction(state) | State::Playground(state) => {
                 list_up(&mut state.allowed_values_state, true);
             }
             _ => (),
@@ -513,10 +513,10 @@ impl App {
 
     /// Performs an action. Action depends on current app state.
     ///
-    /// CustomInstruction | Sandbox: If an element is selected in the list, it is filled in to the text area
+    /// CustomInstruction | Playground: If an element is selected in the list, it is filled in to the text area
     fn tab_key(&mut self) {
         match self.state.borrow_mut() {
-            State::CustomInstruction(state) | State::Sandbox(state) => {
+            State::CustomInstruction(state) | State::Playground(state) => {
                 if let Some(idx) = state.allowed_values_state.selected() {
                     let selected = &state.items_to_display()[idx];
                     state.input = selected.clone();
@@ -535,18 +535,18 @@ impl App {
     fn enter_key(&mut self) -> Result<()> {
         match &self.state.clone() {
             State::CustomInstruction(state) => self.custom_instruction_enter(state, false)?,
-            State::Sandbox(state) => self.custom_instruction_enter(state, true)?,
-            State::CustomInstructionError(_, is_sandbox) => {
-                if *is_sandbox {
+            State::Playground(state) => self.custom_instruction_enter(state, true)?,
+            State::CustomInstructionError(_, is_playground) => {
+                if *is_playground {
                     self.state =
-                        State::Sandbox(SingleInstruction::new(&self.executed_custom_instructions))
+                        State::Playground(SingleInstruction::new(&self.executed_custom_instructions))
                 } else {
                     self.state = State::Running(self.instruction_list_states.breakpoints_set());
                 }
             }
             State::RuntimeError(_, true) => {
                 self.state =
-                    State::Sandbox(SingleInstruction::new(&self.executed_custom_instructions));
+                    State::Playground(SingleInstruction::new(&self.executed_custom_instructions));
             }
             _ => (),
         }
@@ -556,7 +556,7 @@ impl App {
     fn custom_instruction_enter(
         &mut self,
         state: &SingleInstruction,
-        is_sandbox: bool,
+        is_playground: bool,
     ) -> Result<()> {
         let instruction_str = match state.allowed_values_state.selected() {
             Some(idx) => state.items_to_display()[idx].clone(),
@@ -575,13 +575,13 @@ impl App {
                         "input_field",
                         1,
                     ),
-                    is_sandbox,
+                    is_playground,
                 );
                 return Ok(());
             }
         };
         if let Err(e) = self.runtime.run_foreign_instruction(instruction) {
-            self.state = State::RuntimeError(e, is_sandbox);
+            self.state = State::RuntimeError(e, is_playground);
             return Ok(());
         }
         // instruction was executed successfully
@@ -597,11 +597,11 @@ impl App {
             self.executed_custom_instructions.push(instruction_run);
         }
         // set new state
-        if is_sandbox {
-            // if in sandbox mode, add instruction to main window
+        if is_playground {
+            // if in playground mode, add instruction to main window
             self.instruction_list_states
                 .add_instruction(instruction_str);
-            self.state = State::Sandbox(SingleInstruction::new(&self.executed_custom_instructions));
+            self.state = State::Playground(SingleInstruction::new(&self.executed_custom_instructions));
         } else {
             self.state = State::Running(self.instruction_list_states.breakpoints_set());
         }

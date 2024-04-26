@@ -5,7 +5,7 @@
 The program understands the following commands:
 
 - [load](#load-command)
-- [sandbox](#sandbox-command)
+- [playground](#playground-command)
 - [check](#check-command)
 
 ## Load command
@@ -69,13 +69,13 @@ Press `[r]` when in run mode to make the program run automatically to the next b
 When in `debug select mode` you can select a line and jump directly to it using `[j]`, skipping all other instructions. You should however be careful when using this, because runtime errors are far more likely to occur due to uninitialized accumulators or memory cells.
 Functions may also no longer be properly exited because of a misaligned call stack.
 
-## Sandbox command
+## Playground command
 
-The `sandbox` subcommand can be used to start a sandbox session where instructions can be run. Note however that the instructions `CALL`, `GOTO` and `IF` are not supported in this environment, because these instructions require labels to be present.
+The `playground` subcommand can be used to start a playground session where instructions can be run. Note however that the instructions `CALL`, `GOTO` and `IF` are not supported in this environment, because these instructions require labels to be present.
 
-To start the program in sandbox mode, use the command `.\alpha_tui sandbox`. The following window will open:
+To start the program in playground mode, use the command `.\alpha_tui playground`. The following window will open:
 
-![Sandbox mode started](../media/gui_sandbox_mode_opened.png)
+![Playground mode started](../media/gui_playground_mode_opened.png)
 
 Some accumulators and memory cells are automatically created, this can be overwritten by using the arguments `--accumulators` and `--memory-cells` or `--memory-config-file`, see [memory config file](cli.md#memory-config-file) for more.
 
@@ -87,7 +87,7 @@ The area labeled "History" also contains a history of entered commands but this 
 
 If an instruction was entered, that could not be parsed, an error popup is displayed, this can look something like this:
 
-![Sandbox mode instruction parse error](../media/gui_sandbox_mode_instruction_parse_error.png)
+![Playground mode instruction parse error](../media/gui_playground_mode_instruction_parse_error.png)
 
 Unfortunately it is not possible to print the nice and informative error message into that window, to view it the `q` key needs to be pressed to exit the program. The error message is then displayed in the console. To simply close it, use the `ENTER` key.
 

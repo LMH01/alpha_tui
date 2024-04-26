@@ -2,16 +2,16 @@ use miette::Result;
 
 use crate::{
     app::App,
-    cli::{GlobalArgs, InstructionLimitingArgs, SandboxArgs},
+    cli::{GlobalArgs, InstructionLimitingArgs, PlaygroundArgs},
     runtime::{Runtime, RuntimeArgs},
 };
 
 use super::load_instruction_history;
 
-pub fn sandbox(global_args: &GlobalArgs, sandbox_args: &SandboxArgs) -> Result<()> {
+pub fn playground(global_args: &GlobalArgs, playground_args: &PlaygroundArgs) -> Result<()> {
     // check if command history is set
     let instruction_history =
-        load_instruction_history(&sandbox_args.custom_instruction_history_file)?;
+        load_instruction_history(&playground_args.custom_instruction_history_file)?;
 
     println!("Building runtime");
 
@@ -23,10 +23,10 @@ pub fn sandbox(global_args: &GlobalArgs, sandbox_args: &SandboxArgs) -> Result<(
         true,
     ) {
         Ok(runtime_args) => runtime_args,
-        Err(e) => return Err(miette::miette!("Unable to build runtime for sandbox: {e}")),
+        Err(e) => return Err(miette::miette!("Unable to build runtime for playground: {e}")),
     };
 
-    let rt = Runtime::new_sandbox(runtime_args);
+    let rt = Runtime::new_playground(runtime_args);
 
     // setup terminal
     println!("Ready to run, launching tui");
@@ -34,11 +34,11 @@ pub fn sandbox(global_args: &GlobalArgs, sandbox_args: &SandboxArgs) -> Result<(
 
     let mut app = App::from_runtime(
         rt,
-        "Sandbox".to_string(),
+        "Playground".to_string(),
         &Vec::new(),
         &None,
         instruction_history,
-        sandbox_args.custom_instruction_history_file.clone(),
+        playground_args.custom_instruction_history_file.clone(),
         true,
     );
     let res = app.run(&mut terminal);

@@ -305,13 +305,13 @@ Type "r"
 
 Sleep 3s
 
-# start another run with sandbox mode
+# start another run with playground mode
 
 Type "q"
 
 Sleep 500ms
 
-Type "./alpha_tui sandbox"
+Type "./alpha_tui playground"
 
 Sleep 1s
 
