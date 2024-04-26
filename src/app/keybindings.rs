@@ -41,10 +41,7 @@ impl KeybindingHints {
                 line_length += 1;
             }
             let text = format!("{} [{}]", hint.label(), hint.key);
-            let remaining_space = match usize::checked_sub(width as usize, text.len()) {
-                Some(remaining_space) => remaining_space,
-                None => continue,
-            };
+            let remaining_space = usize::saturating_sub(width as usize, text.len());
             if line_length > remaining_space {
                 line_length = 0;
                 styled_keybinds.push(Line::from(styled_keybinds_row));
