@@ -40,7 +40,7 @@ Or this if the command history contains elements: ![Run custom instruction with 
 
 If the instruction could not be parsed a simple error is displayed, quit the program with `q` to receive further information on why the instruction could not be parsed.
 
-If a value is assigned to an accumulator or memory cell that does not yet exist, it is created automatically.
+If a value is assigned to an accumulator or memory cell that does not yet exist, it is created automatically. This does only apply however, if `--disable-memory-detection` is set.
 
 #### Pitfalls
 

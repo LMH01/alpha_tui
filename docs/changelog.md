@@ -33,6 +33,7 @@
 ### Other
 
 - It is now allowed to write `=` instead of `:=` when writing assignment instructions. Note, however, that this is a deviation from the alpha notation standard (fr #27).
+- If a value is assigned to an accumulator or a memory cell that does not exist yet, using the custom instruction feature, it is now automatically created (except when `--disable-memory-detection` is set) (fr #43)
 - The labels `End` and `Ende` can be used to end the program
 - Removed unnecessary 30ms sleep after key input
 - Updated dependencies
