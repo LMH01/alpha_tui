@@ -181,6 +181,7 @@ fn run_calc(
 ) -> Result<(), RuntimeErrorType> {
     match target {
         TargetType::Accumulator(a) => {
+            assert_accumulator_exists(runtime_args, *a)?;
             runtime_args.accumulators.get_mut(a).unwrap().data =
                 Some(op.calc(source_a.value(runtime_args)?, source_b.value(runtime_args)?)?);
         }
@@ -191,6 +192,7 @@ fn run_calc(
             ));
         }
         TargetType::MemoryCell(a) => {
+            assert_memory_cell_exists(runtime_args, a)?;
             runtime_args.memory_cells.get_mut(a).unwrap().data =
                 Some(op.calc(source_a.value(runtime_args)?, source_b.value(runtime_args)?)?);
         }
