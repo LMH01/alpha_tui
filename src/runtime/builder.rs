@@ -395,6 +395,12 @@ fn inject_end_labels(control_flow: &mut ControlFlow, last_instruction_index: usi
     control_flow
         .instruction_labels
         .insert("ende".to_string(), last_instruction_index);
+    control_flow
+        .instruction_labels
+        .insert("End".to_string(), last_instruction_index);
+    control_flow
+        .instruction_labels
+        .insert("Ende".to_string(), last_instruction_index);
 }
 
 fn check_label(control_flow: &ControlFlow, label: &str) -> Result<(), String> {

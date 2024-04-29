@@ -2,7 +2,7 @@
 
 Indices are written directly after `a`/ $\alpha$, however you don't need an indice if you want to address accumulator 0. For example you can use either `a0 := 5`, `a := 5` or $\alpha$ `:= 5` to assign accumulator 0 the value `5`.
 
-By jumping to the labels `END`, `ENDE`, `end` or `ende` you can end your program. Example: `goto END`
+By jumping to the labels `END`, `ENDE`,`End`, `Ende`, `end` or `ende` you can end your program. Example: `goto END`
 
 You can use either `#` or `//` to mark inline or full-line comments.
 

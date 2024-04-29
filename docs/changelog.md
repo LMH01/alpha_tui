@@ -33,6 +33,7 @@
 ### Other
 
 - It is now allowed to write `=` instead of `:=` when writing assignment instructions. Note, however, that this is a deviation from the alpha notation standard (fr #27).
+- The labels `End` and `Ende` can be used to end the program
 - Removed unnecessary 30ms sleep after key input
 - Updated dependencies
 
