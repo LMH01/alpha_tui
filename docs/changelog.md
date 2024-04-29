@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.3.0
+## v1.3.0 (latest version)
 
 ### New feature
 
@@ -50,7 +50,7 @@
 - Fixed rare panic that could happen on specific conditions when an error occurred while an instruction was parsed
 - [Windows] fixed double key input (#35)
 
-## v1.2.0 (latest version)
+## v1.2.0
 
 ### New feature
 - Added way to run a single custom instruction while program is running (fr #24 and #25) (error information here is however not as useful as the errors displayed while the program is being build initially)
