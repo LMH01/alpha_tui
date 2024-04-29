@@ -81,6 +81,8 @@ Some accumulators and memory cells are automatically created, this can be overwr
 
 Type any valid instruction (see [instructions](instructions.md)) and press enter to execute it. The accumulator and memory cell values affected will be updated and highlighted.
 
+If accumulators or memory cells are accessed (read/write) that don't exist, a runtime error occurs, so make sure to only use accumulators and memory cells that are available.
+
 The central area labeled "Executed instructions" contains the instructions that have been executed, where the instruction, that was executed the latest, is displayed at the bottom.
 
 The area labeled "History" also contains a history of entered commands but this history can be loaded from a file (see [instruction history](cli.md#instruction-history)), is searchable and scrollable. If an element is selected in that list, the `ENTER` key can be pressed to execute it or the `TAB` key can be used to copy its text into the editable text area to modify it.
