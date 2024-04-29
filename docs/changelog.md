@@ -5,6 +5,7 @@
 ### Bug fixes
 
 -  `%` was missing from help message when `runtime_error::unknown_operation` occurred
+- `Press [ENTER] to close` missing from `unable to parse instruction` error, when screen width was below certain threshold
 
 ## v1.3.0 (latest version)
 

@@ -312,7 +312,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             .title("Error: unable to parse instruction".to_string())
             .borders(Borders::ALL)
             .border_style(Style::default().fg(ERROR_COLOR));
-        let area = super::centered_rect(60, 30, Some(6), f.size());
+        let area = super::centered_rect(60, 30, if f.size().width <= 124 {Some(7)} else {Some(6)}, f.size());
         let text = paragraph_with_line_wrap(format!(
             "{}\n\nPress [q] to exit and to view further information regarding this error.\nPress [ENTER] to close.",
             reason
