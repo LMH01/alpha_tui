@@ -8,7 +8,7 @@ pub enum InstructionParseError {
     #[error("unknown operation '{1}'")]
     #[diagnostic(
         code("parse_instruction::unknown_operation"),
-        help("Did you mean one of these?: + - * /")
+        help("Did you mean one of these?: + - * / %")
     )]
     UnknownOperation((usize, usize), String),
 

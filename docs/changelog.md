@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.3.1
+
+### Bug fixes
+
+-  `%` was missing from help message when `runtime_error::unknown_operation` occurred
+
 ## v1.3.0 (latest version)
 
 ### New feature
