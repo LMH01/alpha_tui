@@ -73,7 +73,7 @@ Functions may also no longer be properly exited because of a misaligned call sta
 
 ## Playground command
 
-The `playground` subcommand can be used to start a playground session where instructions can be run. Note however that the instructions `CALL`, `GOTO` and `IF` are not supported in this environment, because these instructions require labels to be present.
+The `playground` subcommand can be used to start a playground session where instructions can be run. Note however that the instructions `CALL`, `GOTO`, `IF` and `RETURN` are not supported in this environment, because these instructions require labels to be present, using them anyway will lead to an error.
 
 To start the program in playground mode, use the command `.\alpha_tui playground`. The following window will open:
 
