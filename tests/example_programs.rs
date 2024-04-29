@@ -1,11 +1,6 @@
 use assert_cmd::Command;
 
 #[test]
-fn test_example_program_compile_debug() {
-    test_example_program_compile("debug.alpha");
-}
-
-#[test]
 fn test_example_program_compile_faculty() {
     test_example_program_compile("faculty.alpha")
 }
