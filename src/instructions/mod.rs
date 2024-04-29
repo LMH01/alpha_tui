@@ -3,7 +3,7 @@ use std::fmt::Display;
 use miette::Result;
 
 use crate::{
-    base::{Comparison, MemoryCell, Operation},
+    base::{Accumulator, Comparison, MemoryCell, Operation},
     instructions::error_handling::InstructionParseError,
     runtime::{error_handling::RuntimeErrorType, ControlFlow, RuntimeArgs},
 };
@@ -295,6 +295,11 @@ fn assert_accumulator_exists(
     index: usize,
 ) -> Result<(), RuntimeErrorType> {
     if let Some(_value) = runtime_args.accumulators.get(&index) {
+        Ok(())
+    } else if runtime_args.settings.memory_on_demand {
+        runtime_args
+            .accumulators
+            .insert(index, Accumulator::new(index));
         Ok(())
     } else {
         Err(RuntimeErrorType::AccumulatorDoesNotExist(index))

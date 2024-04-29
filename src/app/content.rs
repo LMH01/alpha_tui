@@ -253,7 +253,13 @@ impl MemoryListsManager {
     pub fn update(&mut self, runtime: &Runtime) {
         // Update accumulators
         for acc in &runtime.runtime_args().accumulators {
-            let a = self.accumulators.get_mut(acc.0).unwrap();
+            let a = match self.accumulators.get_mut(acc.0) {
+                Some(value) => value,
+                None => {
+                    self.accumulators.insert(*acc.0, ("0".to_string(), true));
+                    self.accumulators.get_mut(acc.0).unwrap()
+                }
+            };
             let update = format!("{}", acc.1);
             if update == *a.0 {
                 a.1 = false;
@@ -267,7 +273,7 @@ impl MemoryListsManager {
                 Some(value) => value,
                 None => {
                     self.memory_cells
-                        .insert(cell.1.label.clone(), ("0".to_string(), false));
+                        .insert(cell.1.label.clone(), ("0".to_string(), true));
                     self.memory_cells.get_mut(&cell.1.label).unwrap()
                 }
             };
