@@ -24,4 +24,4 @@ stack÷
 pop
 ρ(x) := α
 
-return
+goto end

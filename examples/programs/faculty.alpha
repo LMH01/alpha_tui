@@ -15,4 +15,4 @@ return
 
 main: α1 := 6
 call fac
-return
+goto end
