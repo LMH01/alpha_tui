@@ -263,7 +263,14 @@ impl MemoryListsManager {
         }
         // Update memory_cells
         for cell in &runtime.runtime_args().memory_cells {
-            let a = self.memory_cells.get_mut(&cell.1.label).unwrap();
+            let a = match self.memory_cells.get_mut(&cell.1.label) {
+                Some(value) => value,
+                None => {
+                    self.memory_cells
+                        .insert(cell.1.label.clone(), ("0".to_string(), false));
+                    self.memory_cells.get_mut(&cell.1.label).unwrap()
+                }
+            };
             let update = format!("{}", cell.1);
             if update == *a.0 {
                 a.1 = false;

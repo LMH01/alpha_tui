@@ -3,7 +3,7 @@ use std::fmt::Display;
 use miette::Result;
 
 use crate::{
-    base::{Comparison, Operation},
+    base::{Comparison, MemoryCell, Operation},
     instructions::error_handling::InstructionParseError,
     runtime::{error_handling::RuntimeErrorType, ControlFlow, RuntimeArgs},
 };
@@ -341,11 +341,18 @@ fn assert_gamma_contains_value(runtime_args: &RuntimeArgs) -> Result<i32, Runtim
 }
 
 /// Tests if the memory cell with **label** exists.
+///
+/// If it does not exist and `memory_on_demand` is enabled, it is created.
 fn assert_memory_cell_exists(
-    runtime_args: &RuntimeArgs,
+    runtime_args: &mut RuntimeArgs,
     label: &str,
 ) -> Result<(), RuntimeErrorType> {
     if let Some(_value) = runtime_args.memory_cells.get(label) {
+        Ok(())
+    } else if runtime_args.settings.memory_on_demand {
+        runtime_args
+            .memory_cells
+            .insert(label.to_string(), MemoryCell::new(label));
         Ok(())
     } else {
         Err(RuntimeErrorType::MemoryCellDoesNotExist(label.to_string()))

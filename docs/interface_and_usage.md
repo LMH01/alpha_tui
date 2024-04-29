@@ -40,6 +40,8 @@ Or this if the command history contains elements: ![Run custom instruction with 
 
 If the instruction could not be parsed a simple error is displayed, quit the program with `q` to receive further information on why the instruction could not be parsed.
 
+If a value is assigned to an accumulator or memory cell that does not yet exist, it is created automatically.
+
 #### Pitfalls
 
 Using this feature may lead to some unexpected behavior, as the normal program flow is changed. The result might be that the program is broken and runtime errors occur.

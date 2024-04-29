@@ -41,6 +41,7 @@
 
 - Fixed panic when jump to line was used in the first line (#37)
 - Fixed panic when very little space is available in the terminal to display tui
+- Fixed panic when trying to assign a calculated value to an accumulator or a memory cell that does not exist
 - Fixed wrong keybinding hints being displayed when runtime error occurred
 - Fixed cli argument `--memory-cells` allowing values that contain numbers only, as these values are conflicting with index memory cells
 - Fixed wrong line highlighted when custom call instruction was run
