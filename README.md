@@ -42,7 +42,7 @@ Pull requests and bug reports are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md
 
 ### Compile from source
 
-To compile the program from source the rust toolchain is needed. Once installed you can run the program by typing `cargo run`. To submit arguments you can use `--`, for example `cargo run -- -h` will print help.
+To compile the program from source the rust toolchain is needed (install via [rustup](https://rustup.rs/)). Once installed you can run the program by typing `cargo run`. To submit arguments you can use `--`, for example `cargo run -- -h` will print help.
 
 ### NixOS (using flakes)
 
@@ -52,4 +52,10 @@ This Repository provides a flake. If you have flakes enabled you can use
 nix run github:lmh01/alpha_tui <COMMAND> <PARAMS>
 ```
 
-to build and run the program.
+to build and run the program once, or 
+
+```
+nix shell github:lmh01/alpha_tui
+```
+
+to start a shell in which `alpha_tui` is installed.
