@@ -78,7 +78,7 @@
 ## v1.1.0
 
 ### New feature
-- Added new cli option: `--allowed-instructions` (fr #15)
+- Added new cli option: `--allowed-instructions-file` (fr #15)
     - This allows to limit the available instructions, more can be found here: https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md
 - Added new cli option: `--allowed-comparisons` (fr #17)
     - This allows to limit the available comparisons, more can be found here: https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md

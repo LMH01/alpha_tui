@@ -480,7 +480,7 @@ mod tests {
             "alpha_tui",
             "load",
             "some_file.alpha",
-            "--allowed-instructions",
+            "--allowed-instructions-file",
             "some_file.txt",
         ]);
         let args = match cli.command {

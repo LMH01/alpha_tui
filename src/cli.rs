@@ -186,7 +186,7 @@ pub struct InstructionLimitingArgs {
     pub enable_gamma_accumulator: Option<bool>,
 
     #[arg(
-        long = "allowed-instructions",
+        long = "allowed-instructions-file",
         help = "Load allowed instructions from file",
         long_help = "Load allowed instructions from file.\nIf set, only these instructions are allowed, if the program\ncontains any instructions not contained in the file, it will fail to build.\n\nFor more help see https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md",
         global = true
