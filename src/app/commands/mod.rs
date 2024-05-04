@@ -1,4 +1,8 @@
-use std::{fs::File, io::{self, Stdout}, path::Path};
+use std::{
+    fs::File,
+    io::{self, Stdout},
+    path::Path,
+};
 
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture},

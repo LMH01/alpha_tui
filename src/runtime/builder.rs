@@ -319,9 +319,9 @@ impl RuntimeBuilder {
     }
 
     /// Checks instructions that are set by comparing them with the provided whitelist of instructions.
-    /// 
+    ///
     /// NOOP instructions are always allowed.
-    /// 
+    ///
     /// It is also checked if any comparisons or operations are used that are not allowed.
     /// If this runtime builder contains instructions that are not contained within the whitelist or comparisons
     /// or operations that are not allowed, an error is returned.

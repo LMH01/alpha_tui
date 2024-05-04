@@ -211,7 +211,8 @@ pub trait CliHint {
 pub fn validate_arguments(cli: &Cli) -> Result<()> {
     if let Some(memory_cells) = &cli.global_args.memory_cells {
         for cell in memory_cells {
-            if cell.chars().any(|c| c.is_ascii_digit()) && !cell.chars().any(|c| c.is_alphabetic()) {
+            if cell.chars().any(|c| c.is_ascii_digit()) && !cell.chars().any(|c| c.is_alphabetic())
+            {
                 return Err(CliError::new(CliErrorType::MemoryCellsInvalid(cell.clone())).into());
             }
         }
