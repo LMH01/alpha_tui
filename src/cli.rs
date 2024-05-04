@@ -25,7 +25,7 @@ pub struct GlobalArgs {
         short,
         long,
         help = "Number of available accumulators",
-        long_help = "Number of available accumulators.\nIf the value is too large it can happen that accumulators are not displayed in the tui.",
+        long_help = "Number of available accumulators.\nIf the value is too large it can happen that accumulators are not displayed in the tui.\n\nCan be used to visualize how accumulators are filled with values or to explicitly enable accumulators when automatic detection has been disabled by the \"--disable-memory-detection\" flag.",
         global = true
     )]
     pub accumulators: Option<u8>,
@@ -33,7 +33,7 @@ pub struct GlobalArgs {
         short,
         long,
         help = "List of available memory cells",
-        long_help = "List of available memory cells.\nIf a large number of memory cells is specified, it can happen that some are not displayed in the tui.\nExample: -a a,b,c,d\n\nNote that memory cells named with numbers only are not allowed, as those would conflict with index memory cells.",
+        long_help = "List of available memory cells.\nIf a large number of memory cells is specified, it can happen that some are not displayed in the tui.\nExample: -a a,b,c,d\n\nCan be used to visualize how memory cells are filled with values or to explicitly enable memory cells when automatic detection has been disabled by the \"--disable-memory-detection\" flag.\n\nNote that memory cells named with numbers only are not allowed, as those would conflict with index memory cells.",
         value_delimiter = ',',
         global = true
     )]
@@ -50,7 +50,7 @@ pub struct GlobalArgs {
     #[arg(
         long,
         help = "Load memory config from a json file",
-        long_help = "Load accumulators, gamma accumulator and memory cell values from a json file.\n\nFurther help can be found here: https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md.",
+        long_help = "Load accumulators, gamma accumulator, memory cells and index memory cells from a json file.\nThe memory config file might may include initial values alongside definitions.\n\nFurther help can be found here: https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md.",
         conflicts_with_all = [ "memory_cells", "index_memory_cells", "accumulators" ],
         global = true,
     )]
@@ -152,8 +152,8 @@ pub enum Command {
 pub struct InstructionLimitingArgs {
     #[arg(
         long,
-        help = "Disable accumulator, gamma accumulator and memory_cell detection",
-        long_help = "Set to disable accumulator, gamma accumulator and memory_cell detection.\nIf disabled, accumulators, gamma accumulator and memory cells won't be read from program,\ninstead they have to be specified using \"--accumulators\", \"--enable-gamma-accumulator\", \"--memory-cells\" and \"--index-memory-cells\" or \"--memory-config-file\"",
+        help = "Disable accumulator, gamma accumulator, memory_cell and index_memory_cell detection",
+        long_help = "Set to disable accumulator, gamma accumulator, memory_cell and index_memory_cell detection.\nIf disabled, accumulators, gamma accumulator, memory cells and index memory cells won't be read from program and cannot be added by using them at runtime.\nInstead they have to be specified using \"--accumulators\", \"--enable-gamma-accumulator\", \"--memory-cells\" and \"--index-memory-cells\" or \"--memory-config-file\"",
         global = true
     )]
     pub disable_memory_detection: bool,
