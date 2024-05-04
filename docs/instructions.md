@@ -30,7 +30,7 @@ $\textbf{cmp}\in\lbrace <,\leq,=, \ne,\geq,>\rbrace;$
 |$T := S\space\textbf{OP}\space S$ |$\rho$(h1) := $\alpha 0$ + 5 | |
 |if $S\space\textbf{cmp}\space S$ then goto label| if $\alpha 0$ == $\alpha 1$ then goto loop | if the comparison succeeds the next instruction pointer is updated to the instruction at label |
 |goto label | goto loop | the next instruction pointer is updated to the instruction at label|
-|stack $\textbf{OP}$ | stack+ | uses the top most values to calculate a new value which is then pushed onto the stack, note that the top most value is the right part of the calculation, also works when operand is separated by a space like this: "stack +"|
+|stack $\textbf{OP}$ | stack+ | uses the top most values to calculate a new value which is then pushed onto the stack, note that the top most value is the right part of the calculation, also works when operand is separated by a space like this: "stack +", this operation has the side effect that accumulator 0 is replaced with the calculated value |
 |push | push | pushes the current value of $\alpha_0$/a0 on the stack |
 |pop | pop | pops the top value of the stack into $\alpha_0$/a0 |
 |call label | call function | the next instruction pointer is updated to the instruction and a return address is set |

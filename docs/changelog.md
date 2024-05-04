@@ -6,6 +6,7 @@
 
 -  `%` was missing from help message when `runtime_error::unknown_operation` occurred
 - `Press [ENTER] to close` missing from `unable to parse instruction` error, when screen width was below certain threshold
+- Fixed accumulator 0 not changing value to calculated value when stack op is calculated due to side effect in stack op operation (fr #44)
 
 ## v1.3.0 (latest version)
 

@@ -268,7 +268,11 @@ fn run_stack_op(runtime_args: &mut RuntimeArgs, op: Operation) -> Result<(), Run
     match runtime_args.stack.pop() {
         Some(a) => match runtime_args.stack.pop() {
             Some(b) => {
-                runtime_args.stack.push(op.calc(b, a)?);
+                // place result of calculation in a0, because value is calculated using that accumulator in alpha notation
+                // so value needs to be placed manually in it
+                let res = op.calc(b, a)?;
+                runtime_args.accumulators.get_mut(&0).unwrap().data = Some(res);
+                runtime_args.stack.push(res);
                 Ok(())
             }
             None => Err(RuntimeErrorType::StackOpFail(op)),
