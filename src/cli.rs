@@ -84,7 +84,7 @@ pub struct LoadArgs {
         short,
         long,
         help = "Disable alignment of labels, instructions and comments",
-        long_help = "Per default labels, instructions and comments are aligned in columns to make reading easier, this can be disabled by setting this flag.",
+        long_help = "Per default labels, instructions and comments are aligned in columns to make reading easier.\nThis can be disabled by setting this flag.",
         global = true
     )]
     pub disable_alignment: bool,
