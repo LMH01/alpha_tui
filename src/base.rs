@@ -28,8 +28,8 @@ impl Accumulator {
 impl Display for Accumulator {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.data {
-            Some(d) => write!(f, "{:2}: {}", self.id, d),
-            None => write!(f, "{:2}: None", self.id),
+            Some(d) => write!(f, "{:>3}: {}", format!("α{}", self.id), d),
+            None => write!(f, "{:>3}: None", format!("α{}", self.id)),
         }
     }
 }
