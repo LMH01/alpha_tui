@@ -9,7 +9,7 @@ use crate::base::{Comparison, Operation};
     author = "LMH01",
     version,
     about,
-    long_about = "debugger and runtime environment for the alpha notation used in my Systemnahme Informatik lecture"
+    long_about = "debugger and runtime environment for the alpha notation used in my Systemnahe Informatik lecture"
 )]
 pub struct Cli {
     #[command(subcommand)]
@@ -72,8 +72,8 @@ pub struct LoadArgs {
     pub file: String,
 
     #[arg(
-        long,
         short,
+        long,
         help = "Enable predetermined breakpoints",
         long_help = "Enable predetermined breakpoints.\nThe supplied element specifies the line in which the breakpoint should be set.\nExample: -b 1,7,8",
         value_delimiter = ',',
@@ -186,7 +186,7 @@ pub struct InstructionLimitingArgs {
     pub enable_gamma_accumulator: Option<bool>,
 
     #[arg(
-        long = "allowed-instructions-file",
+        long,
         help = "Load allowed instructions from file",
         long_help = "Load allowed instructions from file.\nIf set, only these instructions are allowed, if the program\ncontains any instructions not contained in the file, it will fail to build.\n\nFor more help see https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md",
         global = true
