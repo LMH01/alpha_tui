@@ -4,7 +4,7 @@
 
 ### Other
 
-- Renamed cli option `--allowed-instructions` to `--allowed-instructions-file` (fr #49) (by @reeelix)
+- Renamed cli option `--allowed-instructions` to `--allowed-instructions-file` (fr #49) (by [@reeelix](https://github.com/reeelix))
 
 ### Bug fixes
 
