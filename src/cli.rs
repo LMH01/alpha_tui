@@ -32,6 +32,7 @@ pub struct GlobalArgs {
     pub accumulators: Option<u8>,
 
     #[arg(
+        short,
         long,
         help = "List of available index memory cells",
         long_help = "List of available index memory cells.\nExample: 0,1,2,3\n\nCan be used to visualize how index memory cells are filled with values or to explicitly enable index memory cells when automatic detection has been disabled by the \"--disable-memory-detection\" flag.",
@@ -209,6 +210,7 @@ pub struct InstructionLimitingArgs {
     pub disable_memory_detection: bool,
 
     #[arg(
+        short = 'g',
         long,
         help = "Enable the gamma accumulator",
         long_help = "Enable the gamma accumulator, can be used to enable gamma accumulator when automatic detection is disabled by \"--disable-memory-detection\".",
