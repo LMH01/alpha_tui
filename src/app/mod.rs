@@ -285,7 +285,7 @@ impl App {
                 // keybinding actions that are always checked
                 match key.code {
                     KeyCode::Esc => {
-                        if self.escape_key() {
+                        if self.escape_key()? {
                             return Ok(());
                         }
                     }
@@ -364,14 +364,16 @@ impl App {
     /// Playground: exit the program
     ///
     /// Return value indicates if the program should be closed.
-    fn escape_key(&mut self) -> bool {
-        match self.state {
+    fn escape_key(&mut self) -> Result<bool> {
+        match &self.state {
             State::CustomInstruction(_) => {
                 self.state = State::Running(self.instruction_list_states.breakpoints_set())
             }
-            _ => return true,
+            State::RuntimeError(e, _) => return Err(e.clone())?,
+            State::CustomInstructionError(e, _) => return Err(e.clone())?,
+            _ => return Ok(true),
         }
-        false
+        Ok(false)
     }
 
     /// Performs an action. Action depends on current app state.
