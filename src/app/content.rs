@@ -368,13 +368,13 @@ impl MemoryListsManager {
         // Insert gamma accumulator if it is in use
         if let Some(value) = self.gamma {
             if let Some(inner_value) = value.0 {
-                let mut item = ListItem::new(format!(" γ: {inner_value}"));
+                let mut item = ListItem::new(format!("  γ: {inner_value}"));
                 if value.1 {
                     item = item.style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
                 }
                 list.push((item, &0));
             } else {
-                let mut item = ListItem::new(" γ: None".to_string());
+                let mut item = ListItem::new("  γ: None".to_string());
                 if value.1 {
                     item = item.style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
                 }
