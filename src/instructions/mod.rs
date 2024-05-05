@@ -356,9 +356,12 @@ fn assert_accumulator_contains_value(
 }
 
 /// Tests if gamma exists.
-/// 
+///
 /// If `RuntimeSettings::autodetect_gamma` is enabled, and gamma does not exist, it is created.
-fn assert_gamma_exists(runtime_memory: &mut RuntimeMemory, runtime_settings: &RuntimeSettings) -> Result<(), RuntimeErrorType> {
+fn assert_gamma_exists(
+    runtime_memory: &mut RuntimeMemory,
+    runtime_settings: &RuntimeSettings,
+) -> Result<(), RuntimeErrorType> {
     if runtime_memory.gamma.is_some() {
         return Ok(());
     } else if runtime_settings.autodetect_gamma_accumulator {
