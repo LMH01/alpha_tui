@@ -6,11 +6,9 @@ use crate::{
     base::{Accumulator, MemoryCell},
     cli::{GlobalArgs, InstructionLimitingArgs},
     instructions::Instruction,
-    utils,
 };
 
 use self::{
-    builder::RuntimeBuilder,
     error_handling::{RuntimeError, RuntimeErrorType},
     memory_config::MemoryConfig,
 };
@@ -37,17 +35,6 @@ pub struct Runtime {
 }
 
 impl Runtime {
-    /// Creates a new runtime that should only be used for the playground mode.
-    pub fn new_playground(runtime_args: RuntimeMemory) -> Runtime {
-        todo!("Remove, because playground runtime should also only be build using the runtime builder")
-        //Self {
-        //    memory: runtime_args,
-        //    instructions: Vec::new(),
-        //    control_flow: ControlFlow::new(),
-        //    instruction_runs: 0,
-        //}
-    }
-
     /// Runs the complete program.
     #[allow(dead_code)]
     pub fn run(&mut self) -> Result<bool, RuntimeError> {
@@ -269,137 +256,6 @@ impl Default for RuntimeMemory {
 }
 
 impl<'a> RuntimeMemory {
-    /// Creates a new runtimes args struct with empty lists.
-    ///
-    /// Errors if option is set to parse memory cells from file and the parsing fails.
-    pub fn from_args(args: &GlobalArgs, ila: &InstructionLimitingArgs) -> Result<Self, String> {
-        Self::from_args_with_defaults(args, ila, 0, 0, false)
-    }
-
-    /// Creates a new runtime args struct using the cli arguments.
-    ///
-    /// If a specific setting is not provided using the cli, the provided default value is used.
-    ///
-    /// Memory cells are named h1, ..., hn.
-    #[deprecated(note = "Not used anymore, will be replaced by function in runtime builder")]
-    pub fn from_args_with_defaults(
-        global_args: &GlobalArgs,
-        ila: &InstructionLimitingArgs,
-        accumulators_default: u8,
-        memory_cells_default: u32,
-        enable_gamma_default: bool,
-    ) -> Result<Self, String> {
-        // check if memory config file is set and use those values if set
-        //if let Some(path) = &global_args.memory_config_file {
-        //    let config =
-        //        match serde_json::from_str::<MemoryConfig>(&utils::read_file(path)?.join("\n")) {
-        //            Ok(config) => config,
-        //            Err(e) => return Err(format!("json parse error: {e}")),
-        //        };
-        //    return Ok(config.into_runtime_memory(global_args, ila));
-        //}
-
-        //let accumulators = global_args.accumulators.unwrap_or(accumulators_default);
-        //let memory_cells = match global_args.memory_cells.as_ref() {
-        //    None => {
-        //        let mut memory_cell_names = Vec::new();
-        //        for i in 0..memory_cells_default {
-        //            memory_cell_names.push(format!("h{i}"));
-        //        }
-        //        memory_cell_names
-        //    }
-        //    Some(value) => value.clone(),
-        //};
-        //let idx_memory_cells = global_args.index_memory_cells.as_ref().cloned();
-
-        //let enable_gamma = match ila.enable_gamma_accumulator {
-        //    Some(enable_gamma) => enable_gamma,
-        //    None => enable_gamma_default,
-        //};
-
-        //Ok(Self::new(
-        //    accumulators as usize,
-        //    memory_cells,
-        //    idx_memory_cells,
-        //    enable_gamma,
-        //    RuntimeSettings::new(
-        //        !ila.disable_memory_detection,
-        //        global_args.disable_instruction_limit,
-        //        !ila.disable_memory_detection,
-        //    ),
-        //))
-        todo!()
-    }
-
-    pub fn new_debug(memory_cells: &'a [&'static str]) -> Self {
-        Self::new(
-            4,
-            memory_cells.iter().map(|f| (*f).to_string()).collect(),
-            None,
-            true,
-            RuntimeSettings::default(),
-        )
-    }
-
-    #[allow(dead_code)]
-    pub fn new_empty() -> Self {
-        Self {
-            accumulators: HashMap::new(),
-            gamma: None,
-            memory_cells: HashMap::new(),
-            index_memory_cells: HashMap::new(),
-            stack: Vec::new(),
-        }
-    }
-
-    pub fn new(
-        acc: usize,
-        m_cells: Vec<String>,
-        idx_m_cells: Option<Vec<usize>>,
-        enable_gamma: bool,
-        settings: RuntimeSettings,
-    ) -> Self {
-        let mut accumulators = HashMap::new();
-        for i in 0..acc {
-            accumulators.insert(i, Accumulator::new(i));
-        }
-        let mut memory_cells: HashMap<String, MemoryCell> = HashMap::new();
-        for i in m_cells {
-            memory_cells.insert(i.clone(), MemoryCell::new(i.as_str()));
-        }
-        let gamma = if enable_gamma { Some(None) } else { None };
-        let mut index_memory_cells = HashMap::new();
-        if let Some(cells) = idx_m_cells {
-            for c in cells {
-                index_memory_cells.insert(c, None);
-            }
-        }
-        Self {
-            accumulators,
-            gamma,
-            memory_cells,
-            index_memory_cells,
-            stack: Vec::new(),
-        }
-    }
-
-    /// Creates a new memory cell with label **label** if it does not already exist
-    /// and adds it to the **`memory_cells`* hashmap.
-    #[allow(dead_code)]
-    pub fn add_storage_cell(&mut self, label: &str) {
-        if !self.memory_cells.contains_key(label) {
-            self.memory_cells
-                .insert(label.to_string(), MemoryCell::new(label));
-        }
-    }
-
-    /// Adds a new accumulator to the accumulators vector.
-    #[allow(dead_code)]
-    pub fn add_accumulator(&mut self) {
-        let id = self.accumulators.len();
-        self.accumulators.insert(id, Accumulator::new(id));
-    }
-
     /// Checks if the accumulator with id exists.
     pub fn exists_accumulator(&self, id: usize) -> bool {
         for acc in &self.accumulators {
@@ -479,6 +335,84 @@ impl Default for RuntimeSettings {
             autodetect_accumulators: true,
             autodetect_memory_cells: true,
             autodetect_index_memory_cells: true,
+        }
+    }
+}
+
+#[cfg(test)]
+pub mod test_utils {
+    use std::collections::HashMap;
+
+    use crate::base::{Accumulator, MemoryCell};
+
+    use super::RuntimeMemory;
+
+    impl<'a> RuntimeMemory {
+        pub fn new_debug(memory_cells: &'a [&'static str]) -> Self {
+            Self::new(
+                4,
+                memory_cells.iter().map(|f| (*f).to_string()).collect(),
+                None,
+                true,
+            )
+        }
+
+        #[allow(dead_code)]
+        pub fn new_empty() -> Self {
+            Self {
+                accumulators: HashMap::new(),
+                gamma: None,
+                memory_cells: HashMap::new(),
+                index_memory_cells: HashMap::new(),
+                stack: Vec::new(),
+            }
+        }
+
+        pub fn new(
+            acc: usize,
+            m_cells: Vec<String>,
+            idx_m_cells: Option<Vec<usize>>,
+            enable_gamma: bool,
+        ) -> Self {
+            let mut accumulators = HashMap::new();
+            for i in 0..acc {
+                accumulators.insert(i, Accumulator::new(i));
+            }
+            let mut memory_cells: HashMap<String, MemoryCell> = HashMap::new();
+            for i in m_cells {
+                memory_cells.insert(i.clone(), MemoryCell::new(i.as_str()));
+            }
+            let gamma = if enable_gamma { Some(None) } else { None };
+            let mut index_memory_cells = HashMap::new();
+            if let Some(cells) = idx_m_cells {
+                for c in cells {
+                    index_memory_cells.insert(c, None);
+                }
+            }
+            Self {
+                accumulators,
+                gamma,
+                memory_cells,
+                index_memory_cells,
+                stack: Vec::new(),
+            }
+        }
+
+        /// Creates a new memory cell with label **label** if it does not already exist
+        /// and adds it to the **`memory_cells`* hashmap.
+        #[allow(dead_code)]
+        pub fn add_storage_cell(&mut self, label: &str) {
+            if !self.memory_cells.contains_key(label) {
+                self.memory_cells
+                    .insert(label.to_string(), MemoryCell::new(label));
+            }
+        }
+
+        /// Adds a new accumulator to the accumulators vector.
+        #[allow(dead_code)]
+        pub fn add_accumulator(&mut self) {
+            let id = self.accumulators.len();
+            self.accumulators.insert(id, Accumulator::new(id));
         }
     }
 }
