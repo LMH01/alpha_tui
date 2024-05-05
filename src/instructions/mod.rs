@@ -152,6 +152,7 @@ fn run_assign(
             runtime_args.accumulators.get_mut(a).unwrap().data = Some(source.value(runtime_args)?);
         }
         TargetType::Gamma => {
+            assert_gamma_exists(runtime_args, runtime_settings)?;
             runtime_args.gamma = Some(Some(source.value(runtime_args)?));
         }
         TargetType::MemoryCell(a) => {
@@ -198,7 +199,7 @@ fn run_calc(
                 Some(op.calc(source_a.value(runtime_args)?, source_b.value(runtime_args)?)?);
         }
         TargetType::Gamma => {
-            assert_gamma_exists(runtime_args)?;
+            assert_gamma_exists(runtime_args, runtime_settings)?;
             runtime_args.gamma = Some(Some(
                 op.calc(source_a.value(runtime_args)?, source_b.value(runtime_args)?)?,
             ));
@@ -354,9 +355,14 @@ fn assert_accumulator_contains_value(
     }
 }
 
-/// Tests if gamma exists
-fn assert_gamma_exists(runtime_memory: &RuntimeMemory) -> Result<(), RuntimeErrorType> {
+/// Tests if gamma exists.
+/// 
+/// If `RuntimeSettings::autodetect_gamma` is enabled, and gamma does not exist, it is created.
+fn assert_gamma_exists(runtime_memory: &mut RuntimeMemory, runtime_settings: &RuntimeSettings) -> Result<(), RuntimeErrorType> {
     if runtime_memory.gamma.is_some() {
+        return Ok(());
+    } else if runtime_settings.autodetect_gamma_accumulator {
+        runtime_memory.gamma = Some(None);
         return Ok(());
     }
     Err(RuntimeErrorType::GammaDoesNotExist)

@@ -314,6 +314,8 @@ pub struct RuntimeSettings {
     pub disable_instruction_limit: bool,
     // If true, accumulators will be created automatically, if they are accessed and the don't already exist.
     pub autodetect_accumulators: bool,
+    // If true, accumulator gamma will be created automatically, if it is accessed it does not already exist.
+    pub autodetect_gamma_accumulator: bool,
     // If true, memory cells will be created automatically, if they are accessed and the don't already exist.
     pub autodetect_memory_cells: bool,
     // If true, index memory cells will be created automatically, if they are accessed and the don't already exist.
@@ -325,6 +327,7 @@ impl Default for RuntimeSettings {
         Self {
             disable_instruction_limit: false,
             autodetect_accumulators: true,
+            autodetect_gamma_accumulator: true,
             autodetect_memory_cells: true,
             autodetect_index_memory_cells: true,
         }

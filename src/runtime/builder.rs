@@ -122,6 +122,9 @@ impl RuntimeBuilder {
         if let Some(value) = memory_config.accumulators.autodetection {
             runtime_settings.autodetect_accumulators = value;
         }
+        if let Some(value) = memory_config.gamma_accumulator.autodetection {
+            runtime_settings.autodetect_gamma_accumulator = value;
+        }
         if let Some(value) = memory_config.memory_cells.autodetection {
             runtime_settings.autodetect_memory_cells = value;
         }
