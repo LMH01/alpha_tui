@@ -112,6 +112,9 @@ impl<'a> RuntimeBuilder<'a> {
 
     /// Applies the provided instruction limiting args to this runtime builder.
     ///
+    /// If `MemoryConfig` is already set, the values for `autodetection` are overwritten to false,
+    /// otherwise a new `MemoryConfig` is created where the values are set to false.
+    ///
     /// All values previously set in `InstructionConfig` struct are replaced by the new values.
     pub fn apply_instruction_limiting_args(
         &mut self,
@@ -127,6 +130,18 @@ impl<'a> RuntimeBuilder<'a> {
         if let Some(path) = &instruction_limiting_args.allowed_instructions_file {
             self.instruction_config.allowed_instruction_identifiers =
                 Some(utils::build_instruction_whitelist(path)?);
+        }
+        // set/override memory autodetection values to false, if `--disable-memory-detection` is set
+        if instruction_limiting_args.disable_memory_detection {
+            let mut memory_config = match self.memory_config.take() {
+                Some(memory_config) => memory_config,
+                None => MemoryConfig::default(),
+            };
+            memory_config.accumulators.autodetection = Some(false);
+            memory_config.gamma_accumulator.autodetection = Some(false);
+            memory_config.memory_cells.autodetection = Some(false);
+            memory_config.index_memory_cells.autodetection = Some(false);
+            self.memory_config = Some(memory_config);
         }
         Ok(self)
     }
