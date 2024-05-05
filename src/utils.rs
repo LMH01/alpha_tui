@@ -367,7 +367,10 @@ pub fn prepare_whitelist_file(content: Vec<String>) -> Vec<String> {
 
 #[cfg(test)]
 pub mod test_utils {
-    use crate::runtime::{builder_new::RuntimeBuilder, Runtime};
+    use crate::{
+        cli::GlobalArgs,
+        runtime::{builder_new::RuntimeBuilder, Runtime},
+    };
 
     /// Creates a string vector from a &str.
     pub fn string_literal_to_vec(input: &str) -> Vec<String> {
@@ -376,8 +379,17 @@ pub mod test_utils {
 
     /// Constructs a runtime using the input string.
     pub fn runtime_from_str(input: &str) -> miette::Result<Runtime> {
-        RuntimeBuilder::new(&string_literal_to_vec(input), "test").unwrap()
+        RuntimeBuilder::new(&string_literal_to_vec(input), "test")
+            .unwrap()
             .build()
+    }
+
+    /// Constructs a new runtime using the input string and applies default global args.
+    pub fn runtime_from_str_with_default_cli_args(input: &str) -> miette::Result<Runtime> {
+        let mut rb = RuntimeBuilder::new(&string_literal_to_vec(input), "test").unwrap();
+        rb.apply_global_cli_args(&GlobalArgs::default())
+            .unwrap();
+        rb.build()
     }
 }
 

@@ -19,7 +19,7 @@ pub struct Cli {
     pub global_args: GlobalArgs,
 }
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Debug, Clone, Default)]
 pub struct GlobalArgs {
     #[arg(
         short,

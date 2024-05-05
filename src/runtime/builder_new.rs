@@ -75,9 +75,7 @@ impl RuntimeBuilder {
                 // check if memory config file is provided, from which the memory config can be build
                 if let Some(path) = &global_args.memory_config_file {
                     match MemoryConfig::try_from_file(path) {
-                        Ok(config) => {
-                            config
-                        }
+                        Ok(config) => config,
                         Err(e) => {
                             return Err(RuntimeBuildError::MemoryConfigFileInvalid(
                                 path.to_string(),
@@ -530,7 +528,6 @@ pub fn check_gamma(
 }
 
 impl TargetType {
-
     /// Checks if this type is missing in `runtime_args`.
     ///
     /// If autodetection in memory_config is enabled, the type is added to runtime args instead of returning an error.
@@ -611,105 +608,95 @@ impl Value {
     }
 }
 
-//#[cfg(test)]
-//mod tests {
-//    use crate::{
-//        instructions::IndexMemoryCellIndexType,
-//        runtime::{
-//            builder::{check_index_memory_cell, RuntimeBuilder},
-//            error_handling::RuntimeBuildError,
-//            RuntimeMemory,
-//        },
-//    };
-//
-//    /// Used to set the available memory cells during testing.
-//    const TEST_MEMORY_CELL_LABELS: &[&str] = &[
-//        "a", "b", "c", "d", "e", "f", "w", "x", "y", "z", "h1", "h2", "h3", "h4",
-//    ];
-//
-//    #[test]
-//    fn test_instruction_building_with_comments() {
-//        let instructions = vec![
-//            "a0 := 4 // Set alpha to 4",
-//            "p(h1) := a0 # Set memory cell h1 to 4",
-//            "a0 := a1 # Just some stuff",
-//            "a1 := a2 // Just some more stuff",
-//        ];
-//        let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
-//        assert!(rb.build_instructions(&instructions, "test").is_ok());
-//    }
-//
-//    #[test]
-//    fn test_instruction_building_with_semicolons() {
-//        let instructions = vec![
-//            "a0 := 4; // Set alpha to 4",
-//            "p(h1) := a0; # Set memory cell h1 to 4",
-//            "a0 := a1; # Just some stuff",
-//            "a1 := a2; // Just some more stuff",
-//        ];
-//        let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
-//        assert!(rb.build_instructions(&instructions, "test").is_ok());
-//    }
-//
-//    #[test]
-//    fn test_only_label_line() {
-//        let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
-//        assert!(rb
-//            .build_instructions(&vec!["a0 := 5", "my_label:", "a1 := 5"], "")
-//            .is_ok());
-//    }
-//
-//    #[test]
-//    fn test_accumulator_auto_add_working() {
-//        let instructions = vec!["a1 := a2 + a3"];
-//        let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
-//        assert!(rb.build_instructions(&instructions, "test").is_ok());
-//        let rt = rb.build();
-//        assert!(rt.is_ok());
-//        let rt = rt.unwrap();
-//        assert!(rt.memory.accumulators.contains_key(&1));
-//        assert!(rt.memory.accumulators.contains_key(&2));
-//        assert!(rt.memory.accumulators.contains_key(&3));
-//        assert!(!rt.memory.accumulators.contains_key(&4));
-//    }
-//
-//    #[test]
-//    fn test_check_index_memory_cell() {
-//        let mut args = RuntimeMemory::new_empty();
-//        assert_eq!(
-//            check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Accumulator(0), false),
-//            Err(RuntimeBuildError::AccumulatorMissing("0".to_string()))
-//        );
-//        assert_eq!(
-//            check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Gamma, false),
-//            Err(RuntimeBuildError::GammaDisabled)
-//        );
-//        assert_eq!(
-//            check_index_memory_cell(
-//                &mut args,
-//                &IndexMemoryCellIndexType::MemoryCell("h1".to_string()),
-//                false
-//            ),
-//            Err(RuntimeBuildError::MemoryCellMissing("h1".to_string()))
-//        );
-//        assert_eq!(
-//            check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Accumulator(0), true),
-//            Ok(())
-//        );
-//        assert_eq!(
-//            check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Gamma, true),
-//            Ok(())
-//        );
-//        assert_eq!(
-//            check_index_memory_cell(
-//                &mut args,
-//                &IndexMemoryCellIndexType::MemoryCell("h1".to_string()),
-//                true
-//            ),
-//            Ok(())
-//        );
-//        assert!(args.accumulators.contains_key(&0));
-//        assert!(args.gamma.is_some());
-//        assert!(args.memory_cells.contains_key("h1"));
-//    }
-//}
+#[cfg(test)]
+mod tests {
+    use crate::{
+        instructions::IndexMemoryCellIndexType,
+        runtime::{builder_new::{check_index_memory_cell, RuntimeBuilder}, error_handling::RuntimeBuildError, RuntimeMemory},
+        utils::test_utils,
+    };
+
+    #[test]
+    fn test_instruction_building_with_comments() {
+        let instructions = r#"
+            a0 := 4 // Set alpha to 4
+            p(h1) := a0 # Set memory cell h1 to 4
+            a0 := a1 # Just some stuff
+            a1 := a2 // Just some more stuff
+        "#;
+        assert!(test_utils::runtime_from_str_with_default_cli_args(instructions).is_ok());
+    }
+
+    #[test]
+    fn test_instruction_building_with_semicolons() {
+        let instructions = r#"
+            a0 := 4; // Set alpha to 4,
+            p(h1) := a0; # Set memory cell h1 to 4,
+            a0 := a1; # Just some stuff,
+            a1 := a2; // Just some more stuff,
+        "#;
+        assert!(test_utils::runtime_from_str_with_default_cli_args(instructions).is_ok());
+    }
+
+    #[test]
+    fn test_only_label_line() {
+        let instructions = r#"
+            a0 := 5
+            my_label:
+            a1 := 5
+        "#;
+        assert!(test_utils::runtime_from_str_with_default_cli_args(instructions).is_ok());
+    }
+
+    #[test]
+    fn test_accumulator_auto_add_working() {
+        let instructions = r#"
+            a1 := a2 + a3
+        "#;
+        let rt = test_utils::runtime_from_str_with_default_cli_args(instructions).unwrap();
+        assert!(rt.memory.accumulators.contains_key(&1));
+        assert!(rt.memory.accumulators.contains_key(&2));
+        assert!(rt.memory.accumulators.contains_key(&3));
+        assert!(!rt.memory.accumulators.contains_key(&4));
+    }
+
+    #[test]
+    fn test_check_index_memory_cell() {
+        let mut args = RuntimeMemory::new_empty();
+        assert_eq!(
+            check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Accumulator(0), false),
+            Err(RuntimeBuildError::AccumulatorMissing("0".to_string()))
+        );
+        assert_eq!(
+            check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Gamma, false),
+            Err(RuntimeBuildError::GammaDisabled)
+        );
+        assert_eq!(
+            check_index_memory_cell(
+                &mut args,
+                &IndexMemoryCellIndexType::MemoryCell("h1".to_string()),
+                false
+            ),
+            Err(RuntimeBuildError::MemoryCellMissing("h1".to_string()))
+        );
+        assert_eq!(
+            check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Accumulator(0), true),
+            Ok(())
+        );
+        assert_eq!(
+            check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Gamma, true),
+            Ok(())
+        );
+        assert_eq!(
+            check_index_memory_cell(
+                &mut args,
+                &IndexMemoryCellIndexType::MemoryCell("h1".to_string()),
+                true
+            ),
+            Ok(())
+        );
+        assert!(args.accumulators.contains_key(&0));
+        assert!(args.gamma.is_some());
+        assert!(args.memory_cells.contains_key("h1"));
+    }
+}
