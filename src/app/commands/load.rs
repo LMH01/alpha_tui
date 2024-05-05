@@ -1,4 +1,4 @@
-use miette::{Context, Result};
+use miette::Result;
 
 use crate::{
     app::{commands::load_instruction_history, App},

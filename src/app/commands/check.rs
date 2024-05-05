@@ -1,6 +1,6 @@
 use std::process::exit;
 
-use miette::{miette, Context, Report};
+use miette::miette;
 
 use crate::{
     cli::{CheckArgs, GlobalArgs},

@@ -8,13 +8,11 @@ use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture},
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use miette::{miette, Context, IntoDiagnostic, Result};
+use miette::{miette, IntoDiagnostic, Result};
 use ratatui::{backend::CrosstermBackend, Terminal};
 
 use crate::{
-    cli::{GlobalArgs, InstructionLimitingArgs},
     instructions::Instruction,
-    runtime::{builder_new::RuntimeBuilder, Runtime},
     utils::{self, remove_comment},
 };
 
@@ -73,21 +71,6 @@ fn load_instruction_history(
         instruction_history = Some(checked_instructions);
     }
     Ok(instruction_history)
-}
-
-/// Creates a runtime builder and returns miette error if it fails.
-fn build_runtime<'a>(
-    instructions_input: &'a Vec<String>,
-    instructions_input_file_name: &str,
-    global_args: &GlobalArgs,
-    ila: &InstructionLimitingArgs,
-) -> Result<Runtime> {
-    let mut rb = RuntimeBuilder::new(instructions_input, instructions_input_file_name)?;
-    if let Err(e) = rb.apply_global_cli_args(global_args) {
-        return Err(miette!("Unable to apply global cli args to RuntimeBuilder, memory config could not be loaded from file:\n{e}"));
-    }
-    rb.apply_instruction_limiting_args(ila);
-    Ok(rb.build().wrap_err("while building runtime")?)
 }
 
 /// Setup the terminal and returns it.
