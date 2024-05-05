@@ -59,7 +59,7 @@ pub enum RuntimeErrorType {
     #[error("Attempt to use accumulator with index '{0}' while it does not exist")]
     #[diagnostic(
         code("runtime_error::accumulator_does_not_exist"),
-        help("Make sure to tell the progrmm to use enough accumulators by using the '-a' flag")
+        help("Make sure to tell the program to use enough accumulators by using the '-a' flag or by specifying the value using a memory config file")
     )]
     AccumulatorDoesNotExist(usize),
 
@@ -73,7 +73,7 @@ pub enum RuntimeErrorType {
     #[error("Attempt to use accumulator gamma while it does not exist")]
     #[diagnostic(
         code("runtime_error::gamma_does_not_exist"),
-        help("Make sure to tell the progrmm to use the gamma accumulator by using the TODO flag")
+        help("Make sure to tell the program to use the gamma accumulator by using the '--enable-gamma-accumulator' flag or by enabling it using a memory config file")
     )]
     GammaDoesNotExist,
 
@@ -87,7 +87,7 @@ pub enum RuntimeErrorType {
     #[error("Attempt to use value of memory cell named '{0}' that does not exist")]
     #[diagnostic(
         code("runtime_error::memory_cell_uninitialized"),
-        help("Make sure to tell the progrmm to use this memory cell by using the '-m' flag")
+        help("Make sure to tell the progrmm to use this memory cell by using the '-m' flag or by enabling it using a memory config file")
     )]
     MemoryCellDoesNotExist(String),
 
@@ -105,7 +105,7 @@ pub enum RuntimeErrorType {
     )]
     #[diagnostic(
         code("runtime_error::index_memory_cell_does_not_exist"),
-        help("Make sure to tell the progrmm to use this memory cell by using the '--index-memory-cells' flag.\nExample: --index-memory-cells {0}")
+        help("Make sure to tell the progrmm to use this memory cell by using the '--index-memory-cells' flag or by enabling it using a memory config file.\nExample: --index-memory-cells {0}")
     )]
     IndexMemoryCellDoesNotExist(usize),
 

@@ -14,6 +14,7 @@
 - Improved order of command line options in `.\alpha_tui load --help` (fr #54) (by [@reeelix](https://github.com/reeelix))
 - Added short forms `-i` for `--index-memory-cells` and `-g` for `--enable-gamma-accumulator` (fr #56) (by [@reeelix](https://github.com/reeelix))
 - Option `--enable-gamma-accumulator` no longer takes a boolean as value, the value is now set by just using this option
+- Help messages when a runtime error occurs because a memory type is missing now also hint towards the memory config file
 
 ### Other
 
