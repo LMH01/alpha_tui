@@ -294,7 +294,8 @@ pub fn prepare_whitelist_file(content: Vec<String>) -> Vec<String> {
 #[cfg(test)]
 pub mod test_utils {
     use crate::{
-        cli::{GlobalArgs, InstructionLimitingArgs}, runtime::{builder::RuntimeBuilder, Runtime}
+        cli::{GlobalArgs, InstructionLimitingArgs},
+        runtime::{builder::RuntimeBuilder, Runtime},
     };
 
     /// Creates a string vector from a &str.
@@ -319,7 +320,7 @@ pub mod test_utils {
     /// Constructs a runtime using the input string.
     pub fn runtime_from_str_with_disable_memory_detection(input: &str) -> miette::Result<Runtime> {
         let mut rb = RuntimeBuilder::new(&string_literal_to_vec(input), "test").unwrap();
-        
+
         let mut ila = InstructionLimitingArgs::default();
         ila.disable_memory_detection = true;
         rb.apply_instruction_limiting_args(&ila).unwrap();

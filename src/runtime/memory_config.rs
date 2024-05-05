@@ -42,12 +42,11 @@ pub struct IndexMemoryCellConfig {
 }
 
 impl MemoryConfig {
-
     /// Tries to parse the provided file into a memory config.
     pub fn try_from_file(path: &str) -> miette::Result<Self, String> {
         match serde_json::from_str::<MemoryConfig>(&utils::read_file(path)?.join("\n")) {
-            Ok(config) => return Ok(config),
-            Err(e) => return Err(format!("json parse error: {e}")),
-        };
+            Ok(config) => Ok(config),
+            Err(e) => Err(format!("json parse error: {e}")),
+        }
     }
 }

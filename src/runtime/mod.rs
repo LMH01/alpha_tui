@@ -247,7 +247,7 @@ impl Default for RuntimeMemory {
     }
 }
 
-impl<'a> RuntimeMemory {
+impl RuntimeMemory {
     /// Checks if the accumulator with id exists.
     pub fn exists_accumulator(&self, id: usize) -> bool {
         for acc in &self.accumulators {

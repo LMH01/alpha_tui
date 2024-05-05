@@ -27,8 +27,9 @@ impl RuntimeBuilder {
     /// Creates a new runtime builder.
     ///
     /// The input instructions are build directly and this function returns an error if that failed.
+    #[allow(clippy::result_large_err)]
     pub fn new<'a>(
-        instructions_input: &'a Vec<String>,
+        instructions_input: &'a [String],
         instructions_input_file_name: &'a str,
     ) -> Result<Self, BuildProgramError> {
         let mut control_flow = ControlFlow::new();
@@ -40,7 +41,7 @@ impl RuntimeBuilder {
             &mut control_flow,
         ) {
             Ok(instructions) => instructions,
-            Err(e) => return Err(e),
+            Err(e) => return Err(*e),
         };
 
         Ok(Self {
@@ -177,7 +178,7 @@ impl RuntimeBuilder {
     /// Prints status messages into stdout.
     pub fn build(mut self) -> miette::Result<Runtime> {
         // set runtime settings
-        let settings = self.runtime_settings.unwrap_or(RuntimeSettings::default());
+        let settings = self.runtime_settings.unwrap_or_default();
 
         // build memory
         let mut memory = match self.memory_config.as_ref() {
@@ -187,7 +188,7 @@ impl RuntimeBuilder {
 
         // check if instructions are used that are not allowed
         if let Err(e) = check_instructions(&self.instructions, &self.instruction_config) {
-            return Err(miette::Report::new(e));
+            return Err(miette::Report::new(*e));
         }
 
         // inject end labels to give option to end program using goto END
@@ -199,8 +200,7 @@ impl RuntimeBuilder {
 
         // Check if all used accumulators and memory_cells exist
         check_missing_vars(
-            &self
-                .memory_config
+            self.memory_config
                 .as_ref()
                 .unwrap_or(&MemoryConfig::default()),
             &self.instructions,
@@ -247,7 +247,7 @@ fn build_instructions(
     instructions_input: &[String],
     file_name: &str,
     control_flow: &mut ControlFlow,
-) -> Result<Vec<Instruction>, BuildProgramError> {
+) -> Result<Vec<Instruction>, Box<BuildProgramError>> {
     let mut instructions = Vec::new();
     for (index, instruction) in instructions_input.iter().enumerate() {
         // Remove comments
@@ -298,9 +298,9 @@ fn build_instructions(
     if control_flow.instruction_labels.contains_key("main")
         && control_flow.instruction_labels.contains_key("MAIN")
     {
-        return Err(BuildProgramError {
+        return Err(Box::new(BuildProgramError {
             reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes,
-        });
+        }));
     }
     Ok(instructions)
 }
@@ -332,7 +332,7 @@ pub fn remove_comment(instruction: &str) -> String {
 fn check_instructions(
     instructions: &[Instruction],
     instruction_config: &InstructionConfig,
-) -> Result<(), BuildProgramError> {
+) -> Result<(), Box<BuildProgramError>> {
     for (idx, i) in instructions.iter().enumerate() {
         if let Some(whitelist) = &instruction_config.allowed_instruction_identifiers {
             if !whitelist.contains(&i.identifier()) && i.identifier() != "NOOP" {
@@ -342,27 +342,27 @@ fn check_instructions(
                     .map(String::to_string)
                     .collect::<Vec<String>>();
                 allowed_instructions.sort();
-                return Err(BuildProgramError {
+                return Err(Box::new(BuildProgramError {
                     reason: BuildProgramErrorTypes::InstructionNotAllowed(
                         idx + 1,
                         format!("{i}"),
                         i.identifier(),
                         allowed_instructions.join("\n").to_string(),
                     ),
-                });
+                }));
             }
         }
         // Check if all comparisons are allowed
         if let Some(ac) = &instruction_config.allowed_comparisons {
             if let Some(c) = i.comparison() {
                 if !ac.contains(c) {
-                    return Err(BuildProgramError {
+                    return Err(Box::new(BuildProgramError {
                         reason: BuildProgramErrorTypes::ComparisonNotAllowed(
                             idx + 1,
                             c.to_string(),
                             c.cli_hint(),
                         ),
-                    });
+                    }));
                 }
             }
         }
@@ -370,13 +370,13 @@ fn check_instructions(
         if let Some(ao) = &instruction_config.allowed_operations {
             if let Some(o) = i.operation() {
                 if !ao.contains(o) {
-                    return Err(BuildProgramError {
+                    return Err(Box::new(BuildProgramError {
                         reason: BuildProgramErrorTypes::OperationNotAllowed(
                             idx + 1,
                             o.to_string(),
                             o.cli_hint(),
                         ),
-                    });
+                    }));
                 }
             }
         }
@@ -712,7 +712,7 @@ mod tests {
     }
 
     // a simple helper function to make it easier to build test instructions
-    fn build_instructions_test(input: &str) -> Result<Vec<Instruction>, BuildProgramError> {
+    fn build_instructions_test(input: &str) -> Result<Vec<Instruction>, Box<BuildProgramError>> {
         let lines = input
             .split('\n')
             .map(|f| f.to_string())
@@ -725,9 +725,9 @@ mod tests {
         let res = build_instructions_test("loop:\n\nloop:");
         assert_eq!(
             res,
-            Err(BuildProgramError {
+            Err(Box::new(BuildProgramError {
                 reason: BuildProgramErrorTypes::LabelDefinedMultipleTimes("loop".to_string())
-            })
+            }))
         )
     }
 
@@ -736,16 +736,16 @@ mod tests {
         let res = build_instructions_test("main:\n\nMAIN:");
         assert_eq!(
             res,
-            Err(BuildProgramError {
+            Err(Box::new(BuildProgramError {
                 reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes
-            })
+            }))
         );
         let res = build_instructions_test("main:\n\nmain:");
         assert_eq!(
             res,
-            Err(BuildProgramError {
+            Err(Box::new(BuildProgramError {
                 reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes
-            })
+            }))
         )
     }
 
@@ -762,14 +762,14 @@ mod tests {
         let res = check_instructions(&instructions, &allowed_instructions);
         assert_eq!(
             res,
-            Err(BuildProgramError {
+            Err(Box::new(BuildProgramError {
                 reason: BuildProgramErrorTypes::InstructionNotAllowed(
                     1,
                     "a0 := 5".to_string(),
                     "A := C".to_string(),
                     "A := H".to_string()
                 )
-            })
+            }))
         );
     }
 

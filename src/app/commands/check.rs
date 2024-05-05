@@ -15,7 +15,7 @@ pub fn check(
 ) {
     // create runtime builder and apply cli args
     println!("Building instructions");
-    let mut rb = match RuntimeBuilder::new(&instructions, &input) {
+    let mut rb = match RuntimeBuilder::new(&instructions, input) {
         Ok(rb) => rb,
         Err(e) => {
             println!(

@@ -395,12 +395,7 @@ mod tests {
 
     #[test]
     fn test_re_pop_fail() {
-        let mut rm = RuntimeMemory::new(
-            1,
-            vec!["a".to_string()],
-            None,
-            true,
-        );
+        let mut rm = RuntimeMemory::new(1, vec!["a".to_string()], None, true);
         let mut cf = ControlFlow::new();
         let rs = RuntimeSettings::default();
         assert_eq!(
@@ -431,12 +426,7 @@ mod tests {
 
     #[test]
     fn test_re_label_missing() {
-        let mut rm = RuntimeMemory::new(
-            1,
-            vec!["a".to_string()],
-            None,
-            true,
-        );
+        let mut rm = RuntimeMemory::new(1, vec!["a".to_string()], None, true);
         let mut cf = ControlFlow::new();
         let rs = RuntimeSettings::default();
         assert_eq!(
