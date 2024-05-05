@@ -6,6 +6,7 @@
 
 - Added α symbols in front of each entry for a "numerical accumulator" in the accumulator field of the tui (fr #47) (by [@reeelix](https://github.com/reeelix))
 - Reduced size of `Execution finished` popup (fr #46)
+- The escape key can now be used to exit the program in every situation, except when a custom instruction is entered in the load mode (fr #51)
 
 ### Command line arguments
 
