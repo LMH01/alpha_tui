@@ -334,9 +334,9 @@ mod tests {
     fn test_accumultor_display() {
         let mut acc = Accumulator::new(0);
         acc.data = Some(5);
-        assert_eq!(format!("{}", acc), " 0: 5");
+        assert_eq!(format!("{}", acc), " α0: 5");
         acc.data = None;
-        assert_eq!(format!("{}", acc), " 0: None");
+        assert_eq!(format!("{}", acc), " α0: None");
     }
 
     #[test]
