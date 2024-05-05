@@ -2,8 +2,8 @@ use miette::Result;
 
 use crate::{
     app::App,
-    cli::{GlobalArgs, InstructionLimitingArgs, PlaygroundArgs},
-    runtime::{Runtime, RuntimeMemory},
+    cli::{GlobalArgs, PlaygroundArgs},
+    runtime::builder_new::RuntimeBuilder,
 };
 
 use super::load_instruction_history;
@@ -15,22 +15,10 @@ pub fn playground(global_args: &GlobalArgs, playground_args: &PlaygroundArgs) ->
 
     println!("Building runtime");
 
-    let runtime_args = match RuntimeMemory::from_args_with_defaults(
-        global_args,
-        &InstructionLimitingArgs::default(),
-        4,
-        4,
-        true,
-    ) {
-        Ok(runtime_args) => runtime_args,
-        Err(e) => {
-            return Err(miette::miette!(
-                "Unable to build runtime for playground: {e}"
-            ))
-        }
-    };
-
-    let rt = Runtime::new_playground(runtime_args);
+    let dummy_instructions = Vec::new();
+    let mut rb = RuntimeBuilder::new(&dummy_instructions, "playground")?;
+    rb.apply_global_cli_args(global_args)?;
+    let rt = rb.build()?;
 
     // setup terminal
     println!("Ready to run, launching tui");
