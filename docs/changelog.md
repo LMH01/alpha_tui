@@ -4,7 +4,7 @@
 
 ### TUI
 
-- Added α symbols in front of each entry for a "numerical accumulator" in the accumulator field of the tui (fr #47)
+- Added α symbols in front of each entry for a "numerical accumulator" in the accumulator field of the tui (fr #47) (by [@reeelix](https://github.com/reeelix))
 
 ### Command line arguments
 
