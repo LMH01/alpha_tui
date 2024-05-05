@@ -40,7 +40,7 @@ fn main() -> Result<()> {
         Command::Check(check_args) => commands::check::check(
             &cli.global_args,
             check_args,
-            &read_file(input_file.as_ref().unwrap())?,
+            read_file(input_file.as_ref().unwrap())?,
             &input_file.unwrap(),
         ),
         Command::Load(load_args) => commands::load::load(

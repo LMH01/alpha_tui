@@ -5,7 +5,7 @@ use crate::{
     cli::{GlobalArgs, InstructionLimitingArgs},
     instructions::{
         error_handling::{BuildProgramError, BuildProgramErrorTypes},
-        IndexMemoryCellIndexType, Instruction,
+        IndexMemoryCellIndexType, Instruction, TargetType, Value,
     },
     utils,
 };
@@ -24,10 +24,7 @@ pub struct RuntimeBuilder<'a> {
 }
 
 impl<'a> RuntimeBuilder<'a> {
-    pub fn new(
-        instructions_input: &'a Vec<String>,
-        instructions_input_file_name: &'a str,
-    ) -> Self {
+    pub fn new(instructions_input: &'a Vec<String>, instructions_input_file_name: &'a str) -> Self {
         Self {
             instructions_input,
             instructions_input_file_name,
@@ -79,7 +76,7 @@ impl<'a> RuntimeBuilder<'a> {
         // set/overwrite memory config values
         // set accumulator config
         if let Some(accumulators) = global_args.accumulators {
-            for value in 0..=accumulators-1 {
+            for value in 0..=accumulators - 1 {
                 memory_config
                     .accumulators
                     .values
@@ -146,7 +143,7 @@ impl<'a> RuntimeBuilder<'a> {
     }
 
     /// Builds a new runtime by consuming this `RuntimeBuilder`.
-    /// 
+    ///
     /// Prints status messages into stdout.
     pub fn build(self) -> miette::Result<Runtime> {
         // set runtime settings
@@ -445,3 +442,204 @@ pub fn check_gamma(
     }
     Ok(())
 }
+
+impl TargetType {
+    /// Checks if this type is missing in `runtime_args`.
+    ///
+    /// If `add_missing` is set, the type is added to runtime args instead of returning an error.
+    pub fn check(
+        &self,
+        runtime_args: &mut RuntimeMemory,
+        add_missing: bool,
+    ) -> Result<(), RuntimeBuildError> {
+        match self {
+            Self::Accumulator(index) => check_accumulator(runtime_args, *index, add_missing)?,
+            Self::MemoryCell(name) => check_memory_cell(runtime_args, name, add_missing)?,
+            Self::IndexMemoryCell(t) => check_index_memory_cell(runtime_args, t, add_missing)?,
+            Self::Gamma => check_gamma(runtime_args, add_missing)?,
+        }
+        Ok(())
+    }
+
+    /// Checks if this type is missing in `runtime_args`.
+    ///
+    /// If autodetection in memory_config is enabled, the type is added to runtime args instead of returning an error.
+    pub fn check_new(
+        &self,
+        runtime_args: &mut RuntimeMemory,
+        memory_config: &MemoryConfig,
+    ) -> Result<(), RuntimeBuildError> {
+        match self {
+            Self::Accumulator(index) => check_accumulator(
+                runtime_args,
+                *index,
+                memory_config.accumulators.autodetection.unwrap_or(true),
+            )?,
+            Self::MemoryCell(name) => check_memory_cell(
+                runtime_args,
+                name,
+                memory_config.memory_cells.autodetection.unwrap_or(true),
+            )?,
+            Self::IndexMemoryCell(t) => check_index_memory_cell(
+                runtime_args,
+                t,
+                memory_config
+                    .index_memory_cells
+                    .autodetection
+                    .unwrap_or(true),
+            )?,
+            Self::Gamma => check_gamma(
+                runtime_args,
+                memory_config
+                    .gamma_accumulator
+                    .autodetection
+                    .unwrap_or(true),
+            )?,
+        }
+        Ok(())
+    }
+}
+
+impl Value {
+    /// Checks if this type is missing in `runtime_args`.
+    ///
+    /// If autodetection in memory_config is enabled, the type is added to runtime args instead of returning an error.
+    pub fn check_new(
+        &self,
+        runtime_args: &mut RuntimeMemory,
+        memory_config: &MemoryConfig,
+    ) -> Result<(), RuntimeBuildError> {
+        match self {
+            Self::Accumulator(index) => check_accumulator(
+                runtime_args,
+                *index,
+                memory_config.accumulators.autodetection.unwrap_or(true),
+            )?,
+            Self::MemoryCell(name) => check_memory_cell(
+                runtime_args,
+                name,
+                memory_config.memory_cells.autodetection.unwrap_or(true),
+            )?,
+            Self::Constant(_) => (),
+            Self::IndexMemoryCell(t) => check_index_memory_cell(
+                runtime_args,
+                t,
+                memory_config
+                    .index_memory_cells
+                    .autodetection
+                    .unwrap_or(true),
+            )?,
+            Self::Gamma => check_gamma(
+                runtime_args,
+                memory_config
+                    .gamma_accumulator
+                    .autodetection
+                    .unwrap_or(true),
+            )?,
+        }
+        Ok(())
+    }
+}
+
+//#[cfg(test)]
+//mod tests {
+//    use crate::{
+//        instructions::IndexMemoryCellIndexType,
+//        runtime::{
+//            builder::{check_index_memory_cell, RuntimeBuilder},
+//            error_handling::RuntimeBuildError,
+//            RuntimeMemory,
+//        },
+//    };
+//
+//    /// Used to set the available memory cells during testing.
+//    const TEST_MEMORY_CELL_LABELS: &[&str] = &[
+//        "a", "b", "c", "d", "e", "f", "w", "x", "y", "z", "h1", "h2", "h3", "h4",
+//    ];
+//
+//    #[test]
+//    fn test_instruction_building_with_comments() {
+//        let instructions = vec![
+//            "a0 := 4 // Set alpha to 4",
+//            "p(h1) := a0 # Set memory cell h1 to 4",
+//            "a0 := a1 # Just some stuff",
+//            "a1 := a2 // Just some more stuff",
+//        ];
+//        let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
+//        assert!(rb.build_instructions(&instructions, "test").is_ok());
+//    }
+//
+//    #[test]
+//    fn test_instruction_building_with_semicolons() {
+//        let instructions = vec![
+//            "a0 := 4; // Set alpha to 4",
+//            "p(h1) := a0; # Set memory cell h1 to 4",
+//            "a0 := a1; # Just some stuff",
+//            "a1 := a2; // Just some more stuff",
+//        ];
+//        let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
+//        assert!(rb.build_instructions(&instructions, "test").is_ok());
+//    }
+//
+//    #[test]
+//    fn test_only_label_line() {
+//        let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
+//        assert!(rb
+//            .build_instructions(&vec!["a0 := 5", "my_label:", "a1 := 5"], "")
+//            .is_ok());
+//    }
+//
+//    #[test]
+//    fn test_accumulator_auto_add_working() {
+//        let instructions = vec!["a1 := a2 + a3"];
+//        let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
+//        assert!(rb.build_instructions(&instructions, "test").is_ok());
+//        let rt = rb.build();
+//        assert!(rt.is_ok());
+//        let rt = rt.unwrap();
+//        assert!(rt.memory.accumulators.contains_key(&1));
+//        assert!(rt.memory.accumulators.contains_key(&2));
+//        assert!(rt.memory.accumulators.contains_key(&3));
+//        assert!(!rt.memory.accumulators.contains_key(&4));
+//    }
+//
+//    #[test]
+//    fn test_check_index_memory_cell() {
+//        let mut args = RuntimeMemory::new_empty();
+//        assert_eq!(
+//            check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Accumulator(0), false),
+//            Err(RuntimeBuildError::AccumulatorMissing("0".to_string()))
+//        );
+//        assert_eq!(
+//            check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Gamma, false),
+//            Err(RuntimeBuildError::GammaDisabled)
+//        );
+//        assert_eq!(
+//            check_index_memory_cell(
+//                &mut args,
+//                &IndexMemoryCellIndexType::MemoryCell("h1".to_string()),
+//                false
+//            ),
+//            Err(RuntimeBuildError::MemoryCellMissing("h1".to_string()))
+//        );
+//        assert_eq!(
+//            check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Accumulator(0), true),
+//            Ok(())
+//        );
+//        assert_eq!(
+//            check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Gamma, true),
+//            Ok(())
+//        );
+//        assert_eq!(
+//            check_index_memory_cell(
+//                &mut args,
+//                &IndexMemoryCellIndexType::MemoryCell("h1".to_string()),
+//                true
+//            ),
+//            Ok(())
+//        );
+//        assert!(args.accumulators.contains_key(&0));
+//        assert!(args.gamma.is_some());
+//        assert!(args.memory_cells.contains_key("h1"));
+//    }
+//}

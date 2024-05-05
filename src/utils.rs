@@ -6,12 +6,9 @@ use std::{
 
 use miette::{miette, IntoDiagnostic, NamedSource, Result, SourceOffset, SourceSpan};
 
-use crate::{
-    instructions::{
-        error_handling::{BuildAllowedInstructionsError, InstructionParseError},
-        Identifier, Instruction,
-    },
-    runtime::builder::RuntimeBuilder,
+use crate::instructions::{
+    error_handling::{BuildAllowedInstructionsError, InstructionParseError},
+    Identifier, Instruction,
 };
 
 /// How many spaces should be between labels, instructions and comments when pretty formatting them
@@ -251,79 +248,79 @@ pub fn build_instruction_whitelist(path: &str) -> Result<HashSet<String>> {
     Ok(whitelisted_instructions)
 }
 
-/// Builds instructions by checking if all used instructions are allowed.
-///
-/// For that the read in file is first formatted to be a compilable program by using `prepare_whitelist_file()`
-#[allow(clippy::match_same_arms)]
-pub fn build_instructions_with_whitelist(
-    rb: &mut RuntimeBuilder,
-    instructions: &[String],
-    file: &str,
-    whitelist_file: &str,
-) -> Result<()> {
-    // Instruction whitelist is provided
-    let mut whitelisted_instructions_file_contents = match read_file(whitelist_file) {
-        Ok(i) => i,
-        Err(e) => {
-            return Err(miette!(
-                "Unable to read whitelisted instruction file [{}]: {}",
-                whitelist_file,
-                e
-            ))
-        }
-    };
-    whitelisted_instructions_file_contents =
-        prepare_whitelist_file(whitelisted_instructions_file_contents);
-    let mut whitelisted_instructions = HashSet::new();
-    for (idx, s) in whitelisted_instructions_file_contents.iter().enumerate() {
-        match Instruction::try_from(s.as_str()) {
-            Ok(i) => {
-                let _ = whitelisted_instructions.insert(i.identifier());
-            }
-            Err(e) => {
-                // Workaround for wrong end_range value depending on error.
-                // For the line to be printed when more then one character is affected for some reason the range needs to be increased by one.
-                let end_range = match e {
-                    InstructionParseError::InvalidExpression(_, _) => e.range().1 - e.range().0 + 1,
-                    InstructionParseError::UnknownInstruction(_, _) => {
-                        e.range().1 - e.range().0 + 1
-                    }
-                    InstructionParseError::NotANumber(_, _) => e.range().1 - e.range().0,
-                    InstructionParseError::UnknownComparison(_, _) => e.range().1 - e.range().0,
-                    InstructionParseError::UnknownOperation(_, _) => e.range().1 - e.range().0,
-                    InstructionParseError::MissingExpression { range: _, help: _ } => {
-                        e.range().1 - e.range().0
-                    }
-                };
-                let file_contents = whitelisted_instructions_file_contents.join("\n");
-                Err(BuildAllowedInstructionsError {
-                    src: NamedSource::new(
-                        whitelist_file,
-                        whitelisted_instructions_file_contents.clone().join("\n"),
-                    ),
-                    bad_bit: SourceSpan::new(
-                        SourceOffset::from_location(
-                            file_contents.clone(),
-                            idx + 1,
-                            e.range().0 + 1,
-                        ),
-                        end_range,
-                    ),
-                    reason: e,
-                })?;
-            }
-        }
-    }
-    rb.build_instructions_whitelist(
-        &instructions
-            .iter()
-            .map(String::as_str)
-            .collect::<Vec<&str>>(),
-        file,
-        &whitelisted_instructions,
-    )?;
-    Ok(())
-}
+///// Builds instructions by checking if all used instructions are allowed.
+/////
+///// For that the read in file is first formatted to be a compilable program by using `prepare_whitelist_file()`
+//#[allow(clippy::match_same_arms)]
+//pub fn build_instructions_with_whitelist(
+//    rb: &mut RuntimeBuilder,
+//    instructions: &[String],
+//    file: &str,
+//    whitelist_file: &str,
+//) -> Result<()> {
+//    // Instruction whitelist is provided
+//    let mut whitelisted_instructions_file_contents = match read_file(whitelist_file) {
+//        Ok(i) => i,
+//        Err(e) => {
+//            return Err(miette!(
+//                "Unable to read whitelisted instruction file [{}]: {}",
+//                whitelist_file,
+//                e
+//            ))
+//        }
+//    };
+//    whitelisted_instructions_file_contents =
+//        prepare_whitelist_file(whitelisted_instructions_file_contents);
+//    let mut whitelisted_instructions = HashSet::new();
+//    for (idx, s) in whitelisted_instructions_file_contents.iter().enumerate() {
+//        match Instruction::try_from(s.as_str()) {
+//            Ok(i) => {
+//                let _ = whitelisted_instructions.insert(i.identifier());
+//            }
+//            Err(e) => {
+//                // Workaround for wrong end_range value depending on error.
+//                // For the line to be printed when more then one character is affected for some reason the range needs to be increased by one.
+//                let end_range = match e {
+//                    InstructionParseError::InvalidExpression(_, _) => e.range().1 - e.range().0 + 1,
+//                    InstructionParseError::UnknownInstruction(_, _) => {
+//                        e.range().1 - e.range().0 + 1
+//                    }
+//                    InstructionParseError::NotANumber(_, _) => e.range().1 - e.range().0,
+//                    InstructionParseError::UnknownComparison(_, _) => e.range().1 - e.range().0,
+//                    InstructionParseError::UnknownOperation(_, _) => e.range().1 - e.range().0,
+//                    InstructionParseError::MissingExpression { range: _, help: _ } => {
+//                        e.range().1 - e.range().0
+//                    }
+//                };
+//                let file_contents = whitelisted_instructions_file_contents.join("\n");
+//                Err(BuildAllowedInstructionsError {
+//                    src: NamedSource::new(
+//                        whitelist_file,
+//                        whitelisted_instructions_file_contents.clone().join("\n"),
+//                    ),
+//                    bad_bit: SourceSpan::new(
+//                        SourceOffset::from_location(
+//                            file_contents.clone(),
+//                            idx + 1,
+//                            e.range().0 + 1,
+//                        ),
+//                        end_range,
+//                    ),
+//                    reason: e,
+//                })?;
+//            }
+//        }
+//    }
+//    rb.build_instructions_whitelist(
+//        &instructions
+//            .iter()
+//            .map(String::as_str)
+//            .collect::<Vec<&str>>(),
+//        file,
+//        &whitelisted_instructions,
+//    )?;
+//    Ok(())
+//}
 
 /// Prepares the whitelist file for parsing to instructions by replacing placeholders with correct alpha notation code.
 ///

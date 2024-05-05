@@ -4,7 +4,7 @@ use crate::{
     app::{commands::load_instruction_history, App},
     cli::{GlobalArgs, LoadArgs},
     runtime::builder_new,
-    utils::{build_instructions_with_whitelist, pretty_format_instructions, write_file},
+    utils::{pretty_format_instructions, write_file},
 };
 
 #[allow(clippy::match_wildcard_for_single_variants)]
