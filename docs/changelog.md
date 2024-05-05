@@ -2,7 +2,11 @@
 
 ## v1.3.1
 
-### Other
+### TUI
+
+- Added α symbols in front of each entry for a "numerical accumulator" in the accumulator field of the tui (fr #47)
+
+### Command line arguments
 
 - Renamed cli option `--allowed-instructions` to `--allowed-instructions-file` (fr #49) (by [@reeelix](https://github.com/reeelix))
 
@@ -12,7 +16,6 @@
 - `Press [ENTER] to close` missing from `unable to parse instruction` error, when screen width was below certain threshold
 - Fixed accumulator 0 not changing value to calculated value when stack op is calculated due to side effect in stack op operation (fr #44)
 - NOOP was treated as instruction that could be forbidden, so programs with empty lines could fail to build if `--allowed-instructions` (or now `--allowed-instructions-file`) was set (#52)
-- Added α symbols in front of each entry for a "numerical accumulator" in the accumulator field of the tui (fr #47)
 
 ## v1.3.0 (latest version)
 
