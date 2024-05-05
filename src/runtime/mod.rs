@@ -297,7 +297,7 @@ impl<'a> RuntimeArgs {
             Settings::new(
                 !ila.disable_memory_detection,
                 global_args.disable_instruction_limit,
-                !ila.disable_memory_detection
+                !ila.disable_memory_detection,
             ),
         ))
     }
@@ -406,17 +406,21 @@ pub struct Settings {
     /// If false, they will not be generated and a runtime error is thrown.
     pub enable_imc_auto_creation: bool,
     pub disable_instruction_limit: bool,
-    /// If true, accumulators and memory cells (except index memory cells) will be created on demand, 
+    /// If true, accumulators and memory cells (except index memory cells) will be created on demand,
     /// if a value should be assigned and the memory type does nto yet exist.
     pub memory_on_demand: bool,
 }
 
 impl Settings {
-    fn new(enable_imc_auto_creation: bool, disable_instruction_limit: bool, memory_on_demand: bool) -> Self {
+    fn new(
+        enable_imc_auto_creation: bool,
+        disable_instruction_limit: bool,
+        memory_on_demand: bool,
+    ) -> Self {
         Self {
             enable_imc_auto_creation,
             disable_instruction_limit,
-            memory_on_demand
+            memory_on_demand,
         }
     }
 
@@ -487,7 +491,7 @@ impl MemoryConfig {
             settings: Settings::new(
                 !ila.disable_memory_detection,
                 args.disable_instruction_limit,
-                !ila.disable_memory_detection
+                !ila.disable_memory_detection,
             ),
         }
     }

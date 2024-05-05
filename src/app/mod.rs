@@ -538,8 +538,9 @@ impl App {
             State::Playground(state) => self.custom_instruction_enter(state, true)?,
             State::CustomInstructionError(_, is_playground) => {
                 if *is_playground {
-                    self.state =
-                        State::Playground(SingleInstruction::new(&self.executed_custom_instructions))
+                    self.state = State::Playground(SingleInstruction::new(
+                        &self.executed_custom_instructions,
+                    ))
                 } else {
                     self.state = State::Running(self.instruction_list_states.breakpoints_set());
                 }
@@ -601,7 +602,8 @@ impl App {
             // if in playground mode, add instruction to main window
             self.instruction_list_states
                 .add_instruction(instruction_str);
-            self.state = State::Playground(SingleInstruction::new(&self.executed_custom_instructions));
+            self.state =
+                State::Playground(SingleInstruction::new(&self.executed_custom_instructions));
         } else {
             self.state = State::Running(self.instruction_list_states.breakpoints_set());
         }

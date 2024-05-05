@@ -23,7 +23,11 @@ pub fn playground(global_args: &GlobalArgs, playground_args: &PlaygroundArgs) ->
         true,
     ) {
         Ok(runtime_args) => runtime_args,
-        Err(e) => return Err(miette::miette!("Unable to build runtime for playground: {e}")),
+        Err(e) => {
+            return Err(miette::miette!(
+                "Unable to build runtime for playground: {e}"
+            ))
+        }
     };
 
     let rt = Runtime::new_playground(runtime_args);
