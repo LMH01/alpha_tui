@@ -417,14 +417,14 @@ mod tests {
             Instruction::try_from("xxx"),
             Err(InstructionParseError::MissingExpression {
                 range: (3, 3),
-                help: "You might be missing ':='".to_string()
+                help: "You might be missing ':=' or whitespaces before and after ':='".to_string()
             })
         );
         assert_eq!(
             Instruction::try_from("a0"),
             Err(InstructionParseError::MissingExpression {
                 range: (2, 2),
-                help: "You might be missing ':='".to_string()
+                help: "You might be missing ':=' or whitespaces before and after ':='".to_string()
             })
         );
         assert_eq!(
