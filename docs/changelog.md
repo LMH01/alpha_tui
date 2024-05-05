@@ -6,6 +6,10 @@
 
 - Renamed cli option `--allowed-instructions` to `--allowed-instructions-file` (fr #49) (by [@reeelix](https://github.com/reeelix))
 
+### Other
+
+- Error messages now hint towards missing blank spaces (fr #58)
+
 ### Bug fixes
 
 -  `%` was missing from help message when `runtime_error::unknown_operation` occurred
