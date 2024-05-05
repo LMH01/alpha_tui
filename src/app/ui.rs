@@ -330,6 +330,31 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         f.render_widget(Clear, area); //this clears out the background
         f.render_widget(text, area);
     }
+
+    // Draw error when custom instruction could not be build
+    if let State::BuildProgramError(_) = &app.state {
+        let block = Block::default()
+            .title("Error: instruction forbidden".to_string())
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(ERROR_COLOR));
+        let area = super::centered_rect(
+            60,
+            30,
+            if f.size().width <= 124 {
+                Some(7)
+            } else {
+                Some(6)
+            },
+            f.size(),
+        );
+        let text = paragraph_with_line_wrap(format!(
+            "The entered instruction is forbidden.\n\nPress [q] or [{}] to exit and to view further information regarding this error.\nPress [ENTER] to close.",
+            KeySymbol::Escape.to_string()
+        ), area.width)
+        .block(block);
+        f.render_widget(Clear, area); //this clears out the background
+        f.render_widget(text, area);
+    }
 }
 
 /// Creates a paragraph from the input text, where a new line is created when the space is to little

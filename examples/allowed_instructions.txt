@@ -1,3 +1,4 @@
+A := C
 A := M
 M := A
 A := A OP M
@@ -7,5 +8,4 @@ if A CMP C then goto
 call
 goto
 push
-pop
 stackOP

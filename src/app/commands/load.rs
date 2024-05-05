@@ -3,8 +3,8 @@ use miette::Result;
 use crate::{
     app::{commands::load_instruction_history, App},
     cli::{GlobalArgs, LoadArgs},
-    runtime::builder,
-    utils::{pretty_format_instructions, write_file},
+    runtime::builder::{self, InstructionConfig},
+    utils::{self, pretty_format_instructions, write_file},
 };
 
 #[allow(clippy::match_wildcard_for_single_variants)]
@@ -39,6 +39,25 @@ pub fn load(
         write_file(&instructions, &input)?;
     }
 
+    // check if allowed instructions are restricted
+    let allowed_instructions = match &load_args
+        .instruction_limiting_args
+        .allowed_instructions_file
+    {
+        Some(path) => Some(InstructionConfig {
+            allowed_instruction_identifiers: Some(utils::build_instruction_whitelist(path)?),
+            allowed_comparisons: load_args
+                .instruction_limiting_args
+                .allowed_comparisons
+                .clone(),
+            allowed_operations: load_args
+                .instruction_limiting_args
+                .allowed_operations
+                .clone(),
+        }),
+        None => None,
+    };
+
     // tui
     // setup terminal
     println!("Ready to run, launching tui");
@@ -51,6 +70,7 @@ pub fn load(
         &instructions,
         &load_args.breakpoints,
         instruction_history,
+        allowed_instructions,
         load_args.custom_instruction_history_file.clone(),
         false,
     );

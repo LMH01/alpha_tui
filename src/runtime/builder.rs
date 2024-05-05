@@ -232,7 +232,7 @@ impl RuntimeBuilder {
 
 /// Stores information that is used to limit what instructions should be allowed.
 #[derive(Default)]
-struct InstructionConfig {
+pub struct InstructionConfig {
     /// Stores the ids of instructions that are allowed.
     ///
     /// If the value is `None` all instructions are allowed.
@@ -332,7 +332,7 @@ pub fn remove_comment(instruction: &str) -> String {
 /// It is also checked if any comparisons or operations are used that are not allowed.
 /// If `instructions` contains instructions, comparisons or operations that are not included in `instruction_config`,
 /// an error is returned. If values are not set in `instruction_config` everything of that type is allowed.
-fn check_instructions(
+pub fn check_instructions(
     instructions: &[Instruction],
     instruction_config: &InstructionConfig,
 ) -> Result<(), Box<BuildProgramError>> {

@@ -182,7 +182,7 @@ impl KeybindingHints {
                     self.show("t");
                 }
             }
-            State::CustomInstructionError(_, _) => {
+            State::CustomInstructionError(_, _) | State::BuildProgramError(_) => {
                 self.hide("s");
                 self.hide("d");
                 self.hide("c");

@@ -11,8 +11,11 @@ use ratatui::{
 };
 
 use crate::{
-    instructions::{error_handling::ParseSingleInstructionError, Instruction},
-    runtime::{error_handling::RuntimeError, Runtime},
+    instructions::{
+        error_handling::{BuildProgramError, ParseSingleInstructionError},
+        Instruction,
+    },
+    runtime::{self, builder::InstructionConfig, error_handling::RuntimeError, Runtime},
     utils,
 };
 
@@ -62,6 +65,9 @@ pub enum State {
     ///
     /// Boolean value indicates if this error originates in the playground mode.
     CustomInstructionError(ParseSingleInstructionError, bool),
+    /// Indicates that the custom instruction could not be build, because instructions, operations or comparisons
+    /// where used that are not allowed.
+    BuildProgramError(BuildProgramError),
     // 0 = state to restore to when debug mode is exited
     // 1 = index of instruction that was selected before debug mode was started
     DebugSelect(Box<State>, Option<usize>),
@@ -92,8 +98,13 @@ pub struct App {
     command_history_file: Option<String>,
     /// Determines if the call stack should be displayed in the tui
     show_call_stack: bool,
+    /// Stores ids of instructions that are allowed and allowed comparisons/operations.
+    ///
+    /// Used to prevent forbidden instructions from getting executed in run custom instruction popup.
+    instruction_config: Option<InstructionConfig>,
 }
 
+#[allow(clippy::too_many_arguments)]
 #[allow(clippy::cast_possible_wrap)]
 #[allow(clippy::cast_possible_truncation)]
 impl App {
@@ -109,6 +120,7 @@ impl App {
         instructions: &[String], // The content of this array is purely cosmetical, it is just used to print the instructions inside the ui
         set_breakpoints: &Option<Vec<usize>>,
         custom_instructions: Option<Vec<String>>,
+        instruction_config: Option<InstructionConfig>,
         command_history_file: Option<String>,
         playground: bool,
     ) -> App {
@@ -134,6 +146,7 @@ impl App {
             executed_custom_instructions,
             command_history_file,
             show_call_stack,
+            instruction_config,
         }
     }
 
@@ -198,6 +211,7 @@ impl App {
                             KeyCode::Char('q') => match &self.state {
                                 State::RuntimeError(e, _) => Err(e.clone())?,
                                 State::CustomInstructionError(e, _) => Err(e.clone())?,
+                                State::BuildProgramError(e) => Err(e.clone())?,
                                 State::CustomInstruction(_) => (),
                                 _ => return Ok(()),
                             },
@@ -371,6 +385,7 @@ impl App {
             }
             State::RuntimeError(e, _) => return Err(e.clone())?,
             State::CustomInstructionError(e, _) => return Err(e.clone())?,
+            State::BuildProgramError(e) => return Err(e.clone())?,
             _ => return Ok(true),
         }
         Ok(false)
@@ -546,6 +561,9 @@ impl App {
                     self.state = State::Running(self.instruction_list_states.breakpoints_set());
                 }
             }
+            State::BuildProgramError(_) => {
+                self.state = State::Running(self.instruction_list_states.breakpoints_set());
+            }
             State::RuntimeError(_, true) => {
                 self.state =
                     State::Playground(SingleInstruction::new(&self.executed_custom_instructions));
@@ -582,6 +600,15 @@ impl App {
                 return Ok(());
             }
         };
+        // check if instruction is allowed
+        if let Some(ic) = &self.instruction_config {
+            if let Err(e) = runtime::builder::check_instructions(&[instruction.clone()], ic) {
+                // instruction could not be build, because instruction is forbidden
+                self.state = State::BuildProgramError(*e);
+                return Ok(());
+            }
+        }
+
         if let Err(e) = self.runtime.run_foreign_instruction(instruction) {
             self.state = State::RuntimeError(e, is_playground);
             return Ok(());

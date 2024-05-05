@@ -30,6 +30,7 @@ pub fn playground(global_args: &GlobalArgs, playground_args: &PlaygroundArgs) ->
         &Vec::new(),
         &None,
         instruction_history,
+        None,
         playground_args.custom_instruction_history_file.clone(),
         true,
     );

@@ -26,8 +26,9 @@
 -  `%` was missing from help message when `runtime_error::unknown_operation` occurred
 - `Press [ENTER] to close` missing from `unable to parse instruction` error, when screen width was below certain threshold
 - Fixed accumulator 0 not changing value to calculated value when stack op is calculated due to side effect in stack op operation (fr #44)
-- NOOP was treated as instruction that could be forbidden, so programs with empty lines could fail to build if `--allowed-instructions` (or now `--allowed-instructions-file`) was set (#52)
+- NOOP was treated as instruction that could be forbidden, so programs with empty lines could fail to build if `--allowed-instructions` (or now `--allowed-instructions-file`) was set (fr #52)
 - `check` subcommand would mark a test as successful even though labels where missing
+- Run custom instruction could be used in load mode to execute instructions, operations and comparisons that where forbidden (fr #63)
 
 ## v1.3.0 (latest version)
 
