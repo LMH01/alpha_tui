@@ -125,26 +125,37 @@ For example to only allow addition and subtraction you can use this option: `--a
 
 ## Memory config file
 
-The option `--memory-config-file` can be used to specify the path to a `JSON` formatted file that contains information about accumulators, the gamma accumulator, memory cells and index memory cells. It can be used to specify values that should be available when the program is started and it can be used to specify what memory types should be available. To enable a specific memory type, create a new entry in the corresponding map. If the value is `null` the memory type is created but no value is set (does not apply to the gamma accumulator). The gamma accumulator can be enabled by setting the `enabled` field to `true`. Its value can be set by using the `value` field, set it to `null` to enable the gamma accumulator but to not assign it any value.
+The option `--memory-config-file` can be used to specify the path to a `JSON` formatted file that contains information about accumulators, the gamma accumulator, memory cells and index memory cells. It can be used to specify values that should be available when the program is started, it can be used to specify what memory types should be available and is can be used to set what memory types should be auto-detectable, meaning that memory values are automatically created if they are missing. Disabling of automatic detection by `--disable-memory-detection` is overwritten when the `autodetection` field is set to true. To enable a specific memory type, create a new entry in the corresponding map. If the value is `null` the memory type is created but no value is set (does not apply to the gamma accumulator). The gamma accumulator can be enabled by setting the `enabled` field to `true`. Its value can be set by using the `value` field, set it to `null` to enable the gamma accumulator but to not assign it any value.
 An example file could look like this:
 
 ```json
 {
     "accumulators": {
-        "0": 10,
-        "1": null
+        "values": {
+            "0": 10,
+            "1": null,
+            "2": null
+        },
+        "autodetection": true
     },
     "gamma_accumulator": {
         "enabled": true,
-        "value": null
+        "value": 10,
+        "autodetection": true
     },
     "memory_cells": {
-        "h2": null,
-        "h1": 10
+        "values": {
+            "h2": null,
+            "h1": 10
+        },
+        "autodetection": true
     },
     "index_memory_cells": {
-        "1": null,
-        "0": 10
+        "values": {
+            "1": null,
+            "0": 10
+        },
+        "autodetection": false
     }
 }
 ```
