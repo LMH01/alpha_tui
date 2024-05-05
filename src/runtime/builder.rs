@@ -14,7 +14,7 @@ use crate::{
 
 use super::{
     error_handling::{AddLabelError, RuntimeBuildError},
-    ControlFlow, Runtime, RuntimeArgs,
+    ControlFlow, Runtime, RuntimeMemory,
 };
 
 /// Type that is used to build a new runtime environment.
@@ -24,7 +24,7 @@ use super::{
 #[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]
 pub struct RuntimeBuilder {
-    runtime_args: Option<RuntimeArgs>,
+    runtime_args: Option<RuntimeMemory>,
     instructions: Option<Vec<Instruction>>,
     control_flow: ControlFlow,
     add_missing: bool,
@@ -55,7 +55,7 @@ impl RuntimeBuilder {
         ila: &InstructionLimitingArgs,
     ) -> Result<Self, String> {
         Ok(Self {
-            runtime_args: Some(RuntimeArgs::from_args(global_args, ila)?),
+            runtime_args: Some(RuntimeMemory::from_args(global_args, ila)?),
             instructions: None,
             control_flow: ControlFlow::new(),
             add_missing: !ila.disable_memory_detection,
@@ -68,7 +68,7 @@ impl RuntimeBuilder {
     #[allow(dead_code)]
     pub fn new_debug(memory_cells: &[&'static str]) -> Self {
         Self {
-            runtime_args: Some(RuntimeArgs::new_debug(memory_cells)),
+            runtime_args: Some(RuntimeMemory::new_debug(memory_cells)),
             instructions: None,
             control_flow: ControlFlow::new(),
             add_missing: false,
@@ -109,12 +109,13 @@ impl RuntimeBuilder {
             self.control_flow.next_instruction_index = *i;
             self.control_flow.initial_instruction = *i;
         }
-        Ok(Runtime {
-            runtime_args: self.runtime_args.clone().unwrap(),
-            instructions: self.instructions.clone().unwrap(),
-            control_flow: self.control_flow.clone(),
-            instruction_runs: 0,
-        })
+        //Ok(Runtime {
+        //    memory: self.runtime_args.clone().unwrap(),
+        //    instructions: self.instructions.clone().unwrap(),
+        //    control_flow: self.control_flow.clone(),
+        //    instruction_runs: 0,
+        //})
+        todo!("Implement again")
     }
 
     /// Resets the current values to none.
@@ -126,7 +127,7 @@ impl RuntimeBuilder {
     }
 
     #[allow(dead_code)]
-    pub fn set_runtime_args(&mut self, runtime_args: RuntimeArgs) {
+    pub fn set_runtime_args(&mut self, runtime_args: RuntimeMemory) {
         self.runtime_args = Some(runtime_args);
     }
 
@@ -417,7 +418,7 @@ fn check_label(control_flow: &ControlFlow, label: &str) -> Result<(), String> {
 ///
 /// If `add_missing` is set, the accumulator is added with empty value instead of returning an error.
 pub fn check_accumulator(
-    runtime_args: &mut RuntimeArgs,
+    runtime_args: &mut RuntimeMemory,
     id: usize,
     add_missing: bool,
 ) -> Result<(), RuntimeBuildError> {
@@ -435,7 +436,7 @@ pub fn check_accumulator(
 ///
 /// If `add_missing` is set, the memory cell is added with empty value instead of returning an error.
 pub fn check_memory_cell(
-    runtime_args: &mut RuntimeArgs,
+    runtime_args: &mut RuntimeMemory,
     name: &str,
     add_missing: bool,
 ) -> Result<(), RuntimeBuildError> {
@@ -453,7 +454,7 @@ pub fn check_memory_cell(
 
 /// Checks if the accumulator or `memory_cell` exists that is used inside an `index_memory_cell`.
 pub fn check_index_memory_cell(
-    runtime_args: &mut RuntimeArgs,
+    runtime_args: &mut RuntimeMemory,
     t: &IndexMemoryCellIndexType,
     add_missing: bool,
 ) -> Result<(), RuntimeBuildError> {
@@ -473,7 +474,7 @@ pub fn check_index_memory_cell(
 ///
 /// If `add_missing` is set, gamma is enabled, instead of returning an error.
 pub fn check_gamma(
-    runtime_args: &mut RuntimeArgs,
+    runtime_args: &mut RuntimeMemory,
     add_missing: bool,
 ) -> Result<(), RuntimeBuildError> {
     if runtime_args.gamma.is_none() {
@@ -492,7 +493,7 @@ impl TargetType {
     /// If `add_missing` is set, the type is added to runtime args instead of returning an error.
     pub fn check(
         &self,
-        runtime_args: &mut RuntimeArgs,
+        runtime_args: &mut RuntimeMemory,
         add_missing: bool,
     ) -> Result<(), RuntimeBuildError> {
         match self {
@@ -511,7 +512,7 @@ impl Value {
     /// If `add_missing` is set, the type is added to runtime args instead of returning an error.
     pub fn check(
         &self,
-        runtime_args: &mut RuntimeArgs,
+        runtime_args: &mut RuntimeMemory,
         add_missing: bool,
     ) -> Result<(), RuntimeBuildError> {
         match self {
@@ -532,7 +533,7 @@ mod tests {
         runtime::{
             builder::{check_index_memory_cell, RuntimeBuilder},
             error_handling::RuntimeBuildError,
-            RuntimeArgs,
+            RuntimeMemory,
         },
     };
 
@@ -581,15 +582,15 @@ mod tests {
         let rt = rb.build();
         assert!(rt.is_ok());
         let rt = rt.unwrap();
-        assert!(rt.runtime_args.accumulators.contains_key(&1));
-        assert!(rt.runtime_args.accumulators.contains_key(&2));
-        assert!(rt.runtime_args.accumulators.contains_key(&3));
-        assert!(!rt.runtime_args.accumulators.contains_key(&4));
+        assert!(rt.memory.accumulators.contains_key(&1));
+        assert!(rt.memory.accumulators.contains_key(&2));
+        assert!(rt.memory.accumulators.contains_key(&3));
+        assert!(!rt.memory.accumulators.contains_key(&4));
     }
 
     #[test]
     fn test_check_index_memory_cell() {
-        let mut args = RuntimeArgs::new_empty();
+        let mut args = RuntimeMemory::new_empty();
         assert_eq!(
             check_index_memory_cell(&mut args, &IndexMemoryCellIndexType::Accumulator(0), false),
             Err(RuntimeBuildError::AccumulatorMissing("0".to_string()))

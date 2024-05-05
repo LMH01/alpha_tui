@@ -21,7 +21,7 @@ const MAX_INSTRUCTION_RUNS: usize = 1_000_000;
 
 #[derive(Debug, PartialEq)]
 pub struct Runtime {
-    runtime_args: RuntimeArgs,
+    memory: RuntimeMemory,
     instructions: Vec<Instruction>,
     control_flow: ControlFlow,
     /// Used to count how many instructions where executed.
@@ -29,17 +29,19 @@ pub struct Runtime {
     /// If the `MAX_INSTRUCTION_RUNS` instruction has been executed a runtime error is thrown to indicate
     /// that the runtime has reached its design limit. This is among other things to protect from misuse and infinite loops.
     instruction_runs: usize,
+    settings: RuntimeSettings,
 }
 
 impl Runtime {
     /// Creates a new runtime that should only be used for the playground mode.
-    pub fn new_playground(runtime_args: RuntimeArgs) -> Runtime {
-        Self {
-            runtime_args,
-            instructions: Vec::new(),
-            control_flow: ControlFlow::new(),
-            instruction_runs: 0,
-        }
+    pub fn new_playground(runtime_args: RuntimeMemory) -> Runtime {
+        todo!("Remove, because playground runtime should also only be build using the runtime builder")
+        //Self {
+        //    memory: runtime_args,
+        //    instructions: Vec::new(),
+        //    control_flow: ControlFlow::new(),
+        //    instruction_runs: 0,
+        //}
     }
 
     /// Runs the complete program.
@@ -58,7 +60,7 @@ impl Runtime {
         let current_instruction = self.control_flow.next_instruction_index;
         self.control_flow.next_instruction_index += 1;
         if let Some(i) = self.instructions.get(current_instruction) {
-            if let Err(e) = i.run(&mut self.runtime_args, &mut self.control_flow) {
+            if let Err(e) = i.run(&mut self.memory, &mut self.control_flow, &self.settings) {
                 return Err(RuntimeError {
                     reason: e,
                     line_number: current_instruction + 1,
@@ -84,8 +86,7 @@ impl Runtime {
                 line_number,
             });
         }
-        if !self.runtime_args.settings.disable_instruction_limit
-            && self.instruction_runs > MAX_INSTRUCTION_RUNS
+        if !self.settings.disable_instruction_limit && self.instruction_runs > MAX_INSTRUCTION_RUNS
         {
             return Err(RuntimeError {
                 reason: RuntimeErrorType::DesignLimitReached(MAX_INSTRUCTION_RUNS),
@@ -113,8 +114,8 @@ impl Runtime {
     }
 
     /// Returns reference to **`runtime_args`**.
-    pub fn runtime_args(&self) -> &RuntimeArgs {
-        &self.runtime_args
+    pub fn runtime_args(&self) -> &RuntimeMemory {
+        &self.memory
     }
 
     /// Returns a reference to **`control_flow`**.
@@ -125,7 +126,7 @@ impl Runtime {
     /// Resets the current runtime to defaults, resets instruction pointer.
     pub fn reset(&mut self) {
         self.control_flow.reset_soft();
-        self.runtime_args.reset();
+        self.memory.reset();
     }
 
     /// Returns the index of the instruction that is executed first
@@ -140,7 +141,7 @@ impl Runtime {
         &mut self,
         instruction: Instruction,
     ) -> Result<(), RuntimeError> {
-        if let Err(e) = instruction.run(&mut self.runtime_args, &mut self.control_flow) {
+        if let Err(e) = instruction.run(&mut self.memory, &mut self.control_flow, &self.settings) {
             return Err(RuntimeError {
                 reason: e,
                 line_number: self.control_flow.next_instruction_index,
@@ -221,9 +222,10 @@ impl ControlFlow {
     }
 }
 
+/// Used to store the values of the different memory spaces, while a program is run
 #[derive(Debug, Clone, PartialEq)]
 #[allow(clippy::module_name_repetitions, clippy::option_option)]
-pub struct RuntimeArgs {
+pub struct RuntimeMemory {
     /// Current values stored in accumulators
     pub accumulators: HashMap<usize, Accumulator>,
     /// The value of the gamma accumulator
@@ -238,10 +240,9 @@ pub struct RuntimeArgs {
     pub index_memory_cells: HashMap<usize, Option<i32>>,
     /// The stack of the runner
     pub stack: Vec<i32>,
-    pub settings: Settings,
 }
 
-impl<'a> RuntimeArgs {
+impl<'a> RuntimeMemory {
     /// Creates a new runtimes args struct with empty lists.
     ///
     /// Errors if option is set to parse memory cells from file and the parsing fails.
@@ -268,7 +269,7 @@ impl<'a> RuntimeArgs {
                     Ok(config) => config,
                     Err(e) => return Err(format!("json parse error: {e}")),
                 };
-            return Ok(config.into_runtime_args(global_args, ila));
+            return Ok(config.into_runtime_memory(global_args, ila));
         }
 
         let accumulators = global_args.accumulators.unwrap_or(accumulators_default);
@@ -294,7 +295,7 @@ impl<'a> RuntimeArgs {
             memory_cells,
             idx_memory_cells,
             enable_gamma,
-            Settings::new(
+            RuntimeSettings::new(
                 !ila.disable_memory_detection,
                 global_args.disable_instruction_limit,
                 !ila.disable_memory_detection,
@@ -308,7 +309,7 @@ impl<'a> RuntimeArgs {
             memory_cells.iter().map(|f| (*f).to_string()).collect(),
             None,
             true,
-            Settings::new_default(),
+            RuntimeSettings::default(),
         )
     }
 
@@ -320,7 +321,6 @@ impl<'a> RuntimeArgs {
             memory_cells: HashMap::new(),
             index_memory_cells: HashMap::new(),
             stack: Vec::new(),
-            settings: Settings::new_default(),
         }
     }
 
@@ -329,7 +329,7 @@ impl<'a> RuntimeArgs {
         m_cells: Vec<String>,
         idx_m_cells: Option<Vec<usize>>,
         enable_gamma: bool,
-        settings: Settings,
+        settings: RuntimeSettings,
     ) -> Self {
         let mut accumulators = HashMap::new();
         for i in 0..acc {
@@ -352,7 +352,6 @@ impl<'a> RuntimeArgs {
             memory_cells,
             index_memory_cells,
             stack: Vec::new(),
-            settings,
         }
     }
 
@@ -400,7 +399,7 @@ impl<'a> RuntimeArgs {
 
 #[derive(Debug, Clone, PartialEq)]
 /// Settings that may be required during runtime
-pub struct Settings {
+pub struct RuntimeSettings {
     /// If true, index memory cells are generated when they are receiving a value and if the don't already exist.
     ///
     /// If false, they will not be generated and a runtime error is thrown.
@@ -411,7 +410,7 @@ pub struct Settings {
     pub memory_on_demand: bool,
 }
 
-impl Settings {
+impl RuntimeSettings {
     fn new(
         enable_imc_auto_creation: bool,
         disable_instruction_limit: bool,
@@ -423,8 +422,10 @@ impl Settings {
             memory_on_demand,
         }
     }
+}
 
-    fn new_default() -> Self {
+impl Default for RuntimeSettings {
+    fn default() -> Self {
         Self {
             enable_imc_auto_creation: true,
             disable_instruction_limit: false,
@@ -433,6 +434,10 @@ impl Settings {
     }
 }
 
+/// Contains configuration values on how the memory layout should be configured, meaning what memory locations should be
+/// available and pre initialized.
+///
+/// Can be used in the runtime builder to configure the memory values that should be available in the build runtime.
 #[derive(PartialEq, Debug, Deserialize, Serialize)]
 struct MemoryConfig {
     pub accumulators: HashMap<usize, Option<i32>>,
@@ -448,8 +453,12 @@ struct MemoryConfigGammaAccumulator {
 }
 
 impl MemoryConfig {
-    /// Creates runtime args from this memory config.
-    fn into_runtime_args(self, args: &GlobalArgs, ila: &InstructionLimitingArgs) -> RuntimeArgs {
+    /// Creates runtime memory from this memory config.
+    fn into_runtime_memory(
+        self,
+        args: &GlobalArgs,
+        ila: &InstructionLimitingArgs,
+    ) -> RuntimeMemory {
         let mut accumulators = HashMap::new();
         for (idx, value) in self.accumulators {
             accumulators.insert(
@@ -482,18 +491,19 @@ impl MemoryConfig {
         for (idx, value) in self.index_memory_cells {
             index_memory_cells.insert(idx, value);
         }
-        RuntimeArgs {
-            accumulators,
-            gamma,
-            memory_cells,
-            index_memory_cells,
-            stack: Vec::new(),
-            settings: Settings::new(
-                !ila.disable_memory_detection,
-                args.disable_instruction_limit,
-                !ila.disable_memory_detection,
-            ),
-        }
+        //RuntimeMemory {
+        //    accumulators,
+        //    gamma,
+        //    memory_cells,
+        //    index_memory_cells,
+        //    stack: Vec::new(),
+        //    settings: RuntimeSettings::new(
+        //        !ila.disable_memory_detection,
+        //        args.disable_instruction_limit,
+        //        !ila.disable_memory_detection,
+        //    ),
+        //}
+        todo!("Move function into runtime builder subfunction, that should be named something like 'apply_memory_config' or 'from_memory_config'")
     }
 }
 
@@ -505,7 +515,7 @@ mod tests {
         runtime::{builder::RuntimeBuilder, error_handling::RuntimeBuildError},
     };
 
-    use super::RuntimeArgs;
+    use super::RuntimeMemory;
 
     /// Used to set the available memory cells during testing.
     const TEST_MEMORY_CELL_LABELS: &[&str] = &[
@@ -543,7 +553,7 @@ mod tests {
         assert!(rb.build().is_ok());
         rb.reset();
         rb.set_instructions(instructions);
-        rb.set_runtime_args(RuntimeArgs::new_debug(TEST_MEMORY_CELL_LABELS));
+        rb.set_runtime_args(RuntimeMemory::new_debug(TEST_MEMORY_CELL_LABELS));
         assert_eq!(
             rb.build(),
             Err(RuntimeBuildError::LabelUndefined(label.to_string()))
@@ -572,7 +582,7 @@ mod tests {
         rb.set_instructions(vec![instruction]);
         _ = rb.add_label("loop".to_string(), 0);
         // Test if ok works
-        let mut runtime_args = RuntimeArgs::new_empty();
+        let mut runtime_args = RuntimeMemory::new_empty();
         runtime_args.add_storage_cell("h1");
         runtime_args.add_storage_cell("h2");
         for _ in &to_test {
@@ -583,7 +593,7 @@ mod tests {
         assert!(build.is_ok());
         // Test if missing accumulators are detected
         for (_, s) in to_test.iter().enumerate() {
-            let mut runtime_args = RuntimeArgs::new_empty();
+            let mut runtime_args = RuntimeMemory::new_empty();
             runtime_args.add_storage_cell("h1");
             runtime_args.add_storage_cell("h2");
             for _ in 0..(to_test.len() - *s - 1) {
@@ -625,7 +635,7 @@ mod tests {
         rb.set_instructions(vec![instruction]);
         _ = rb.add_label("loop".to_string(), 0);
         // Test if ok works
-        let mut runtime_args = RuntimeArgs::new_empty();
+        let mut runtime_args = RuntimeMemory::new_empty();
         runtime_args.add_accumulator();
         for s in &to_test {
             runtime_args.add_storage_cell(s);
@@ -636,7 +646,7 @@ mod tests {
         assert!(build.is_ok());
         // Test if missing memory cells are detected
         for (i1, s) in to_test.iter().enumerate() {
-            let mut runtime_args = RuntimeArgs::new_empty();
+            let mut runtime_args = RuntimeMemory::new_empty();
             runtime_args.add_accumulator();
             for (i2, s2) in to_test.iter().enumerate() {
                 if i1 == i2 {

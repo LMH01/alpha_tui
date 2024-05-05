@@ -39,7 +39,7 @@ pub enum RuntimeBuildError {
     )]
     AccumulatorMissing(String),
 
-    #[error("Gamma accumulator is used in the program but is disabled")]
+    #[error("Gamma accumulator is used in the progrmm but is disabled")]
     #[diagnostic(
         code("runtime_build_error::gamma_disabled"),
         help("You can't use the gamma accumulator when it is disabled, to enable it you can either enable automatic memory detection\nby removing the \"--disable-memory-detection\" flag or you can explicitly enable it by using the \"--enable-gamma-accumulator\" flag.")
@@ -73,7 +73,7 @@ pub enum RuntimeErrorType {
     #[error("Attempt to use accumulator with index '{0}' while it does not exist")]
     #[diagnostic(
         code("runtime_error::accumulator_does_not_exist"),
-        help("Make sure to tell the program to use enough accumulators by using the '-a' flag")
+        help("Make sure to tell the progrmm to use enough accumulators by using the '-a' flag")
     )]
     AccumulatorDoesNotExist(usize),
 
@@ -87,7 +87,7 @@ pub enum RuntimeErrorType {
     #[error("Attempt to use accumulator gamma while it does not exist")]
     #[diagnostic(
         code("runtime_error::gamma_does_not_exist"),
-        help("Make sure to tell the program to use the gamma accumulator by using the TODO flag")
+        help("Make sure to tell the progrmm to use the gamma accumulator by using the TODO flag")
     )]
     GammaDoesNotExist,
 
@@ -101,7 +101,7 @@ pub enum RuntimeErrorType {
     #[error("Attempt to use value of memory cell named '{0}' that does not exist")]
     #[diagnostic(
         code("runtime_error::memory_cell_uninitialized"),
-        help("Make sure to tell the program to use this memory cell by using the '-m' flag")
+        help("Make sure to tell the progrmm to use this memory cell by using the '-m' flag")
     )]
     MemoryCellDoesNotExist(String),
 
@@ -119,7 +119,7 @@ pub enum RuntimeErrorType {
     )]
     #[diagnostic(
         code("runtime_error::index_memory_cell_does_not_exist"),
-        help("Make sure to tell the program to use this memory cell by using the '--index-memory-cells' flag.\nExample: --index-memory-cells {0}")
+        help("Make sure to tell the progrmm to use this memory cell by using the '--index-memory-cells' flag.\nExample: --index-memory-cells {0}")
     )]
     IndexMemoryCellDoesNotExist(usize),
 
@@ -144,10 +144,10 @@ pub enum RuntimeErrorType {
     )]
     PopFail,
 
-    #[error("Attempt to perform operation '{0}' on stack while stack does not contain two values")]
+    #[error("Attempt to perform Operation '{0}' on stack while stack does not contain two values")]
     #[diagnostic(
         code("runtime_error::stack_op_fail"),
-        help("Make sure to only use a stack operation (stack{0}) when you know that the stack contains at least two values")
+        help("Make sure to only use a stack Operation (stack{0}) when you know that the stack contains at least two values")
     )]
     StackOpFail(Operation),
 
@@ -181,7 +181,7 @@ pub enum RuntimeErrorType {
     #[error("Design limit reached")]
     #[diagnostic(
         code("runtime_error::design_limit_reached"),
-        help("You have run over {0} instructions, this tool is not build for that.\nIf you know exactly what you are doing and would like to circumvent this limit use the '--disable-instruction-limit' option\nWarning: This can cause the program to freeze!")
+        help("You have run over {0} instructions, this tool is not build for that.\nIf you know exactly what you are doing and would like to circumvent this limit use the '--disable-instruction-limit' option\nWarning: This can cause the progrmm to freeze!")
     )]
     DesignLimitReached(usize),
 }
@@ -198,7 +198,7 @@ pub enum CalcError {
     #[error("Attempt to {0} with overflow")]
     #[diagnostic(
         code("calc_error::attempt_to_overflow"),
-        help("{1} would have resulted in an overflow leading to a wrong value.\nMake sure the integer never leaves the following range: [{},{}]", i32::MIN, i32::MAX)
+        help("{1} would have resulted in an overflow leading to a wrong value.\nMake sure the integer never leaves the following rmnge: [{},{}]", i32::MIN, i32::MAX)
     )]
     AttemptToOverflow(String, String),
 }
@@ -211,7 +211,7 @@ mod tests {
         runtime::{
             builder::RuntimeBuilder,
             error_handling::{CalcError, RuntimeBuildError, RuntimeErrorType},
-            ControlFlow, RuntimeArgs, Settings, MAX_INSTRUCTION_RUNS,
+            ControlFlow, RuntimeMemory, RuntimeSettings, MAX_INSTRUCTION_RUNS,
         },
     };
 
@@ -225,7 +225,7 @@ mod tests {
     #[test]
     fn test_rbe_instructions_missing_error() {
         let mut rt = RuntimeBuilder::new();
-        rt.set_runtime_args(RuntimeArgs::new_debug(&[""]));
+        rt.set_runtime_args(RuntimeMemory::new_debug(&[""]));
         assert_eq!(rt.build(), Err(RuntimeBuildError::InstructionsMissing));
     }
 
@@ -255,7 +255,7 @@ mod tests {
     #[test]
     fn test_rbe_accumulator_missing() {
         let mut rt = RuntimeBuilder::new_debug(&[]);
-        rt.set_runtime_args(RuntimeArgs::new_empty());
+        rt.set_runtime_args(RuntimeMemory::new_empty());
         rt.set_instructions(vec![Instruction::Assign(
             TargetType::Accumulator(0),
             Value::Constant(10),
@@ -269,9 +269,9 @@ mod tests {
     #[test]
     fn test_rbe_gamma_disabled() {
         let mut rt = RuntimeBuilder::new_debug(&[]);
-        let mut ra = RuntimeArgs::new_debug(&["h1"]);
-        ra.gamma = None;
-        rt.set_runtime_args(ra);
+        let mut rm = RuntimeMemory::new_debug(&["h1"]);
+        rm.gamma = None;
+        rt.set_runtime_args(rm);
         rt.set_instructions(vec![Instruction::Assign(
             TargetType::Gamma,
             Value::Constant(10),
@@ -281,195 +281,207 @@ mod tests {
 
     #[test]
     fn test_re_accumulator_uninitialized() {
-        let mut ra = RuntimeArgs::new(
+        let mut rm = RuntimeMemory::new(
             1,
             vec!["h1".to_string()],
             None,
             true,
-            Settings::new_default(),
+            RuntimeSettings::default(),
         );
         let mut cf = ControlFlow::new();
+        let rs = RuntimeSettings::default();
         assert_eq!(
             Instruction::Assign(
                 TargetType::MemoryCell("h1".to_string()),
                 Value::Accumulator(0)
             )
-            .run(&mut ra, &mut cf),
+            .run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::AccumulatorUninitialized(0))
         );
     }
 
     #[test]
     fn test_re_accumulator_does_not_exist() {
-        let mut ra = RuntimeArgs::new(
+        let mut rm = RuntimeMemory::new(
             0,
             vec!["h1".to_string()],
             None,
             true,
-            Settings::new_default(),
+            RuntimeSettings::default(),
         );
         let mut cf = ControlFlow::new();
+        let rs = RuntimeSettings::default();
         assert_eq!(
             Instruction::Assign(
                 TargetType::MemoryCell("h1".to_string()),
                 Value::Accumulator(0)
             )
-            .run(&mut ra, &mut cf),
+            .run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::AccumulatorDoesNotExist(0))
         );
     }
 
     #[test]
     fn test_re_gamma_uninitialized() {
-        let mut ra = RuntimeArgs::new_debug(&["h1"]);
-        ra.gamma = Some(None);
+        let mut rm = RuntimeMemory::new_debug(&["h1"]);
+        rm.gamma = Some(None);
         let mut cf = ControlFlow::new();
+        let rs = RuntimeSettings::default();
         assert_eq!(
             Instruction::Assign(TargetType::MemoryCell("h1".to_string()), Value::Gamma)
-                .run(&mut ra, &mut cf),
+                .run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::GammaUninitialized)
         )
     }
 
     #[test]
     fn test_re_gamma_does_not_exist() {
-        let mut ra = RuntimeArgs::new_debug(&["h1"]);
-        ra.gamma = None;
+        let mut rm = RuntimeMemory::new_debug(&["h1"]);
+        rm.gamma = None;
         let mut cf = ControlFlow::new();
+        let rs = RuntimeSettings::default();
         assert_eq!(
             Instruction::Assign(TargetType::MemoryCell("h1".to_string()), Value::Gamma)
-                .run(&mut ra, &mut cf),
+                .run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::GammaDoesNotExist)
         )
     }
 
     #[test]
     fn test_re_memory_cell_uninitialized() {
-        let mut ra = RuntimeArgs::new(
+        let mut rm = RuntimeMemory::new(
             1,
             vec!["a".to_string()],
             None,
             true,
-            Settings::new_default(),
+            RuntimeSettings::default(),
         );
         let mut cf = ControlFlow::new();
+        let rs = RuntimeSettings::default();
         assert_eq!(
             Instruction::Assign(
                 TargetType::Accumulator(0),
                 Value::MemoryCell("a".to_string())
             )
-            .run(&mut ra, &mut cf),
+            .run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::MemoryCellUninitialized("a".to_string()))
         );
     }
 
     #[test]
     fn test_re_memory_cell_does_not_exist() {
-        let mut ra = RuntimeArgs::new(1, vec![], None, true, Settings::new_default());
+        let mut rm = RuntimeMemory::new(1, vec![], None, true, RuntimeSettings::default());
         let mut cf = ControlFlow::new();
+        let rs = RuntimeSettings::default();
         assert_eq!(
             Instruction::Assign(
                 TargetType::Accumulator(0),
                 Value::MemoryCell("a".to_string())
             )
-            .run(&mut ra, &mut cf),
+            .run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::MemoryCellDoesNotExist("a".to_string()))
         );
     }
 
     #[test]
     fn test_re_imc_uninitialized() {
-        let mut ra = RuntimeArgs::new_debug(&["h1"]);
+        let mut rm = RuntimeMemory::new_debug(&["h1"]);
         let mut cf = ControlFlow::new();
-        ra.index_memory_cells.insert(0, None);
+        rm.index_memory_cells.insert(0, None);
+        let rs = RuntimeSettings::default();
         assert_eq!(
             Instruction::Assign(
                 TargetType::MemoryCell("h1".to_string()),
                 Value::IndexMemoryCell(IndexMemoryCellIndexType::Direct(0))
             )
-            .run(&mut ra, &mut cf),
+            .run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::IndexMemoryCellUninitialized(0))
         )
     }
 
     #[test]
     fn test_re_imc_does_not_exist() {
-        let mut ra = RuntimeArgs::new_debug(&["h1"]);
+        let mut rm = RuntimeMemory::new_debug(&["h1"]);
         let mut cf = ControlFlow::new();
+        let rs = RuntimeSettings::default();
         assert_eq!(
             Instruction::Assign(
                 TargetType::MemoryCell("h1".to_string()),
                 Value::IndexMemoryCell(IndexMemoryCellIndexType::Direct(0))
             )
-            .run(&mut ra, &mut cf),
+            .run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::IndexMemoryCellDoesNotExist(0))
         )
     }
 
     #[test]
     fn test_re_imc_negative_index() {
-        let mut ra = RuntimeArgs::new_debug(&["h1"]);
+        let mut rm = RuntimeMemory::new_debug(&["h1"]);
         let mut cf = ControlFlow::new();
-        ra.memory_cells
+        let rs = RuntimeSettings::default();
+        rm.memory_cells
             .insert("h1".to_string(), MemoryCell::new("h1"));
-        ra.memory_cells.get_mut("h1").unwrap().data = Some(-1);
+        rm.memory_cells.get_mut("h1").unwrap().data = Some(-1);
         assert_eq!(
             Instruction::Assign(
                 TargetType::MemoryCell("h1".to_string()),
                 Value::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string()))
             )
-            .run(&mut ra, &mut cf),
+            .run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::IndexMemoryCellNegativeIndex(-1))
         )
     }
 
     #[test]
     fn test_re_push_fail() {
-        let mut ra = RuntimeArgs::new(1, vec![], None, true, Settings::new_default());
+        let mut rm = RuntimeMemory::new(1, vec![], None, true, RuntimeSettings::default());
         let mut cf = ControlFlow::new();
+        let rs = RuntimeSettings::default();
         assert_eq!(
-            Instruction::Push.run(&mut ra, &mut cf),
+            Instruction::Push.run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::PushFail)
         );
     }
 
     #[test]
     fn test_re_pop_fail() {
-        let mut ra = RuntimeArgs::new(
+        let mut rm = RuntimeMemory::new(
             1,
             vec!["a".to_string()],
             None,
             true,
-            Settings::new_default(),
+            RuntimeSettings::default(),
         );
         let mut cf = ControlFlow::new();
+        let rs = RuntimeSettings::default();
         assert_eq!(
-            Instruction::Pop.run(&mut ra, &mut cf),
+            Instruction::Pop.run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::PopFail)
         );
     }
 
     #[test]
     fn test_re_stack_op_fail() {
-        let mut ra = RuntimeArgs::new_debug(&["h1"]);
+        let mut rm = RuntimeMemory::new_debug(&["h1"]);
         let mut cf = ControlFlow::new();
+        let rs = RuntimeSettings::default();
         assert_eq!(
-            Instruction::StackOp(Operation::Add).run(&mut ra, &mut cf),
+            Instruction::StackOp(Operation::Add).run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::StackOpFail(Operation::Add))
         )
     }
 
     #[test]
     fn test_re_stack_overflow() {
-        let ra = RuntimeArgs::new(
+        let rm = RuntimeMemory::new(
             1,
             vec!["a".to_string()],
             None,
             true,
-            Settings::new_default(),
+            RuntimeSettings::default(),
         );
         let mut rb = RuntimeBuilder::new();
-        rb.set_runtime_args(ra);
+        rb.set_runtime_args(rm);
         let instructions = vec!["loop: call loop"];
         rb.build_instructions(&instructions, "test").unwrap();
         let mut rt = rb.build().unwrap();
@@ -481,26 +493,28 @@ mod tests {
 
     #[test]
     fn test_re_label_missing() {
-        let mut ra = RuntimeArgs::new(
+        let mut rm = RuntimeMemory::new(
             1,
             vec!["a".to_string()],
             None,
             true,
-            Settings::new_default(),
+            RuntimeSettings::default(),
         );
         let mut cf = ControlFlow::new();
+        let rs = RuntimeSettings::default();
         assert_eq!(
-            Instruction::Goto("loop".to_string()).run(&mut ra, &mut cf),
+            Instruction::Goto("loop".to_string()).run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::LabelMissing("loop".to_string()))
         );
     }
 
     #[test]
     fn test_re_ce_attempt_to_divide_by_zero() {
-        let mut ra = RuntimeArgs::new(2, vec![], None, true, Settings::new_default());
-        ra.accumulators.get_mut(&0).unwrap().data = Some(0);
-        ra.accumulators.get_mut(&1).unwrap().data = Some(0);
+        let mut rm = RuntimeMemory::new(2, vec![], None, true, RuntimeSettings::default());
+        rm.accumulators.get_mut(&0).unwrap().data = Some(0);
+        rm.accumulators.get_mut(&1).unwrap().data = Some(0);
         let mut cf = ControlFlow::new();
+        let rs = RuntimeSettings::default();
         assert_eq!(
             Instruction::Calc(
                 TargetType::Accumulator(0),
@@ -508,7 +522,7 @@ mod tests {
                 Operation::Div,
                 Value::Accumulator(1)
             )
-            .run(&mut ra, &mut cf),
+            .run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::IllegalCalculation {
                 cause: CalcError::AttemptToDivideByZero()
             })
@@ -517,10 +531,11 @@ mod tests {
 
     #[test]
     fn test_re_ce_attempt_to_overflow_add() {
-        let mut ra = RuntimeArgs::new(2, vec![], None, true, Settings::new_default());
-        ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MAX);
-        ra.accumulators.get_mut(&1).unwrap().data = Some(1);
+        let mut rm = RuntimeMemory::new(2, vec![], None, true, RuntimeSettings::default());
+        rm.accumulators.get_mut(&0).unwrap().data = Some(i32::MAX);
+        rm.accumulators.get_mut(&1).unwrap().data = Some(1);
         let mut cf = ControlFlow::new();
+        let rs = RuntimeSettings::default();
         assert_eq!(
             Instruction::Calc(
                 TargetType::Accumulator(0),
@@ -528,7 +543,7 @@ mod tests {
                 Operation::Add,
                 Value::Accumulator(1)
             )
-            .run(&mut ra, &mut cf),
+            .run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::IllegalCalculation {
                 cause: CalcError::AttemptToOverflow("add".to_string(), "Addition".to_string())
             })
@@ -537,10 +552,11 @@ mod tests {
 
     #[test]
     fn test_re_ce_attempt_to_overflow_sub() {
-        let mut ra = RuntimeArgs::new(2, vec![], None, true, Settings::new_default());
-        ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MIN);
-        ra.accumulators.get_mut(&1).unwrap().data = Some(1);
+        let mut rm = RuntimeMemory::new(2, vec![], None, true, RuntimeSettings::default());
+        rm.accumulators.get_mut(&0).unwrap().data = Some(i32::MIN);
+        rm.accumulators.get_mut(&1).unwrap().data = Some(1);
         let mut cf = ControlFlow::new();
+        let rs = RuntimeSettings::default();
         assert_eq!(
             Instruction::Calc(
                 TargetType::Accumulator(0),
@@ -548,11 +564,11 @@ mod tests {
                 Operation::Sub,
                 Value::Accumulator(1)
             )
-            .run(&mut ra, &mut cf),
+            .run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::IllegalCalculation {
                 cause: CalcError::AttemptToOverflow(
-                    "subtract".to_string(),
-                    "Subtraction".to_string()
+                    "subtrmct".to_string(),
+                    "Subtrmction".to_string()
                 )
             })
         );
@@ -560,10 +576,11 @@ mod tests {
 
     #[test]
     fn test_re_ce_attempt_to_overflow_div() {
-        let mut ra = RuntimeArgs::new(2, vec![], None, true, Settings::new_default());
-        ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MIN);
-        ra.accumulators.get_mut(&1).unwrap().data = Some(-1);
+        let mut rm = RuntimeMemory::new(2, vec![], None, true, RuntimeSettings::default());
+        rm.accumulators.get_mut(&0).unwrap().data = Some(i32::MIN);
+        rm.accumulators.get_mut(&1).unwrap().data = Some(-1);
         let mut cf = ControlFlow::new();
+        let rs = RuntimeSettings::default();
         assert_eq!(
             Instruction::Calc(
                 TargetType::Accumulator(0),
@@ -571,7 +588,7 @@ mod tests {
                 Operation::Div,
                 Value::Accumulator(1)
             )
-            .run(&mut ra, &mut cf),
+            .run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::IllegalCalculation {
                 cause: CalcError::AttemptToOverflow("divide".to_string(), "Division".to_string())
             })
@@ -580,10 +597,11 @@ mod tests {
 
     #[test]
     fn test_re_ce_attempt_to_overflow_mul() {
-        let mut ra = RuntimeArgs::new(2, vec![], None, true, Settings::new_default());
-        ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MAX);
-        ra.accumulators.get_mut(&1).unwrap().data = Some(2);
+        let mut rm = RuntimeMemory::new(2, vec![], None, true, RuntimeSettings::default());
+        rm.accumulators.get_mut(&0).unwrap().data = Some(i32::MAX);
+        rm.accumulators.get_mut(&1).unwrap().data = Some(2);
         let mut cf = ControlFlow::new();
+        let rs = RuntimeSettings::default();
         assert_eq!(
             Instruction::Calc(
                 TargetType::Accumulator(0),
@@ -591,7 +609,7 @@ mod tests {
                 Operation::Mul,
                 Value::Accumulator(1)
             )
-            .run(&mut ra, &mut cf),
+            .run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::IllegalCalculation {
                 cause: CalcError::AttemptToOverflow(
                     "multiply".to_string(),
@@ -603,10 +621,11 @@ mod tests {
 
     #[test]
     fn test_re_ce_attempt_to_overflow_mod() {
-        let mut ra = RuntimeArgs::new(2, vec![], None, true, Settings::new_default());
-        ra.accumulators.get_mut(&0).unwrap().data = Some(i32::MIN);
-        ra.accumulators.get_mut(&1).unwrap().data = Some(-1);
+        let mut rm = RuntimeMemory::new(2, vec![], None, true, RuntimeSettings::default());
+        rm.accumulators.get_mut(&0).unwrap().data = Some(i32::MIN);
+        rm.accumulators.get_mut(&1).unwrap().data = Some(-1);
         let mut cf = ControlFlow::new();
+        let rs = RuntimeSettings::default();
         assert_eq!(
             Instruction::Calc(
                 TargetType::Accumulator(0),
@@ -614,7 +633,7 @@ mod tests {
                 Operation::Mod,
                 Value::Accumulator(1)
             )
-            .run(&mut ra, &mut cf),
+            .run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::IllegalCalculation {
                 cause: CalcError::AttemptToOverflow("mod".to_string(), "Modulo".to_string())
             })
@@ -623,10 +642,11 @@ mod tests {
 
     #[test]
     fn test_re_ce_attempt_to_divide_by_zero_mod() {
-        let mut ra = RuntimeArgs::new(2, vec![], None, true, Settings::new_default());
-        ra.accumulators.get_mut(&0).unwrap().data = Some(10);
-        ra.accumulators.get_mut(&1).unwrap().data = Some(0);
+        let mut rm = RuntimeMemory::new(2, vec![], None, true, RuntimeSettings::default());
+        rm.accumulators.get_mut(&0).unwrap().data = Some(10);
+        rm.accumulators.get_mut(&1).unwrap().data = Some(0);
         let mut cf = ControlFlow::new();
+        let rs = RuntimeSettings::default();
         assert_eq!(
             Instruction::Calc(
                 TargetType::Accumulator(0),
@@ -634,7 +654,7 @@ mod tests {
                 Operation::Mod,
                 Value::Accumulator(1)
             )
-            .run(&mut ra, &mut cf),
+            .run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::IllegalCalculation {
                 cause: CalcError::AttemptToDivideByZero()
             })
@@ -643,15 +663,15 @@ mod tests {
 
     #[test]
     fn test_re_design_limit_reached() {
-        let ra = RuntimeArgs::new(
+        let rm = RuntimeMemory::new(
             1,
             vec!["a".to_string()],
             None,
             true,
-            Settings::new_default(),
+            RuntimeSettings::default(),
         );
         let mut rb = RuntimeBuilder::new();
-        rb.set_runtime_args(ra);
+        rb.set_runtime_args(rm);
         let instructions = vec!["loop: goto loop"];
         rb.build_instructions(&instructions, "test").unwrap();
         let mut rt = rb.build().unwrap();

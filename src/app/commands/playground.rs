@@ -3,7 +3,7 @@ use miette::Result;
 use crate::{
     app::App,
     cli::{GlobalArgs, InstructionLimitingArgs, PlaygroundArgs},
-    runtime::{Runtime, RuntimeArgs},
+    runtime::{Runtime, RuntimeMemory},
 };
 
 use super::load_instruction_history;
@@ -15,7 +15,7 @@ pub fn playground(global_args: &GlobalArgs, playground_args: &PlaygroundArgs) ->
 
     println!("Building runtime");
 
-    let runtime_args = match RuntimeArgs::from_args_with_defaults(
+    let runtime_args = match RuntimeMemory::from_args_with_defaults(
         global_args,
         &InstructionLimitingArgs::default(),
         4,

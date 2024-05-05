@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{ListItem, ListState},
 };
 
-use crate::runtime::{Runtime, RuntimeArgs};
+use crate::runtime::{Runtime, RuntimeMemory};
 
 use super::LIST_ITEM_HIGHLIGHT_COLOR;
 
@@ -216,7 +216,7 @@ pub struct MemoryListsManager {
 
 impl MemoryListsManager {
     /// Creates a new `MemoryListsManager` with the current values of the runtime arguments.
-    pub fn new(runtime_args: &RuntimeArgs) -> Self {
+    pub fn new(runtime_args: &RuntimeMemory) -> Self {
         let mut accumulators = HashMap::new();
         for acc in &runtime_args.accumulators {
             accumulators.insert(*acc.0, (format!("{}", acc.1), false));
