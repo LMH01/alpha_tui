@@ -366,6 +366,22 @@ pub fn prepare_whitelist_file(content: Vec<String>) -> Vec<String> {
 }
 
 #[cfg(test)]
+pub mod test_utils {
+    use crate::runtime::{builder_new::RuntimeBuilder, Runtime};
+
+    /// Creates a string vector from a &str.
+    pub fn string_literal_to_vec(input: &str) -> Vec<String> {
+        input.split('\n').map(|f| f.to_string()).collect()
+    }
+
+    /// Constructs a runtime using the input string.
+    pub fn runtime_from_str(input: &str) -> miette::Result<Runtime> {
+        RuntimeBuilder::new(&string_literal_to_vec(input), "test")
+            .build()
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use crate::utils::{get_comment, prepare_whitelist_file, remove_comment};
 

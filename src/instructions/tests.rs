@@ -8,10 +8,10 @@ use crate::{
         COMPARISON_IDENTIFIER, CONSTANT_IDENTIFIER, GAMMA_IDENTIFIER, MEMORY_CELL_IDENTIFIER,
         OPERATOR_IDENTIFIER,
     },
-    runtime::{
-        self, builder_new::RuntimeBuilder, error_handling::RuntimeErrorType, ControlFlow,
+    runtime::{error_handling::RuntimeErrorType, ControlFlow,
         RuntimeMemory, RuntimeSettings,
     },
+    utils::test_utils,
 };
 
 /// Used to set the available memory cells during testing.
@@ -954,235 +954,70 @@ fn test_alternative_assignment_parsing() {
 
 #[test]
 fn test_example_program_memory_cells() {
-    let mut runtime_memory = RuntimeMemory::new_debug(TEST_MEMORY_CELL_LABELS);
-    for _i in 1..=4 {
-        runtime_memory.add_accumulator();
-    }
-    runtime_memory.add_storage_cell("a");
-    runtime_memory.add_storage_cell("b");
-    runtime_memory.add_storage_cell("c");
-    runtime_memory.add_storage_cell("d");
-    runtime_memory.add_storage_cell("w");
-    runtime_memory.add_storage_cell("x");
-    runtime_memory.add_storage_cell("y");
-    runtime_memory.add_storage_cell("z");
-    runtime_memory.add_storage_cell("h1");
-    runtime_memory.add_storage_cell("h2");
-    runtime_memory.add_storage_cell("h3");
-    runtime_memory.add_storage_cell("h4");
-    let instructions = vec![
-        Instruction::Assign(TargetType::MemoryCell("a".to_string()), Value::Constant(5)),
-        Instruction::Assign(TargetType::MemoryCell("b".to_string()), Value::Constant(2)),
-        Instruction::Assign(TargetType::MemoryCell("c".to_string()), Value::Constant(3)),
-        Instruction::Assign(TargetType::MemoryCell("d".to_string()), Value::Constant(9)),
-        Instruction::Assign(TargetType::MemoryCell("w".to_string()), Value::Constant(4)),
-        Instruction::Assign(TargetType::MemoryCell("x".to_string()), Value::Constant(8)),
-        Instruction::Assign(TargetType::MemoryCell("y".to_string()), Value::Constant(3)),
-        Instruction::Assign(TargetType::MemoryCell("z".to_string()), Value::Constant(2)),
-        Instruction::Calc(
-            TargetType::MemoryCell("h1".to_string()),
-            Value::MemoryCell("a".to_string()),
-            Operation::Mul,
-            Value::MemoryCell("w".to_string()),
-        ),
-        Instruction::Calc(
-            TargetType::MemoryCell("h2".to_string()),
-            Value::MemoryCell("b".to_string()),
-            Operation::Mul,
-            Value::MemoryCell("y".to_string()),
-        ),
-        Instruction::Calc(
-            TargetType::MemoryCell("h3".to_string()),
-            Value::MemoryCell("a".to_string()),
-            Operation::Mul,
-            Value::MemoryCell("x".to_string()),
-        ),
-        Instruction::Calc(
-            TargetType::MemoryCell("h4".to_string()),
-            Value::MemoryCell("b".to_string()),
-            Operation::Mul,
-            Value::MemoryCell("z".to_string()),
-        ),
-        Instruction::Calc(
-            TargetType::MemoryCell("a".to_string()),
-            Value::MemoryCell("h1".to_string()),
-            Operation::Add,
-            Value::MemoryCell("h2".to_string()),
-        ),
-        Instruction::Calc(
-            TargetType::MemoryCell("b".to_string()),
-            Value::MemoryCell("h3".to_string()),
-            Operation::Add,
-            Value::MemoryCell("h4".to_string()),
-        ),
-        Instruction::Calc(
-            TargetType::MemoryCell("h1".to_string()),
-            Value::MemoryCell("c".to_string()),
-            Operation::Mul,
-            Value::MemoryCell("w".to_string()),
-        ),
-        Instruction::Calc(
-            TargetType::MemoryCell("h2".to_string()),
-            Value::MemoryCell("d".to_string()),
-            Operation::Mul,
-            Value::MemoryCell("y".to_string()),
-        ),
-        Instruction::Calc(
-            TargetType::MemoryCell("h3".to_string()),
-            Value::MemoryCell("c".to_string()),
-            Operation::Mul,
-            Value::MemoryCell("x".to_string()),
-        ),
-        Instruction::Calc(
-            TargetType::MemoryCell("h4".to_string()),
-            Value::MemoryCell("d".to_string()),
-            Operation::Mul,
-            Value::MemoryCell("z".to_string()),
-        ),
-        Instruction::Calc(
-            TargetType::MemoryCell("c".to_string()),
-            Value::MemoryCell("h1".to_string()),
-            Operation::Add,
-            Value::MemoryCell("h2".to_string()),
-        ),
-        Instruction::Calc(
-            TargetType::MemoryCell("d".to_string()),
-            Value::MemoryCell("h3".to_string()),
-            Operation::Add,
-            Value::MemoryCell("h4".to_string()),
-        ),
-    ];
-    //let mut runtime_builder = RuntimeBuilder::new();
-    //runtime_builder.set_instructions(instructions);
-    //runtime_builder.set_runtime_memory(runtime_memory);
-    //let mut runtime = runtime_builder.build().expect("Unable to build runtime!");
-    //runtime.run().unwrap();
-    //assert_eq!(
-    //    runtime
-    //        .runtime_memory()
-    //        .memory_cells
-    //        .get("a")
-    //        .unwrap()
-    //        .data
-    //        .unwrap(),
-    //    26
-    //);
-    //assert_eq!(
-    //    runtime
-    //        .runtime_memory()
-    //        .memory_cells
-    //        .get("b")
-    //        .unwrap()
-    //        .data
-    //        .unwrap(),
-    //    44
-    //);
-    //assert_eq!(
-    //    runtime
-    //        .runtime_memory()
-    //        .memory_cells
-    //        .get("c")
-    //        .unwrap()
-    //        .data
-    //        .unwrap(),
-    //    39
-    //);
-    //assert_eq!(
-    //    runtime
-    //        .runtime_memory()
-    //        .memory_cells
-    //        .get("d")
-    //        .unwrap()
-    //        .data
-    //        .unwrap(),
-    //    42
-    //);
-    todo!("Implement test again")
-}
-
-#[test]
-fn test_example_program_memory_cells_text_parsing() {
-    let mut runtime_memory = RuntimeMemory::new_debug(TEST_MEMORY_CELL_LABELS);
-    for _i in 1..=4 {
-        runtime_memory.add_accumulator();
-    }
-    runtime_memory.add_storage_cell("aa");
-    runtime_memory.add_storage_cell("b");
-    runtime_memory.add_storage_cell("c");
-    runtime_memory.add_storage_cell("d");
-    runtime_memory.add_storage_cell("w");
-    runtime_memory.add_storage_cell("x");
-    runtime_memory.add_storage_cell("yy");
-    runtime_memory.add_storage_cell("z");
-    runtime_memory.add_storage_cell("h1");
-    runtime_memory.add_storage_cell("h2");
-    runtime_memory.add_storage_cell("h3");
-    runtime_memory.add_storage_cell("h4");
-    let mut instructions = Vec::new();
-    instructions.push("p(aa) := 5\n");
-    instructions.push("p(b) := 2\n");
-    instructions.push("p(c) := 3\n");
-    instructions.push("p(d) := 9\n");
-    instructions.push("p(w) := 4\n");
-    instructions.push("p(x) := 8\n");
-    instructions.push("p(yy) := 3\n");
-    instructions.push("p(z) := 2\n");
-    instructions.push("p(h1) := p(aa) * p(w)\n");
-    instructions.push("p(h2) := p(b) * p(yy)\n");
-    instructions.push("p(h3) := p(aa) * p(x)\n");
-    instructions.push("p(h4) := p(b) * p(z)\n");
-    instructions.push("p(aa) := p(h1) + p(h2)\n");
-    instructions.push("p(b) := p(h3) + p(h4)\n");
-    instructions.push("p(h1) := p(c) * p(w)\n");
-    instructions.push("p(h2) := p(d) * p(yy)\n");
-    instructions.push("p(h3) := p(c) * p(x)\n");
-    instructions.push("p(h4) := p(d) * p(z)\n");
-    instructions.push("p(c) := p(h1) + p(h2)\n");
-    instructions.push("p(d) := p(h3) + p(h4)\n");
-    //let mut rb = RuntimeBuilder::new();
-    //rb.set_runtime_memory(runtime_memory);
-    //assert!(rb.build_instructions(&instructions, "test").is_ok());
-    //let rt = rb.build();
-    //assert!(rt.is_ok());
-    //let mut rt = rt.unwrap();
-    //assert!(rt.run().is_ok());
-    //assert_eq!(
-    //    rt.runtime_memory()
-    //        .memory_cells
-    //        .get("aa")
-    //        .unwrap()
-    //        .data
-    //        .unwrap(),
-    //    26
-    //);
-    //assert_eq!(
-    //    rt.runtime_memory()
-    //        .memory_cells
-    //        .get("b")
-    //        .unwrap()
-    //        .data
-    //        .unwrap(),
-    //    44
-    //);
-    //assert_eq!(
-    //    rt.runtime_memory()
-    //        .memory_cells
-    //        .get("c")
-    //        .unwrap()
-    //        .data
-    //        .unwrap(),
-    //    39
-    //);
-    //assert_eq!(
-    //    rt.runtime_memory()
-    //        .memory_cells
-    //        .get("d")
-    //        .unwrap()
-    //        .data
-    //        .unwrap(),
-    //    42
-    //);
-    todo!("Implement test again")
+    let instructions = r#"
+p(a) := 5
+p(b) := 2
+p(c) := 3
+p(d) := 9
+p(w) := 4
+p(x) := 8
+p(yy) := 3
+p(z) := 2
+p(h1) := p(a) * p(w)
+p(h2) := p(b) * p(yy)
+p(h3) := p(a) * p(x)
+p(h4) := p(b) * p(z)
+p(a) := p(h1) + p(h2)
+p(b) := p(h3) + p(h4)
+p(h1) := p(c) * p(w)
+p(h2) := p(d) * p(yy)
+p(h3) := p(c) * p(x)
+p(h4) := p(d) * p(z)
+p(c) := p(h1) + p(h2)
+p(d) := p(h3) + p(h4)
+    "#;
+    let mut runtime = test_utils::runtime_from_str(&instructions).unwrap();
+    runtime.run().unwrap();
+    assert_eq!(
+        runtime
+            .runtime_memory()
+            .memory_cells
+            .get("a")
+            .unwrap()
+            .data
+            .unwrap(),
+        26
+    );
+    assert_eq!(
+        runtime
+            .runtime_memory()
+            .memory_cells
+            .get("b")
+            .unwrap()
+            .data
+            .unwrap(),
+        44
+    );
+    assert_eq!(
+        runtime
+            .runtime_memory()
+            .memory_cells
+            .get("c")
+            .unwrap()
+            .data
+            .unwrap(),
+        39
+    );
+    assert_eq!(
+        runtime
+            .runtime_memory()
+            .memory_cells
+            .get("d")
+            .unwrap()
+            .data
+            .unwrap(),
+        42
+    );
 }
 
 //#[test]

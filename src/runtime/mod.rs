@@ -119,7 +119,7 @@ impl Runtime {
     }
 
     /// Returns reference to **`runtime_args`**.
-    pub fn runtime_args(&self) -> &RuntimeMemory {
+    pub fn runtime_memory(&self) -> &RuntimeMemory {
         &self.memory
     }
 

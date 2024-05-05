@@ -112,7 +112,7 @@ impl App {
         command_history_file: Option<String>,
         playground: bool,
     ) -> App {
-        let mlm = MemoryListsManager::new(runtime.runtime_args());
+        let mlm = MemoryListsManager::new(runtime.runtime_memory());
         let show_call_stack = runtime.contains_call_instruction();
         let executed_custom_instructions = custom_instructions.unwrap_or_default();
         let state = if playground {
