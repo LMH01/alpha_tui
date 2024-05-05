@@ -10,14 +10,13 @@ use crate::{
 };
 
 use self::{
-    builder_new::RuntimeBuilder,
+    builder::RuntimeBuilder,
     error_handling::{RuntimeError, RuntimeErrorType},
     memory_config::MemoryConfig,
 };
 
 /// Structs related to building a runtime
 pub mod builder;
-pub mod builder_new;
 pub mod error_handling;
 pub mod memory_config;
 
@@ -492,7 +491,7 @@ mod tests {
         runtime::error_handling::RuntimeBuildError,
     };
 
-    use super::{builder_new::RuntimeBuilder, RuntimeMemory};
+    use super::{builder::RuntimeBuilder, RuntimeMemory};
 
     /// Used to set the available memory cells during testing.
     const TEST_MEMORY_CELL_LABELS: &[&str] = &[

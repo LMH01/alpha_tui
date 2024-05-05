@@ -4,7 +4,7 @@ use miette::miette;
 
 use crate::{
     cli::{CheckArgs, GlobalArgs},
-    runtime::builder_new::RuntimeBuilder,
+    runtime::builder::RuntimeBuilder,
 };
 
 pub fn check(

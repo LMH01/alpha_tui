@@ -3,7 +3,7 @@ use miette::Result;
 use crate::{
     app::{commands::load_instruction_history, App},
     cli::{GlobalArgs, LoadArgs},
-    runtime::builder_new,
+    runtime::builder,
     utils::{pretty_format_instructions, write_file},
 };
 
@@ -19,7 +19,7 @@ pub fn load(
 
     // create runtime builder and apply cli args
     println!("Building instructions");
-    let mut rb = builder_new::RuntimeBuilder::new(&instructions, &input)?;
+    let mut rb = builder::RuntimeBuilder::new(&instructions, &input)?;
     rb.apply_global_cli_args(global_args)?
         .apply_instruction_limiting_args(&load_args.instruction_limiting_args)?;
     // build runtime

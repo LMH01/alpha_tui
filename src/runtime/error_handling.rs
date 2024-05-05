@@ -196,7 +196,7 @@ mod tests {
         base::{MemoryCell, Operation},
         instructions::{IndexMemoryCellIndexType, Instruction, TargetType, Value},
         runtime::{
-            builder_new::RuntimeBuilder,
+            builder::RuntimeBuilder,
             error_handling::{CalcError, RuntimeBuildError, RuntimeErrorType},
             ControlFlow, RuntimeMemory, RuntimeSettings, MAX_INSTRUCTION_RUNS,
         },

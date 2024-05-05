@@ -3,7 +3,7 @@ use miette::Result;
 use crate::{
     app::App,
     cli::{GlobalArgs, PlaygroundArgs},
-    runtime::builder_new::RuntimeBuilder,
+    runtime::builder::RuntimeBuilder,
 };
 
 use super::load_instruction_history;

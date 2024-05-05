@@ -369,7 +369,7 @@ pub fn prepare_whitelist_file(content: Vec<String>) -> Vec<String> {
 pub mod test_utils {
     use crate::{
         cli::GlobalArgs,
-        runtime::{builder_new::RuntimeBuilder, Runtime},
+        runtime::{builder::RuntimeBuilder, Runtime},
     };
 
     /// Creates a string vector from a &str.
