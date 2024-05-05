@@ -9,6 +9,8 @@
 ### Command line arguments
 
 - Renamed cli option `--allowed-instructions` to `--allowed-instructions-file` (fr #49) (by [@reeelix](https://github.com/reeelix))
+- Improved order of command line options in `.\alpha_tui load --help` (fr #54) (by [@reeelix](https://github.com/reeelix))
+- Added short forms `-i` for `--index-memory-cells` and `-g` for `--enable-gamma-accumulator` (fr #56) (by [@reeelix](https://github.com/reeelix))
 
 ### Bug fixes
 

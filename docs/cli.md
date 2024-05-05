@@ -6,10 +6,11 @@ For an explanation of the available commands see [interface and usage](interface
 
 ## General options
 
-Accumulators and memory cells are automatically created when the input program is read.
-To circumvent that you can set the option `--disable-memory-detection`. You then need to specify the accumulators and memory_cells that should be created. The options `-a` and `-m` or `--memory-config-file` can be used to specify those values. Note that it is not required to set these values but if a memory type is used that does not exist, the runtime will fail to build.
+Numbered accumulators, the gamma accumulator, memory cells and index memory cells are automatically created when the input program is read.
+To circumvent that you can set the option `--disable-memory-detection`. You then need to specify the accumulators, memory_cells and index_memory_cells that should be created. The options `-a`, `-m` and `-i`, or `--memory-config-file` can be used to specify those values. The gamma accumulator has to be enabled using `-g true`.
+Note that it is not required to set these values but if a memory type is used that does not exist, the runtime will fail to build, or the custom instruction will cause an error.
 
-If you require accumulators, the gamma accumulator or memory cells to be pre initialized you can use the option `--memory-config-file` to read in a file that contains information about this data. This file is formatted in json. To enable a specific memory type, create a new entry in the corresponding map. If the value is `null` the memory type is created but no value is set (does not apply to the gamma accumulator). The gamma accumulator can be enabled by setting the `enabled` field to `true`. Its value can be set by using the `value` field, set it to `null` to enable the gamma accumulator but to not assign it any value. An example for such file can be found [here](../examples/memory_config.json).
+If you require accumulators, the gamma accumulator, memory cells or index memory cells to be pre initialized you can use the option `--memory-config-file` to read in a file that contains information about this data. An example for such file can be found [here](../examples/memory_config.json). See [below](cli.md#memory-config-file) for more information on this option.
 
 ### Allowed instructions
 
@@ -77,7 +78,7 @@ if a == p(h) then goto label
 ```
 to be used in the program.
 
-**It is important to understand that only the type of instruction is limited by this option, to specifically limit what memory locations or what comparisons/operations are available you can use the options `-a`, `-m` or `--memory-config-file` and `--allowed-comparisons` and `--allowed-operations` . This means that even though you might write `p(h1)` in the allowed instructions file, all available memory cells are allowed in this position, not just `p(h1)`!**
+**It is important to understand that only the type of instruction is limited by this option, to specifically limit what memory locations or what comparisons/operations are available you can use the options `-a`, `-g`, `-m` and `-i` or `--memory-config-file`, and `--allowed-comparisons` and `--allowed-operations` . This means that even though you might write `p(h1)` in the allowed instructions file, all available memory cells are allowed in this position, not just `p(h1)`!**
 
 An example file can be found here: [examples/allowed_instructions.txt](../examples/allowed_instructions.txt);
 
@@ -124,7 +125,8 @@ For example to only allow addition and subtraction you can use this option: `--a
 
 ## Memory config file
 
-The option `--memory-config-file` can be used to specify the path to a `JSON` formatted file that contains information about accumulators, memory cells, index memory cells and the gamma accumulator. It can be used to specify values that should be available when the program is started and it can be used to specify what memory types should be available. To mark a type as available but not set any value yet, add its name to the file under the correct data type and set the value to `null`. An example file could look like this:
+The option `--memory-config-file` can be used to specify the path to a `JSON` formatted file that contains information about accumulators, the gamma accumulator, memory cells and index memory cells. It can be used to specify values that should be available when the program is started and it can be used to specify what memory types should be available. To enable a specific memory type, create a new entry in the corresponding map. If the value is `null` the memory type is created but no value is set (does not apply to the gamma accumulator). The gamma accumulator can be enabled by setting the `enabled` field to `true`. Its value can be set by using the `value` field, set it to `null` to enable the gamma accumulator but to not assign it any value.
+An example file could look like this:
 
 ```json
 {
@@ -165,12 +167,14 @@ If you would like to limit what instructions, comparisons/operations and memory 
 
 ```
 alpha_tui load program.alpha
-    --disable-memory-detection      // Disable automatic memory detection
-    --accumulators 2                // Enable two accumulators (a0 and a1)
-    --memory-cells "h1,h2"          // Enable memory cells h1 and h2
-    --allowed-comparisons "eq,neq"  // Allow equal and not equal comparisons
-    --allowed-operations "add,sub"  // Allow addition and subtraction operations
-    --allowed-instructions-file     // Allow some specific instructions
+    --disable-memory-detection         // Disable automatic memory detection
+    --accumulators 2                   // Enable two accumulators (a0 and a1)
+    --enable-gamma-accumulator true    // Enable the gamma accumulator
+    --memory-cells "h1,h2"             // Enable memory cells h1 and h2
+    --index-memory-cells "1,2"         // Enable index memory cells 1 and 2
+    --allowed-comparisons "eq,neq"     // Allow equal and not equal comparisons
+    --allowed-operations "add,sub"     // Allow addition and subtraction operations
+    --allowed-instructions-file <path> // Allow some specific instructions
 ```
 (The different options have been written each in a new line for better understanding, in the correct command you would write them in one line.)
 
