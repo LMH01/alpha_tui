@@ -1,28 +1,36 @@
 use std::collections::HashSet;
 
 use crate::{
-    base::{Comparison, Operation},
+    base::{Accumulator, Comparison, MemoryCell, Operation},
     cli::{GlobalArgs, InstructionLimitingArgs},
-    instructions::Instruction,
+    instructions::{
+        error_handling::{BuildProgramError, BuildProgramErrorTypes},
+        IndexMemoryCellIndexType, Instruction,
+    },
     utils,
 };
 
 use super::{
-    error_handling::RuntimeBuildError, memory_config::MemoryConfig, ControlFlow, RuntimeMemory,
-    RuntimeSettings,
+    error_handling::RuntimeBuildError, memory_config::MemoryConfig, ControlFlow, Runtime,
+    RuntimeMemory, RuntimeSettings,
 };
 
 pub struct RuntimeBuilder<'a> {
     instructions_input: &'a Vec<&'a str>,
+    instructions_input_file_name: &'a str,
     memory_config: Option<MemoryConfig>,
     runtime_settings: Option<RuntimeSettings>,
     instruction_config: InstructionConfig,
 }
 
 impl<'a> RuntimeBuilder<'a> {
-    pub fn new(instructions_input: &'a Vec<&'a str>) -> Self {
+    pub fn new(
+        instructions_input: &'a Vec<&'a str>,
+        instructions_input_file_name: &'a str,
+    ) -> Self {
         Self {
             instructions_input,
+            instructions_input_file_name,
             memory_config: None,
             runtime_settings: None,
             instruction_config: InstructionConfig::default(),
@@ -122,6 +130,63 @@ impl<'a> RuntimeBuilder<'a> {
         }
         Ok(self)
     }
+
+    /// Builds a new runtime by consuming this `RuntimeBuilder`.
+    pub fn build(self) -> miette::Result<Runtime> {
+        // set runtime settings
+        let settings = self.runtime_settings.unwrap_or(RuntimeSettings::default());
+
+        // build memory
+        let mut memory = match self.memory_config.as_ref() {
+            Some(memory_config) => RuntimeMemory::from(memory_config.to_owned()),
+            None => RuntimeMemory::default(),
+        };
+
+        // set control flow
+        let mut control_flow = ControlFlow::new();
+
+        // build instructions (also updated control flow with detected labels)
+        let instructions = build_instructions(
+            &self.instructions_input,
+            &self.instructions_input_file_name,
+            &mut control_flow,
+        )?;
+
+        // inject end labels to give option to end program using goto END
+        inject_end_labels(&mut control_flow, instructions.len());
+
+        if let Err(e) = check_labels(&control_flow, &instructions) {
+            return Err(miette::miette!(RuntimeBuildError::LabelUndefined(e)));
+        }
+
+        // Check if all used accumulators and memory_cells exist
+        check_missing_vars(
+            &self
+                .memory_config
+                .as_ref()
+                .unwrap_or(&MemoryConfig::default()),
+            &instructions,
+            &mut memory,
+        )?;
+
+        // check if main label is set and update instruction pointer if found
+        if let Some(i) = control_flow.instruction_labels.get("main") {
+            control_flow.next_instruction_index = *i;
+            control_flow.initial_instruction = *i;
+        }
+        if let Some(i) = control_flow.instruction_labels.get("MAIN") {
+            control_flow.next_instruction_index = *i;
+            control_flow.initial_instruction = *i;
+        }
+
+        Ok(Runtime {
+            memory,
+            instructions,
+            control_flow,
+            instruction_runs: 0,
+            settings,
+        })
+    }
 }
 
 /// Stores information that is used to limit what instructions should be allowed.
@@ -135,4 +200,229 @@ struct InstructionConfig {
     pub allowed_comparisons: Option<Vec<Comparison>>,
     /// Stores operations that are allowed, if value is `None`, all operations are allowed.
     pub allowed_operations: Option<Vec<Operation>>,
+}
+
+/// Builds the provided instructions.
+///
+/// Updates the provided control flow with labels.
+fn build_instructions(
+    instructions_input: &[&str],
+    file_name: &str,
+    control_flow: &mut ControlFlow,
+) -> Result<Vec<Instruction>, BuildProgramError> {
+    let mut instructions = Vec::new();
+    for (index, instruction) in instructions_input.iter().enumerate() {
+        // Remove comments
+        let instruction = remove_comment(instruction);
+        // Check for labels
+        let mut splits = instruction.split_whitespace().collect::<Vec<&str>>();
+        if splits.is_empty() {
+            // Line is empty / line contains comment, add dummy instruction
+            instructions.push(Instruction::Noop);
+            continue;
+        }
+        if splits[0].ends_with(':') {
+            let label = splits.remove(0).replace(':', "");
+            if control_flow
+                .instruction_labels
+                .insert(label.clone(), index)
+                .is_some()
+            {
+                // main label defined multiple times
+                if label == "main" || label == "MAIN" {
+                    Err(BuildProgramError {
+                        reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes,
+                    })?;
+                }
+                // label defined multiple times
+                Err(BuildProgramError {
+                    reason: BuildProgramErrorTypes::LabelDefinedMultipleTimes(label),
+                })?;
+            }
+            if splits.is_empty() {
+                // line contains only label
+                instructions.push(Instruction::Noop);
+                continue;
+            }
+        }
+
+        match Instruction::try_from(&splits) {
+            Ok(i) => instructions.push(i),
+            Err(e) => {
+                Err(e.into_build_program_error(
+                    instructions_input.join("\n"),
+                    file_name,
+                    index + 1,
+                ))?;
+            }
+        }
+    }
+    if control_flow.instruction_labels.contains_key("main")
+        && control_flow.instruction_labels.contains_key("MAIN")
+    {
+        return Err(BuildProgramError {
+            reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes,
+        });
+    }
+    Ok(instructions)
+}
+
+/// Removes everything behind # or // from the string
+pub fn remove_comment(instruction: &str) -> String {
+    instruction
+        .lines()
+        .map(|line| {
+            if let Some(index) = line.find("//") {
+                line[..index].trim()
+            } else if let Some(index) = line.find('#') {
+                line[..index].trim()
+            } else {
+                line.trim()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn inject_end_labels(control_flow: &mut ControlFlow, last_instruction_index: usize) {
+    control_flow
+        .instruction_labels
+        .insert("END".to_string(), last_instruction_index);
+    control_flow
+        .instruction_labels
+        .insert("ENDE".to_string(), last_instruction_index);
+    control_flow
+        .instruction_labels
+        .insert("end".to_string(), last_instruction_index);
+    control_flow
+        .instruction_labels
+        .insert("ende".to_string(), last_instruction_index);
+    control_flow
+        .instruction_labels
+        .insert("End".to_string(), last_instruction_index);
+    control_flow
+        .instruction_labels
+        .insert("Ende".to_string(), last_instruction_index);
+}
+
+fn check_label(control_flow: &ControlFlow, label: &str) -> Result<(), String> {
+    if !control_flow.instruction_labels.contains_key(label) {
+        return Err(label.to_string());
+    }
+    Ok(())
+}
+
+/// Checks if all labels that are called in the instructions exist in the control flow.
+///
+/// If label is missing the name of the label that is missing is returned.
+fn check_labels(control_flow: &ControlFlow, instructions: &Vec<Instruction>) -> Result<(), String> {
+    for instruction in instructions {
+        match instruction {
+            Instruction::Goto(label) | Instruction::JumpIf(_, _, _, label) => {
+                check_label(control_flow, label)?;
+            }
+            _ => (),
+        };
+    }
+    Ok(())
+}
+
+/// Checks if any accumulators or memory cells are missing in the runtime args that are used.
+///
+/// If something missing is found, a runtime build error is returned.
+///
+/// If `add_missing` is true, the missing `accumulator/memory_cell` is added with empty value to the runtime args instead of returning an error.
+fn check_missing_vars(
+    memory_config: &MemoryConfig,
+    instructions: &Vec<Instruction>,
+    runtime_memory: &mut RuntimeMemory,
+) -> Result<(), RuntimeBuildError> {
+    for instruction in instructions {
+        match instruction {
+            Instruction::Assign(target, source) => {
+                target.check_new(runtime_memory, memory_config)?;
+                source.check_new(runtime_memory, memory_config)?;
+            }
+            Instruction::Calc(target, value_a, _, value_b) => {
+                target.check_new(runtime_memory, memory_config)?;
+                value_a.check_new(runtime_memory, memory_config)?;
+                value_b.check_new(runtime_memory, memory_config)?;
+            }
+            _ => (),
+        }
+    }
+    Ok(())
+}
+
+/// Checks if accumulators with id exist.
+///
+/// If `add_missing` is set, the accumulator is added with empty value instead of returning an error.
+pub fn check_accumulator(
+    runtime_args: &mut RuntimeMemory,
+    id: usize,
+    add_missing: bool,
+) -> Result<(), RuntimeBuildError> {
+    if !runtime_args.exists_accumulator(id) {
+        if add_missing {
+            runtime_args.accumulators.insert(id, Accumulator::new(id));
+        } else {
+            return Err(RuntimeBuildError::AccumulatorMissing(id.to_string()));
+        }
+    }
+    Ok(())
+}
+
+/// Checks if the memory cell with name exists.
+///
+/// If `add_missing` is set, the memory cell is added with empty value instead of returning an error.
+pub fn check_memory_cell(
+    runtime_args: &mut RuntimeMemory,
+    name: &str,
+    add_missing: bool,
+) -> Result<(), RuntimeBuildError> {
+    if !runtime_args.memory_cells.contains_key(name) {
+        if add_missing {
+            runtime_args
+                .memory_cells
+                .insert(name.to_string(), MemoryCell::new(name));
+        } else {
+            return Err(RuntimeBuildError::MemoryCellMissing(name.to_string()));
+        }
+    }
+    Ok(())
+}
+
+/// Checks if the accumulator or `memory_cell` exists that is used inside an `index_memory_cell`.
+pub fn check_index_memory_cell(
+    runtime_args: &mut RuntimeMemory,
+    t: &IndexMemoryCellIndexType,
+    add_missing: bool,
+) -> Result<(), RuntimeBuildError> {
+    match t {
+        IndexMemoryCellIndexType::Accumulator(idx) => {
+            check_accumulator(runtime_args, *idx, add_missing)
+        }
+        IndexMemoryCellIndexType::Direct(_) | IndexMemoryCellIndexType::Index(_) => Ok(()),
+        IndexMemoryCellIndexType::Gamma => check_gamma(runtime_args, add_missing),
+        IndexMemoryCellIndexType::MemoryCell(name) => {
+            check_memory_cell(runtime_args, name, add_missing)
+        }
+    }
+}
+
+/// Checks if gamma is enabled in runtime args.
+///
+/// If `add_missing` is set, gamma is enabled, instead of returning an error.
+pub fn check_gamma(
+    runtime_args: &mut RuntimeMemory,
+    add_missing: bool,
+) -> Result<(), RuntimeBuildError> {
+    if runtime_args.gamma.is_none() {
+        if add_missing {
+            runtime_args.gamma = Some(None);
+            return Ok(());
+        }
+        return Err(RuntimeBuildError::GammaDisabled);
+    }
+    Ok(())
 }

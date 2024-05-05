@@ -10,8 +10,7 @@ use crate::{
 };
 
 use self::{
-    error_handling::{RuntimeError, RuntimeErrorType},
-    memory_config::MemoryConfig,
+    builder_new::RuntimeBuilder, error_handling::{RuntimeError, RuntimeErrorType}, memory_config::MemoryConfig
 };
 
 /// Structs related to building a runtime
@@ -246,6 +245,28 @@ pub struct RuntimeMemory {
     pub stack: Vec<i32>,
 }
 
+impl Default for RuntimeMemory {
+    /// Creates a runtime memory with 4 accumulators and 4 memory cells.
+    fn default() -> Self {
+        let mut accumulators = HashMap::new();
+        for i in 0..4 {
+            accumulators.insert(i, Accumulator::new(i));
+        }
+        let mut memory_cells: HashMap<String, MemoryCell> = HashMap::new();
+        for i in 0..4 {
+            let label = format!("h{i}");
+            memory_cells.insert(label.clone(), MemoryCell::new(&label));
+        }
+        Self {
+            accumulators,
+            gamma: None,
+            memory_cells,
+            index_memory_cells: HashMap::new(),
+            stack: Vec::new(),
+        }
+    }
+}
+
 impl<'a> RuntimeMemory {
     /// Creates a new runtimes args struct with empty lists.
     ///
@@ -400,6 +421,41 @@ impl<'a> RuntimeMemory {
             *cell.1 = None;
         }
         self.stack = Vec::new();
+    }
+}
+
+impl From<MemoryConfig> for RuntimeMemory {
+    fn from(value: MemoryConfig) -> Self {
+        let mut accumulators = HashMap::new();
+        for (idx, value) in value.accumulators.values {
+            accumulators.insert(
+                idx,
+                Accumulator {
+                    id: idx,
+                    data: value,
+                },
+            );
+        }
+        let mut memory_cells = HashMap::new();
+        for (label, value) in value.memory_cells.values {
+            memory_cells.insert(label.clone(), MemoryCell { label, data: value });
+        }
+        let index_memory_cells = value.index_memory_cells.values;
+        let gamma = if value.gamma_accumulator.enabled {
+            match value.gamma_accumulator.value {
+                Some(value) => Some(Some(value)),
+                None => Some(None),
+            }
+        } else {
+            None
+        };
+        Self {
+            accumulators,
+            gamma,
+            memory_cells,
+            index_memory_cells,
+            stack: Vec::new(),
+        }
     }
 }
 

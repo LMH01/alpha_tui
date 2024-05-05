@@ -14,7 +14,8 @@ use crate::{
 
 use super::{
     error_handling::{AddLabelError, RuntimeBuildError},
-    ControlFlow, Runtime, RuntimeMemory,
+    memory_config::MemoryConfig,
+    ControlFlow, Runtime, RuntimeMemory, RuntimeSettings,
 };
 
 /// Type that is used to build a new runtime environment.
@@ -504,6 +505,44 @@ impl TargetType {
         }
         Ok(())
     }
+
+    /// Checks if this type is missing in `runtime_args`.
+    ///
+    /// If autodetection in memory_config is enabled, the type is added to runtime args instead of returning an error.
+    pub fn check_new(
+        &self,
+        runtime_args: &mut RuntimeMemory,
+        memory_config: &MemoryConfig,
+    ) -> Result<(), RuntimeBuildError> {
+        match self {
+            Self::Accumulator(index) => check_accumulator(
+                runtime_args,
+                *index,
+                memory_config.accumulators.autodetection.unwrap_or(true),
+            )?,
+            Self::MemoryCell(name) => check_memory_cell(
+                runtime_args,
+                name,
+                memory_config.memory_cells.autodetection.unwrap_or(true),
+            )?,
+            Self::IndexMemoryCell(t) => check_index_memory_cell(
+                runtime_args,
+                t,
+                memory_config
+                    .index_memory_cells
+                    .autodetection
+                    .unwrap_or(true),
+            )?,
+            Self::Gamma => check_gamma(
+                runtime_args,
+                memory_config
+                    .gamma_accumulator
+                    .autodetection
+                    .unwrap_or(true),
+            )?,
+        }
+        Ok(())
+    }
 }
 
 impl Value {
@@ -521,6 +560,45 @@ impl Value {
             Self::Constant(_) => (),
             Self::IndexMemoryCell(t) => check_index_memory_cell(runtime_args, t, add_missing)?,
             Self::Gamma => check_gamma(runtime_args, add_missing)?,
+        }
+        Ok(())
+    }
+
+    /// Checks if this type is missing in `runtime_args`.
+    ///
+    /// If autodetection in memory_config is enabled, the type is added to runtime args instead of returning an error.
+    pub fn check_new(
+        &self,
+        runtime_args: &mut RuntimeMemory,
+        memory_config: &MemoryConfig,
+    ) -> Result<(), RuntimeBuildError> {
+        match self {
+            Self::Accumulator(index) => check_accumulator(
+                runtime_args,
+                *index,
+                memory_config.accumulators.autodetection.unwrap_or(true),
+            )?,
+            Self::MemoryCell(name) => check_memory_cell(
+                runtime_args,
+                name,
+                memory_config.memory_cells.autodetection.unwrap_or(true),
+            )?,
+            Self::Constant(_) => (),
+            Self::IndexMemoryCell(t) => check_index_memory_cell(
+                runtime_args,
+                t,
+                memory_config
+                    .index_memory_cells
+                    .autodetection
+                    .unwrap_or(true),
+            )?,
+            Self::Gamma => check_gamma(
+                runtime_args,
+                memory_config
+                    .gamma_accumulator
+                    .autodetection
+                    .unwrap_or(true),
+            )?,
         }
         Ok(())
     }
