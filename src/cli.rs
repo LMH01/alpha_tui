@@ -63,11 +63,7 @@ pub struct GlobalArgs {
     )]
     pub memory_config_file: Option<String>,
 
-    #[arg(
-        long, 
-        hide = true, 
-        global = true
-    )]
+    #[arg(long, hide = true, global = true)]
     pub disable_instruction_limit: bool,
 }
 
