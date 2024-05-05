@@ -1380,12 +1380,12 @@ fn test_try_value_from_string_usize_usize_tuple() {
 fn test_assign_index_memory_cell() {
     let mut runtime_memory = RuntimeMemory::new_debug(&[&""]);
     let mut runtime_settings = setup_runtime_settings();
-    runtime_settings.enable_imc_auto_creation = true;
+    runtime_settings.autodetect_index_memory_cells = true;
     assert_eq!(
         assign_index_memory_cell(&mut runtime_memory, &runtime_settings, 0, 5),
         Ok(())
     );
-    runtime_settings.enable_imc_auto_creation = false;
+    runtime_settings.autodetect_index_memory_cells = false;
     assert_eq!(
         assign_index_memory_cell(&mut runtime_memory, &runtime_settings, 1, 5),
         Err(RuntimeErrorType::IndexMemoryCellDoesNotExist(1))
@@ -1396,7 +1396,7 @@ fn test_assign_index_memory_cell() {
 fn test_assign_index_memory_cell_from_value() {
     let mut runtime_memory = RuntimeMemory::new_debug(&[&""]);
     let mut runtime_settings = setup_runtime_settings();
-    runtime_settings.enable_imc_auto_creation = true;
+    runtime_settings.autodetect_index_memory_cells = true;
     assert_eq!(
         assign_index_memory_cell_from_value(
             &mut runtime_memory,
@@ -1406,7 +1406,7 @@ fn test_assign_index_memory_cell_from_value() {
         ),
         Ok(())
     );
-    runtime_settings.enable_imc_auto_creation = false;
+    runtime_settings.autodetect_index_memory_cells = false;
     assert_eq!(
         assign_index_memory_cell_from_value(
             &mut runtime_memory,

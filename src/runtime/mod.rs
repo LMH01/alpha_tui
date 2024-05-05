@@ -16,6 +16,7 @@ use self::{
 
 /// Structs related to building a runtime
 pub mod builder;
+pub mod builder_new;
 pub mod error_handling;
 pub mod memory_config;
 
@@ -405,10 +406,6 @@ impl<'a> RuntimeMemory {
 #[derive(Debug, Clone, PartialEq)]
 /// Settings that may be required during runtime
 pub struct RuntimeSettings {
-    /// If true, index memory cells are generated when they are receiving a value and if the don't already exist.
-    ///
-    /// If false, they will not be generated and a runtime error is thrown.
-    pub enable_imc_auto_creation: bool,
     pub disable_instruction_limit: bool,
     // If true, accumulators will be created automatically, if they are accessed and the don't already exist.
     pub autodetect_accumulators: bool,
@@ -421,7 +418,6 @@ pub struct RuntimeSettings {
 impl Default for RuntimeSettings {
     fn default() -> Self {
         Self {
-            enable_imc_auto_creation: true,
             disable_instruction_limit: false,
             autodetect_accumulators: false,
             autodetect_memory_cells: false,

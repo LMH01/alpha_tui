@@ -39,12 +39,20 @@ pub enum RuntimeBuildError {
     )]
     AccumulatorMissing(String),
 
-    #[error("Gamma accumulator is used in the progrmm but is disabled")]
+    #[error("Gamma accumulator is used in the program but is disabled")]
     #[diagnostic(
         code("runtime_build_error::gamma_disabled"),
         help("You can't use the gamma accumulator when it is disabled, to enable it you can either enable automatic memory detection\nby removing the \"--disable-memory-detection\" flag or you can explicitly enable it by using the \"--enable-gamma-accumulator\" flag.")
     )]
     GammaDisabled,
+
+    // TODO add test for this variant
+    #[error("Memory config file '{0}' is invalid: {1}")]
+    #[diagnostic(
+        code("runtime_build_error:memory_config_file_invalid"),
+        help("Make sure that the provided file is formatted correctly.\nSee https://github.com/LMH01/alpha_tui/blob/master/examples/memory_config.json for an example.")
+    )]
+    MemoryConfigFileInvalid(String, String),
 }
 
 #[derive(Debug)]

@@ -442,7 +442,7 @@ fn assign_index_memory_cell(
     value: i32,
 ) -> Result<(), RuntimeErrorType> {
     if runtime_memory.index_memory_cells.contains_key(&idx)
-        || runtime_settings.enable_imc_auto_creation
+        || runtime_settings.autodetect_index_memory_cells
     {
         runtime_memory.index_memory_cells.insert(idx, Some(value));
     } else {
@@ -460,7 +460,7 @@ fn assign_index_memory_cell_from_value(
     source: &Value,
 ) -> Result<(), RuntimeErrorType> {
     if runtime_memory.index_memory_cells.contains_key(&idx)
-        || runtime_settings.enable_imc_auto_creation
+        || runtime_settings.autodetect_index_memory_cells
     {
         runtime_memory
             .index_memory_cells
