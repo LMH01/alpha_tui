@@ -576,8 +576,8 @@ mod tests {
             .run(&mut rm, &mut cf, &rs),
             Err(RuntimeErrorType::IllegalCalculation {
                 cause: CalcError::AttemptToOverflow(
-                    "subtrmct".to_string(),
-                    "Subtrmction".to_string()
+                    "subtract".to_string(),
+                    "Subtraction".to_string()
                 )
             })
         );
