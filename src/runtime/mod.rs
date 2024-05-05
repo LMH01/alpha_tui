@@ -475,9 +475,9 @@ impl Default for RuntimeSettings {
     fn default() -> Self {
         Self {
             disable_instruction_limit: false,
-            autodetect_accumulators: false,
-            autodetect_memory_cells: false,
-            autodetect_index_memory_cells: false,
+            autodetect_accumulators: true,
+            autodetect_memory_cells: true,
+            autodetect_index_memory_cells: true,
         }
     }
 }

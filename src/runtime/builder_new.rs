@@ -136,6 +136,10 @@ impl<'a> RuntimeBuilder<'a> {
             memory_config.gamma_accumulator.autodetection = Some(false);
             memory_config.memory_cells.autodetection = Some(false);
             memory_config.index_memory_cells.autodetection = Some(false);
+            // enable gamma accumulator, if specified
+            if instruction_limiting_args.enable_gamma_accumulator {
+                memory_config.gamma_accumulator.enabled = true;
+            }
             self.memory_config = Some(memory_config);
         }
         Ok(self)

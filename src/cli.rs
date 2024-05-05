@@ -214,7 +214,7 @@ pub struct InstructionLimitingArgs {
         global = true,
         display_order = 21
     )]
-    pub enable_gamma_accumulator: Option<bool>,
+    pub enable_gamma_accumulator: bool,
 }
 
 #[derive(Subcommand, Clone, Debug)]
