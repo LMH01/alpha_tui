@@ -610,10 +610,19 @@ impl Value {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
     use crate::{
-        instructions::IndexMemoryCellIndexType,
+        instructions::{
+            error_handling::{BuildProgramError, BuildProgramErrorTypes},
+            IndexMemoryCellIndexType, Instruction,
+        },
         runtime::{
-            builder::check_index_memory_cell, error_handling::RuntimeBuildError, RuntimeMemory,
+            builder::{
+                build_instructions, check_index_memory_cell, check_instructions, InstructionConfig,
+            },
+            error_handling::RuntimeBuildError,
+            ControlFlow, RuntimeMemory,
         },
         utils::test_utils,
     };
@@ -700,5 +709,89 @@ mod tests {
         assert!(args.accumulators.contains_key(&0));
         assert!(args.gamma.is_some());
         assert!(args.memory_cells.contains_key("h1"));
+    }
+
+    // a simple helper function to make it easier to build test instructions
+    fn build_instructions_test(input: &str) -> Result<Vec<Instruction>, BuildProgramError> {
+        let lines = input
+            .split('\n')
+            .map(|f| f.to_string())
+            .collect::<Vec<String>>();
+        build_instructions(&lines, "test", &mut ControlFlow::new())
+    }
+
+    #[test]
+    fn test_bpe_label_defined_multiple_times() {
+        let res = build_instructions_test("loop:\n\nloop:");
+        assert_eq!(
+            res,
+            Err(BuildProgramError {
+                reason: BuildProgramErrorTypes::LabelDefinedMultipleTimes("loop".to_string())
+            })
+        )
+    }
+
+    #[test]
+    fn test_bpe_main_label_defined_multiple_times() {
+        let res = build_instructions_test("main:\n\nMAIN:");
+        assert_eq!(
+            res,
+            Err(BuildProgramError {
+                reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes
+            })
+        );
+        let res = build_instructions_test("main:\n\nmain:");
+        assert_eq!(
+            res,
+            Err(BuildProgramError {
+                reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes
+            })
+        )
+    }
+
+    #[test]
+    fn test_bpe_instruction_not_allowed() {
+        let instructions = build_instructions_test("a := 5").unwrap();
+        let mut allowed_instruction_identifiers = HashSet::new();
+        allowed_instruction_identifiers.insert("A := H".to_string());
+        let allowed_instructions = InstructionConfig {
+            allowed_instruction_identifiers: Some(allowed_instruction_identifiers),
+            allowed_comparisons: None,
+            allowed_operations: None,
+        };
+        let res = check_instructions(&instructions, &allowed_instructions);
+        assert_eq!(
+            res,
+            Err(BuildProgramError {
+                reason: BuildProgramErrorTypes::InstructionNotAllowed(
+                    1,
+                    "a0 := 5".to_string(),
+                    "A := C".to_string(),
+                    "A := H".to_string()
+                )
+            })
+        );
+    }
+
+    #[test]
+    fn test_bpe_comparison_not_allowed() {
+        let instructions = build_instructions_test("if a == a then goto loop").unwrap();
+        let allowed_instructions = InstructionConfig {
+            allowed_instruction_identifiers: None,
+            allowed_comparisons: Some(Vec::new()),
+            allowed_operations: None,
+        };
+        assert!(check_instructions(&instructions, &allowed_instructions).is_err());
+    }
+
+    #[test]
+    fn test_bpe_operation_not_allowed() {
+        let instructions = build_instructions_test("a := a + p(h1)").unwrap();
+        let allowed_instructions = InstructionConfig {
+            allowed_instruction_identifiers: None,
+            allowed_comparisons: None,
+            allowed_operations: Some(Vec::new()),
+        };
+        assert!(check_instructions(&instructions, &allowed_instructions).is_err());
     }
 }
