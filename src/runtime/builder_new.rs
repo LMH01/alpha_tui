@@ -16,7 +16,7 @@ use super::{
 };
 
 pub struct RuntimeBuilder<'a> {
-    instructions_input: &'a Vec<&'a str>,
+    instructions_input: &'a Vec<String>,
     instructions_input_file_name: &'a str,
     memory_config: Option<MemoryConfig>,
     runtime_settings: Option<RuntimeSettings>,
@@ -25,7 +25,7 @@ pub struct RuntimeBuilder<'a> {
 
 impl<'a> RuntimeBuilder<'a> {
     pub fn new(
-        instructions_input: &'a Vec<&'a str>,
+        instructions_input: &'a Vec<String>,
         instructions_input_file_name: &'a str,
     ) -> Self {
         Self {
@@ -35,11 +35,6 @@ impl<'a> RuntimeBuilder<'a> {
             runtime_settings: None,
             instruction_config: InstructionConfig::default(),
         }
-    }
-
-    pub fn memory_config(&mut self, memory_config: MemoryConfig) -> &mut Self {
-        self.memory_config = Some(memory_config);
-        self
     }
 
     /// Applies the parameters in global args to this runtime builder.
@@ -84,7 +79,7 @@ impl<'a> RuntimeBuilder<'a> {
         // set/overwrite memory config values
         // set accumulator config
         if let Some(accumulators) = global_args.accumulators {
-            for value in 1..=accumulators {
+            for value in 0..=accumulators-1 {
                 memory_config
                     .accumulators
                     .values
@@ -147,6 +142,8 @@ impl<'a> RuntimeBuilder<'a> {
     }
 
     /// Builds a new runtime by consuming this `RuntimeBuilder`.
+    /// 
+    /// Prints status messages into stdout.
     pub fn build(self) -> miette::Result<Runtime> {
         // set runtime settings
         let settings = self.runtime_settings.unwrap_or(RuntimeSettings::default());
@@ -161,11 +158,14 @@ impl<'a> RuntimeBuilder<'a> {
         let mut control_flow = ControlFlow::new();
 
         // build instructions (also updated control flow with detected labels)
+        println!("Building instructions");
         let instructions = build_instructions(
             &self.instructions_input,
             &self.instructions_input_file_name,
             &mut control_flow,
         )?;
+
+        println!("Building runtime");
 
         // inject end labels to give option to end program using goto END
         inject_end_labels(&mut control_flow, instructions.len());
@@ -221,7 +221,7 @@ struct InstructionConfig {
 ///
 /// Updates the provided control flow with labels.
 fn build_instructions(
-    instructions_input: &[&str],
+    instructions_input: &[String],
     file_name: &str,
     control_flow: &mut ControlFlow,
 ) -> Result<Vec<Instruction>, BuildProgramError> {

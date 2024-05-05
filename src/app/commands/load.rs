@@ -3,6 +3,7 @@ use miette::{Context, Result};
 use crate::{
     app::{commands::load_instruction_history, App},
     cli::{GlobalArgs, LoadArgs},
+    runtime::builder_new,
     utils::{build_instructions_with_whitelist, pretty_format_instructions, write_file},
 };
 
@@ -16,28 +17,33 @@ pub fn load(
     // check if command history is set
     let instruction_history = load_instruction_history(&load_args.custom_instruction_history_file)?;
 
-    println!("Building program");
-    let mut rb = super::create_runtime_builder(global_args, &load_args.instruction_limiting_args)?;
+    //println!("Building program");
+    //let mut rb = super::create_runtime_builder(global_args, &load_args.instruction_limiting_args)?;
 
-    if let Some(file) = load_args
-        .instruction_limiting_args
-        .allowed_instructions_file
-        .as_ref()
-    {
-        build_instructions_with_whitelist(&mut rb, &instructions, &input, file)?;
-    } else {
-        rb.build_instructions(&instructions.iter().map(String::as_str).collect(), &input)?;
-    }
+    let mut rb = builder_new::RuntimeBuilder::new(&instructions, &input);
+    rb.apply_global_cli_args(global_args)?
+        .apply_instruction_limiting_args(&load_args.instruction_limiting_args)?;
+    let rt = rb.build().wrap_err("while building runtime")?;
+
+    //if let Some(file) = load_args
+    //    .instruction_limiting_args
+    //    .allowed_instructions_file
+    //    .as_ref()
+    //{
+    //    build_instructions_with_whitelist(&mut rb, &instructions, &input, file)?;
+    //} else {
+    //    rb.build_instructions(&instructions.iter().map(String::as_str).collect(), &input)?;
+    //}
 
     // format instructions pretty if cli flag is set
-    let instructions = if load_args.disable_alignment {
-        instructions
-    } else {
-        pretty_format_instructions(&instructions)
-    };
+    //let instructions = if load_args.disable_alignment {
+    //    instructions
+    //} else {
+    //    pretty_format_instructions(&instructions)
+    //};
 
-    println!("Building runtime");
-    let rt = rb.build().wrap_err("while building runtime")?;
+    //println!("Building runtime");
+    //let rt = rb.build().wrap_err("while building runtime")?;
 
     if load_args.write_alignment {
         // write new formatting to file if enabled
