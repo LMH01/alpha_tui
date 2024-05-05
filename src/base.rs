@@ -28,8 +28,8 @@ impl Accumulator {
 impl Display for Accumulator {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.data {
-            Some(d) => write!(f, "{:2}: {}", self.id, d),
-            None => write!(f, "{:2}: None", self.id),
+            Some(d) => write!(f, "{:>3}: {}", format!("α{}", self.id), d),
+            None => write!(f, "{:>3}: None", format!("α{}", self.id)),
         }
     }
 }
@@ -334,9 +334,9 @@ mod tests {
     fn test_accumultor_display() {
         let mut acc = Accumulator::new(0);
         acc.data = Some(5);
-        assert_eq!(format!("{}", acc), " 0: 5");
+        assert_eq!(format!("{}", acc), " α0: 5");
         acc.data = None;
-        assert_eq!(format!("{}", acc), " 0: None");
+        assert_eq!(format!("{}", acc), " α0: None");
     }
 
     #[test]

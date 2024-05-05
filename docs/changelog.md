@@ -2,7 +2,11 @@
 
 ## v1.3.1
 
-### Other
+### TUI
+
+- Added α symbols in front of each entry for a "numerical accumulator" in the accumulator field of the tui (fr #47)
+
+### Command line arguments
 
 - Renamed cli option `--allowed-instructions` to `--allowed-instructions-file` (fr #49) (by [@reeelix](https://github.com/reeelix))
 
