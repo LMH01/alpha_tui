@@ -499,7 +499,7 @@ mod tests {
         "a", "b", "c", "d", "e", "f", "w", "x", "y", "z", "h1", "h2", "h3", "h4",
     ];
 
-    impl<'a> RuntimeBuilder<'a> {}
+    impl RuntimeBuilder {}
 
     //#[test]
     //fn test_label_missing() {

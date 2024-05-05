@@ -1,7 +1,5 @@
 use std::collections::HashSet;
 
-use miette::Error;
-
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
     cli::{CliHint, GlobalArgs, InstructionLimitingArgs},
@@ -17,20 +15,19 @@ use super::{
     RuntimeMemory, RuntimeSettings,
 };
 
-pub struct RuntimeBuilder<'a> {
+pub struct RuntimeBuilder {
     instructions: Vec<Instruction>,
-    instructions_input_file_name: &'a str,
     control_flow: ControlFlow,
     memory_config: Option<MemoryConfig>,
     runtime_settings: Option<RuntimeSettings>,
     instruction_config: InstructionConfig,
 }
 
-impl<'a> RuntimeBuilder<'a> {
+impl RuntimeBuilder {
     /// Creates a new runtime builder.
     ///
     /// The input instructions are build directly and this function returns an error if that failed.
-    pub fn new(
+    pub fn new<'a>(
         instructions_input: &'a Vec<String>,
         instructions_input_file_name: &'a str,
     ) -> Result<Self, BuildProgramError> {
@@ -48,7 +45,6 @@ impl<'a> RuntimeBuilder<'a> {
 
         Ok(Self {
             instructions,
-            instructions_input_file_name,
             control_flow,
             memory_config: None,
             runtime_settings: None,
@@ -534,22 +530,6 @@ pub fn check_gamma(
 }
 
 impl TargetType {
-    /// Checks if this type is missing in `runtime_args`.
-    ///
-    /// If `add_missing` is set, the type is added to runtime args instead of returning an error.
-    pub fn check(
-        &self,
-        runtime_args: &mut RuntimeMemory,
-        add_missing: bool,
-    ) -> Result<(), RuntimeBuildError> {
-        match self {
-            Self::Accumulator(index) => check_accumulator(runtime_args, *index, add_missing)?,
-            Self::MemoryCell(name) => check_memory_cell(runtime_args, name, add_missing)?,
-            Self::IndexMemoryCell(t) => check_index_memory_cell(runtime_args, t, add_missing)?,
-            Self::Gamma => check_gamma(runtime_args, add_missing)?,
-        }
-        Ok(())
-    }
 
     /// Checks if this type is missing in `runtime_args`.
     ///
