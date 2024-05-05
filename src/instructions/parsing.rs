@@ -111,7 +111,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
         if parts.len() < 2 {
             return Err(InstructionParseError::MissingExpression {
                 range: (parts[0].len(), parts[0].len()),
-                help: "You might be missing ':='".to_string(),
+                help: "You might be missing ':=' or whitespaces before and after ':='".to_string(),
             });
         }
 
