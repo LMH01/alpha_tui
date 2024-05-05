@@ -1,7 +1,7 @@
 use miette::Diagnostic;
 use thiserror::Error;
 
-use crate::base::Operation;
+use crate::{base::Operation, instructions::error_handling::BuildProgramError};
 
 /// Errors that can occur when a runtime is constructed from a `RuntimeBuilder`.
 #[derive(Debug, PartialEq, Error, Diagnostic)]
@@ -49,11 +49,16 @@ pub enum RuntimeBuildError {
     // TODO add test for this variant
     #[error("Memory config file '{0}' is invalid: {1}")]
     #[diagnostic(
-        code("runtime_build_error:memory_config_file_invalid"),
+        code("runtime_build_error::memory_config_file_invalid"),
         help("Make sure that the provided file is formatted correctly.\nSee https://github.com/LMH01/alpha_tui/blob/master/examples/memory_config.json for an example.")
     )]
     MemoryConfigFileInvalid(String, String),
     // TODO add test for this variant
+    #[error("Unable to build program")]
+    #[diagnostic(
+        code("runtime_build_error::build_program_error")
+    )]
+    BuildProgramError(BuildProgramError)
 }
 
 #[derive(Debug)]

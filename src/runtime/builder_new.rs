@@ -2,10 +2,10 @@ use std::collections::HashSet;
 
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
-    cli::{GlobalArgs, InstructionLimitingArgs},
+    cli::{CliHint, GlobalArgs, InstructionLimitingArgs},
     instructions::{
         error_handling::{BuildProgramError, BuildProgramErrorTypes},
-        IndexMemoryCellIndexType, Instruction, TargetType, Value,
+        Identifier, IndexMemoryCellIndexType, Instruction, TargetType, Value,
     },
     utils,
 };
@@ -145,7 +145,7 @@ impl<'a> RuntimeBuilder<'a> {
     /// Builds a new runtime by consuming this `RuntimeBuilder`.
     ///
     /// Prints status messages into stdout.
-    pub fn build(self) -> miette::Result<Runtime> {
+    pub fn build(self) -> miette::Result<Runtime, RuntimeBuildError> {
         // set runtime settings
         let settings = self.runtime_settings.unwrap_or(RuntimeSettings::default());
 
@@ -160,19 +160,27 @@ impl<'a> RuntimeBuilder<'a> {
 
         // build instructions (also updated control flow with detected labels)
         println!("Building instructions");
-        let instructions = build_instructions(
+        let instructions = match build_instructions(
             &self.instructions_input,
             &self.instructions_input_file_name,
             &mut control_flow,
-        )?;
+        ) {
+            Ok(instructions) => instructions,
+            Err(e) => return Err(RuntimeBuildError::BuildProgramError(e)),
+        };
 
         println!("Building runtime");
+
+        // check if instructions are used that are not allowed
+        if let Err(e) = check_instructions(&instructions, &self.instruction_config) {
+            return Err(RuntimeBuildError::BuildProgramError(e));
+        }
 
         // inject end labels to give option to end program using goto END
         inject_end_labels(&mut control_flow, instructions.len());
 
         if let Err(e) = check_labels(&control_flow, &instructions) {
-            return Err(miette::miette!(RuntimeBuildError::LabelUndefined(e)));
+            return Err(RuntimeBuildError::LabelUndefined(e));
         }
 
         // Check if all used accumulators and memory_cells exist
@@ -298,6 +306,68 @@ pub fn remove_comment(instruction: &str) -> String {
         })
         .collect::<Vec<_>>()
         .join("\n")
+}
+
+/// Checks instructions that are set by comparing them with the provided whitelist of instructions.
+///
+/// NOOP instructions are always allowed.
+///
+/// It is also checked if any comparisons or operations are used that are not allowed.
+/// If `instructions` contains instructions, comparisons or operations that are not included in `instruction_config`,
+/// an error is returned. If values are not set in `instruction_config` everything of that type is allowed.
+fn check_instructions(
+    instructions: &[Instruction],
+    instruction_config: &InstructionConfig,
+) -> Result<(), BuildProgramError> {
+    for (idx, i) in instructions.iter().enumerate() {
+        if let Some(whitelist) = &instruction_config.allowed_instruction_identifiers {
+            if !whitelist.contains(&i.identifier()) && i.identifier() != "NOOP" {
+                // Instruction found, that is forbidden
+                let mut allowed_instructions = whitelist
+                    .iter()
+                    .map(String::to_string)
+                    .collect::<Vec<String>>();
+                allowed_instructions.sort();
+                return Err(BuildProgramError {
+                    reason: BuildProgramErrorTypes::InstructionNotAllowed(
+                        idx + 1,
+                        format!("{i}"),
+                        i.identifier(),
+                        allowed_instructions.join("\n").to_string(),
+                    ),
+                });
+            }
+        }
+        // Check if all comparisons are allowed
+        if let Some(ac) = &instruction_config.allowed_comparisons {
+            if let Some(c) = i.comparison() {
+                if !ac.contains(c) {
+                    return Err(BuildProgramError {
+                        reason: BuildProgramErrorTypes::ComparisonNotAllowed(
+                            idx + 1,
+                            c.to_string(),
+                            c.cli_hint(),
+                        ),
+                    });
+                }
+            }
+        }
+        // Check if all operations are allowed
+        if let Some(ao) = &instruction_config.allowed_operations {
+            if let Some(o) = i.operation() {
+                if !ao.contains(o) {
+                    return Err(BuildProgramError {
+                        reason: BuildProgramErrorTypes::OperationNotAllowed(
+                            idx + 1,
+                            o.to_string(),
+                            o.cli_hint(),
+                        ),
+                    });
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 fn inject_end_labels(control_flow: &mut ControlFlow, last_instruction_index: usize) {
