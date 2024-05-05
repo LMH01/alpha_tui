@@ -171,7 +171,7 @@ alpha_tui load program.alpha
     --accumulators 2                   // Enable two accumulators (a0 and a1)
     --enable-gamma-accumulator true    // Enable the gamma accumulator
     --memory-cells "h1,h2"             // Enable memory cells h1 and h2
-    --index-memory-cells "1,2"       // Enable index memory cells 1 and 2
+    --index-memory-cells "1,2"         // Enable index memory cells 1 and 2
     --allowed-comparisons "eq,neq"     // Allow equal and not equal comparisons
     --allowed-operations "add,sub"     // Allow addition and subtraction operations
     --allowed-instructions-file <path> // Allow some specific instructions
