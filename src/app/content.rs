@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{ListItem, ListState},
 };
 
-use crate::runtime::{Runtime, RuntimeArgs};
+use crate::runtime::{Runtime, RuntimeMemory};
 
 use super::LIST_ITEM_HIGHLIGHT_COLOR;
 
@@ -216,7 +216,7 @@ pub struct MemoryListsManager {
 
 impl MemoryListsManager {
     /// Creates a new `MemoryListsManager` with the current values of the runtime arguments.
-    pub fn new(runtime_args: &RuntimeArgs) -> Self {
+    pub fn new(runtime_args: &RuntimeMemory) -> Self {
         let mut accumulators = HashMap::new();
         for acc in &runtime_args.accumulators {
             accumulators.insert(*acc.0, (format!("{}", acc.1), false));
@@ -252,7 +252,7 @@ impl MemoryListsManager {
     /// `control_flow` is used to update call stack values.
     pub fn update(&mut self, runtime: &Runtime) {
         // Update accumulators
-        for acc in &runtime.runtime_args().accumulators {
+        for acc in &runtime.runtime_memory().accumulators {
             let a = match self.accumulators.get_mut(acc.0) {
                 Some(value) => value,
                 None => {
@@ -268,7 +268,7 @@ impl MemoryListsManager {
             }
         }
         // Update memory_cells
-        for cell in &runtime.runtime_args().memory_cells {
+        for cell in &runtime.runtime_memory().memory_cells {
             let a = match self.memory_cells.get_mut(&cell.1.label) {
                 Some(value) => value,
                 None => {
@@ -285,7 +285,7 @@ impl MemoryListsManager {
             }
         }
         // Update index memory cells
-        for cell in &runtime.runtime_args().index_memory_cells {
+        for cell in &runtime.runtime_memory().index_memory_cells {
             if !self.index_memory_cells.contains_key(cell.0) {
                 if let Some(v) = cell.1 {
                     self.index_memory_cells
@@ -308,7 +308,7 @@ impl MemoryListsManager {
             }
         }
         // Update gamma
-        if let Some(update) = runtime.runtime_args().gamma {
+        if let Some(update) = runtime.runtime_memory().gamma {
             if let Some(value) = self.gamma.as_mut() {
                 if update == value.0 {
                     value.1 = false;
@@ -320,9 +320,9 @@ impl MemoryListsManager {
             }
         }
         // Update stack
-        let stack_changed = self.stack.len() != runtime.runtime_args().stack.len();
+        let stack_changed = self.stack.len() != runtime.runtime_memory().stack.len();
         let mut new_stack: Vec<ListItem<'_>> = runtime
-            .runtime_args()
+            .runtime_memory()
             .stack
             .iter()
             .map(|f| ListItem::new(f.to_string()))

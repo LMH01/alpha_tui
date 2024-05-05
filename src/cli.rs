@@ -19,7 +19,7 @@ pub struct Cli {
     pub global_args: GlobalArgs,
 }
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Debug, Clone, Default)]
 pub struct GlobalArgs {
     #[arg(
         short,
@@ -214,7 +214,7 @@ pub struct InstructionLimitingArgs {
         global = true,
         display_order = 21
     )]
-    pub enable_gamma_accumulator: Option<bool>,
+    pub enable_gamma_accumulator: bool,
 }
 
 #[derive(Subcommand, Clone, Debug)]

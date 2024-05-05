@@ -6,12 +6,9 @@ use std::{
 
 use miette::{miette, IntoDiagnostic, NamedSource, Result, SourceOffset, SourceSpan};
 
-use crate::{
-    instructions::{
-        error_handling::{BuildAllowedInstructionsError, InstructionParseError},
-        Identifier, Instruction,
-    },
-    runtime::builder::RuntimeBuilder,
+use crate::instructions::{
+    error_handling::{BuildAllowedInstructionsError, InstructionParseError},
+    Identifier, Instruction,
 };
 
 /// How many spaces should be between labels, instructions and comments when pretty formatting them
@@ -193,23 +190,15 @@ pub fn get_comment(instruction: &str) -> Option<String> {
     }
 }
 
-/// Builds instructions by checking if all used instructions are allowed.
-///
-/// For that the read in file is first formatted to be a compilable program by using `prepare_whitelist_file()`
-#[allow(clippy::match_same_arms)]
-pub fn build_instructions_with_whitelist(
-    rb: &mut RuntimeBuilder,
-    instructions: &[String],
-    file: &str,
-    whitelist_file: &str,
-) -> Result<()> {
+/// Builds a hash set of allowed instruction identifiers, by reading the provided file and building instructions.
+pub fn build_instruction_whitelist(path: &str) -> Result<HashSet<String>> {
     // Instruction whitelist is provided
-    let mut whitelisted_instructions_file_contents = match read_file(whitelist_file) {
+    let mut whitelisted_instructions_file_contents = match read_file(path) {
         Ok(i) => i,
         Err(e) => {
             return Err(miette!(
                 "Unable to read whitelisted instruction file [{}]: {}",
-                whitelist_file,
+                path,
                 e
             ))
         }
@@ -240,7 +229,7 @@ pub fn build_instructions_with_whitelist(
                 let file_contents = whitelisted_instructions_file_contents.join("\n");
                 Err(BuildAllowedInstructionsError {
                     src: NamedSource::new(
-                        whitelist_file,
+                        path,
                         whitelisted_instructions_file_contents.clone().join("\n"),
                     ),
                     bad_bit: SourceSpan::new(
@@ -256,15 +245,7 @@ pub fn build_instructions_with_whitelist(
             }
         }
     }
-    rb.build_instructions_whitelist(
-        &instructions
-            .iter()
-            .map(String::as_str)
-            .collect::<Vec<&str>>(),
-        file,
-        &whitelisted_instructions,
-    )?;
-    Ok(())
+    Ok(whitelisted_instructions)
 }
 
 /// Prepares the whitelist file for parsing to instructions by replacing placeholders with correct alpha notation code.
@@ -308,6 +289,43 @@ pub fn prepare_whitelist_file(content: Vec<String>) -> Vec<String> {
         prepared.push(new_chunks.join(" "));
     }
     prepared
+}
+
+#[cfg(test)]
+pub mod test_utils {
+    use crate::{
+        cli::{GlobalArgs, InstructionLimitingArgs},
+        runtime::{builder::RuntimeBuilder, Runtime},
+    };
+
+    /// Creates a string vector from a &str.
+    pub fn string_literal_to_vec(input: &str) -> Vec<String> {
+        input.split('\n').map(|f| f.to_string()).collect()
+    }
+
+    /// Constructs a runtime using the input string.
+    pub fn runtime_from_str(input: &str) -> miette::Result<Runtime> {
+        RuntimeBuilder::new(&string_literal_to_vec(input), "test")
+            .unwrap()
+            .build()
+    }
+
+    /// Constructs a new runtime using the input string and applies default global args.
+    pub fn runtime_from_str_with_default_cli_args(input: &str) -> miette::Result<Runtime> {
+        let mut rb = RuntimeBuilder::new(&string_literal_to_vec(input), "test").unwrap();
+        rb.apply_global_cli_args(&GlobalArgs::default()).unwrap();
+        rb.build()
+    }
+
+    /// Constructs a runtime using the input string.
+    pub fn runtime_from_str_with_disable_memory_detection(input: &str) -> miette::Result<Runtime> {
+        let mut rb = RuntimeBuilder::new(&string_literal_to_vec(input), "test").unwrap();
+
+        let mut ila = InstructionLimitingArgs::default();
+        ila.disable_memory_detection = true;
+        rb.apply_instruction_limiting_args(&ila).unwrap();
+        rb.build()
+    }
 }
 
 #[cfg(test)]

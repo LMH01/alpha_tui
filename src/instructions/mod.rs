@@ -5,7 +5,7 @@ use miette::Result;
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
     instructions::error_handling::InstructionParseError,
-    runtime::{error_handling::RuntimeErrorType, ControlFlow, RuntimeArgs},
+    runtime::{error_handling::RuntimeErrorType, ControlFlow, RuntimeMemory, RuntimeSettings},
 };
 
 use self::parsing::{parse_alpha, parse_gamma, parse_index_memory_cell, parse_memory_cell};
@@ -46,21 +46,31 @@ pub enum Instruction {
 impl Instruction {
     pub fn run(
         &self,
-        runtime_args: &mut RuntimeArgs,
+        runtime_memory: &mut RuntimeMemory,
         control_flow: &mut ControlFlow,
+        runtime_settings: &RuntimeSettings,
     ) -> Result<(), RuntimeErrorType> {
         match self {
-            Self::Assign(target, source) => run_assign(runtime_args, target, source)?,
+            Self::Assign(target, source) => {
+                run_assign(runtime_memory, runtime_settings, target, source)?
+            }
             Self::Calc(target, source_a, op, source_b) => {
-                run_calc(runtime_args, target, source_a, *op, source_b)?;
+                run_calc(
+                    runtime_memory,
+                    runtime_settings,
+                    target,
+                    source_a,
+                    *op,
+                    source_b,
+                )?;
             }
             Self::JumpIf(value_a, cmp, value_b, label) => {
-                run_jump_if(runtime_args, control_flow, value_a, cmp, value_b, label)?;
+                run_jump_if(runtime_memory, control_flow, value_a, cmp, value_b, label)?;
             }
             Self::Goto(label) => run_goto(control_flow, label)?,
-            Self::Push => run_push(runtime_args)?,
-            Self::Pop => run_pop(runtime_args)?,
-            Self::StackOp(op) => run_stack_op(runtime_args, *op)?,
+            Self::Push => run_push(runtime_memory, runtime_settings)?,
+            Self::Pop => run_pop(runtime_memory, runtime_settings)?,
+            Self::StackOp(op) => run_stack_op(runtime_memory, *op)?,
             Self::Call(label) => run_call(control_flow, label)?,
             Self::Return => run_return(control_flow)?,
             Self::Noop => (),
@@ -131,41 +141,43 @@ impl Identifier for Instruction {
 }
 
 fn run_assign(
-    runtime_args: &mut RuntimeArgs,
+    runtime_args: &mut RuntimeMemory,
+    runtime_settings: &RuntimeSettings,
     target: &TargetType,
     source: &Value,
 ) -> Result<(), RuntimeErrorType> {
     match target {
         TargetType::Accumulator(a) => {
-            assert_accumulator_exists(runtime_args, *a)?;
+            assert_accumulator_exists(runtime_args, runtime_settings, *a)?;
             runtime_args.accumulators.get_mut(a).unwrap().data = Some(source.value(runtime_args)?);
         }
         TargetType::Gamma => {
+            assert_gamma_exists(runtime_args, runtime_settings)?;
             runtime_args.gamma = Some(Some(source.value(runtime_args)?));
         }
         TargetType::MemoryCell(a) => {
-            assert_memory_cell_exists(runtime_args, a)?;
+            assert_memory_cell_exists(runtime_args, runtime_settings, a)?;
             runtime_args.memory_cells.get_mut(a).unwrap().data = Some(source.value(runtime_args)?);
         }
         TargetType::IndexMemoryCell(t) => match t {
             IndexMemoryCellIndexType::Accumulator(idx) => {
                 let idx = index_from_accumulator(runtime_args, *idx)?;
-                assign_index_memory_cell_from_value(runtime_args, idx, source)?;
+                assign_index_memory_cell_from_value(runtime_args, runtime_settings, idx, source)?;
             }
             IndexMemoryCellIndexType::Direct(idx) => {
-                assign_index_memory_cell_from_value(runtime_args, *idx, source)?;
+                assign_index_memory_cell_from_value(runtime_args, runtime_settings, *idx, source)?;
             }
             IndexMemoryCellIndexType::Gamma => {
                 let idx = index_from_gamma(runtime_args)?;
-                assign_index_memory_cell_from_value(runtime_args, idx, source)?;
+                assign_index_memory_cell_from_value(runtime_args, runtime_settings, idx, source)?;
             }
             IndexMemoryCellIndexType::MemoryCell(name) => {
                 let idx = index_from_memory_cell(runtime_args, name)?;
-                assign_index_memory_cell_from_value(runtime_args, idx, source)?;
+                assign_index_memory_cell_from_value(runtime_args, runtime_settings, idx, source)?;
             }
             IndexMemoryCellIndexType::Index(idx) => {
                 let idx = index_from_index_memory_cell(runtime_args, *idx)?;
-                assign_index_memory_cell_from_value(runtime_args, idx, source)?;
+                assign_index_memory_cell_from_value(runtime_args, runtime_settings, idx, source)?;
             }
         },
     }
@@ -173,7 +185,8 @@ fn run_assign(
 }
 
 fn run_calc(
-    runtime_args: &mut RuntimeArgs,
+    runtime_args: &mut RuntimeMemory,
+    runtime_settings: &RuntimeSettings,
     target: &TargetType,
     source_a: &Value,
     op: Operation,
@@ -181,18 +194,18 @@ fn run_calc(
 ) -> Result<(), RuntimeErrorType> {
     match target {
         TargetType::Accumulator(a) => {
-            assert_accumulator_exists(runtime_args, *a)?;
+            assert_accumulator_exists(runtime_args, runtime_settings, *a)?;
             runtime_args.accumulators.get_mut(a).unwrap().data =
                 Some(op.calc(source_a.value(runtime_args)?, source_b.value(runtime_args)?)?);
         }
         TargetType::Gamma => {
-            assert_gamma_exists(runtime_args)?;
+            assert_gamma_exists(runtime_args, runtime_settings)?;
             runtime_args.gamma = Some(Some(
                 op.calc(source_a.value(runtime_args)?, source_b.value(runtime_args)?)?,
             ));
         }
         TargetType::MemoryCell(a) => {
-            assert_memory_cell_exists(runtime_args, a)?;
+            assert_memory_cell_exists(runtime_args, runtime_settings, a)?;
             runtime_args.memory_cells.get_mut(a).unwrap().data =
                 Some(op.calc(source_a.value(runtime_args)?, source_b.value(runtime_args)?)?);
         }
@@ -201,22 +214,22 @@ fn run_calc(
             match t {
                 IndexMemoryCellIndexType::Accumulator(idx) => {
                     let idx = index_from_accumulator(runtime_args, *idx)?;
-                    assign_index_memory_cell(runtime_args, idx, res)?;
+                    assign_index_memory_cell(runtime_args, runtime_settings, idx, res)?;
                 }
                 IndexMemoryCellIndexType::Direct(idx) => {
-                    assign_index_memory_cell(runtime_args, *idx, res)?;
+                    assign_index_memory_cell(runtime_args, runtime_settings, *idx, res)?;
                 }
                 IndexMemoryCellIndexType::Gamma => {
                     let idx = index_from_gamma(runtime_args)?;
-                    assign_index_memory_cell(runtime_args, idx, res)?;
+                    assign_index_memory_cell(runtime_args, runtime_settings, idx, res)?;
                 }
                 IndexMemoryCellIndexType::MemoryCell(name) => {
                     let idx = index_from_memory_cell(runtime_args, name)?;
-                    assign_index_memory_cell(runtime_args, idx, res)?;
+                    assign_index_memory_cell(runtime_args, runtime_settings, idx, res)?;
                 }
                 IndexMemoryCellIndexType::Index(idx) => {
                     let idx = index_from_index_memory_cell(runtime_args, *idx)?;
-                    assign_index_memory_cell(runtime_args, idx, res)?;
+                    assign_index_memory_cell(runtime_args, runtime_settings, idx, res)?;
                 }
             }
         }
@@ -225,7 +238,7 @@ fn run_calc(
 }
 
 fn run_jump_if(
-    runtime_args: &mut RuntimeArgs,
+    runtime_args: &mut RuntimeMemory,
     control_flow: &mut ControlFlow,
     value_a: &Value,
     cmp: &Comparison,
@@ -244,8 +257,11 @@ fn run_goto(control_flow: &mut ControlFlow, label: &str) -> Result<(), RuntimeEr
 }
 
 /// Causes runtime error if accumulator does not contain data.
-fn run_push(runtime_args: &mut RuntimeArgs) -> Result<(), RuntimeErrorType> {
-    assert_accumulator_exists(runtime_args, 0)?;
+fn run_push(
+    runtime_args: &mut RuntimeMemory,
+    runtime_settings: &RuntimeSettings,
+) -> Result<(), RuntimeErrorType> {
+    assert_accumulator_exists(runtime_args, runtime_settings, 0)?;
     match runtime_args.accumulators[&0].data {
         Some(d) => runtime_args.stack.push(d),
         None => return Err(RuntimeErrorType::PushFail),
@@ -254,25 +270,28 @@ fn run_push(runtime_args: &mut RuntimeArgs) -> Result<(), RuntimeErrorType> {
 }
 
 /// Causes runtime error if stack does not contain data.
-fn run_pop(runtime_args: &mut RuntimeArgs) -> Result<(), RuntimeErrorType> {
-    assert_accumulator_exists(runtime_args, 0)?;
-    match runtime_args.stack.pop() {
-        Some(d) => runtime_args.accumulators.get_mut(&0).unwrap().data = Some(d),
+fn run_pop(
+    runtime_memory: &mut RuntimeMemory,
+    runtime_settings: &RuntimeSettings,
+) -> Result<(), RuntimeErrorType> {
+    assert_accumulator_exists(runtime_memory, runtime_settings, 0)?;
+    match runtime_memory.stack.pop() {
+        Some(d) => runtime_memory.accumulators.get_mut(&0).unwrap().data = Some(d),
         None => return Err(RuntimeErrorType::PopFail),
     }
     Ok(())
 }
 
 /// Causes runtime error if stack does not contain two values.
-fn run_stack_op(runtime_args: &mut RuntimeArgs, op: Operation) -> Result<(), RuntimeErrorType> {
-    match runtime_args.stack.pop() {
-        Some(a) => match runtime_args.stack.pop() {
+fn run_stack_op(runtime_memory: &mut RuntimeMemory, op: Operation) -> Result<(), RuntimeErrorType> {
+    match runtime_memory.stack.pop() {
+        Some(a) => match runtime_memory.stack.pop() {
             Some(b) => {
                 // place result of calculation in a0, because value is calculated using that accumulator in alpha notation
                 // so value needs to be placed manually in it
                 let res = op.calc(b, a)?;
-                runtime_args.accumulators.get_mut(&0).unwrap().data = Some(res);
-                runtime_args.stack.push(res);
+                runtime_memory.accumulators.get_mut(&0).unwrap().data = Some(res);
+                runtime_memory.stack.push(res);
                 Ok(())
             }
             None => Err(RuntimeErrorType::StackOpFail(op)),
@@ -295,13 +314,14 @@ fn run_return(control_flow: &mut ControlFlow) -> Result<(), RuntimeErrorType> {
 
 /// Tests if the accumulator with **index** exists.
 fn assert_accumulator_exists(
-    runtime_args: &mut RuntimeArgs,
+    runtime_memory: &mut RuntimeMemory,
+    runtime_settings: &RuntimeSettings,
     index: usize,
 ) -> Result<(), RuntimeErrorType> {
-    if let Some(_value) = runtime_args.accumulators.get(&index) {
+    if let Some(_value) = runtime_memory.accumulators.get(&index) {
         Ok(())
-    } else if runtime_args.settings.memory_on_demand {
-        runtime_args
+    } else if runtime_settings.autodetect_accumulators {
+        runtime_memory
             .accumulators
             .insert(index, Accumulator::new(index));
         Ok(())
@@ -316,12 +336,17 @@ fn assert_accumulator_exists(
 ///
 /// Err(String) contains error message.
 fn assert_accumulator_contains_value(
-    runtime_args: &RuntimeArgs,
+    runtime_memory: &RuntimeMemory,
     index: usize,
 ) -> Result<i32, RuntimeErrorType> {
-    if let Some(value) = runtime_args.accumulators.get(&index) {
+    if let Some(value) = runtime_memory.accumulators.get(&index) {
         if value.data.is_some() {
-            Ok(runtime_args.accumulators.get(&index).unwrap().data.unwrap())
+            Ok(runtime_memory
+                .accumulators
+                .get(&index)
+                .unwrap()
+                .data
+                .unwrap())
         } else {
             Err(RuntimeErrorType::AccumulatorUninitialized(index))
         }
@@ -330,17 +355,25 @@ fn assert_accumulator_contains_value(
     }
 }
 
-/// Tests if gamma exists
-fn assert_gamma_exists(runtime_args: &RuntimeArgs) -> Result<(), RuntimeErrorType> {
-    if runtime_args.gamma.is_some() {
+/// Tests if gamma exists.
+///
+/// If `RuntimeSettings::autodetect_gamma` is enabled, and gamma does not exist, it is created.
+fn assert_gamma_exists(
+    runtime_memory: &mut RuntimeMemory,
+    runtime_settings: &RuntimeSettings,
+) -> Result<(), RuntimeErrorType> {
+    if runtime_memory.gamma.is_some() {
+        return Ok(());
+    } else if runtime_settings.autodetect_gamma_accumulator {
+        runtime_memory.gamma = Some(None);
         return Ok(());
     }
     Err(RuntimeErrorType::GammaDoesNotExist)
 }
 
 /// Tests if gamma contains a value.
-fn assert_gamma_contains_value(runtime_args: &RuntimeArgs) -> Result<i32, RuntimeErrorType> {
-    if let Some(value) = runtime_args.gamma {
+fn assert_gamma_contains_value(runtime_memory: &RuntimeMemory) -> Result<i32, RuntimeErrorType> {
+    if let Some(value) = runtime_memory.gamma {
         if let Some(value) = value {
             return Ok(value);
         }
@@ -353,13 +386,14 @@ fn assert_gamma_contains_value(runtime_args: &RuntimeArgs) -> Result<i32, Runtim
 ///
 /// If it does not exist and `memory_on_demand` is enabled, it is created.
 fn assert_memory_cell_exists(
-    runtime_args: &mut RuntimeArgs,
+    runtime_memory: &mut RuntimeMemory,
+    runtime_settings: &RuntimeSettings,
     label: &str,
 ) -> Result<(), RuntimeErrorType> {
-    if let Some(_value) = runtime_args.memory_cells.get(label) {
+    if let Some(_value) = runtime_memory.memory_cells.get(label) {
         Ok(())
-    } else if runtime_args.settings.memory_on_demand {
-        runtime_args
+    } else if runtime_settings.autodetect_memory_cells {
+        runtime_memory
             .memory_cells
             .insert(label.to_string(), MemoryCell::new(label));
         Ok(())
@@ -374,12 +408,17 @@ fn assert_memory_cell_exists(
 ///
 /// Err(String) contains error message.
 fn assert_memory_cell_contains_value(
-    runtime_args: &RuntimeArgs,
+    runtime_memory: &RuntimeMemory,
     label: &str,
 ) -> Result<i32, RuntimeErrorType> {
-    if let Some(value) = runtime_args.memory_cells.get(label) {
+    if let Some(value) = runtime_memory.memory_cells.get(label) {
         if value.data.is_some() {
-            Ok(runtime_args.memory_cells.get(label).unwrap().data.unwrap())
+            Ok(runtime_memory
+                .memory_cells
+                .get(label)
+                .unwrap()
+                .data
+                .unwrap())
         } else {
             Err(RuntimeErrorType::MemoryCellUninitialized(label.to_string()))
         }
@@ -389,10 +428,10 @@ fn assert_memory_cell_contains_value(
 }
 
 fn assert_index_memory_cell_contains_value(
-    runtime_args: &RuntimeArgs,
+    runtime_memory: &RuntimeMemory,
     index: usize,
 ) -> Result<i32, RuntimeErrorType> {
-    if let Some(value) = runtime_args.index_memory_cells.get(&index) {
+    if let Some(value) = runtime_memory.index_memory_cells.get(&index) {
         if let Some(value) = value {
             Ok(*value)
         } else {
@@ -406,14 +445,15 @@ fn assert_index_memory_cell_contains_value(
 /// Tries to assign a value to the memory cell, if the imc does not exist and `runtime_args.enable_imc_auto_creation` is true, the memory cell is created and the value is assigned.
 /// Otherwise returns an runtime error.
 fn assign_index_memory_cell(
-    runtime_args: &mut RuntimeArgs,
+    runtime_memory: &mut RuntimeMemory,
+    runtime_settings: &RuntimeSettings,
     idx: usize,
     value: i32,
 ) -> Result<(), RuntimeErrorType> {
-    if runtime_args.index_memory_cells.contains_key(&idx)
-        || runtime_args.settings.enable_imc_auto_creation
+    if runtime_memory.index_memory_cells.contains_key(&idx)
+        || runtime_settings.autodetect_index_memory_cells
     {
-        runtime_args.index_memory_cells.insert(idx, Some(value));
+        runtime_memory.index_memory_cells.insert(idx, Some(value));
     } else {
         return Err(RuntimeErrorType::IndexMemoryCellDoesNotExist(idx));
     }
@@ -423,16 +463,17 @@ fn assign_index_memory_cell(
 /// Tries to assign a value to the memory cell, if the imc does not exist and `runtime_args.enable_imc_auto_creation` is true, the memory cell is created and the value is assigned.
 /// Otherwise returns an runtime error.
 fn assign_index_memory_cell_from_value(
-    runtime_args: &mut RuntimeArgs,
+    runtime_memory: &mut RuntimeMemory,
+    runtime_settings: &RuntimeSettings,
     idx: usize,
     source: &Value,
 ) -> Result<(), RuntimeErrorType> {
-    if runtime_args.index_memory_cells.contains_key(&idx)
-        || runtime_args.settings.enable_imc_auto_creation
+    if runtime_memory.index_memory_cells.contains_key(&idx)
+        || runtime_settings.autodetect_index_memory_cells
     {
-        runtime_args
+        runtime_memory
             .index_memory_cells
-            .insert(idx, Some(source.value(runtime_args)?));
+            .insert(idx, Some(source.value(runtime_memory)?));
     } else {
         return Err(RuntimeErrorType::IndexMemoryCellDoesNotExist(idx));
     }
@@ -538,7 +579,7 @@ pub enum Value {
 }
 
 impl Value {
-    fn value(&self, runtime_args: &RuntimeArgs) -> Result<i32, RuntimeErrorType> {
+    fn value(&self, runtime_args: &RuntimeMemory) -> Result<i32, RuntimeErrorType> {
         match self {
             Self::Accumulator(a) => {
                 assert_accumulator_contains_value(runtime_args, *a)?;
@@ -633,7 +674,7 @@ impl Identifier for Value {
 /// return the value if it is.
 #[allow(clippy::cast_sign_loss)]
 fn index_from_accumulator(
-    runtime_args: &RuntimeArgs,
+    runtime_args: &RuntimeMemory,
     idx: usize,
 ) -> Result<usize, RuntimeErrorType> {
     let idx = assert_accumulator_contains_value(runtime_args, idx)?;
@@ -646,7 +687,7 @@ fn index_from_accumulator(
 /// Gets the content from the gamma accumulator and checks if the value is positive,
 /// return the value if it is.
 #[allow(clippy::cast_sign_loss)]
-fn index_from_gamma(runtime_args: &RuntimeArgs) -> Result<usize, RuntimeErrorType> {
+fn index_from_gamma(runtime_args: &RuntimeMemory) -> Result<usize, RuntimeErrorType> {
     let idx = assert_gamma_contains_value(runtime_args)?;
     if idx.is_negative() {
         return Err(RuntimeErrorType::IndexMemoryCellNegativeIndex(idx));
@@ -658,7 +699,7 @@ fn index_from_gamma(runtime_args: &RuntimeArgs) -> Result<usize, RuntimeErrorTyp
 /// returns the value if it is.
 #[allow(clippy::cast_sign_loss)]
 fn index_from_memory_cell(
-    runtime_args: &RuntimeArgs,
+    runtime_args: &RuntimeMemory,
     name: &str,
 ) -> Result<usize, RuntimeErrorType> {
     let idx = assert_memory_cell_contains_value(runtime_args, name)?;
@@ -672,7 +713,7 @@ fn index_from_memory_cell(
 /// returns the value if it is.
 #[allow(clippy::cast_sign_loss)]
 fn index_from_index_memory_cell(
-    runtime_args: &RuntimeArgs,
+    runtime_args: &RuntimeMemory,
     idx: usize,
 ) -> Result<usize, RuntimeErrorType> {
     let idx = assert_index_memory_cell_contains_value(runtime_args, idx)?;

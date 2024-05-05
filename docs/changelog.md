@@ -13,6 +13,8 @@
 - Renamed cli option `--allowed-instructions` to `--allowed-instructions-file` (fr #49) (by [@reeelix](https://github.com/reeelix))
 - Improved order of command line options in `.\alpha_tui load --help` (fr #54) (by [@reeelix](https://github.com/reeelix))
 - Added short forms `-i` for `--index-memory-cells` and `-g` for `--enable-gamma-accumulator` (fr #56) (by [@reeelix](https://github.com/reeelix))
+- Option `--enable-gamma-accumulator` no longer takes a boolean as value, the value is now set by just using this option
+- Help messages when a runtime error occurs because a memory type is missing now also hint towards the memory config file
 
 ### Other
 
@@ -24,6 +26,7 @@
 - `Press [ENTER] to close` missing from `unable to parse instruction` error, when screen width was below certain threshold
 - Fixed accumulator 0 not changing value to calculated value when stack op is calculated due to side effect in stack op operation (fr #44)
 - NOOP was treated as instruction that could be forbidden, so programs with empty lines could fail to build if `--allowed-instructions` (or now `--allowed-instructions-file`) was set (#52)
+- `check` subcommand would mark a test as successful even though labels where missing
 
 ## v1.3.0 (latest version)
 

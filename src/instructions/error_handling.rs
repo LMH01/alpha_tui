@@ -118,22 +118,22 @@ impl InstructionParseError {
         // For the line to be printed when more then one character is affected for some reason the range needs to be increased by one.
         match self {
             InstructionParseError::InvalidExpression(_, _) => {
-                self.range().1.checked_sub(self.range().0 + 1).unwrap_or(0)
+                self.range().1.saturating_sub(self.range().0 + 1)
             }
             InstructionParseError::UnknownInstruction(_, _) => {
-                self.range().1.checked_sub(self.range().0 + 1).unwrap_or(0)
+                self.range().1.saturating_sub(self.range().0 + 1)
             }
             InstructionParseError::NotANumber(_, _) => {
-                self.range().1.checked_sub(self.range().0).unwrap_or(0)
+                self.range().1.saturating_sub(self.range().0)
             }
             InstructionParseError::UnknownComparison(_, _) => {
-                self.range().1.checked_sub(self.range().0).unwrap_or(0)
+                self.range().1.saturating_sub(self.range().0)
             }
             InstructionParseError::UnknownOperation(_, _) => {
-                self.range().1.checked_sub(self.range().0).unwrap_or(0)
+                self.range().1.saturating_sub(self.range().0)
             }
             InstructionParseError::MissingExpression { range: _, help: _ } => {
-                self.range().1.checked_sub(self.range().0).unwrap_or(0)
+                self.range().1.saturating_sub(self.range().0)
             }
         }
     }
@@ -251,18 +251,8 @@ pub struct ParseSingleInstructionError {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashSet;
 
-    use clap::Parser;
-
-    use crate::{
-        cli::{Cli, Command},
-        instructions::{
-            error_handling::{BuildProgramError, BuildProgramErrorTypes, InstructionParseError},
-            Instruction,
-        },
-        runtime::builder::RuntimeBuilder,
-    };
+    use crate::instructions::{error_handling::InstructionParseError, Instruction};
 
     #[test]
     fn test_ipe_unknown_operation() {
@@ -439,128 +429,6 @@ mod tests {
             Err(InstructionParseError::MissingExpression {
                 range: (13, 13),
                 help: "Try inserting an accumulator or a memory cell".to_string()
-            })
-        );
-    }
-
-    #[test]
-    fn test_bpe_label_defined_multiple_times() {
-        let mut rb = RuntimeBuilder::new_debug(&["a", "b"]);
-        let instructions_input = vec!["loop:", "", "loop:"];
-        assert_eq!(
-            rb.build_instructions(&instructions_input, "test"),
-            Err(BuildProgramError {
-                reason: BuildProgramErrorTypes::LabelDefinedMultipleTimes("loop".to_string())
-            })
-        )
-    }
-
-    #[test]
-    fn test_bpe_main_label_defined_multiple_times() {
-        let mut rb = RuntimeBuilder::new_debug(&["a", "b"]);
-        let instructions_input = vec!["main:", "", "MAIN:"];
-        assert_eq!(
-            rb.build_instructions(&instructions_input, "test"),
-            Err(BuildProgramError {
-                reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes
-            })
-        );
-        let instructions_input = vec!["main:", "", "main:"];
-        assert_eq!(
-            rb.build_instructions(&instructions_input, "test"),
-            Err(BuildProgramError {
-                reason: BuildProgramErrorTypes::MainLabelDefinedMultipleTimes
-            })
-        )
-    }
-
-    #[test]
-    fn test_bpe_instruction_not_allowed() {
-        let cli = Cli::parse_from([
-            "alpha_tui",
-            "load",
-            "some_file.alpha",
-            "--allowed-instructions-file",
-            "some_file.txt",
-        ]);
-        let args = match cli.command {
-            Command::Load(args) => args,
-            _ => panic!(""),
-        };
-        let mut rb =
-            RuntimeBuilder::from_args(&cli.global_args, &args.instruction_limiting_args).unwrap();
-
-        let mut whitelist = HashSet::new();
-        whitelist.insert("A := H".to_string());
-
-        let instructions_input = vec!["a := 5"];
-        assert_eq!(
-            rb.build_instructions_whitelist(&instructions_input, "test", &whitelist),
-            Err(BuildProgramError {
-                reason: BuildProgramErrorTypes::InstructionNotAllowed(
-                    1,
-                    "a0 := 5".to_string(),
-                    "A := C".to_string(),
-                    "A := H".to_string()
-                )
-            })
-        );
-    }
-
-    #[test]
-    fn test_bpe_comparison_not_allowed() {
-        let cli = Cli::parse_from([
-            "alpha_tui",
-            "load",
-            "some_file.alpha",
-            "--allowed-comparisons",
-            "ge",
-        ]);
-        let args = match cli.command {
-            Command::Load(args) => args,
-            _ => panic!(""),
-        };
-        let mut rb =
-            RuntimeBuilder::from_args(&cli.global_args, &args.instruction_limiting_args).unwrap();
-
-        let instructions_input = vec!["if a == a then goto loop"];
-        assert_eq!(
-            rb.build_instructions(&instructions_input, "test"),
-            Err(BuildProgramError {
-                reason: BuildProgramErrorTypes::ComparisonNotAllowed(
-                    1,
-                    "==".to_string(),
-                    "eq".to_string()
-                )
-            })
-        );
-    }
-
-    #[test]
-    fn test_bpe_operation_not_allowed() {
-        let cli = Cli::parse_from([
-            "alpha_tui",
-            "load",
-            "some_file.alpha",
-            "--allowed-operations",
-            "mul",
-        ]);
-        let args = match cli.command {
-            Command::Load(args) => args,
-            _ => panic!(""),
-        };
-        let mut rb =
-            RuntimeBuilder::from_args(&cli.global_args, &args.instruction_limiting_args).unwrap();
-
-        let instructions_input = vec!["a := a + p(h1)"];
-        assert_eq!(
-            rb.build_instructions(&instructions_input, "test"),
-            Err(BuildProgramError {
-                reason: BuildProgramErrorTypes::OperationNotAllowed(
-                    1,
-                    "+".to_string(),
-                    "add".to_string()
-                )
             })
         );
     }
