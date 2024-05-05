@@ -82,7 +82,7 @@ fn build_runtime<'a>(
     global_args: &GlobalArgs,
     ila: &InstructionLimitingArgs,
 ) -> Result<Runtime> {
-    let mut rb = RuntimeBuilder::new(instructions_input, instructions_input_file_name);
+    let mut rb = RuntimeBuilder::new(instructions_input, instructions_input_file_name)?;
     if let Err(e) = rb.apply_global_cli_args(global_args) {
         return Err(miette!("Unable to apply global cli args to RuntimeBuilder, memory config could not be loaded from file:\n{e}"));
     }

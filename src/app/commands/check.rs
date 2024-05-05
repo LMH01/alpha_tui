@@ -14,7 +14,19 @@ pub fn check(
     input: &str,
 ) {
     // create runtime builder and apply cli args
-    let mut rb = RuntimeBuilder::new(&instructions, &input);
+    println!("Building instructions");
+    let mut rb = match RuntimeBuilder::new(&instructions, &input) {
+        Ok(rb) => rb,
+        Err(e) => {
+            println!(
+                "Check unsuccessful, program did not compile.\nError: {:?}",
+                miette!(e)
+            );
+            exit(1);
+        }
+    };
+
+    println!("Building runtime");
     if let Err(e) = rb.apply_global_cli_args(global_args) {
         println!(
             "Check unsuccessful: {:?}",
@@ -32,7 +44,7 @@ pub fn check(
         exit(1);
     }
     // build runtime
-    if let Err(e) = rb.build().wrap_err("while building runtime") {
+    if let Err(e) = rb.build() {
         println!(
             "Check unsuccessful, program did not compile.\nError: {:?}",
             miette!(e)

@@ -1,5 +1,7 @@
 use std::collections::HashSet;
 
+use miette::Error;
+
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
     cli::{CliHint, GlobalArgs, InstructionLimitingArgs},
@@ -16,22 +18,42 @@ use super::{
 };
 
 pub struct RuntimeBuilder<'a> {
-    instructions_input: &'a Vec<String>,
+    instructions: Vec<Instruction>,
     instructions_input_file_name: &'a str,
+    control_flow: ControlFlow,
     memory_config: Option<MemoryConfig>,
     runtime_settings: Option<RuntimeSettings>,
     instruction_config: InstructionConfig,
 }
 
 impl<'a> RuntimeBuilder<'a> {
-    pub fn new(instructions_input: &'a Vec<String>, instructions_input_file_name: &'a str) -> Self {
-        Self {
+    /// Creates a new runtime builder.
+    ///
+    /// The input instructions are build directly and this function returns an error if that failed.
+    pub fn new(
+        instructions_input: &'a Vec<String>,
+        instructions_input_file_name: &'a str,
+    ) -> Result<Self, BuildProgramError> {
+        let mut control_flow = ControlFlow::new();
+
+        // build instructions (also updated control flow with detected labels)
+        let instructions = match build_instructions(
             instructions_input,
             instructions_input_file_name,
+            &mut control_flow,
+        ) {
+            Ok(instructions) => instructions,
+            Err(e) => return Err(e),
+        };
+
+        Ok(Self {
+            instructions,
+            instructions_input_file_name,
+            control_flow,
             memory_config: None,
             runtime_settings: None,
             instruction_config: InstructionConfig::default(),
-        }
+        })
     }
 
     /// Applies the parameters in global args to this runtime builder.
@@ -145,7 +167,7 @@ impl<'a> RuntimeBuilder<'a> {
     /// Builds a new runtime by consuming this `RuntimeBuilder`.
     ///
     /// Prints status messages into stdout.
-    pub fn build(self) -> miette::Result<Runtime, RuntimeBuildError> {
+    pub fn build(self) -> miette::Result<Runtime> {
         // set runtime settings
         let settings = self.runtime_settings.unwrap_or(RuntimeSettings::default());
 
@@ -158,29 +180,16 @@ impl<'a> RuntimeBuilder<'a> {
         // set control flow
         let mut control_flow = ControlFlow::new();
 
-        // build instructions (also updated control flow with detected labels)
-        println!("Building instructions");
-        let instructions = match build_instructions(
-            &self.instructions_input,
-            &self.instructions_input_file_name,
-            &mut control_flow,
-        ) {
-            Ok(instructions) => instructions,
-            Err(e) => return Err(RuntimeBuildError::BuildProgramError(e)),
-        };
-
-        println!("Building runtime");
-
         // check if instructions are used that are not allowed
-        if let Err(e) = check_instructions(&instructions, &self.instruction_config) {
-            return Err(RuntimeBuildError::BuildProgramError(e));
+        if let Err(e) = check_instructions(&self.instructions, &self.instruction_config) {
+            return Err(miette::Report::new(e));
         }
 
         // inject end labels to give option to end program using goto END
-        inject_end_labels(&mut control_flow, instructions.len());
+        inject_end_labels(&mut control_flow, self.instructions.len());
 
-        if let Err(e) = check_labels(&control_flow, &instructions) {
-            return Err(RuntimeBuildError::LabelUndefined(e));
+        if let Err(e) = check_labels(&control_flow, &self.instructions) {
+            return Err(miette::Report::new(RuntimeBuildError::LabelUndefined(e)));
         }
 
         // Check if all used accumulators and memory_cells exist
@@ -189,7 +198,7 @@ impl<'a> RuntimeBuilder<'a> {
                 .memory_config
                 .as_ref()
                 .unwrap_or(&MemoryConfig::default()),
-            &instructions,
+            &self.instructions,
             &mut memory,
         )?;
 
@@ -205,7 +214,7 @@ impl<'a> RuntimeBuilder<'a> {
 
         Ok(Runtime {
             memory,
-            instructions,
+            instructions: self.instructions,
             control_flow,
             instruction_runs: 0,
             settings,

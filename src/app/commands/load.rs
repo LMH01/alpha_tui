@@ -18,11 +18,13 @@ pub fn load(
     let instruction_history = load_instruction_history(&load_args.custom_instruction_history_file)?;
 
     // create runtime builder and apply cli args
-    let mut rb = builder_new::RuntimeBuilder::new(&instructions, &input);
+    println!("Building instructions");
+    let mut rb = builder_new::RuntimeBuilder::new(&instructions, &input)?;
     rb.apply_global_cli_args(global_args)?
         .apply_instruction_limiting_args(&load_args.instruction_limiting_args)?;
     // build runtime
-    let rt = rb.build().wrap_err("while building runtime")?;
+    println!("Building runtime");
+    let rt = rb.build()?;
 
     // format instructions pretty if cli flag is set
     let instructions = if load_args.disable_alignment {
