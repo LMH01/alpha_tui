@@ -8,7 +8,7 @@
 
 ### Other
 
-- Error messages now hint towards missing blank spaces (fr #58)
+- Error messages now hint towards missing blank spaces (fr #58) (by [@reeelix](https://github.com/reeelix))
 
 ### Bug fixes
 
