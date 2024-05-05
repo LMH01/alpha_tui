@@ -369,8 +369,7 @@ impl App {
             State::CustomInstruction(_) => {
                 self.state = State::Running(self.instruction_list_states.breakpoints_set())
             }
-            State::Playground(_) => return true,
-            _ => (),
+            _ => return true,
         }
         false
     }

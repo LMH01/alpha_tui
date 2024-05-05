@@ -8,8 +8,8 @@ use ratatui::{
 use text_align::TextAlign;
 
 use super::{
-    run_instruction::SingleInstruction, App, State, BREAKPOINT_ACCENT_COLOR,
-    CODE_AREA_DEFAULT_COLOR, ERROR_COLOR, EXECUTION_FINISHED_POPUP_COLOR,
+    keybindings::KeySymbol, run_instruction::SingleInstruction, App, State,
+    BREAKPOINT_ACCENT_COLOR, CODE_AREA_DEFAULT_COLOR, ERROR_COLOR, EXECUTION_FINISHED_POPUP_COLOR,
     INTERNAL_MEMORY_BLOCK_BORDER_FG, LIST_ITEM_HIGHLIGHT_COLOR, MEMORY_BLOCK_BORDER_FG,
 };
 
@@ -265,8 +265,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             .border_style(Style::default().fg(EXECUTION_FINISHED_POPUP_COLOR));
         let area = super::centered_rect_abs(5, 36, f.size());
         let text = paragraph_with_line_wrap(
-            "Press [q] to exit.\nPress [t] to reset to start.\nPress [d] to dismiss this message."
-                .to_string(),
+            format!("Press [t] to reset to start.\nPress [d] to dismiss this message.\nPress [q] or [{}] to exit.", KeySymbol::Escape.to_string()),
             area.width,
         )
         .block(block);
@@ -300,8 +299,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             .border_style(Style::default().fg(ERROR_COLOR));
         let area = super::centered_rect(60, 30, None, f.size());
         let text = paragraph_with_line_wrap(if is_playground {format!("This instruction could not be executed due to the following problem:\n{}\n\nPress [q] to exit and to view further information regarding this error.\nPress [ENTER] to close.", e.reason)} else {format!(
-                "Execution can not continue due to the following problem:\n{}\n\nPress [q] to exit and to view further information regarding this error.\nPress [t] to reset to start.",
-                e.reason)}, area.width - 2).block(block);
+                "Execution can not continue due to the following problem:\n{}\n\nPress [q] or [{}] to exit and to view further information regarding this error.\nPress [t] to reset to start.",
+                e.reason, KeySymbol::Escape.to_string())}, area.width - 2).block(block);
         f.render_widget(Clear, area); //this clears out the background
         f.render_widget(text, area);
     }
@@ -323,8 +322,9 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             f.size(),
         );
         let text = paragraph_with_line_wrap(format!(
-            "{}\n\nPress [q] to exit and to view further information regarding this error.\nPress [ENTER] to close.",
-            reason
+            "{}\n\nPress [q] or [{}] to exit and to view further information regarding this error.\nPress [ENTER] to close.",
+            reason,
+            KeySymbol::Escape.to_string()
         ), area.width)
         .block(block);
         f.render_widget(Clear, area); //this clears out the background

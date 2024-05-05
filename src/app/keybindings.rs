@@ -268,7 +268,7 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     let mut hints = HashMap::new();
     hints.insert(
         "q".to_string(),
-        KeybindingHint::new(0, "q", "Quit", true, true),
+        KeybindingHint::new(0, &format!("q|{}", KeySymbol::Escape.to_string()), "Quit", true, true),
     );
     hints.insert(
         "s".to_string(),
