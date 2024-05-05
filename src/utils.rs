@@ -368,8 +368,7 @@ pub fn prepare_whitelist_file(content: Vec<String>) -> Vec<String> {
 #[cfg(test)]
 pub mod test_utils {
     use crate::{
-        cli::GlobalArgs,
-        runtime::{builder::RuntimeBuilder, Runtime},
+        cli::{GlobalArgs, InstructionLimitingArgs}, instructions::error_handling::BuildProgramError, runtime::{builder::RuntimeBuilder, Runtime}
     };
 
     /// Creates a string vector from a &str.
@@ -388,6 +387,16 @@ pub mod test_utils {
     pub fn runtime_from_str_with_default_cli_args(input: &str) -> miette::Result<Runtime> {
         let mut rb = RuntimeBuilder::new(&string_literal_to_vec(input), "test").unwrap();
         rb.apply_global_cli_args(&GlobalArgs::default()).unwrap();
+        rb.build()
+    }
+
+    /// Constructs a runtime using the input string.
+    pub fn runtime_from_str_with_disable_memory_detection(input: &str) -> miette::Result<Runtime> {
+        let mut rb = RuntimeBuilder::new(&string_literal_to_vec(input), "test").unwrap();
+        
+        let mut ila = InstructionLimitingArgs::default();
+        ila.disable_memory_detection = true;
+        rb.apply_instruction_limiting_args(&ila).unwrap();
         rb.build()
     }
 }
