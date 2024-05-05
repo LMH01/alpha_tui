@@ -8,9 +8,7 @@ use crate::{
         COMPARISON_IDENTIFIER, CONSTANT_IDENTIFIER, GAMMA_IDENTIFIER, MEMORY_CELL_IDENTIFIER,
         OPERATOR_IDENTIFIER,
     },
-    runtime::{error_handling::RuntimeErrorType, ControlFlow,
-        RuntimeMemory, RuntimeSettings,
-    },
+    runtime::{error_handling::RuntimeErrorType, ControlFlow, RuntimeMemory, RuntimeSettings},
     utils::test_utils,
 };
 

@@ -6,7 +6,6 @@ use crate::base::Operation;
 /// Errors that can occur when a runtime is constructed from a `RuntimeBuilder`.
 #[derive(Debug, PartialEq, Error, Diagnostic)]
 pub enum RuntimeBuildError {
-
     /// Indicates that a label is used in an instruction that does not exist in the control flow.
     /// This would lead to a runtime error.
     #[error("Label '{0}' should be used but is not defined")]

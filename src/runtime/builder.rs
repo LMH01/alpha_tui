@@ -612,7 +612,9 @@ impl Value {
 mod tests {
     use crate::{
         instructions::IndexMemoryCellIndexType,
-        runtime::{builder::{check_index_memory_cell, RuntimeBuilder}, error_handling::RuntimeBuildError, RuntimeMemory},
+        runtime::{
+            builder::check_index_memory_cell, error_handling::RuntimeBuildError, RuntimeMemory,
+        },
         utils::test_utils,
     };
 
