@@ -319,7 +319,7 @@ fn assert_accumulator_exists(
 ) -> Result<(), RuntimeErrorType> {
     if let Some(_value) = runtime_memory.accumulators.get(&index) {
         Ok(())
-    } else if runtime_settings.memory_on_demand {
+    } else if runtime_settings.autodetect_accumulators {
         runtime_memory
             .accumulators
             .insert(index, Accumulator::new(index));
@@ -383,7 +383,7 @@ fn assert_memory_cell_exists(
 ) -> Result<(), RuntimeErrorType> {
     if let Some(_value) = runtime_memory.memory_cells.get(label) {
         Ok(())
-    } else if runtime_settings.memory_on_demand {
+    } else if runtime_settings.autodetect_memory_cells {
         runtime_memory
             .memory_cells
             .insert(label.to_string(), MemoryCell::new(label));

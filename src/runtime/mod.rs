@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use miette::Result;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     base::{Accumulator, MemoryCell},
@@ -10,11 +9,15 @@ use crate::{
     utils,
 };
 
-use self::error_handling::{RuntimeError, RuntimeErrorType};
+use self::{
+    error_handling::{RuntimeError, RuntimeErrorType},
+    memory_config::MemoryConfig,
+};
 
 /// Structs related to building a runtime
 pub mod builder;
 pub mod error_handling;
+pub mod memory_config;
 
 const MAX_CALL_STACK_SIZE: usize = u16::MAX as usize;
 const MAX_INSTRUCTION_RUNS: usize = 1_000_000;
@@ -255,6 +258,7 @@ impl<'a> RuntimeMemory {
     /// If a specific setting is not provided using the cli, the provided default value is used.
     ///
     /// Memory cells are named h1, ..., hn.
+    #[deprecated(note = "Not used anymore, will be replaced by function in runtime builder")]
     pub fn from_args_with_defaults(
         global_args: &GlobalArgs,
         ila: &InstructionLimitingArgs,
@@ -263,44 +267,45 @@ impl<'a> RuntimeMemory {
         enable_gamma_default: bool,
     ) -> Result<Self, String> {
         // check if memory config file is set and use those values if set
-        if let Some(path) = &global_args.memory_config_file {
-            let config =
-                match serde_json::from_str::<MemoryConfig>(&utils::read_file(path)?.join("\n")) {
-                    Ok(config) => config,
-                    Err(e) => return Err(format!("json parse error: {e}")),
-                };
-            return Ok(config.into_runtime_memory(global_args, ila));
-        }
+        //if let Some(path) = &global_args.memory_config_file {
+        //    let config =
+        //        match serde_json::from_str::<MemoryConfig>(&utils::read_file(path)?.join("\n")) {
+        //            Ok(config) => config,
+        //            Err(e) => return Err(format!("json parse error: {e}")),
+        //        };
+        //    return Ok(config.into_runtime_memory(global_args, ila));
+        //}
 
-        let accumulators = global_args.accumulators.unwrap_or(accumulators_default);
-        let memory_cells = match global_args.memory_cells.as_ref() {
-            None => {
-                let mut memory_cell_names = Vec::new();
-                for i in 0..memory_cells_default {
-                    memory_cell_names.push(format!("h{i}"));
-                }
-                memory_cell_names
-            }
-            Some(value) => value.clone(),
-        };
-        let idx_memory_cells = global_args.index_memory_cells.as_ref().cloned();
+        //let accumulators = global_args.accumulators.unwrap_or(accumulators_default);
+        //let memory_cells = match global_args.memory_cells.as_ref() {
+        //    None => {
+        //        let mut memory_cell_names = Vec::new();
+        //        for i in 0..memory_cells_default {
+        //            memory_cell_names.push(format!("h{i}"));
+        //        }
+        //        memory_cell_names
+        //    }
+        //    Some(value) => value.clone(),
+        //};
+        //let idx_memory_cells = global_args.index_memory_cells.as_ref().cloned();
 
-        let enable_gamma = match ila.enable_gamma_accumulator {
-            Some(enable_gamma) => enable_gamma,
-            None => enable_gamma_default,
-        };
+        //let enable_gamma = match ila.enable_gamma_accumulator {
+        //    Some(enable_gamma) => enable_gamma,
+        //    None => enable_gamma_default,
+        //};
 
-        Ok(Self::new(
-            accumulators as usize,
-            memory_cells,
-            idx_memory_cells,
-            enable_gamma,
-            RuntimeSettings::new(
-                !ila.disable_memory_detection,
-                global_args.disable_instruction_limit,
-                !ila.disable_memory_detection,
-            ),
-        ))
+        //Ok(Self::new(
+        //    accumulators as usize,
+        //    memory_cells,
+        //    idx_memory_cells,
+        //    enable_gamma,
+        //    RuntimeSettings::new(
+        //        !ila.disable_memory_detection,
+        //        global_args.disable_instruction_limit,
+        //        !ila.disable_memory_detection,
+        //    ),
+        //))
+        todo!()
     }
 
     pub fn new_debug(memory_cells: &'a [&'static str]) -> Self {
@@ -405,23 +410,12 @@ pub struct RuntimeSettings {
     /// If false, they will not be generated and a runtime error is thrown.
     pub enable_imc_auto_creation: bool,
     pub disable_instruction_limit: bool,
-    /// If true, accumulators and memory cells (except index memory cells) will be created on demand,
-    /// if a value should be assigned and the memory type does nto yet exist.
-    pub memory_on_demand: bool,
-}
-
-impl RuntimeSettings {
-    fn new(
-        enable_imc_auto_creation: bool,
-        disable_instruction_limit: bool,
-        memory_on_demand: bool,
-    ) -> Self {
-        Self {
-            enable_imc_auto_creation,
-            disable_instruction_limit,
-            memory_on_demand,
-        }
-    }
+    // If true, accumulators will be created automatically, if they are accessed and the don't already exist.
+    pub autodetect_accumulators: bool,
+    // If true, memory cells will be created automatically, if they are accessed and the don't already exist.
+    pub autodetect_memory_cells: bool,
+    // If true, index memory cells will be created automatically, if they are accessed and the don't already exist.
+    pub autodetect_index_memory_cells: bool,
 }
 
 impl Default for RuntimeSettings {
@@ -429,81 +423,10 @@ impl Default for RuntimeSettings {
         Self {
             enable_imc_auto_creation: true,
             disable_instruction_limit: false,
-            memory_on_demand: false,
+            autodetect_accumulators: false,
+            autodetect_memory_cells: false,
+            autodetect_index_memory_cells: false,
         }
-    }
-}
-
-/// Contains configuration values on how the memory layout should be configured, meaning what memory locations should be
-/// available and pre initialized.
-///
-/// Can be used in the runtime builder to configure the memory values that should be available in the build runtime.
-#[derive(PartialEq, Debug, Deserialize, Serialize)]
-struct MemoryConfig {
-    pub accumulators: HashMap<usize, Option<i32>>,
-    pub gamma_accumulator: MemoryConfigGammaAccumulator,
-    pub memory_cells: HashMap<String, Option<i32>>,
-    pub index_memory_cells: HashMap<usize, Option<i32>>,
-}
-
-#[derive(PartialEq, Debug, Deserialize, Serialize)]
-struct MemoryConfigGammaAccumulator {
-    enabled: bool,
-    value: Option<i32>,
-}
-
-impl MemoryConfig {
-    /// Creates runtime memory from this memory config.
-    fn into_runtime_memory(
-        self,
-        args: &GlobalArgs,
-        ila: &InstructionLimitingArgs,
-    ) -> RuntimeMemory {
-        let mut accumulators = HashMap::new();
-        for (idx, value) in self.accumulators {
-            accumulators.insert(
-                idx,
-                Accumulator {
-                    id: idx,
-                    data: value,
-                },
-            );
-        }
-        let gamma = if self.gamma_accumulator.enabled {
-            match self.gamma_accumulator.value {
-                Some(value) => Some(Some(value)),
-                None => Some(None),
-            }
-        } else {
-            None
-        };
-        let mut memory_cells = HashMap::new();
-        for (name, value) in self.memory_cells {
-            memory_cells.insert(
-                name.clone(),
-                MemoryCell {
-                    label: name,
-                    data: value,
-                },
-            );
-        }
-        let mut index_memory_cells = HashMap::new();
-        for (idx, value) in self.index_memory_cells {
-            index_memory_cells.insert(idx, value);
-        }
-        //RuntimeMemory {
-        //    accumulators,
-        //    gamma,
-        //    memory_cells,
-        //    index_memory_cells,
-        //    stack: Vec::new(),
-        //    settings: RuntimeSettings::new(
-        //        !ila.disable_memory_detection,
-        //        args.disable_instruction_limit,
-        //        !ila.disable_memory_detection,
-        //    ),
-        //}
-        todo!("Move function into runtime builder subfunction, that should be named something like 'apply_memory_config' or 'from_memory_config'")
     }
 }
 
