@@ -68,21 +68,6 @@ pub struct IndexMemoryCell {
     pub data: i32,
 }
 
-//impl PartialEq for IndexMemoryCell {
-//    fn eq(&self, other: &Self) -> bool {
-//        self.index == other.index
-//    }
-//}
-//
-//impl PartialOrd for IndexMemoryCell {
-//    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-//        match self.index.partial_cmp(&other.index) {
-//            Some(core::cmp::Ordering::Equal) => return Some(Ordering::Equal),
-//            ord => return ord,
-//        }
-//    }
-//}
-
 /// Different ways of paring two values
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Comparison {
