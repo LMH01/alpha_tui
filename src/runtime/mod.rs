@@ -4,7 +4,6 @@ use miette::Result;
 
 use crate::{
     base::{Accumulator, MemoryCell},
-    cli::{GlobalArgs, InstructionLimitingArgs},
     instructions::Instruction,
 };
 
@@ -197,13 +196,6 @@ impl ControlFlow {
         self.call_stack.push(self.next_instruction_index);
         self.next_instruction_index(label)?;
         Ok(())
-    }
-
-    /// Resets the `next_instruction_index` to 0 and clears the `instruction_labels` map.
-    pub fn reset(&mut self) {
-        self.next_instruction_index = 0;
-        self.instruction_labels.clear();
-        self.call_stack.clear();
     }
 
     /// Resets the `next_instruction_index` to 0 and clears the call stack.
@@ -415,160 +407,4 @@ pub mod test_utils {
             self.accumulators.insert(id, Accumulator::new(id));
         }
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::{
-        base::{Comparison, Operation},
-        instructions::{Instruction, TargetType, Value},
-        runtime::error_handling::RuntimeBuildError,
-    };
-
-    use super::{builder::RuntimeBuilder, RuntimeMemory};
-
-    /// Used to set the available memory cells during testing.
-    const TEST_MEMORY_CELL_LABELS: &[&str] = &[
-        "a", "b", "c", "d", "e", "f", "w", "x", "y", "z", "h1", "h2", "h3", "h4",
-    ];
-
-    impl RuntimeBuilder {}
-
-    //#[test]
-    //fn test_label_missing() {
-    //    test_label_instruction(Instruction::Goto("loop".to_string()), "loop");
-    //    test_label_instruction(
-    //        Instruction::JumpIf(
-    //            Value::Accumulator(0),
-    //            Comparison::Eq,
-    //            Value::Accumulator(0),
-    //            "loop".to_string(),
-    //        ),
-    //        "loop",
-    //    );
-    //    test_label_instruction(
-    //        Instruction::JumpIf(
-    //            Value::Accumulator(0),
-    //            Comparison::Eq,
-    //            Value::MemoryCell("h1".to_string()),
-    //            "loop".to_string(),
-    //        ),
-    //        "loop",
-    //    );
-    //}
-
-    //fn test_label_instruction(instruction: Instruction, label: &str) {
-    //    let instructions = vec![instruction];
-    //    let mut rb = RuntimeBuilder::new_debug(TEST_MEMORY_CELL_LABELS);
-    //    rb.set_instructions(instructions.clone());
-    //    assert!(rb.add_label(label.to_string(), 0).is_ok());
-    //    assert!(rb.build().is_ok());
-    //    rb.reset();
-    //    rb.set_instructions(instructions);
-    //    rb.set_runtime_args(RuntimeMemory::new_debug(TEST_MEMORY_CELL_LABELS));
-    //    assert_eq!(
-    //        rb.build(),
-    //        Err(RuntimeBuildError::LabelUndefined(label.to_string()))
-    //    );
-    //}
-
-    //#[test]
-    //fn test_accumulator_missing() {
-    //    test_accumulator_instruction(
-    //        Instruction::Assign(TargetType::Accumulator(0), Value::Accumulator(1)),
-    //        vec![&0_usize, &1_usize],
-    //    );
-    //    test_accumulator_instruction(
-    //        Instruction::Calc(
-    //            TargetType::Accumulator(0),
-    //            Value::Accumulator(1),
-    //            Operation::Add,
-    //            Value::Accumulator(2),
-    //        ),
-    //        vec![&0_usize, &1_usize, &2_usize],
-    //    );
-    //}
-
-    //fn test_accumulator_instruction(instruction: Instruction, to_test: Vec<&usize>) {
-    //    let mut rb = RuntimeBuilder::new();
-    //    rb.set_instructions(vec![instruction]);
-    //    _ = rb.add_label("loop".to_string(), 0);
-    //    // Test if ok works
-    //    let mut runtime_args = RuntimeMemory::new_empty();
-    //    runtime_args.add_storage_cell("h1");
-    //    runtime_args.add_storage_cell("h2");
-    //    for _ in &to_test {
-    //        runtime_args.add_accumulator();
-    //    }
-    //    rb.set_runtime_args(runtime_args);
-    //    let build = rb.build();
-    //    assert!(build.is_ok());
-    //    // Test if missing accumulators are detected
-    //    for (_, s) in to_test.iter().enumerate() {
-    //        let mut runtime_args = RuntimeMemory::new_empty();
-    //        runtime_args.add_storage_cell("h1");
-    //        runtime_args.add_storage_cell("h2");
-    //        for _ in 0..(to_test.len() - *s - 1) {
-    //            runtime_args.add_accumulator();
-    //        }
-    //        rb.set_runtime_args(runtime_args);
-    //        let b = rb.build();
-    //        assert_eq!(
-    //            b,
-    //            Err(RuntimeBuildError::AccumulatorMissing(
-    //                (to_test.len() - *s - 1).to_string()
-    //            ))
-    //        );
-    //    }
-    //}
-
-    //#[test]
-    //fn test_memory_cell_missing() {
-    //    test_memory_cell_instruction(
-    //        Instruction::Assign(
-    //            TargetType::MemoryCell("h1".to_string()),
-    //            Value::MemoryCell("h2".to_string()),
-    //        ),
-    //        vec!["h1", "h2"],
-    //    );
-    //    test_memory_cell_instruction(
-    //        Instruction::Calc(
-    //            TargetType::MemoryCell("h1".to_string()),
-    //            Value::MemoryCell("h2".to_string()),
-    //            Operation::Add,
-    //            Value::MemoryCell("h3".to_string()),
-    //        ),
-    //        vec!["h1", "h2", "h3"],
-    //    );
-    //}
-
-    //fn test_memory_cell_instruction(instruction: Instruction, to_test: Vec<&str>) {
-    //    let mut rb = RuntimeBuilder::new();
-    //    rb.set_instructions(vec![instruction]);
-    //    _ = rb.add_label("loop".to_string(), 0);
-    //    // Test if ok works
-    //    let mut runtime_args = RuntimeMemory::new_empty();
-    //    runtime_args.add_accumulator();
-    //    for s in &to_test {
-    //        runtime_args.add_storage_cell(s);
-    //    }
-    //    rb.set_runtime_args(runtime_args);
-    //    let build = rb.build();
-    //    println!("{:?}", build);
-    //    assert!(build.is_ok());
-    //    // Test if missing memory cells are detected
-    //    for (i1, s) in to_test.iter().enumerate() {
-    //        let mut runtime_args = RuntimeMemory::new_empty();
-    //        runtime_args.add_accumulator();
-    //        for (i2, s2) in to_test.iter().enumerate() {
-    //            if i1 == i2 {
-    //                continue;
-    //            }
-    //            runtime_args.add_storage_cell(s2);
-    //        }
-    //        rb.set_runtime_args(runtime_args);
-    //        let b = rb.build();
-    //        assert_eq!(b, Err(RuntimeBuildError::MemoryCellMissing(s.to_string())));
-    //    }
-    //}
 }
