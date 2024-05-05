@@ -263,7 +263,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             .title("Execution finished!")
             .borders(Borders::ALL)
             .border_style(Style::default().fg(EXECUTION_FINISHED_POPUP_COLOR));
-        let area = super::centered_rect(60, 20, None, f.size());
+        let area = super::centered_rect_abs(5, 36, f.size());
         let text = paragraph_with_line_wrap(
             "Press [q] to exit.\nPress [t] to reset to start.\nPress [d] to dismiss this message."
                 .to_string(),

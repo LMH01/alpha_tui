@@ -5,6 +5,7 @@
 ### TUI
 
 - Added α symbols in front of each entry for a "numerical accumulator" in the accumulator field of the tui (fr #47) (by [@reeelix](https://github.com/reeelix))
+- Reduced size of `Execution finished` popup (fr #46)
 
 ### Command line arguments
 

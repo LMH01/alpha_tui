@@ -632,6 +632,25 @@ pub fn centered_rect(percent_x: u16, percent_y: u16, height: Option<u16>, r: Rec
     .split(popup_layout[1])[1]
 }
 
+/// Helper function to create a centered rect, where the height and width of the rect are fixed.
+pub fn centered_rect_abs(height: u16, width: u16, r: Rect) -> Rect {
+    let margin_top_bottom = r.height.saturating_sub(height) / 2;
+    let popup_layout = Layout::vertical([
+        Constraint::Length(margin_top_bottom),
+        Constraint::Length(height),
+        Constraint::Length(margin_top_bottom),
+    ])
+    .split(r);
+
+    let margin_left_right = r.width.saturating_sub(width) / 2;
+    Layout::horizontal([
+        Constraint::Length(margin_left_right),
+        Constraint::Length(width),
+        Constraint::Length(margin_left_right),
+    ])
+    .split(popup_layout[1])[1]
+}
+
 /// Scrolls the provided list down.
 pub fn list_down(state: &mut ListState, len: &usize) {
     if let Some(idx) = state.selected() {
