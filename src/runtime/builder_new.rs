@@ -80,8 +80,7 @@ impl<'a> RuntimeBuilder<'a> {
                 if let Some(path) = &global_args.memory_config_file {
                     match MemoryConfig::try_from_file(path) {
                         Ok(config) => {
-                            self.memory_config = Some(config);
-                            return Ok(self);
+                            config
                         }
                         Err(e) => {
                             return Err(RuntimeBuildError::MemoryConfigFileInvalid(
@@ -120,6 +119,21 @@ impl<'a> RuntimeBuilder<'a> {
                 memory_config.index_memory_cells.values.insert(*imc, None);
             }
         }
+        // update runtime settings
+        let mut runtime_settings = match self.runtime_settings.take() {
+            Some(settings) => settings,
+            None => RuntimeSettings::default(),
+        };
+        if let Some(value) = memory_config.accumulators.autodetection {
+            runtime_settings.autodetect_accumulators = value;
+        }
+        if let Some(value) = memory_config.memory_cells.autodetection {
+            runtime_settings.autodetect_memory_cells = value;
+        }
+        if let Some(value) = memory_config.index_memory_cells.autodetection {
+            runtime_settings.autodetect_index_memory_cells = value;
+        }
+        self.runtime_settings = Some(runtime_settings);
         self.memory_config = Some(memory_config);
         Ok(self)
     }
