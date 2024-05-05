@@ -1,26 +1,11 @@
 use miette::Diagnostic;
 use thiserror::Error;
 
-use crate::{base::Operation, instructions::error_handling::BuildProgramError};
+use crate::base::Operation;
 
 /// Errors that can occur when a runtime is constructed from a `RuntimeBuilder`.
 #[derive(Debug, PartialEq, Error, Diagnostic)]
 pub enum RuntimeBuildError {
-    #[error("Runtime arguments missing")]
-    #[diagnostic(
-        code("runtime_build_error::runtime_args_missing"),
-        help("This is an internal error and should not be exposed, please create a new bug report on github."),
-        url("https://github.com/LMH01/alpha_tui/issues")
-    )]
-    RuntimeArgsMissing,
-
-    #[error("Instructions are missing")]
-    #[diagnostic(
-        code("runtime_build_error::instructions_missing"),
-        help("This is an internal error and should not be exposed, please create a new bug report on github."),
-        url("https://github.com/LMH01/alpha_tui/issues")
-    )]
-    InstructionsMissing,
 
     /// Indicates that a label is used in an instruction that does not exist in the control flow.
     /// This would lead to a runtime error.
@@ -53,12 +38,6 @@ pub enum RuntimeBuildError {
         help("Make sure that the provided file is formatted correctly.\nSee https://github.com/LMH01/alpha_tui/blob/master/examples/memory_config.json for an example.")
     )]
     MemoryConfigFileInvalid(String, String),
-}
-
-#[derive(Debug)]
-pub enum AddLabelError {
-    InstructionsNotSet,
-    IndexOutOfBounds,
 }
 
 #[derive(Debug, Error, Diagnostic, Clone, PartialEq)]
