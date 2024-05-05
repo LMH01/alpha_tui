@@ -6,7 +6,7 @@ fn test_bai_error() {
     let assert = cmd
         .arg("load")
         .arg("tests/input/test_bai_error/program.alpha")
-        .arg("--allowed-instructions")
+        .arg("--allowed-instructions-file")
         .arg("tests/input/test_bai_error/allowed_instructions_a.txt")
         .assert();
     assert.stderr(

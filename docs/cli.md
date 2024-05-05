@@ -13,7 +13,7 @@ If you require accumulators, the gamma accumulator or memory cells to be pre ini
 
 ### Allowed instructions
 
-You can use the option `--allowed-instructions` to specify a file where allowed instructions are stored. When this option is provided, all programs will fail to build that contain instructions that are not included in the file.
+You can use the option `--allowed-instructions-file` to specify a file where allowed instructions are stored. When this option is provided, all programs will fail to build that contain instructions that are not included in the file.
 
 This makes it possible to challenge yourself into working with only a limited instruction set.
 
@@ -102,7 +102,7 @@ The comparisons that can be specified are:
 
 For example to only allow equal and not equal comparisons you can use this option: `--allowed-comparisons "eq,neq"`
 
-**Note**: At least one comparison needs to be specified, if you would like to prevent the use of any comparison you can use `--allowed-instructions` to limit the available instructions into only allowing instructions which don't take any comparisons.
+**Note**: At least one comparison needs to be specified, if you would like to prevent the use of any comparison you can use `--allowed-instructions-file` to limit the available instructions into only allowing instructions which don't take any comparisons.
 
 ### Allowed operations
 
@@ -120,7 +120,7 @@ The operations that can be specified are:
 
 For example to only allow addition and subtraction you can use this option: `--allowed-operations "add,sub"`
 
-**Note**: At least one operation needs to be specified, if you would like to prevent the use of any operation you can use `--allowed-instructions` to limit the available instructions into only allowing instructions which don't take any operations.
+**Note**: At least one operation needs to be specified, if you would like to prevent the use of any operation you can use `--allowed-instructions-file` to limit the available instructions into only allowing instructions which don't take any operations.
 
 ## Memory config file
 
@@ -170,7 +170,7 @@ alpha_tui load program.alpha
     --memory-cells "h1,h2"          // Enable memory cells h1 and h2
     --allowed-comparisons "eq,neq"  // Allow equal and not equal comparisons
     --allowed-operations "add,sub"  // Allow addition and subtraction operations
-    --allowed-instructions          // Allow some specific instructions
+    --allowed-instructions-file     // Allow some specific instructions
 ```
 (The different options have been written each in a new line for better understanding, in the correct command you would write them in one line.)
 

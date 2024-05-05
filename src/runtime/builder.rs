@@ -319,6 +319,9 @@ impl RuntimeBuilder {
     }
 
     /// Checks instructions that are set by comparing them with the provided whitelist of instructions.
+    ///
+    /// NOOP instructions are always allowed.
+    ///
     /// It is also checked if any comparisons or operations are used that are not allowed.
     /// If this runtime builder contains instructions that are not contained within the whitelist or comparisons
     /// or operations that are not allowed, an error is returned.
@@ -332,7 +335,7 @@ impl RuntimeBuilder {
     ) -> Result<(), BuildProgramError> {
         for (idx, i) in instructions.iter().enumerate() {
             if let Some(whitelist) = whitelist {
-                if !whitelist.contains(&i.identifier()) {
+                if !whitelist.contains(&i.identifier()) && i.identifier() != "NOOP" {
                     // Instruction found, that is forbidden
                     let mut allowed_instructions = whitelist
                         .iter()

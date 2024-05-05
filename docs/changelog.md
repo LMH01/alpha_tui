@@ -2,11 +2,16 @@
 
 ## v1.3.1
 
+### Other
+
+- Renamed cli option `--allowed-instructions` to `--allowed-instructions-file` (fr #49) (by [@reeelix](https://github.com/reeelix))
+
 ### Bug fixes
 
 -  `%` was missing from help message when `runtime_error::unknown_operation` occurred
 - `Press [ENTER] to close` missing from `unable to parse instruction` error, when screen width was below certain threshold
 - Fixed accumulator 0 not changing value to calculated value when stack op is calculated due to side effect in stack op operation (fr #44)
+- NOOP was treated as instruction that could be forbidden, so programs with empty lines could fail to build if `--allowed-instructions` (or now `--allowed-instructions-file`) was set (#52)
 - Added α symbols in front of each entry for a "numerical accumulator" in the accumulator field of the tui (fr #47)
 
 ## v1.3.0 (latest version)
@@ -79,7 +84,7 @@
 ## v1.1.0
 
 ### New feature
-- Added new cli option: `--allowed-instructions` (fr #15)
+- Added new cli option: `--allowed-instructions-file` (fr #15)
     - This allows to limit the available instructions, more can be found here: https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md
 - Added new cli option: `--allowed-comparisons` (fr #17)
     - This allows to limit the available comparisons, more can be found here: https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md

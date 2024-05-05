@@ -186,7 +186,7 @@ pub struct InstructionLimitingArgs {
     pub enable_gamma_accumulator: Option<bool>,
 
     #[arg(
-        long = "allowed-instructions",
+        long = "allowed-instructions-file",
         help = "Load allowed instructions from file",
         long_help = "Load allowed instructions from file.\nIf set, only these instructions are allowed, if the program\ncontains any instructions not contained in the file, it will fail to build.\n\nFor more help see https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md",
         global = true
@@ -211,7 +211,8 @@ pub trait CliHint {
 pub fn validate_arguments(cli: &Cli) -> Result<()> {
     if let Some(memory_cells) = &cli.global_args.memory_cells {
         for cell in memory_cells {
-            if cell.chars().any(|c| c.is_ascii_digit()) && !cell.chars().any(|c| c.is_alphabetic()) {
+            if cell.chars().any(|c| c.is_ascii_digit()) && !cell.chars().any(|c| c.is_alphabetic())
+            {
                 return Err(CliError::new(CliErrorType::MemoryCellsInvalid(cell.clone())).into());
             }
         }
