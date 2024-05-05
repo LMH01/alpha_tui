@@ -167,7 +167,7 @@ impl<'a> RuntimeBuilder<'a> {
     /// Builds a new runtime by consuming this `RuntimeBuilder`.
     ///
     /// Prints status messages into stdout.
-    pub fn build(self) -> miette::Result<Runtime> {
+    pub fn build(mut self) -> miette::Result<Runtime> {
         // set runtime settings
         let settings = self.runtime_settings.unwrap_or(RuntimeSettings::default());
 
@@ -177,18 +177,15 @@ impl<'a> RuntimeBuilder<'a> {
             None => RuntimeMemory::default(),
         };
 
-        // set control flow
-        let mut control_flow = ControlFlow::new();
-
         // check if instructions are used that are not allowed
         if let Err(e) = check_instructions(&self.instructions, &self.instruction_config) {
             return Err(miette::Report::new(e));
         }
 
         // inject end labels to give option to end program using goto END
-        inject_end_labels(&mut control_flow, self.instructions.len());
+        inject_end_labels(&mut self.control_flow, self.instructions.len());
 
-        if let Err(e) = check_labels(&control_flow, &self.instructions) {
+        if let Err(e) = check_labels(&self.control_flow, &self.instructions) {
             return Err(miette::Report::new(RuntimeBuildError::LabelUndefined(e)));
         }
 
@@ -203,19 +200,19 @@ impl<'a> RuntimeBuilder<'a> {
         )?;
 
         // check if main label is set and update instruction pointer if found
-        if let Some(i) = control_flow.instruction_labels.get("main") {
-            control_flow.next_instruction_index = *i;
-            control_flow.initial_instruction = *i;
+        if let Some(i) = self.control_flow.instruction_labels.get("main") {
+            self.control_flow.next_instruction_index = *i;
+            self.control_flow.initial_instruction = *i;
         }
-        if let Some(i) = control_flow.instruction_labels.get("MAIN") {
-            control_flow.next_instruction_index = *i;
-            control_flow.initial_instruction = *i;
+        if let Some(i) = self.control_flow.instruction_labels.get("MAIN") {
+            self.control_flow.next_instruction_index = *i;
+            self.control_flow.initial_instruction = *i;
         }
 
         Ok(Runtime {
             memory,
             instructions: self.instructions,
-            control_flow,
+            control_flow: self.control_flow,
             instruction_runs: 0,
             settings,
         })
