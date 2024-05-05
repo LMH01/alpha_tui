@@ -53,6 +53,9 @@ pub enum RuntimeBuildError {
         help("Make sure that the provided file is formatted correctly.\nSee https://github.com/LMH01/alpha_tui/blob/master/examples/memory_config.json for an example.")
     )]
     MemoryConfigFileInvalid(String, String),
+
+    // TODO add test for this variant
+    
 }
 
 #[derive(Debug)]

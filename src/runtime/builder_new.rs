@@ -2,8 +2,9 @@ use std::collections::HashSet;
 
 use crate::{
     base::{Comparison, Operation},
-    cli::GlobalArgs,
+    cli::{GlobalArgs, InstructionLimitingArgs},
     instructions::Instruction,
+    utils,
 };
 
 use super::{
@@ -15,7 +16,7 @@ pub struct RuntimeBuilder<'a> {
     instructions_input: &'a Vec<&'a str>,
     memory_config: Option<MemoryConfig>,
     runtime_settings: Option<RuntimeSettings>,
-    instruction_config: InstructionConfig<'a>,
+    instruction_config: InstructionConfig,
 }
 
 impl<'a> RuntimeBuilder<'a> {
@@ -100,14 +101,36 @@ impl<'a> RuntimeBuilder<'a> {
         self.memory_config = Some(memory_config);
         Ok(self)
     }
+
+    /// Applies the provided instruction limiting args to this runtime builder.
+    ///
+    /// All values previously set in `InstructionConfig` struct are replaced by the new values.
+    pub fn apply_instruction_limiting_args(
+        &mut self,
+        instruction_limiting_args: &InstructionLimitingArgs,
+    ) -> miette::Result<&mut Self> {
+        if let Some(ac) = &instruction_limiting_args.allowed_comparisons {
+            self.instruction_config.allowed_comparisons = Some(ac.clone());
+        }
+        if let Some(ao) = &instruction_limiting_args.allowed_operations {
+            self.instruction_config.allowed_operations = Some(ao.clone());
+        }
+        // if allowed instructions file is set, parse instructions and set the ids as allowed
+        if let Some(path) = &instruction_limiting_args.allowed_instructions_file {
+            self.instruction_config.allowed_instruction_identifiers =
+                Some(utils::build_instruction_whitelist(path)?);
+        }
+        Ok(self)
+    }
 }
 
+/// Stores information that is used to limit what instructions should be allowed.
 #[derive(Default)]
-struct InstructionConfig<'a> {
+struct InstructionConfig {
     /// Stores the ids of instructions that are allowed.
     ///
     /// If the value is `None` all instructions are allowed.
-    pub allowed_instruction_identifiers: Option<&'a HashSet<String>>,
+    pub allowed_instruction_identifiers: Option<HashSet<String>>,
     /// Stores comparisons that are allowed, if value is `None`, all comparisons are allowed.
     pub allowed_comparisons: Option<Vec<Comparison>>,
     /// Stores operations that are allowed, if value is `None`, all operations are allowed.
