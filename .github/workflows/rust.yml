@@ -16,5 +16,14 @@ jobs:
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
+
+  check-format:
+    
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
     - name: Check format
       run: cargo fmt --check
+    
