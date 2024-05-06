@@ -222,7 +222,7 @@ pub enum CheckCommand {
     #[command(about = "Check if the program compiles")]
     Compile,
     #[command(about = "Check if the program can be run")]
-    Run
+    Run,
 }
 
 #[allow(clippy::module_name_repetitions)]

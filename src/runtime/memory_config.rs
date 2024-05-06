@@ -51,7 +51,7 @@ impl MemoryConfig {
                     config.gamma_accumulator.enabled = true;
                 };
                 Ok(config)
-            },
+            }
             Err(e) => Err(miette::miette!("json parse error: {e}")),
         }
     }
