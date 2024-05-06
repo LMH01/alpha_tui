@@ -97,7 +97,7 @@ Unfortunately it is not possible to print the nice and informative error message
 
 ## Check command
 
-The `check` subcommand can be used to perform checks on the program. It is currently only supported to check if the program compiles. For example the command `alpha_tui check examples/programs/faculty.alpha compile` will check if the program compiles and return `0` if it did. Otherwise an error code is returned, see below for the meaning.
+The `check` subcommand can be used to perform checks on the program. It is currently supported to check if the program compiles or if the program compiles and runs without an error. For example the command `alpha_tui check examples/programs/faculty.alpha compile` will check if the program compiles and return `0` if it did. Otherwise an error code is returned, see below for the meaning.
 
 ### Return values
 

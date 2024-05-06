@@ -132,7 +132,7 @@ pub struct CheckArgs {
     pub file: String,
 
     #[command(subcommand)]
-    command: CheckCommand,
+    pub command: CheckCommand,
 }
 
 #[derive(Args, Clone, Debug)]
@@ -221,6 +221,8 @@ pub struct InstructionLimitingArgs {
 pub enum CheckCommand {
     #[command(about = "Check if the program compiles")]
     Compile,
+    #[command(about = "Check if the program can be run")]
+    Run
 }
 
 #[allow(clippy::module_name_repetitions)]

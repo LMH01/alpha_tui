@@ -2,6 +2,10 @@
 
 ## v1.4.0
 
+### New feature
+
+- Added `run` subcommand to `check` subcommand, with that subcommand it can be checked if program can be run without an error
+
 ### TUI
 
 - Added α symbols in front of each entry for a "numerical accumulator" in the accumulator field of the tui (fr #47) (by [@reeelix](https://github.com/reeelix))

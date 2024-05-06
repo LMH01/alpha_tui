@@ -3,7 +3,7 @@ use std::process::exit;
 use miette::miette;
 
 use crate::{
-    cli::{CheckArgs, GlobalArgs},
+    cli::{CheckArgs, CheckCommand, GlobalArgs},
     runtime::builder::RuntimeBuilder,
 };
 
@@ -44,9 +44,29 @@ pub fn check(
         exit(1);
     }
     // build runtime
-    if let Err(e) = rb.build() {
+    let mut rt = match rb.build() {
+        Ok(rt) => rt,
+        Err(e) => {
+            println!(
+                "Check unsuccessful, program did not compile.\nError: {:?}",
+                miette!(e)
+            );
+            exit(1);
+        }
+    };
+
+    match check_args.command {
+        CheckCommand::Compile => {
+            println!("Check successful");
+            return;
+        }
+        CheckCommand::Run => (),
+    }
+
+    // run runtime
+    if let Err(e) = rt.run() {
         println!(
-            "Check unsuccessful, program did not compile.\nError: {:?}",
+            "Check unsuccessful, runtime error while running program.\nError: {:?}",
             miette!(e)
         );
         exit(1);

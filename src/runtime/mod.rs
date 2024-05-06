@@ -35,7 +35,6 @@ pub struct Runtime {
 
 impl Runtime {
     /// Runs the complete program.
-    #[allow(dead_code)]
     pub fn run(&mut self) -> Result<bool, RuntimeError> {
         while self.control_flow.next_instruction_index < self.instructions.len() {
             self.step()?;
