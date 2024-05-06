@@ -196,6 +196,16 @@ impl RuntimeBuilder {
                 memory_config.gamma_accumulator.enabled = true;
             }
             self.memory_config = Some(memory_config);
+            // update runtime settings
+            let mut runtime_settings = match self.runtime_settings.take() {
+                Some(runtime_settings) => runtime_settings,
+                None => RuntimeSettings::default(),
+            };
+            runtime_settings.autodetect_accumulators = false;
+            runtime_settings.autodetect_gamma_accumulator = false;
+            runtime_settings.autodetect_memory_cells = false;
+            runtime_settings.autodetect_index_memory_cells = false;
+            self.runtime_settings = Some(runtime_settings);
         }
         Ok(self)
     }
