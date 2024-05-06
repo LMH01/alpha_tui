@@ -148,7 +148,6 @@ Error: build_program_error
     );
 }
 
-
 #[test]
 fn test_allowed_instructions_only_operations() {
     let mut cmd = Command::cargo_bin("alpha_tui").unwrap();
