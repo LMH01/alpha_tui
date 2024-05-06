@@ -12,9 +12,11 @@ Note that it is not required to set these values but if a memory type is used th
 
 If you require accumulators, the gamma accumulator, memory cells or index memory cells to be pre initialized you can use the option `--memory-config-file` to read in a file that contains information about this data. An example for such file can be found [here](../examples/memory_config.json). See [below](cli.md#memory-config-file) for more information on this option.
 
-### Allowed instructions
+### Allowed instructions, comparisons and operations
 
-You can use the option `--allowed-instructions-file` to specify a file where allowed instructions are stored. When this option is provided, all programs will fail to build that contain instructions that are not included in the file.
+You can use the option `--allowed-instructions-file` to specify a file where allowed instructions, comparisons and operations are stored. When this option is provided, all programs will fail to build that contain instructions, comparisons or operations that are not included in the file (comparisons and operations provided to the arguments `--allowed-comparisons` and `--allowed-operations` are also allowed). 
+
+If a field in the file is `null` it is disregarded and everything in that category is allowed, if an empty list is provided, everything in the category is forbidden.
 
 This makes it possible to challenge yourself into working with only a limited instruction set.
 
@@ -35,38 +37,58 @@ Furthermore it is not required to specify a label for the following instructions
 
 This results in this file
 
-```
-A := C
-M := A OP C
-A := M OP C
-M := Y
-push
-pop
-stackOP
-call
-goto
-if A CMP M then goto
+```json
+{
+   "instructions": [
+      "A := C",
+      "M := A OP C",
+      "A := M OP C",
+      "M := Y",
+      "push",
+      "pop",
+      "stackOP",
+      "call",
+      "goto",
+      "if A CMP M then goto"
+   ],
+   "comparisons": [
+      "eq"
+   ],
+   "operations": [
+      "add"
+   ]
+}
 ```
 or this file
 
-```
-a := 5
-p(h) := a OP 3
-a := p(h) OP 3
-p(h) := y
-push
-pop
-stack+
-call label
-goto label
-if a == p(h) then goto label
+```json
+{
+   "instructions": [
+        "a := 5",
+        "p(h) := a OP 3",
+        "a := p(h) OP 3",
+        "p(h) := y",
+        "push",
+        "pop",
+        "stack+",
+        "call label",
+        "goto label",
+        "if a == p(h) then goto label"
+   ],
+   "comparisons": [
+      "eq"
+   ],
+   "operations": [
+      "add"
+   ]
+}
 ```
 
 allowing instructions like these
 
 ```
 a0 := 5
-p(h1) := a0 * 4
+p(h1) := a0 + 4
 a0 := p(h1) + 2
 p(h2) := y
 push
@@ -78,7 +100,23 @@ if a == p(h) then goto label
 ```
 to be used in the program.
 
-**It is important to understand that only the type of instruction is limited by this option, to specifically limit what memory locations or what comparisons/operations are available you can use the options `-a`, `-g`, `-m` and `-i` or `--memory-config-file`, and `--allowed-comparisons` and `--allowed-operations` . This means that even though you might write `p(h1)` in the allowed instructions file, all available memory cells are allowed in this position, not just `p(h1)`!**
+All fields in this file are optional, so you can use a file like this
+
+```json
+{
+   "instructions": null,
+   "comparisons": [
+      "eq",
+      "neq"
+   ],
+   "operations": null
+}
+```
+to only limit the allowed comparisons.
+
+For the possible values that can be set in the `comparisons` and `operations` section of the file see [allowed-comparisons](#allowed-comparisons) and [allowed-operations](#allowed-operations).
+
+**It is important to understand that only the type of instruction, the allowed operations and the allowed comparisons are limited (if set) by this option, to specifically limit what memory locations are available you can use the options `-a`, `-g`, `-m` and `-i` or `--memory-config-file`. This means that even though you might write `p(h1)` in the allowed instructions file, all available memory cells are allowed in this position, not just `p(h1)`!**
 
 An example file can be found here: [examples/allowed_instructions.txt](../examples/allowed_instructions.txt);
 
@@ -86,9 +124,9 @@ If a runtime can not be built, because certain instructions are not allowed, thi
 
 ![Runtime build error because certain instructions are not allowed](../media/miette_error_instruction_not_allowed.png)
 
-### Allowed comparisons
+#### Allowed comparisons
 
-You can use the option `--allowed-comparisons` to specify all comparisons that should be allowed. If this option is not set, all comparisons are allowed.
+You can use the option `--allowed-comparisons` or the `comparisons` section in the `--allowed-instruction-file` to specify all comparisons that should be allowed. If neither option is set, all comparisons are allowed.
 
 The comparisons that can be specified are:
 
@@ -103,11 +141,32 @@ The comparisons that can be specified are:
 
 For example to only allow equal and not equal comparisons you can use this option: `--allowed-comparisons "eq,neq"`
 
-**Note**: At least one comparison needs to be specified, if you would like to prevent the use of any comparison you can use `--allowed-instructions-file` to limit the available instructions into only allowing instructions which don't take any comparisons.
+or this file:
 
-### Allowed operations
+```json
+{
+   "instructions": null,
+   "comparisons": [
+      "eq",
+      "neq"
+   ],
+   "operations": null
+}
+```
 
-You can use the option `--allowed-operations` to specify all operations that should be allowed. If this option is not set, all operations are allowed.
+**Note**: When `--allowed-comparisons` is used, at least one comparison needs to be specified, to prevent the use of any comparison use the option `--allowed-instructions-file` and provide an empty list in the `comparisons` section like this:
+
+```json
+{
+   "instructions": null,
+   "comparisons": [],
+   "operations": null
+}
+```
+
+#### Allowed operations
+
+You can use the option `--allowed-operations` or the `operations` section in the `--allowed-instruction-file` to specify all operations that should be allowed. If neither option is set, all operations are allowed.
 
 The operations that can be specified are:
 
@@ -121,7 +180,28 @@ The operations that can be specified are:
 
 For example to only allow addition and subtraction you can use this option: `--allowed-operations "add,sub"`
 
-**Note**: At least one operation needs to be specified, if you would like to prevent the use of any operation you can use `--allowed-instructions-file` to limit the available instructions into only allowing instructions which don't take any operations.
+or this file:
+
+```json
+{
+   "instructions": null,
+   "comparisons": null,
+   "operations": [
+        "add",
+        "sub"
+   ]
+}
+```
+
+**Note**: When `--allowed-operations` is used, at least one operation needs to be specified, to prevent the use of any operation use the option `--allowed-instructions-file` and provide an empty list in the `operations` section like this:
+
+```json
+{
+   "instructions": null,
+   "comparisons": null,
+   "operations": []
+}
+```
 
 ## Memory config file
 
