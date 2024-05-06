@@ -59,7 +59,8 @@
                 gcc
                 rustfmt
                 clippy
-                cargo-tarpaulin
+                cargo-llvm-cov
+                rustc.llvmPackages.llvm
                 vhs
               ];
 
@@ -67,6 +68,8 @@
               # This can also be fixed by using oxalica/rust-overlay and specifying the rust-src extension
               # See https://discourse.nixos.org/t/rust-src-not-found-and-other-misadventures-of-developing-rust-on-nixos/11570/3?u=samuela. for more details.
               RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
+              LLVM_COV = "${pkgs.rustc.llvmPackages.llvm}/bin/llvm-cov";
+              LLVM_PROFDATA = "${pkgs.rustc.llvmPackages.llvm}/bin/llvm-profdata";
             };
 
             packages = {
