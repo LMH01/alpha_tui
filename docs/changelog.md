@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.4.0
+## v1.4.0 (latest version)
 
 ### New feature
 
@@ -19,7 +19,7 @@
 - Added short forms `-i` for `--index-memory-cells` and `-g` for `--enable-gamma-accumulator` (fr #56) (by [@reeelix](https://github.com/reeelix))
 - Option `--enable-gamma-accumulator` no longer takes a boolean as value, the value is now set by just using this option
 - Help messages when a runtime error occurs because a memory type is missing now also hint towards the memory config file
-- Formatting for the file provided to `--memory-config-file` has been updated to include values if automatic detection of the values should be enabled (fr #62)
+- Formatting for the file provided to `--memory-config-file` has been updated to include values of automatic detection if the values should be enabled (fr #62)
 - Allowed instructions file can now be used to specify allowed comparisons and operations in addition to allowing instructions. For that the file formatting was change to `.json`. This makes it now possible to forbid all comparisons/operations (fr #72)
 
 ### Other
@@ -36,7 +36,7 @@
 - `check` subcommand would mark a test as successful even though labels where missing
 - Run custom instruction could be used in load mode to execute instructions, operations and comparisons that where forbidden (fr #63)
 
-## v1.3.0 (latest version)
+## v1.3.0
 
 ### New feature
 
