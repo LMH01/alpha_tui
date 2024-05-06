@@ -119,6 +119,37 @@ Error: build_program_error
 }
 
 #[test]
+fn test_allowed_instructions_no_comparisons() {
+    let mut cmd = Command::cargo_bin("alpha_tui").unwrap();
+    let assert = cmd
+        .arg("check")
+        .arg("tests/input/test_allowed_instructions_no_comparisons/program.alpha")
+        .arg("compile")
+        .arg("--allowed-instructions-file")
+        .arg("tests/input/test_allowed_instructions_no_comparisons/instructions.json")
+        .assert();
+    assert.stdout(
+        r#"Building instructions
+Building runtime
+Check unsuccessful, program did not compile.
+Error: build_program_error
+
+  × when building program
+  ╰─▶ build_program::comparison_not_allowed_error
+      
+        × comparison '==' in line '1' is not allowed
+        help: Make sure that you include this comparison ('==') in the allowed
+              comparisons or use a different instruction.
+              To mark this comparison as allowed you can use: '--allowed-
+              comparisons "eq"'
+      
+
+"#,
+    );
+}
+
+
+#[test]
 fn test_allowed_instructions_only_operations() {
     let mut cmd = Command::cargo_bin("alpha_tui").unwrap();
     let assert = cmd
@@ -156,6 +187,37 @@ Error: build_program_error
               To mark this operation as allowed you can use: '--allowed-
       operations
               "sub"'
+      
+
+"#,
+    );
+}
+
+#[test]
+fn test_allowed_instructions_no_operations() {
+    let mut cmd = Command::cargo_bin("alpha_tui").unwrap();
+    let assert = cmd
+        .arg("check")
+        .arg("tests/input/test_allowed_instructions_no_operations/program.alpha")
+        .arg("compile")
+        .arg("--allowed-instructions-file")
+        .arg("tests/input/test_allowed_instructions_no_operations/instructions.json")
+        .assert();
+    assert.stdout(
+        r#"Building instructions
+Building runtime
+Check unsuccessful, program did not compile.
+Error: build_program_error
+
+  × when building program
+  ╰─▶ build_program::operation_not_allowed_error
+      
+        × operation '+' in line '1' is not allowed
+        help: Make sure that you include this operation ('+') in the allowed
+              operations or use a different instruction.
+              To mark this operation as allowed you can use: '--allowed-
+      operations
+              "add"'
       
 
 "#,
