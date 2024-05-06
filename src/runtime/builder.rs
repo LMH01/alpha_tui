@@ -149,7 +149,8 @@ impl RuntimeBuilder {
             match InstructionConfig::try_from_file(path) {
                 Ok(config) => {
                     if let Some(instructions) = config.allowed_instruction_identifiers {
-                        self.instruction_config.allowed_instruction_identifiers = Some(instructions);
+                        self.instruction_config.allowed_instruction_identifiers =
+                            Some(instructions);
                     }
                     if let Some(comparisons) = config.allowed_comparisons {
                         self.instruction_config.allowed_comparisons = Some(comparisons);

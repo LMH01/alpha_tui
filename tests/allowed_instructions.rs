@@ -99,7 +99,7 @@ fn test_allowed_instructions_only_comparisons_fail() {
         .arg("tests/input/test_allowed_instructions_only_comparisons_fail/instructions.json")
         .assert();
     assert.stdout(
-            r#"Building instructions
+        r#"Building instructions
 Building runtime
 Check unsuccessful, program did not compile.
 Error: build_program_error
@@ -114,7 +114,7 @@ Error: build_program_error
               comparisons "eq"'
       
 
-"#
+"#,
     );
 }
 
@@ -142,7 +142,7 @@ fn test_allowed_instructions_only_operations_fail() {
         .arg("tests/input/test_allowed_instructions_only_operations_fail/instructions.json")
         .assert();
     assert.stdout(
-            r#"Building instructions
+        r#"Building instructions
 Building runtime
 Check unsuccessful, program did not compile.
 Error: build_program_error
@@ -158,6 +158,6 @@ Error: build_program_error
               "sub"'
       
 
-"#
+"#,
     );
 }
