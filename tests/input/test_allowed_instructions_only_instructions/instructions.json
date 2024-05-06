@@ -1,0 +1,9 @@
+{
+   "instructions": [
+      "A := C",
+      "A := C OP C",
+      "if A CMP C then goto"
+   ],
+   "comparisons": null,
+   "operations": null
+}
