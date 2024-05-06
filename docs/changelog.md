@@ -21,6 +21,7 @@
 ### Other
 
 - Error messages now hint towards missing blank spaces (fr #58) (by [@reeelix](https://github.com/reeelix))
+- If the gamma accumulator is completely disabled (meaning autodetection is disabled and it does not exist from the start) `p(y)` is treated as access of memory cell with label `y` instead of taking the value of the gamma accumulator and using it to access an index memory cell (fr #64)
 
 ### Bug fixes
 

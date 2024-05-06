@@ -208,10 +208,20 @@ impl RuntimeBuilder {
         let settings = self.runtime_settings.unwrap_or_default();
 
         // build memory
-        let mut memory = match self.memory_config.as_ref() {
+        let mut memory = match &self.memory_config {
             Some(memory_config) => RuntimeMemory::from(memory_config.to_owned()),
             None => RuntimeMemory::default(),
         };
+
+        // check if gamma is used as index for index memory cell even though gamma is fully disabled
+        // replace that gamma command with labeled memory cell access
+        if let None = memory.gamma {
+            // gamma is definitely currently disabled
+            if !settings.autodetect_gamma_accumulator {
+                // gamma can not be created automatically so gamma can not exist in runtime
+                replace_gamma_as_index_instructions(&mut self.instructions);
+            }
+        }
 
         // check if instructions are used that are not allowed
         if let Err(e) = check_instructions(&self.instructions, &self.instruction_config) {
@@ -398,6 +408,62 @@ pub fn check_instructions(
     Ok(())
 }
 
+/// Replaces all index accesses with gamma for memory cells with normal memory cell access.
+///
+/// So `p(y)` (where y is used as index for the index memory cell) is now changed to a normal
+/// memory cell access, where `y` is the label of a specific memory cell.
+fn replace_gamma_as_index_instructions(instructions: &mut Vec<Instruction>) {
+    for instruction in instructions {
+        match instruction {
+            Instruction::Assign(target, value) => {
+                let target = if target.is_imc_gamma() {
+                    TargetType::MemoryCell("y".to_string())
+                } else {
+                    target.clone()
+                };
+                let value = if value.is_imc_gamma() {
+                    Value::MemoryCell("y".to_string())
+                } else {
+                    value.clone()
+                };
+                *instruction = Instruction::Assign(target, value);
+            }
+            Instruction::Calc(target, value_a, op, value_b) => {
+                let target = if target.is_imc_gamma() {
+                    TargetType::MemoryCell("y".to_string())
+                } else {
+                    target.clone()
+                };
+                let value_a = if value_a.is_imc_gamma() {
+                    Value::MemoryCell("y".to_string())
+                } else {
+                    value_a.clone()
+                };
+                let value_b = if value_b.is_imc_gamma() {
+                    Value::MemoryCell("y".to_string())
+                } else {
+                    value_b.clone()
+                };
+                *instruction = Instruction::Calc(target, value_a, *op, value_b);
+            }
+            Instruction::JumpIf(value_a, cmp, value_b, label) => {
+                let value_a = if value_a.is_imc_gamma() {
+                    Value::MemoryCell("y".to_string())
+                } else {
+                    value_a.clone()
+                };
+                let value_b = if value_b.is_imc_gamma() {
+                    Value::MemoryCell("y".to_string())
+                } else {
+                    value_b.clone()
+                };
+                *instruction = Instruction::JumpIf(value_a, *cmp, value_b, label.clone());
+            }
+            _ => (),
+        }
+    }
+}
+
 fn inject_end_labels(control_flow: &mut ControlFlow, last_instruction_index: usize) {
     control_flow
         .instruction_labels
@@ -452,6 +518,7 @@ fn check_missing_vars(
     runtime_memory: &mut RuntimeMemory,
 ) -> Result<(), RuntimeBuildError> {
     for instruction in instructions {
+        println!("{}", instruction);
         match instruction {
             Instruction::Assign(target, source) => {
                 target.check_new(runtime_memory, memory_config)?;

@@ -70,7 +70,7 @@ pub struct IndexMemoryCell {
 }
 
 /// Different ways of paring two values
-#[derive(Debug, PartialEq, Eq, Clone, Hash, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Comparison {
     Lt,

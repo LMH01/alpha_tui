@@ -547,6 +547,17 @@ impl TryFrom<(&String, (usize, usize))> for TargetType {
     }
 }
 
+impl TargetType {
+
+    /// Returns true if this target type is `IndexMemoryCell(IndexMemoryCellIndexType::Gamma)`.
+    pub fn is_imc_gamma(&self) -> bool {
+        match self {
+            TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Gamma) => true,
+            _ => false,
+        }
+    }
+}
+
 impl Display for TargetType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -614,6 +625,14 @@ impl Value {
                     Ok(assert_index_memory_cell_contains_value(runtime_args, idx)?)
                 }
             },
+        }
+    }
+
+    /// Returns true if this target type is `IndexMemoryCell(IndexMemoryCellIndexType::Gamma)`.
+    pub fn is_imc_gamma(&self) -> bool {
+        match self {
+            Value::IndexMemoryCell(IndexMemoryCellIndexType::Gamma) => true,
+            _ => false,
         }
     }
 }
