@@ -45,7 +45,13 @@ impl MemoryConfig {
     /// Tries to parse the provided file into a memory config.
     pub fn try_from_file(path: &str) -> miette::Result<Self> {
         match serde_json::from_str::<MemoryConfig>(&utils::read_file(path)?.join("\n")) {
-            Ok(config) => Ok(config),
+            Ok(mut config) => {
+                // check if autodetection for gamma is enabled, because that implies that gamma is enabled
+                if let Some(true) = config.gamma_accumulator.autodetection {
+                    config.gamma_accumulator.enabled = true;
+                };
+                Ok(config)
+            },
             Err(e) => Err(miette::miette!("json parse error: {e}")),
         }
     }
