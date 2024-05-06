@@ -1,6 +1,7 @@
 {
    "instructions": [
       "A := C",
+      "A := C OP C",
       "A := M",
       "M := A",
       "A := A OP M",
@@ -12,6 +13,19 @@
       "push",
       "stackOP"
    ],
-   "comparisons": null,
-   "operations": null
+   "comparisons": [
+      "lt",
+      "le",
+      "eq",
+      "neq",
+      "ge",
+      "gt"
+   ],
+   "operations": [
+      "add",
+      "sub",
+      "mul",
+      "div",
+      "mod"
+   ]
 }
