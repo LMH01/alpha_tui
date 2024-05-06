@@ -1,0 +1,16 @@
+{
+   "instructions": [
+      "A := C OP C",
+      "if A CMP C then goto"
+   ],
+   "comparisons": [
+      "neq",
+      "ge",
+      "gt"
+   ],
+   "operations": [
+      "mul",
+      "div",
+      "mod"
+   ]
+}

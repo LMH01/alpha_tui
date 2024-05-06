@@ -144,12 +144,6 @@ impl RuntimeBuilder {
         &mut self,
         instruction_limiting_args: &InstructionLimitingArgs,
     ) -> miette::Result<&mut Self> {
-        if let Some(ac) = &instruction_limiting_args.allowed_comparisons {
-            self.instruction_config.allowed_comparisons = Some(ac.clone());
-        }
-        if let Some(ao) = &instruction_limiting_args.allowed_operations {
-            self.instruction_config.allowed_operations = Some(ao.clone());
-        }
         // if allowed instructions file is set, parse instructions and set the ids as allowed
         if let Some(path) = &instruction_limiting_args.allowed_instructions_file {
             match InstructionConfig::try_from_file(path) {
@@ -160,6 +154,23 @@ impl RuntimeBuilder {
                     return Err(e);
                 }
             }
+        }
+        if let Some(ac) = &instruction_limiting_args.allowed_comparisons {
+            // if allowed_comparisons are already set, merge with additional allowed comparisons
+            let mut allowed_comparisons = match self.instruction_config.allowed_comparisons.take() {
+                Some(value) => value,
+                None => Vec::new(),
+            };
+            allowed_comparisons.append(&mut ac.clone());
+            self.instruction_config.allowed_comparisons = Some(allowed_comparisons);
+        }
+        if let Some(ao) = &instruction_limiting_args.allowed_operations {
+            let mut allowed_operations = match self.instruction_config.allowed_operations.take() {
+                Some(value) => value,
+                None => Vec::new(),
+            };
+            allowed_operations.append(&mut ao.clone());
+            self.instruction_config.allowed_operations = Some(allowed_operations);
         }
         // set/override memory autodetection values to false, if `--disable-memory-detection` is set
         if instruction_limiting_args.disable_memory_detection {
