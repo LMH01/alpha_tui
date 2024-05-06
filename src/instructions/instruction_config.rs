@@ -34,7 +34,7 @@ impl InstructionConfig {
                 // TODO change error return type to return RuntimeBuildError
                 Err(e) => return Err(miette::miette!("json parse error: {e}")),
             };
-        return Ok(raw.into_instruction_config()?);
+        raw.into_instruction_config()
     }
 }
 

@@ -550,10 +550,10 @@ impl TryFrom<(&String, (usize, usize))> for TargetType {
 impl TargetType {
     /// Returns true if this target type is `IndexMemoryCell(IndexMemoryCellIndexType::Gamma)`.
     pub fn is_imc_gamma(&self) -> bool {
-        match self {
-            TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Gamma) => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Gamma)
+        )
     }
 }
 
@@ -629,10 +629,10 @@ impl Value {
 
     /// Returns true if this target type is `IndexMemoryCell(IndexMemoryCellIndexType::Gamma)`.
     pub fn is_imc_gamma(&self) -> bool {
-        match self {
-            Value::IndexMemoryCell(IndexMemoryCellIndexType::Gamma) => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            Value::IndexMemoryCell(IndexMemoryCellIndexType::Gamma)
+        )
     }
 }
 

@@ -225,7 +225,7 @@ impl RuntimeBuilder {
 
         // check if gamma is used as index for index memory cell even though gamma is fully disabled
         // replace that gamma command with labeled memory cell access
-        if let None = memory.gamma {
+        if memory.gamma.is_none() {
             // gamma is definitely currently disabled
             if !settings.autodetect_gamma_accumulator {
                 // gamma can not be created automatically so gamma can not exist in runtime
