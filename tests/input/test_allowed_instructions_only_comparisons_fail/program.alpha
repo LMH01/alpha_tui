@@ -1,0 +1,2 @@
+if a == 5 then goto end
+if a != 5 then goto end
