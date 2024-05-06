@@ -518,7 +518,6 @@ fn check_missing_vars(
     runtime_memory: &mut RuntimeMemory,
 ) -> Result<(), RuntimeBuildError> {
     for instruction in instructions {
-        println!("{}", instruction);
         match instruction {
             Instruction::Assign(target, source) => {
                 target.check_new(runtime_memory, memory_config)?;
