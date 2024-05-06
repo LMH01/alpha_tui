@@ -8,7 +8,7 @@ fn test_cmd_check_compile_with_allowed_instructions() {
         .arg("tests/input/test_cmd_check_compile_with_allowed_instructions/program.alpha")
         .arg("compile")
         .arg("--allowed-instructions-file")
-        .arg("tests/input/test_cmd_check_compile_with_allowed_instructions/instructions.txt")
+        .arg("tests/input/test_cmd_check_compile_with_allowed_instructions/instructions.json")
         .assert();
     assert.success();
 }
@@ -21,7 +21,7 @@ fn test_cmd_check_compile_with_allowed_instructions_2() {
         .arg("tests/input/test_cmd_check_compile_with_allowed_instructions_2/program.alpha")
         .arg("compile")
         .arg("--allowed-instructions-file")
-        .arg("tests/input/test_cmd_check_compile_with_allowed_instructions_2/instructions.txt")
+        .arg("tests/input/test_cmd_check_compile_with_allowed_instructions_2/instructions.json")
         .assert();
     assert.success();
 }

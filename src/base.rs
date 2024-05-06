@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use clap::{builder::PossibleValue, ValueEnum};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     cli::CliHint,
@@ -69,7 +70,7 @@ pub struct IndexMemoryCell {
 }
 
 /// Different ways of paring two values
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, Serialize, Deserialize)]
 pub enum Comparison {
     Lt,
     Le,
@@ -165,7 +166,7 @@ impl CliHint for Comparison {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, Copy, Serialize, Deserialize)]
 pub enum Operation {
     Add,
     Sub,

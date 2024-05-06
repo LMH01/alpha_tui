@@ -13,9 +13,10 @@ use ratatui::{
 use crate::{
     instructions::{
         error_handling::{BuildProgramError, ParseSingleInstructionError},
+        instruction_config::InstructionConfig,
         Instruction,
     },
-    runtime::{self, builder::InstructionConfig, error_handling::RuntimeError, Runtime},
+    runtime::{self, error_handling::RuntimeError, Runtime},
     utils,
 };
 

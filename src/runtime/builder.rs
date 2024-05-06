@@ -1,13 +1,11 @@
-use std::collections::HashSet;
-
 use crate::{
-    base::{Accumulator, Comparison, MemoryCell, Operation},
+    base::{Accumulator, MemoryCell},
     cli::{CliHint, GlobalArgs, InstructionLimitingArgs},
     instructions::{
         error_handling::{BuildProgramError, BuildProgramErrorTypes},
+        instruction_config::InstructionConfig,
         Identifier, IndexMemoryCellIndexType, Instruction, TargetType, Value,
     },
-    utils,
 };
 
 use super::{
@@ -154,8 +152,14 @@ impl RuntimeBuilder {
         }
         // if allowed instructions file is set, parse instructions and set the ids as allowed
         if let Some(path) = &instruction_limiting_args.allowed_instructions_file {
-            self.instruction_config.allowed_instruction_identifiers =
-                Some(utils::build_instruction_whitelist(path)?);
+            match InstructionConfig::try_from_file(path) {
+                Ok(config) => {
+                    self.instruction_config = config;
+                }
+                Err(e) => {
+                    return Err(e);
+                }
+            }
         }
         // set/override memory autodetection values to false, if `--disable-memory-detection` is set
         if instruction_limiting_args.disable_memory_detection {
@@ -228,19 +232,6 @@ impl RuntimeBuilder {
             settings,
         })
     }
-}
-
-/// Stores information that is used to limit what instructions should be allowed.
-#[derive(Default)]
-pub struct InstructionConfig {
-    /// Stores the ids of instructions that are allowed.
-    ///
-    /// If the value is `None` all instructions are allowed.
-    pub allowed_instruction_identifiers: Option<HashSet<String>>,
-    /// Stores comparisons that are allowed, if value is `None`, all comparisons are allowed.
-    pub allowed_comparisons: Option<Vec<Comparison>>,
-    /// Stores operations that are allowed, if value is `None`, all operations are allowed.
-    pub allowed_operations: Option<Vec<Operation>>,
 }
 
 /// Builds the provided instructions.

@@ -4,7 +4,9 @@ use std::{
     io::{BufRead, BufReader, LineWriter, Write},
 };
 
-use miette::{miette, IntoDiagnostic, NamedSource, Result, SourceOffset, SourceSpan};
+use miette::{
+    miette, IntoDiagnostic, NamedSource, Result, SourceOffset, SourceSpan,
+};
 
 use crate::instructions::{
     error_handling::{BuildAllowedInstructionsError, InstructionParseError},
@@ -17,6 +19,7 @@ const SPACING: usize = 2;
 /// Reads a file into a string vector.
 ///
 /// Each  line is a new entry.
+#[deprecated(note = "Use read_file_new instead")]
 pub fn read_file(path: &str) -> Result<Vec<String>, String> {
     let mut content = Vec::new();
     let file = match File::open(path) {
@@ -29,6 +32,27 @@ pub fn read_file(path: &str) -> Result<Vec<String>, String> {
         match line {
             Ok(l) => content.push(l),
             Err(e) => return Err(e.to_string()),
+        }
+    }
+    Ok(content)
+}
+
+// TODO rename to read_file, when deprecated function has been removed^
+/// Reads a file into a string vector.
+///
+/// Each  line is a new entry.
+pub fn read_file_new(path: &str) -> Result<Vec<String>> {
+    let mut content = Vec::new();
+    let file = match File::open(path) {
+        Ok(f) => f,
+        Err(e) => return Err(miette::miette!(e)),
+    };
+    let reader = BufReader::new(file);
+
+    for line in reader.lines() {
+        match line {
+            Ok(l) => content.push(l),
+            Err(e) => return Err(miette::miette!(e)),
         }
     }
     Ok(content)
@@ -188,6 +212,53 @@ pub fn get_comment(instruction: &str) -> Option<String> {
     } else {
         Some(comment)
     }
+}
+
+/// Builds a hash set of allowed instruction identifiers, by parsing each line in the input instructions as instruction
+/// and storing the id.
+pub fn build_instruction_whitelist_new(
+    instructions: Vec<String>,
+    path: &str,
+) -> Result<HashSet<String>> {
+    let instructions = prepare_whitelist_file(instructions);
+    let mut whitelisted_instructions = HashSet::new();
+    for (idx, s) in instructions.iter().enumerate() {
+        match Instruction::try_from(s.as_str()) {
+            Ok(i) => {
+                let _ = whitelisted_instructions.insert(i.identifier());
+            }
+            Err(e) => {
+                // Workaround for wrong end_range value depending on error.
+                // For the line to be printed when more then one character is affected for some reason the range needs to be increased by one.
+                let end_range = match e {
+                    InstructionParseError::InvalidExpression(_, _) => e.range().1 - e.range().0 + 1,
+                    InstructionParseError::UnknownInstruction(_, _) => {
+                        e.range().1 - e.range().0 + 1
+                    }
+                    InstructionParseError::NotANumber(_, _) => e.range().1 - e.range().0,
+                    InstructionParseError::UnknownComparison(_, _) => e.range().1 - e.range().0,
+                    InstructionParseError::UnknownOperation(_, _) => e.range().1 - e.range().0,
+                    InstructionParseError::MissingExpression { range: _, help: _ } => {
+                        e.range().1 - e.range().0
+                    }
+                };
+                let file_contents = instructions.join("\n");
+                Err(BuildAllowedInstructionsError {
+                    src: NamedSource::new(path, instructions.clone().join("\n")),
+                    bad_bit: SourceSpan::new(
+                        SourceOffset::from_location(
+                            file_contents.clone(),
+                            idx + 1,
+                            e.range().0 + 1,
+                        ),
+                        end_range,
+                    ),
+                    reason: e,
+                })?;
+            }
+        }
+    }
+    Ok(whitelisted_instructions)
 }
 
 /// Builds a hash set of allowed instruction identifiers, by reading the provided file and building instructions.

@@ -3,7 +3,8 @@ use miette::Result;
 use crate::{
     app::{commands::load_instruction_history, App},
     cli::{GlobalArgs, LoadArgs},
-    runtime::builder::{self, InstructionConfig},
+    instructions::instruction_config::InstructionConfig,
+    runtime::builder,
     utils::{self, pretty_format_instructions, write_file},
 };
 

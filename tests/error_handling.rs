@@ -7,7 +7,7 @@ fn test_bai_error() {
         .arg("load")
         .arg("tests/input/test_bai_error/program.alpha")
         .arg("--allowed-instructions-file")
-        .arg("tests/input/test_bai_error/allowed_instructions_a.txt")
+        .arg("tests/input/test_bai_error/allowed_instructions_a.json")
         .assert();
     assert.stderr(
         r#"Error: build_program_error

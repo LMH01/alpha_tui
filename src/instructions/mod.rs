@@ -11,10 +11,9 @@ use crate::{
 use self::parsing::{parse_alpha, parse_gamma, parse_index_memory_cell, parse_memory_cell};
 
 pub mod error_handling;
-
+pub mod instruction_config;
 /// Functions related to instruction parsing
 mod parsing;
-
 #[cfg(test)]
 mod tests;
 
