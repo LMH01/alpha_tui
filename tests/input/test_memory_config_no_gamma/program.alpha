@@ -2,6 +2,7 @@ p(y) := a
 p(y) := p(h1)
 p(y) := 5
 p(y) := p(5)
+p(y) := p(y)
 a := p(y) + a
 a := p(y) + p(h1)
 a := p(y) + 5
@@ -14,3 +15,11 @@ p(y) := a + a
 p(y) := a + p(h1)
 p(y) := a + 5
 p(y) := a + p(5)
+if a == p(y) then goto end
+if p(h1) == p(y) then goto end
+if 5 == p(y) then goto end
+if p(5) == p(y) then goto end
+if p(y) == a then goto end
+if p(y) == p(h1) then goto end
+if p(y) == 5 then goto end
+if p(y) == p(5) then goto end
