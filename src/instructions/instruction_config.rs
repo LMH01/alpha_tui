@@ -27,13 +27,13 @@ impl InstructionConfig {
     /// Uses `RawInstructionConfig` to initially parse the file and if allowed instructions are set, they are parsed and
     /// the ids are stored.
     pub fn try_from_file(path: &str) -> miette::Result<Self> {
-        let raw = match serde_json::from_str::<RawInstructionConfig>(
-            &utils::read_file_new(path)?.join("\n"),
-        ) {
-            Ok(config) => config,
-            // TODO change error return type to return RuntimeBuildError
-            Err(e) => return Err(miette::miette!("json parse error: {e}")),
-        };
+        let raw =
+            match serde_json::from_str::<RawInstructionConfig>(&utils::read_file(path)?.join("\n"))
+            {
+                Ok(config) => config,
+                // TODO change error return type to return RuntimeBuildError
+                Err(e) => return Err(miette::miette!("json parse error: {e}")),
+            };
         return Ok(raw.into_instruction_config()?);
     }
 }

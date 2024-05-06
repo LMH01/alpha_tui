@@ -4,9 +4,7 @@ use std::{
     io::{BufRead, BufReader, LineWriter, Write},
 };
 
-use miette::{
-    miette, IntoDiagnostic, NamedSource, Result, SourceOffset, SourceSpan,
-};
+use miette::{miette, IntoDiagnostic, NamedSource, Result, SourceOffset, SourceSpan};
 
 use crate::instructions::{
     error_handling::{BuildAllowedInstructionsError, InstructionParseError},
@@ -19,29 +17,7 @@ const SPACING: usize = 2;
 /// Reads a file into a string vector.
 ///
 /// Each  line is a new entry.
-#[deprecated(note = "Use read_file_new instead")]
-pub fn read_file(path: &str) -> Result<Vec<String>, String> {
-    let mut content = Vec::new();
-    let file = match File::open(path) {
-        Ok(f) => f,
-        Err(e) => return Err(e.to_string()),
-    };
-    let reader = BufReader::new(file);
-
-    for line in reader.lines() {
-        match line {
-            Ok(l) => content.push(l),
-            Err(e) => return Err(e.to_string()),
-        }
-    }
-    Ok(content)
-}
-
-// TODO rename to read_file, when deprecated function has been removed^
-/// Reads a file into a string vector.
-///
-/// Each  line is a new entry.
-pub fn read_file_new(path: &str) -> Result<Vec<String>> {
+pub fn read_file(path: &str) -> Result<Vec<String>> {
     let mut content = Vec::new();
     let file = match File::open(path) {
         Ok(f) => f,

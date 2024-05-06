@@ -78,7 +78,7 @@ impl RuntimeBuilder {
                         Err(e) => {
                             return Err(RuntimeBuildError::MemoryConfigFileInvalid(
                                 path.to_string(),
-                                e,
+                                e.to_string(),
                             ))
                         }
                     }

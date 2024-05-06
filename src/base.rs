@@ -71,7 +71,7 @@ pub struct IndexMemoryCell {
 
 /// Different ways of paring two values
 #[derive(Debug, PartialEq, Eq, Clone, Hash, Serialize, Deserialize)]
-#[serde(rename_all= "snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum Comparison {
     Lt,
     Le,
@@ -168,7 +168,7 @@ impl CliHint for Comparison {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash, Copy, Serialize, Deserialize)]
-#[serde(rename_all= "snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum Operation {
     Add,
     Sub,
