@@ -1,0 +1,25 @@
+{
+   "accumulators": {
+      "values": {
+         "a": 1
+      },
+      "autodetection": true
+   },
+   "gamma_accumulator": {
+      "enabled": false,
+      "value": 10,
+      "autodetection": false
+   },
+   "memory_cells": {
+      "values": {
+         "h1": 1
+      },
+      "autodetection": true
+   },
+   "index_memory_cells": {
+      "values": {
+         "5": 1
+      },
+      "autodetection": true
+   }
+}
