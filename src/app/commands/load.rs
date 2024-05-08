@@ -5,7 +5,7 @@ use crate::{
     cli::{GlobalArgs, LoadArgs},
     instructions::instruction_config::InstructionConfig,
     runtime::builder,
-    utils::{self, pretty_format_instructions, write_file},
+    utils::{pretty_format_instructions, write_file},
 };
 
 #[allow(clippy::match_wildcard_for_single_variants)]
@@ -41,21 +41,13 @@ pub fn load(
     }
 
     // check if allowed instructions are restricted
-    let allowed_instructions = match &load_args
-        .instruction_limiting_args
-        .allowed_instructions_file
-    {
-        Some(path) => Some(InstructionConfig {
-            allowed_instruction_identifiers: Some(utils::build_instruction_whitelist(path)?),
-            allowed_comparisons: load_args
-                .instruction_limiting_args
-                .allowed_comparisons
-                .clone(),
-            allowed_operations: load_args
-                .instruction_limiting_args
-                .allowed_operations
-                .clone(),
-        }),
+    let allowed_instructions = match &load_args.instruction_limiting_args.allowed_instructions_file {
+        Some(path) => {
+            match InstructionConfig::try_from_file(path) {
+                Ok(config) => Some(config),
+                Err(e) => return Err(e),
+            }
+        },
         None => None,
     };
 

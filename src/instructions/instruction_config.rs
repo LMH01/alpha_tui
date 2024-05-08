@@ -53,7 +53,7 @@ impl RawInstructionConfig {
     /// Converts this instruction config file into an instruction config.
     fn into_instruction_config(self) -> Result<InstructionConfig> {
         let allowed_instruction_identifiers = match self.instructions {
-            Some(aii) => Some(utils::build_instruction_whitelist_new(aii, "")?),
+            Some(aii) => Some(utils::build_instruction_whitelist(aii, "")?),
             None => None,
         };
         Ok(InstructionConfig {

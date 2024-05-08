@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.1
+
+### Bug fixes
+
+- A `build_allowed_instructions_error` would occur, when the `load` command was used while an `--allowed-instructions-file` was provided
+
 ## v1.4.0 (latest version)
 
 ### New feature
