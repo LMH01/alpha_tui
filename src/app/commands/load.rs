@@ -41,12 +41,13 @@ pub fn load(
     }
 
     // check if allowed instructions are restricted
-    let allowed_instructions = match &load_args.instruction_limiting_args.allowed_instructions_file {
-        Some(path) => {
-            match InstructionConfig::try_from_file(path) {
-                Ok(config) => Some(config),
-                Err(e) => return Err(e),
-            }
+    let allowed_instructions = match &load_args
+        .instruction_limiting_args
+        .allowed_instructions_file
+    {
+        Some(path) => match InstructionConfig::try_from_file(path) {
+            Ok(config) => Some(config),
+            Err(e) => return Err(e),
         },
         None => None,
     };
