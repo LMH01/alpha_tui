@@ -201,7 +201,6 @@ pub fn build_instruction_whitelist(
     for (idx, s) in instructions.iter().enumerate() {
         match Instruction::try_from(s.as_str()) {
             Ok(i) => {
-                println!("{i}");
                 let _ = whitelisted_instructions.insert(i.identifier());
             }
             Err(e) => {
