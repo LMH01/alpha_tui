@@ -606,12 +606,12 @@ pub fn input_to_lines(
             // fill spaces if enabled until next part is reached
             if enable_alignment {
                 spans.push(fill_span(max_label_width - len + SPACING))
+            } else {
+                spans.push(fill_span(1));
             }
         } else if parts.instruction.is_some() || parts.comment.is_some() {
             if enable_alignment {
                 spans.push(fill_span(max_label_width + 1))
-            } else {
-                spans.push(fill_span(1));
             }
         }
 
@@ -623,6 +623,8 @@ pub fn input_to_lines(
             // fill spaces if enabled until next part is reached
             if enable_alignment {
                 spans.push(fill_span(max_instruction_width - len + SPACING));
+            } else {
+                spans.push(fill_span(1));
             }
         } else if parts.comment.is_some() {
             if enable_alignment {
@@ -815,6 +817,29 @@ mod tests {
                 "long_label:  \u{03c1}(h1) := 20 * 30  // comment hey".to_string(),
                 "hello:       \u{03b1}0 := \u{03c1}(1)".to_string(),
                 "            goto main         // repeat".to_string()
+            ]
+        );
+    }
+
+    #[test]
+    fn test_input_to_lines_alignment_disabled_syntax_highlighting_enabled() {
+        let input = vec![
+            "main: a := 20".to_string(),
+            "// full line comment".to_string(),
+            "# invisible".to_string(),
+            "long_label: p(h1) := 20 * 30 // comment hey".to_string(),
+            "hello: a := p(1)".to_string(),
+            "goto main // repeat".to_string(),
+        ];
+        let res = input_to_lines(&input, false, true).unwrap();
+        assert_eq!(
+            res.iter().map(|f| f.to_string()).collect::<Vec<String>>(),
+            vec![
+                "main: \u{03b1}0 := 20".to_string(),
+                "// full line comment".to_string(),
+                "long_label: \u{03c1}(h1) := 20 * 30 // comment hey".to_string(),
+                "hello: \u{03b1}0 := \u{03c1}(1)".to_string(),
+                "goto main // repeat".to_string()
             ]
         );
     }
