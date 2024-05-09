@@ -165,10 +165,8 @@ impl InstructionListStates {
     }
 
     /// Adds a new instruction to the list (display only)
-    pub fn add_instruction(&mut self, string: String) {
-        // TODO implement again
-        todo!()
-        //self.instructions.push((0, string, false))
+    pub fn add_instruction(&mut self, line: Line<'static>) {
+        self.instructions.push((0, line, false))
     }
 }
 

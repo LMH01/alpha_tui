@@ -20,7 +20,7 @@ use self::{
     content::{InstructionListStates, MemoryListsManager},
     keybindings::KeybindingHints,
     run_instruction::SingleInstruction,
-    ui::draw,
+    ui::{draw, ToSpans},
 };
 
 /// Contains all commands that this app can run
@@ -621,6 +621,7 @@ impl App {
             }
         }
 
+        let instruction_line = Line::from(instruction.to_spans());
         if let Err(e) = self.runtime.run_foreign_instruction(instruction) {
             self.state = State::RuntimeError(e, is_playground);
             return Ok(());
@@ -641,7 +642,7 @@ impl App {
         if is_playground {
             // if in playground mode, add instruction to main window
             self.instruction_list_states
-                .add_instruction(instruction_str);
+                .add_instruction(instruction_line);
             self.state =
                 State::Playground(SingleInstruction::new(&self.executed_custom_instructions));
         } else {
