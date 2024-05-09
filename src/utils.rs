@@ -186,7 +186,7 @@ pub fn format_instructions(
         }
         // instruction
         let len = instruction_txt.chars().count();
-        if enable_syntax_highlighting {
+        if enable_syntax_highlighting && !instruction_txt.is_empty() {
             let instruction =
                 Instruction::try_from(cleanup_instruction_line(instruction_txt).as_str())?;
             pretty_instruction.append(&mut instruction.to_spans());
