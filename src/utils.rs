@@ -138,26 +138,39 @@ pub fn format_instructions(
         let mut pretty_instruction = Vec::new();
         // label
         match label.clone() {
-            Some(l) => pretty_instruction.push(Span::from(format!(
-                "{}{}",
-                l,
-                &" ".repeat(max_label_length - l.chars().count() + SPACING)
-            ))),
+            Some(l) => {
+                let len = l.chars().count();
+                pretty_instruction.push(Span::from(l));
+                pretty_instruction.push(Span::from(" ".repeat(max_label_length - len + SPACING)));
+            }
             None => pretty_instruction.push(Span::from(" ".repeat(max_label_length + SPACING))),
         }
         // instruction
-        pretty_instruction.push(Span::from(format!(
-            "{}{}",
-            instruction_txt,
-            " ".repeat(max_instruction_length - instruction_txt.chars().count() + SPACING)
-        )));
+        let len = instruction_txt.chars().count();
+        pretty_instruction.push(Span::from(instruction_txt));
+        pretty_instruction.push(Span::from(
+            " ".repeat(max_instruction_length - len + SPACING),
+        ));
         // comment
         if let Some(ref c) = comment {
             pretty_instruction.push(Span::from(c.to_string()));
         } else {
             pretty_instruction.push(Span::from(" ".repeat(max_instruction_length + SPACING)));
         }
-        pretty_instructions.push(Line::from(pretty_instruction));
+        // remove trailing whitespaces
+        pretty_instruction.reverse();
+        let mut pretty_instruction_done = Vec::new();
+        let mut all_whitespaces_found = false;
+        for span in pretty_instruction {
+            if span.content.chars().all(char::is_whitespace) && !all_whitespaces_found {
+                continue;
+            }
+            all_whitespaces_found = true;
+            pretty_instruction_done.push(span);
+        }
+        pretty_instruction_done.reverse();
+
+        pretty_instructions.push(Line::from(pretty_instruction_done));
     }
     pretty_instructions
 }
