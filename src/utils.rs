@@ -18,6 +18,7 @@ use crate::{
     },
 };
 
+// TODO remove
 /// How many spaces should be between labels, instructions and comments when pretty formatting them
 const SPACING: usize = 2;
 
@@ -282,6 +283,7 @@ pub fn get_comment(instruction: &str) -> Option<String> {
     }
 }
 
+// TODO remove
 /// Removes comments and labels from the string.
 pub fn cleanup_instruction_line(mut line: String) -> String {
     // Remove comments
