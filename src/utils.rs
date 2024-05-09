@@ -5,7 +5,10 @@ use std::{
 };
 
 use miette::{miette, IntoDiagnostic, NamedSource, Result, SourceOffset, SourceSpan};
-use ratatui::{style::Style, text::{Line, Span}};
+use ratatui::{
+    style::Style,
+    text::{Line, Span},
+};
 
 use crate::{
     app::{ui::ToSpans, COMMENT, GREEN, PINK},
@@ -62,7 +65,7 @@ pub fn write_line_to_file(line: &str, path: &str) -> Result<()> {
 }
 
 /// Takes the input instructions and applies optional
-/// syntax highlighting and formatting (formatting means in this
+/// syntax highlighting and alignment (alignment means in this
 /// case that all labels, instructions and comments are aligned).
 ///
 /// If syntax highlighting is enabled, the lines are
@@ -72,43 +75,45 @@ pub fn write_line_to_file(line: &str, path: &str) -> Result<()> {
 /// Returns a vector of formatted lines.
 pub fn format_instructions(
     instructions: &[String],
-    enable_formatting: bool,
+    enable_alignment: bool,
     enable_syntax_highlighting: bool,
 ) -> Result<Vec<Line<'static>>> {
     // determine spacings
     let mut max_label_length = 0;
     let mut max_instruction_length = 0;
-    for instruction in instructions {
-        // remove comments
-        let instruction = remove_comment(instruction);
+    if enable_alignment {
+        for instruction in instructions {
+            // remove comments
+            let instruction = remove_comment(instruction);
 
-        let mut parts = instruction.split_whitespace().collect::<Vec<&str>>();
-        if parts.is_empty() {
-            continue;
-        }
-        if parts[0].ends_with(':') {
-            // label detected
-            if max_label_length < parts[0].chars().count() {
-                max_label_length = parts[0].chars().count();
+            let mut parts = instruction.split_whitespace().collect::<Vec<&str>>();
+            if parts.is_empty() {
+                continue;
             }
-            parts.remove(0);
-        }
-        // check if line contained only label and skip because parts is now empty
-        if parts.is_empty() {
-            continue;
-        }
+            if parts[0].ends_with(':') {
+                // label detected
+                if max_label_length < parts[0].chars().count() {
+                    max_label_length = parts[0].chars().count();
+                }
+                parts.remove(0);
+            }
+            // check if line contained only label and skip because parts is now empty
+            if parts.is_empty() {
+                continue;
+            }
 
-        // count length of instruction
-        let mut instruction_length = parts.len() - 1; // used to add in the spaces between the parts
-        for part in parts {
-            instruction_length += part.len();
-        }
-        if max_instruction_length < instruction_length {
-            max_instruction_length = instruction_length;
+            // count length of instruction
+            let mut instruction_length = parts.len() - 1; // used to add in the spaces between the parts
+            for part in parts {
+                instruction_length += part.len();
+            }
+            if max_instruction_length < instruction_length {
+                max_instruction_length = instruction_length;
+            }
         }
     }
 
-    // apply spacing
+    // apply spacing and formatting to each instruction (if enabled)
     let mut pretty_instructions = Vec::new();
     for instruction in instructions {
         let mut label: Option<Vec<Span<'static>>> = None;
@@ -126,7 +131,10 @@ pub fn format_instructions(
             let label_span = Span::from(parts.remove(0).replace(":", "").trim().to_string());
             let colon_span = Span::from(":");
             if enable_syntax_highlighting {
-                label = Some(vec![label_span.style(Style::default().fg(GREEN)), colon_span.style(Style::default().fg(PINK))]);
+                label = Some(vec![
+                    label_span.style(Style::default().fg(GREEN)),
+                    colon_span.style(Style::default().fg(PINK)),
+                ]);
             } else {
                 label = Some(vec![label_span, colon_span]);
             }
@@ -142,27 +150,39 @@ pub fn format_instructions(
                 } else {
                     Some(span)
                 }
-            },
+            }
             None => None,
         };
 
         // Detect instruction
         // remove comment from instruction line, if comment exists
         let instruction_txt = match comment {
-            Some(ref c) => without_label.replace(&c.content.to_string(), "").trim().to_string(),
+            Some(ref c) => without_label
+                .replace(&c.content.to_string(), "")
+                .trim()
+                .to_string(),
             None => without_label,
         };
 
-        // Create pretty instruction from gathered parts
+        // Create pretty instruction from gathered parts and apply spacing if enabled
         let mut pretty_instruction = Vec::new();
         // label
         match label.take() {
             Some(mut l) => {
                 let len = l.iter().map(|f| f.width()).sum::<usize>();
                 pretty_instruction.append(&mut l);
-                pretty_instruction.push(Span::from(" ".repeat(max_label_length - len + SPACING)));
+                if enable_alignment {
+                    pretty_instruction
+                        .push(Span::from(" ".repeat(max_label_length - len + SPACING)));
+                } else {
+                    pretty_instruction.push(Span::from(" "));
+                }
             }
-            None => pretty_instruction.push(Span::from(" ".repeat(max_label_length + SPACING))),
+            None => {
+                if enable_alignment {
+                    pretty_instruction.push(Span::from(" ".repeat(max_label_length + SPACING)))
+                }
+            }
         }
         // instruction
         let len = instruction_txt.chars().count();
@@ -173,13 +193,17 @@ pub fn format_instructions(
         } else {
             pretty_instruction.push(Span::from(instruction_txt));
         }
-        pretty_instruction.push(Span::from(
-            " ".repeat(max_instruction_length - len + SPACING),
-        ));
+        if enable_alignment {
+            pretty_instruction.push(Span::from(
+                " ".repeat(max_instruction_length - len + SPACING),
+            ));
+        } else {
+            pretty_instruction.push(Span::from(" "))
+        }
         // comment
         match comment.take() {
             Some(c) => pretty_instruction.push(c),
-            None => pretty_instruction.push(Span::from(" ".repeat(max_instruction_length + SPACING))),
+            None => ()
         }
         // remove trailing whitespaces
         pretty_instruction.reverse();
