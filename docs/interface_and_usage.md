@@ -12,7 +12,7 @@ The program understands the following commands:
 
 The main command to compile and run a program is the `load` command, it takes the file as first parameter. Example: `alpha_tui load examples/programs/faculty.alpha`.
 
-By default the code that is read will be formatted to be easier to read, this can be disabled by using the `--disable-alignment` flag. If you however would like to write the formatted code into the source file you can use the `--write-alignment` flag.
+By default the code that is read will be formatted and syntax highlighted to be easier to read, this can be disabled by using the `--disable-alignment` and `--disable-syntax-highlighting` flags. If the formatting should be written to the source file you can use the `--write-alignment` flag. If you wrote `a`, `p` and `y` in your source file, the greek alphabet equivalent ($\alpha,\rho,\gamma$) will be displayed.
 
 Predetermined breakpoints can be loaded by using the `--breakpoints` flag, it takes multiple line numbers as parameter. Example: `alpha_tui load examples/programs/faculty.alpha -b 5`.
 
