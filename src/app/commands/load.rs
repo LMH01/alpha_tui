@@ -5,7 +5,7 @@ use crate::{
     cli::{GlobalArgs, LoadArgs},
     instructions::instruction_config::InstructionConfig,
     runtime::builder,
-    utils::{pretty_format_instructions, write_file},
+    utils::{format_instructions, write_file},
 };
 
 #[allow(clippy::match_wildcard_for_single_variants)]
@@ -28,17 +28,18 @@ pub fn load(
     let rt = rb.build()?;
 
     // format instructions pretty if cli flag is set
-    let instructions = if load_args.disable_alignment {
-        instructions
-    } else {
-        pretty_format_instructions(&instructions)
-    };
+    let instructions = &format_instructions(
+        &instructions,
+        !load_args.disable_alignment,
+        !load_args.load_playground_args.disable_syntax_highlighting,
+    );
 
-    if load_args.write_alignment {
-        // write new formatting to file if enabled
-        println!("Writing alignment to source file");
-        write_file(&instructions, &input)?;
-    }
+    // TODO add in again
+    //if load_args.write_alignment {
+    //    // write new formatting to file if enabled
+    //    println!("Writing alignment to source file");
+    //    write_file(&instructions, &input)?;
+    //}
 
     // check if allowed instructions are restricted
     let allowed_instructions = match &load_args
@@ -58,32 +59,30 @@ pub fn load(
     let mut terminal = super::setup_terminal()?;
 
     // create app
-    //let mut app = App::from_runtime(
-    //    rt,
-    //    input,
-    //    &remove_special_commented_lines(instructions),
-    //    &load_args.breakpoints,
-    //    instruction_history,
-    //    allowed_instructions,
-    //    load_args.custom_instruction_history_file.clone(),
-    //    false,
-    //);
-    //let res = app.run(&mut terminal);
+    let mut app = App::from_runtime(
+        rt,
+        input,
+        //&remove_special_commented_lines(instructions),
+        &instructions,
+        &load_args.breakpoints,
+        instruction_history,
+        allowed_instructions,
+        load_args.custom_instruction_history_file.clone(),
+        false,
+    );
+    let res = app.run(&mut terminal);
 
     // restore terminal
     super::restore_terminal(&mut terminal)?;
 
-    //res?;
+    res?;
     Ok(())
 }
 
 /// Removes all lines from the input vector that start with '#'
 /// and returns the modified vector.
 fn remove_special_commented_lines(mut instructions: Vec<String>) -> Vec<String> {
-    instructions = instructions
-        .into_iter()
-        .map(|f| f.to_string())
-        .collect();
+    instructions = instructions.into_iter().map(|f| f.to_string()).collect();
     instructions.retain(|f| !f.trim().starts_with('#'));
     instructions
 }

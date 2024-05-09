@@ -5,6 +5,7 @@ use std::{
 };
 
 use miette::{miette, IntoDiagnostic, NamedSource, Result, SourceOffset, SourceSpan};
+use ratatui::text::{Line, Span};
 
 use crate::instructions::{
     error_handling::{BuildAllowedInstructionsError, InstructionParseError},
@@ -57,7 +58,20 @@ pub fn write_line_to_file(line: &str, path: &str) -> Result<()> {
     write_file(&content, path)
 }
 
-pub fn pretty_format_instructions(instructions: &[String]) -> Vec<String> {
+/// Takes the input instructions and applies optional
+/// syntax highlighting and formatting (formatting means in this
+/// case that all labels, instructions and comments are aligned).
+///
+/// If syntax highlighting is enabled, the lines are
+/// parsed as instructions to be able to print them highlighted.
+/// As this can fail the function returns a result.
+///
+/// Returns a vector of formatted lines.
+pub fn format_instructions(
+    instructions: &[String],
+    enable_formatting: bool,
+    enable_syntax_highlighting: bool,
+) -> Vec<Line<'static>> {
     // determine spacings
     let mut max_label_length = 0;
     let mut max_instruction_length = 0;
@@ -98,7 +112,7 @@ pub fn pretty_format_instructions(instructions: &[String]) -> Vec<String> {
 
         // Check if instruction is empty string
         if instruction.is_empty() {
-            pretty_instructions.push(String::new());
+            pretty_instructions.push(Line::default());
             continue;
         }
 
@@ -121,31 +135,29 @@ pub fn pretty_format_instructions(instructions: &[String]) -> Vec<String> {
         };
 
         // Create pretty instruction from gathered parts
-        let mut pretty_instruction = String::new();
+        let mut pretty_instruction = Vec::new();
         // label
         match label.clone() {
-            Some(l) => pretty_instruction.push_str(&format!(
+            Some(l) => pretty_instruction.push(Span::from(format!(
                 "{}{}",
                 l,
                 &" ".repeat(max_label_length - l.chars().count() + SPACING)
-            )),
-            None => pretty_instruction.push_str(&" ".repeat(max_label_length + SPACING)),
+            ))),
+            None => pretty_instruction.push(Span::from(" ".repeat(max_label_length + SPACING))),
         }
         // instruction
-        pretty_instruction.push_str(&format!(
+        pretty_instruction.push(Span::from(format!(
             "{}{}",
             instruction_txt,
             " ".repeat(max_instruction_length - instruction_txt.chars().count() + SPACING)
-        ));
+        )));
         // comment
         if let Some(ref c) = comment {
-            pretty_instruction.push_str(&c.to_string());
+            pretty_instruction.push(Span::from(c.to_string()));
         } else {
-            pretty_instruction.push_str(&" ".repeat(max_instruction_length + SPACING));
-            pretty_instruction = pretty_instruction.trim_end().to_string();
+            pretty_instruction.push(Span::from(" ".repeat(max_instruction_length + SPACING)));
         }
-
-        pretty_instructions.push(pretty_instruction);
+        pretty_instructions.push(Line::from(pretty_instruction));
     }
     pretty_instructions
 }
@@ -321,7 +333,7 @@ pub mod test_utils {
 mod tests {
     use crate::utils::{get_comment, prepare_whitelist_file, remove_comment};
 
-    use super::pretty_format_instructions;
+    use super::format_instructions;
 
     #[test]
     fn test_pretty_format_instructions() {
@@ -355,12 +367,18 @@ mod tests {
             "         if p(b) > 0 then goto loop_b".to_string(),                              
             "         pop".to_string()
         ];
-        let pretty_instructions = pretty_format_instructions(&instructions);
+        let pretty_instructions = format_instructions(&instructions, true, false);
         for (idx, _) in pretty_instructions.iter().enumerate() {
-            assert_eq!(pretty_instructions[idx], formatted_instructions[idx]);
+            assert_eq!(
+                pretty_instructions[idx].to_string(),
+                formatted_instructions[idx]
+            );
         }
         assert_eq!(
-            pretty_format_instructions(&instructions),
+            format_instructions(&instructions, true, false)
+                .iter()
+                .map(|f| f.to_string())
+                .collect::<Vec<String>>(),
             formatted_instructions
         );
     }
