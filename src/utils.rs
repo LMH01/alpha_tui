@@ -8,7 +8,7 @@ use miette::{miette, IntoDiagnostic, NamedSource, Result, SourceOffset, SourceSp
 use ratatui::{style::Style, text::{Line, Span}};
 
 use crate::{
-    app::{ui::ToSpans, GREEN, PINK},
+    app::{ui::ToSpans, COMMENT, GREEN, PINK},
     instructions::{
         error_handling::{BuildAllowedInstructionsError, InstructionParseError},
         Identifier, Instruction,
@@ -134,12 +134,22 @@ pub fn format_instructions(
 
         // Detect comment
         let without_label = parts.join(" ");
-        let comment = get_comment(&without_label);
+        let mut comment = match get_comment(&without_label) {
+            Some(comment) => {
+                let span = Span::from(comment);
+                if enable_syntax_highlighting {
+                    Some(span.style(Style::default().fg(COMMENT)))
+                } else {
+                    Some(span)
+                }
+            },
+            None => None,
+        };
 
         // Detect instruction
         // remove comment from instruction line, if comment exists
         let instruction_txt = match comment {
-            Some(ref c) => without_label.replace(c, "").trim().to_string(),
+            Some(ref c) => without_label.replace(&c.content.to_string(), "").trim().to_string(),
             None => without_label,
         };
 
@@ -167,10 +177,9 @@ pub fn format_instructions(
             " ".repeat(max_instruction_length - len + SPACING),
         ));
         // comment
-        if let Some(ref c) = comment {
-            pretty_instruction.push(Span::from(c.to_string()));
-        } else {
-            pretty_instruction.push(Span::from(" ".repeat(max_instruction_length + SPACING)));
+        match comment.take() {
+            Some(c) => pretty_instruction.push(c),
+            None => pretty_instruction.push(Span::from(" ".repeat(max_instruction_length + SPACING))),
         }
         // remove trailing whitespaces
         pretty_instruction.reverse();
