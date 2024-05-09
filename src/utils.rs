@@ -151,9 +151,9 @@ pub fn format_instructions(
         // instruction
         let len = instruction_txt.chars().count();
         if enable_syntax_highlighting {
-            //let instruction =
-            //    Instruction::try_from(cleanup_instruction_line(instruction_txt).as_str())?;
-            //pretty_instruction.append(&mut instruction.to_spans());
+            let instruction =
+                Instruction::try_from(cleanup_instruction_line(instruction_txt).as_str())?;
+            pretty_instruction.append(&mut instruction.to_spans());
         } else {
             pretty_instruction.push(Span::from(instruction_txt));
         }

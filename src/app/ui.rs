@@ -400,7 +400,7 @@ fn paragraph_with_line_wrap(text: String, width: u16) -> Paragraph<'static> {
 /// In used to make syntax highlighting possible.
 pub trait ToSpans {
     /// Creates a span from this element,
-    fn to_spans(&self) -> Vec<Span<'_>>;
+    fn to_spans(&self) -> Vec<Span<'static>>;
 }
 
 /// Creates a span containing ' := '.
@@ -424,7 +424,7 @@ fn build_in_span<'a>(text: &'a str) -> Span<'a> {
 }
 
 impl ToSpans for Instruction {
-    fn to_spans(&self) -> Vec<Span<'_>> {
+    fn to_spans(&self) -> Vec<Span<'static>> {
         match self {
             Self::Assign(t, v) => {
                 let mut spans = t.to_spans();
@@ -488,7 +488,7 @@ fn memory_cell_spans(label: &str) -> Vec<Span<'static>> {
 }
 
 /// Creates formatted spans for a index memory cell with type `imcit`.
-fn index_memory_cell_spanns<'a>(imcit: &'a IndexMemoryCellIndexType) -> Vec<Span<'a>> {
+fn index_memory_cell_spanns(imcit: &IndexMemoryCellIndexType) -> Vec<Span<'static>> {
     let mut spans = vec![Span::from(format!("\u{03c1}(")).style(Style::default().fg(GREEN))];
     spans.append(&mut imcit.to_spans());
     spans.push(Span::from(format!(")")).style(Style::default().fg(GREEN)));
@@ -502,7 +502,7 @@ fn constant_span(value: &usize) -> Span<'static> {
 
 impl ToSpans for TargetType {
     /// Creates a span from this target type, with specific coloring.
-    fn to_spans(&self) -> Vec<Span<'_>> {
+    fn to_spans(&self) -> Vec<Span<'static>> {
         match self {
             Self::Accumulator(idx) => vec![accumulator_span(idx)],
             Self::Gamma => vec![gamma_span()],
@@ -514,7 +514,7 @@ impl ToSpans for TargetType {
 
 impl ToSpans for IndexMemoryCellIndexType {
     /// Creates a span from this target type, with specific coloring.
-    fn to_spans(&self) -> Vec<Span<'_>> {
+    fn to_spans(&self) -> Vec<Span<'static>> {
         match self {
             Self::Accumulator(idx) => vec![accumulator_span(idx)],
             Self::Direct(idx) => vec![constant_span(idx)],
@@ -532,7 +532,7 @@ impl ToSpans for IndexMemoryCellIndexType {
 }
 
 impl ToSpans for Value {
-    fn to_spans(&self) -> Vec<Span<'_>> {
+    fn to_spans(&self) -> Vec<Span<'static>> {
         match self {
             Self::Accumulator(idx) => vec![accumulator_span(idx)],
             Self::Constant(value) => vec![constant_span(value as &usize)],
