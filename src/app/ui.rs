@@ -10,6 +10,7 @@ use text_align::TextAlign;
 use crate::{
     base::Operation,
     instructions::{IndexMemoryCellIndexType, Instruction, TargetType, Value},
+    utils::{self, remove_comment},
 };
 
 use super::{
@@ -539,5 +540,189 @@ impl ToSpans for Value {
             Self::MemoryCell(label) => memory_cell_spans(label),
             Self::IndexMemoryCell(imcit) => index_memory_cell_spanns(imcit),
         }
+    }
+}
+
+/// This function turns the input instructions string into a
+/// vector of lines, ready to be printed in the tui.
+///
+/// Lines that start with `#` are not included in the resulting vector.
+///
+/// If `enable_alignment` is true, all labels, instructions and comments are aligned below each other
+/// (excluding full line comments that start with //, they always start at the beginning of the line).
+///
+/// If `enable_syntax_highlighting` is true, all labels, instructions and comments will be colored.
+pub fn instructions_to_lines(
+    instructions: &[String],
+    enable_alignment: bool,
+    enable_syntax_highlighting: bool,
+) -> miette::Result<Vec<Line<'static>>> {
+    // determine max width of each block
+    let (max_label_width, max_instuction_width) = if enable_alignment {
+        determine_alignment(instructions)
+    } else {
+        (0, 0)
+    };
+
+    let mut lines = Vec::new();
+    for instruction in instructions {}
+
+    Ok(lines)
+}
+
+/// Reads in the instructions vector and determines what the maximum width for
+/// labels and instructions is.
+///
+/// Returns max width of labels in first variant and max width of instructions
+/// in second variant.
+fn determine_alignment(instructions: &[String]) -> (usize, usize) {
+    let mut max_label_width = 0;
+    let mut max_instruction_width = 0;
+    for instruction in instructions {
+        // Remove comments
+        let instruction = remove_comment(instruction);
+
+        let mut parts = instruction.split_whitespace().collect::<Vec<&str>>();
+        if parts.is_empty() {
+            continue;
+        }
+        if parts[0].ends_with(":") {
+            // label detected
+            let len = parts[0].chars().count();
+            if max_label_width < len {
+                max_label_width = len;
+            }
+            parts.remove(0);
+        }
+        // check if line contained only label and skip because parts is now empty
+        if parts.is_empty() {
+            continue;
+        }
+
+        // count width of instruction
+        let mut instruction_width = parts.len() - 1; // used to add in the spaces between the parts
+        for part in parts {
+            instruction_width += part.chars().count();
+        }
+        if max_instruction_width < instruction_width {
+            max_instruction_width = instruction_width;
+        }
+    }
+    (max_label_width, max_instruction_width)
+}
+
+#[derive(Debug, PartialEq)]
+struct InputParts {
+    /// Label of the input, does not contain ':'
+    label: Option<String>,
+    instruction: Option<String>,
+    comment: Option<String>,
+}
+
+/// Splits up the input into its sub components.
+///
+/// Returns all parts of the input as strings, wrapped in `InputParts`.
+/// If an element does not exist, the corresponding entry in the struct is set to null.
+///
+/// `label` in `InputParts` does not contain the `:`.
+fn input_parts(mut input: String) -> Option<InputParts> {
+    if input.is_empty() {
+        return None;
+    }
+
+    // get comment
+    let comment = utils::get_comment(&input);
+    if let Some(comment) = &comment {
+        // remove comment from input
+        input = input.replace(comment, "").trim().to_string();
+    }
+
+    // check if line only contained comment and is now empty
+    if input.is_empty() {
+        if let Some(comment) = comment {
+            return Some(InputParts {
+                label: None,
+                instruction: None,
+                comment: Some(comment),
+            });
+        } else {
+            return None;
+        }
+    }
+
+    // check for label
+    let mut parts = input.split_whitespace().collect::<Vec<&str>>();
+    let label = if parts[0].ends_with(":") {
+        Some(parts.remove(0).to_string().replace(":", ""))
+    } else {
+        None
+    };
+
+    // check for instruction
+    // at this point only instructions are left in parts
+    let instruction = if parts.is_empty() {
+        None
+    } else {
+        Some(parts.join(" ").to_string())
+    };
+
+    if comment.is_none() && label.is_none() && instruction.is_none() {
+        None
+    } else {
+        Some(InputParts {
+            label,
+            instruction,
+            comment,
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::app::ui::{input_parts, InputParts};
+
+    #[test]
+    fn test_input_parts() {
+        assert_eq!(
+            input_parts("main: a := 20 // comment".to_string()),
+            Some(InputParts {
+                label: Some("main".to_string()),
+                instruction: Some("a := 20".to_string()),
+                comment: Some("// comment".to_string())
+            })
+        );
+        assert_eq!(
+            input_parts("    a := 20 // comment".to_string()),
+            Some(InputParts {
+                label: None,
+                instruction: Some("a := 20".to_string()),
+                comment: Some("// comment".to_string())
+            })
+        );
+        assert_eq!(
+            input_parts(" // comment".to_string()),
+            Some(InputParts {
+                label: None,
+                instruction: None,
+                comment: Some("// comment".to_string())
+            })
+        );
+        assert_eq!(
+            input_parts("main: // comment".to_string()),
+            Some(InputParts {
+                label: Some("main".to_string()),
+                instruction: None,
+                comment: Some("// comment".to_string())
+            })
+        );
+        assert_eq!(
+            input_parts("main:".to_string()),
+            Some(InputParts {
+                label: Some("main".to_string()),
+                instruction: None,
+                comment: None
+            })
+        );
+        assert_eq!(input_parts("".to_string()), None);
     }
 }
