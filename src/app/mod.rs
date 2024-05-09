@@ -654,7 +654,8 @@ impl App {
                 self.instruction_list_states
                     .add_instruction(instruction_line);
             } else {
-                self.instruction_list_states.add_instruction(Line::from(instruction_str));
+                self.instruction_list_states
+                    .add_instruction(Line::from(instruction_str));
             }
             self.state =
                 State::Playground(SingleInstruction::new(&self.executed_custom_instructions));

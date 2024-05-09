@@ -8,7 +8,10 @@ use ratatui::{
 use text_align::TextAlign;
 
 use crate::{
-    app::CYAN, base::Operation, instructions::{IndexMemoryCellIndexType, Instruction, TargetType, Value}, utils::{self, remove_comment}
+    app::CYAN,
+    base::Operation,
+    instructions::{IndexMemoryCellIndexType, Instruction, TargetType, Value},
+    utils::{self, remove_comment},
 };
 
 use super::{

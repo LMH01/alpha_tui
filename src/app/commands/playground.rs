@@ -33,7 +33,9 @@ pub fn playground(global_args: &GlobalArgs, playground_args: &PlaygroundArgs) ->
         None,
         playground_args.custom_instruction_history_file.clone(),
         true,
-        !playground_args.load_playground_args.disable_syntax_highlighting,
+        !playground_args
+            .load_playground_args
+            .disable_syntax_highlighting,
     );
     let res = app.run(&mut terminal);
 

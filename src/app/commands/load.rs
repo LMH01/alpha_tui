@@ -37,7 +37,10 @@ pub fn load(
     if load_args.write_alignment {
         // write new formatting to file if enabled
         println!("Writing alignment to source file");
-        write_file(&instructions.iter().map(|f| f.to_string()).collect(), &input)?;
+        write_file(
+            &instructions.iter().map(|f| f.to_string()).collect(),
+            &input,
+        )?;
     }
 
     // check if allowed instructions are restricted
@@ -68,7 +71,7 @@ pub fn load(
         allowed_instructions,
         load_args.custom_instruction_history_file.clone(),
         false,
-        !load_args.load_playground_args.disable_syntax_highlighting
+        !load_args.load_playground_args.disable_syntax_highlighting,
     );
     let res = app.run(&mut terminal);
 
