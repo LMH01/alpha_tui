@@ -277,13 +277,19 @@ impl RuntimeBuilder {
 /// Builds the provided instructions.
 ///
 /// Updates the provided control flow with labels.
+/// 
+/// If a line starts with `#` it is skipped and no noop operation is created.
 fn build_instructions(
     instructions_input: &[String],
     file_name: &str,
     control_flow: &mut ControlFlow,
 ) -> Result<Vec<Instruction>, Box<BuildProgramError>> {
+    println!("{:?}", instructions_input);
     let mut instructions = Vec::new();
     for (index, instruction) in instructions_input.iter().enumerate() {
+        if instruction.trim().starts_with('#') {
+            continue;
+        }
         // Remove comments
         let instruction = remove_comment(instruction);
         // Check for labels
