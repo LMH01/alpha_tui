@@ -2,6 +2,10 @@
 
 ## v1.5.0
 
+### TUI
+
+- Changed color of list highlight to be in line with dracula color scheme
+
 ### Command line arguments
 
 - Added command line option `--disable-syntax-highlighting`

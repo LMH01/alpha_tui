@@ -38,7 +38,8 @@ pub mod ui;
 const BREAKPOINT_ACCENT_COLOR: Color = Color::Magenta;
 const ERROR_COLOR: Color = Color::Red;
 const CODE_AREA_DEFAULT_COLOR: Color = Color::Green;
-const LIST_ITEM_HIGHLIGHT_COLOR: Color = Color::Rgb(98, 114, 164);
+//const LIST_ITEM_HIGHLIGHT_COLOR: Color = Color::Rgb(98, 114, 164);
+const LIST_ITEM_HIGHLIGHT_COLOR: Color = SELECTION;
 const EXECUTION_FINISHED_POPUP_COLOR: Color = Color::Green;
 const KEYBINDS_FG: Color = Color::White;
 const KEYBINDS_DISABLED_FG: Color = Color::DarkGray;
@@ -52,7 +53,7 @@ const INTERNAL_MEMORY_BLOCK_BORDER_FG: Color = Color::Yellow;
 // dracula theme
 const _BACKGROUND: Color = Color::Rgb(40, 42, 54);
 const FOREGROUND: Color = Color::Rgb(248, 248, 242);
-const _SELECTION: Color = Color::Rgb(68, 71, 90);
+const SELECTION: Color = Color::Rgb(68, 71, 90);
 pub const COMMENT: Color = Color::Rgb(98, 114, 164);
 const _RED: Color = Color::Rgb(255, 85, 85);
 const _ORANGE: Color = Color::Rgb(255, 184, 108);
