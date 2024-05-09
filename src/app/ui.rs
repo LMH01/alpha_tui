@@ -841,6 +841,10 @@ mod tests {
             "long_label: p(h1) := 20 * 30 // comment hey".to_string(),
             "hello: a := p(1)".to_string(),
             "goto main // repeat".to_string(),
+            "".to_string(),
+            "a := p(1)".to_string(),
+            "label:".to_string(),
+            "label2: // comment".to_string(),
         ];
         let res = input_to_lines(&input, false, true).unwrap();
         assert_eq!(
@@ -850,7 +854,11 @@ mod tests {
                 "// full line comment".to_string(),
                 "long_label: \u{03c1}(h1) := 20 * 30 // comment hey".to_string(),
                 "hello: \u{03b1}0 := \u{03c1}(1)".to_string(),
-                "goto main // repeat".to_string()
+                "goto main // repeat".to_string(),
+                "".to_string(),
+                "\u{03b1}0 := \u{03c1}(1)".to_string(),
+                "label:".to_string(),
+                "label2: // comment".to_string(),
             ]
         );
     }
