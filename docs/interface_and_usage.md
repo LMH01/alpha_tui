@@ -24,7 +24,7 @@ When a program is loaded it can look like this: ![Program loaded example](../med
 
 Press `[s]` to begin to run the program, subsequent instructions can be run with `[n]`. Values that have changed and the line that was run last are highlighted.  This can look like this: ![Program running example](../media/gui_program_running.png)
 
-When the last instruction was executed the following window is displayed. You can restart by pressing `[t]` or exit the program by pressing `[q]`. ![Program finished example](../media/gui_program_finished.png)
+When the last instruction was executed the following window is displayed. You can restart by pressing `[t]` or exit the program by pressing `[q]`. When restarting, the memory values are reset to the state they where in when the program was launched. ![Program finished example](../media/gui_program_finished.png)
 
 Below the memory cells section the address of the instruction that is executed next is displayed.
 

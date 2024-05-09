@@ -22,7 +22,11 @@ const MAX_INSTRUCTION_RUNS: usize = 1_000_000;
 
 #[derive(Debug, PartialEq)]
 pub struct Runtime {
+    /// Currently active memory of this runtime.
     memory: RuntimeMemory,
+    /// Stores a copy of the memory configuration when the runtime was initialized.
+    /// This state is restored when the runtime is reset.
+    initial_memory: RuntimeMemory,
     instructions: Vec<Instruction>,
     control_flow: ControlFlow,
     /// Used to count how many instructions where executed.
@@ -112,10 +116,11 @@ impl Runtime {
         &self.control_flow
     }
 
-    /// Resets the current runtime to defaults, resets instruction pointer.
+    /// Resets the current runtime to defaults, resets instruction pointer
+    /// and restores the initial memory state.
     pub fn reset(&mut self) {
         self.control_flow.reset_soft();
-        self.memory.reset();
+        self.memory = self.initial_memory.clone();
     }
 
     /// Returns the index of the instruction that is executed first
@@ -257,19 +262,6 @@ impl RuntimeMemory {
         false
     }
 
-    /// Resets all values back to None.
-    pub fn reset(&mut self) {
-        for acc in &mut self.accumulators {
-            acc.1.data = None;
-        }
-        for cell in &mut self.memory_cells {
-            cell.1.data = None;
-        }
-        for cell in &mut self.index_memory_cells {
-            *cell.1 = None;
-        }
-        self.stack = Vec::new();
-    }
 }
 
 impl From<MemoryConfig> for RuntimeMemory {

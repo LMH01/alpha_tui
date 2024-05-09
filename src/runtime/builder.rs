@@ -265,7 +265,8 @@ impl RuntimeBuilder {
         }
 
         Ok(Runtime {
-            memory,
+            memory: memory.clone(),
+            initial_memory: memory,
             instructions: self.instructions,
             control_flow: self.control_flow,
             instruction_runs: 0,
@@ -284,7 +285,6 @@ fn build_instructions(
     file_name: &str,
     control_flow: &mut ControlFlow,
 ) -> Result<Vec<Instruction>, Box<BuildProgramError>> {
-    println!("{:?}", instructions_input);
     let mut instructions = Vec::new();
     for (index, instruction) in instructions_input.iter().enumerate() {
         if instruction.trim().starts_with('#') {
