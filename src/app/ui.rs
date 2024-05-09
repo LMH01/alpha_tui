@@ -596,7 +596,7 @@ pub fn input_to_lines(
 
         // handle label
         if let Some(label) = parts.label {
-            let len = label.len() + 1; // add plus one because `:` is not included in label
+            let len = label.chars().count() + 1; // add plus one because `:` is not included in label
             spans.push(string_into_span(label, enable_syntax_highlighting, GREEN));
             spans.push(string_into_span(
                 ":".to_string(),
@@ -617,7 +617,7 @@ pub fn input_to_lines(
 
         // handle instruction
         if let Some(instruction) = parts.instruction {
-            let len = instruction.len();
+            let len = instruction.chars().count();
             let instruction = Instruction::try_from(instruction.as_str())?;
             spans.append(&mut instruction.to_spans());
             // fill spaces if enabled until next part is reached
