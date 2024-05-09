@@ -64,6 +64,14 @@ pub fn write_line_to_file(line: &str, path: &str) -> Result<()> {
     write_file(&content, path)
 }
 
+// TODO rewrite to remove all options: This
+// function should always apply spacing, syntax highlighting
+// and remove hashtag lines -> Allowing these values to be
+// configurable increases the complexity of this function
+// and I don't think that these options are required that hard
+// if an issue comes that these features should be added back in
+// I will rewrite this function again to include these features
+// (mention in changelog)
 /// Takes the input instructions and applies optional
 /// syntax highlighting and alignment (alignment means in this
 /// case that all labels, instructions and comments are aligned).
@@ -198,13 +206,17 @@ pub fn format_instructions(
         } else {
             pretty_instruction.push(Span::from(instruction_txt));
         }
-        if enable_alignment {
-            pretty_instruction.push(Span::from(
-                " ".repeat(max_instruction_length - len + SPACING),
-            ));
-        } else {
-            pretty_instruction.push(Span::from(" "))
+        // add whitespaces after instruction
+        if comment.is_some() {
+            if enable_alignment {
+                pretty_instruction.push(Span::from(
+                    " ".repeat(max_instruction_length - len + SPACING),
+                ));
+            } else {
+                pretty_instruction.push(Span::from(" "));
+            }
         }
+
         // comment
         match comment.take() {
             Some(c) => pretty_instruction.push(c),
@@ -418,8 +430,6 @@ pub mod test_utils {
 
 #[cfg(test)]
 mod tests {
-    use ratatui::text::Line;
-
     use crate::utils::{get_comment, prepare_whitelist_file, remove_comment};
 
     use super::format_instructions;
