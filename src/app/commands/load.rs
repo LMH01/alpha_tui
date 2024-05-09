@@ -5,7 +5,7 @@ use crate::{
     cli::{GlobalArgs, LoadArgs},
     instructions::instruction_config::InstructionConfig,
     runtime::builder,
-    utils::format_instructions,
+    utils::{format_instructions, write_file},
 };
 
 #[allow(clippy::match_wildcard_for_single_variants)]
@@ -34,12 +34,11 @@ pub fn load(
         !load_args.load_playground_args.disable_syntax_highlighting,
     )?;
 
-    // TODO add in again
-    //if load_args.write_alignment {
-    //    // write new formatting to file if enabled
-    //    println!("Writing alignment to source file");
-    //    write_file(&instructions, &input)?;
-    //}
+    if load_args.write_alignment {
+        // write new formatting to file if enabled
+        println!("Writing alignment to source file");
+        write_file(&instructions.iter().map(|f| f.to_string()).collect(), &input)?;
+    }
 
     // check if allowed instructions are restricted
     let allowed_instructions = match &load_args
