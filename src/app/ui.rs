@@ -550,7 +550,7 @@ impl ToSpans for Value {
 /// vector of lines, ready to be printed in the tui.
 ///
 /// An input line can contain a label, instruction and comment.
-/// 
+///
 /// If an input line does not contain anything an empty line is inserted.
 ///
 /// Lines that start with `#` are not included in the resulting vector.
@@ -578,7 +578,7 @@ pub fn input_to_lines(
             None => {
                 lines.push(Line::default());
                 continue;
-            },
+            }
         };
 
         let mut spans = Vec::new();
@@ -623,8 +623,12 @@ pub fn input_to_lines(
         // handle instruction
         if let Some(instruction) = parts.instruction {
             let len = instruction.chars().count();
-            let instruction = Instruction::try_from(instruction.as_str())?;
-            spans.append(&mut instruction.to_spans());
+            if enable_syntax_highlighting {
+                let instruction = Instruction::try_from(instruction.as_str())?;
+                spans.append(&mut instruction.to_spans());
+            } else {
+                spans.push(Span::from(instruction));
+            }
             // fill spaces if enabled until next part is reached
             if enable_alignment {
                 spans.push(fill_span(max_instruction_width - len + SPACING));
