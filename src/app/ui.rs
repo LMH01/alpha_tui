@@ -550,6 +550,8 @@ impl ToSpans for Value {
 /// vector of lines, ready to be printed in the tui.
 ///
 /// An input line can contain a label, instruction and comment.
+/// 
+/// If an input line does not contain anything an empty line is inserted.
 ///
 /// Lines that start with `#` are not included in the resulting vector.
 ///
@@ -573,7 +575,10 @@ pub fn input_to_lines(
     for line in input {
         let parts = match input_parts(line.clone()) {
             Some(parts) => parts,
-            None => continue,
+            None => {
+                lines.push(Line::default());
+                continue;
+            },
         };
 
         let mut spans = Vec::new();
@@ -628,9 +633,7 @@ pub fn input_to_lines(
             }
         } else if parts.comment.is_some() {
             if enable_alignment {
-                spans.push(fill_span(max_instruction_width + 1));
-            } else {
-                spans.push(fill_span(1));
+                spans.push(fill_span(max_instruction_width + SPACING));
             }
         }
 
@@ -807,6 +810,10 @@ mod tests {
             "long_label: p(h1) := 20 * 30 // comment hey".to_string(),
             "hello: a := p(1)".to_string(),
             "goto main // repeat".to_string(),
+            "".to_string(),
+            "a := p(1)".to_string(),
+            "label:".to_string(),
+            "label2: // comment".to_string(),
         ];
         let res = input_to_lines(&input, true, true).unwrap();
         assert_eq!(
@@ -816,7 +823,11 @@ mod tests {
                 "// full line comment".to_string(),
                 "long_label:  \u{03c1}(h1) := 20 * 30  // comment hey".to_string(),
                 "hello:       \u{03b1}0 := \u{03c1}(1)".to_string(),
-                "             goto main         // repeat".to_string()
+                "             goto main         // repeat".to_string(),
+                "".to_string(),
+                "             \u{03b1}0 := \u{03c1}(1)".to_string(),
+                "label:".to_string(),
+                "label2:                        // comment".to_string(),
             ]
         );
     }
