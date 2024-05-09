@@ -68,6 +68,7 @@ pub fn load(
         allowed_instructions,
         load_args.custom_instruction_history_file.clone(),
         false,
+        !load_args.load_playground_args.disable_syntax_highlighting
     );
     let res = app.run(&mut terminal);
 

@@ -3,7 +3,12 @@ use std::{borrow::BorrowMut, ops::Deref};
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use miette::{miette, IntoDiagnostic, Result};
 use ratatui::{
-    backend::Backend, layout::{Constraint, Layout, Rect}, style::Color, text::Line, widgets::ListState, Terminal
+    backend::Backend,
+    layout::{Constraint, Layout, Rect},
+    style::Color,
+    text::Line,
+    widgets::ListState,
+    Terminal,
 };
 
 use crate::{
@@ -114,6 +119,8 @@ pub struct App {
     ///
     /// Used to prevent forbidden instructions from getting executed in run custom instruction popup.
     instruction_config: Option<InstructionConfig>,
+    /// Determines if syntax highlighting should be used.
+    enable_syntax_highlighting: bool,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -135,6 +142,7 @@ impl App {
         instruction_config: Option<InstructionConfig>,
         command_history_file: Option<String>,
         playground: bool,
+        enable_syntax_highlighting: bool,
     ) -> App {
         let mlm = MemoryListsManager::new(runtime.runtime_memory());
         let show_call_stack = runtime.contains_call_instruction();
@@ -159,6 +167,7 @@ impl App {
             command_history_file,
             show_call_stack,
             instruction_config,
+            enable_syntax_highlighting,
         }
     }
 
@@ -641,8 +650,12 @@ impl App {
         // set new state
         if is_playground {
             // if in playground mode, add instruction to main window
-            self.instruction_list_states
-                .add_instruction(instruction_line);
+            if self.enable_syntax_highlighting {
+                self.instruction_list_states
+                    .add_instruction(instruction_line);
+            } else {
+                self.instruction_list_states.add_instruction(Line::from(instruction_str));
+            }
             self.state =
                 State::Playground(SingleInstruction::new(&self.executed_custom_instructions));
         } else {
