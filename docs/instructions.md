@@ -4,7 +4,7 @@ Indices are written directly after `a`/ $\alpha$, however you don't need an indi
 
 By jumping to the labels `END`, `ENDE`,`End`, `Ende`, `end` or `ende` you can end your program. Example: `goto END`
 
-You can use either `#` or `//` to mark inline or full-line comments.
+You can use either `#` or `//` to mark inline or full-line comments. Full-line comments starting with `#` are hidden from the view, to allow for writing comments in the source file that should not be displayed in the tui.
 
 You can end instructions with `;`, it will be disregarded, when instructions are parsed.
 

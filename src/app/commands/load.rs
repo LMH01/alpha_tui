@@ -61,7 +61,7 @@ pub fn load(
     let mut app = App::from_runtime(
         rt,
         input,
-        &instructions,
+        &remove_special_commented_lines(instructions),
         &load_args.breakpoints,
         instruction_history,
         allowed_instructions,
@@ -75,4 +75,44 @@ pub fn load(
 
     res?;
     Ok(())
+}
+
+/// Removes all lines from the input vector that start with '#'
+/// and returns the modified vector.
+fn remove_special_commented_lines(mut instructions: Vec<String>) -> Vec<String> {
+    instructions = instructions
+        .into_iter()
+        .map(|f| f.trim().to_string())
+        .collect();
+    instructions.retain(|f| !f.starts_with('#'));
+    instructions
+}
+
+#[cfg(test)]
+mod tests {
+    use super::remove_special_commented_lines;
+
+    #[test]
+    fn test_remove_special_commented_lines() {
+        let input = vec![
+            "a := 5".to_string(),
+            "# a:= 5".to_string(),
+            "       # a:= 5".to_string(),
+            "// a := 5".to_string(),
+            "       // a := 5".to_string(),
+            "a := 5 # comment".to_string(),
+            "a := 5 // comment".to_string(),
+        ];
+        let res = remove_special_commented_lines(input);
+        assert_eq!(
+            res,
+            vec![
+                "a := 5",
+                "// a := 5",
+                "// a := 5",
+                "a := 5 # comment",
+                "a := 5 // comment"
+            ]
+        );
+    }
 }

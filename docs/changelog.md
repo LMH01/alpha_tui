@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.5.0
+
+### Other
+
+- Full-line comments starting with `#` are now hidden from the tui (fr #73)
+
 ## v1.4.1 (latest version)
 
 ### Bug fixes
