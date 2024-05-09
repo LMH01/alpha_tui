@@ -495,7 +495,7 @@ fn index_memory_cell_spanns(imcit: &IndexMemoryCellIndexType) -> Vec<Span<'stati
 }
 
 /// Span to be used when the value is constant.
-fn constant_span(value: &usize) -> Span<'static> {
+fn constant_span(value: &i32) -> Span<'static> {
     Span::from(format!("{value}")).style(Style::default().fg(PURPLE))
 }
 
@@ -516,7 +516,7 @@ impl ToSpans for IndexMemoryCellIndexType {
     fn to_spans(&self) -> Vec<Span<'static>> {
         match self {
             Self::Accumulator(idx) => vec![accumulator_span(idx)],
-            Self::Direct(idx) => vec![constant_span(idx)],
+            Self::Direct(idx) => vec![constant_span(&usize::try_into(*idx).unwrap_or_default())],
             Self::Gamma => vec![gamma_span()],
             Self::MemoryCell(label) => memory_cell_spans(label),
             Self::Index(idx) => {
@@ -534,7 +534,7 @@ impl ToSpans for Value {
     fn to_spans(&self) -> Vec<Span<'static>> {
         match self {
             Self::Accumulator(idx) => vec![accumulator_span(idx)],
-            Self::Constant(value) => vec![constant_span(value as &usize)],
+            Self::Constant(value) => vec![constant_span(value)],
             Self::Gamma => vec![gamma_span()],
             Self::MemoryCell(label) => memory_cell_spans(label),
             Self::IndexMemoryCell(imcit) => index_memory_cell_spanns(imcit),
