@@ -8,9 +8,7 @@ use ratatui::{
 use text_align::TextAlign;
 
 use crate::{
-    base::Operation,
-    instructions::{IndexMemoryCellIndexType, Instruction, TargetType, Value},
-    utils::{self, remove_comment},
+    app::CYAN, base::Operation, instructions::{IndexMemoryCellIndexType, Instruction, TargetType, Value}, utils::{self, remove_comment}
 };
 
 use super::{
@@ -484,17 +482,17 @@ fn gamma_span() -> Span<'static> {
 /// Creates formatted spans for a memory cell with label `label`.
 fn memory_cell_spans(label: &str) -> Vec<Span<'static>> {
     vec![
-        Span::from(format!("\u{03c1}(")).style(Style::default().fg(GREEN)),
+        Span::from(format!("\u{03c1}(")).style(Style::default().fg(CYAN)),
         Span::from(format!("{label}")).style(Style::default().fg(FOREGROUND)),
-        Span::from(format!(")")).style(Style::default().fg(GREEN)),
+        Span::from(format!(")")).style(Style::default().fg(CYAN)),
     ]
 }
 
 /// Creates formatted spans for a index memory cell with type `imcit`.
 fn index_memory_cell_spanns(imcit: &IndexMemoryCellIndexType) -> Vec<Span<'static>> {
-    let mut spans = vec![Span::from(format!("\u{03c1}(")).style(Style::default().fg(GREEN))];
+    let mut spans = vec![Span::from(format!("\u{03c1}(")).style(Style::default().fg(CYAN))];
     spans.append(&mut imcit.to_spans());
-    spans.push(Span::from(format!(")")).style(Style::default().fg(GREEN)));
+    spans.push(Span::from(format!(")")).style(Style::default().fg(CYAN)));
     spans
 }
 
