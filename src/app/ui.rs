@@ -423,7 +423,7 @@ fn label_span(label: &str) -> Span<'static> {
 }
 
 /// Span to use for build in functions.
-fn build_in_span<'a>(text: &'a str) -> Span<'a> {
+fn build_in_span(text: &str) -> Span<'_> {
     Span::from(text).style(Style::default().fg(PINK))
 }
 
@@ -485,17 +485,17 @@ fn gamma_span() -> Span<'static> {
 /// Creates formatted spans for a memory cell with label `label`.
 fn memory_cell_spans(label: &str) -> Vec<Span<'static>> {
     vec![
-        Span::from(format!("\u{03c1}(")).style(Style::default().fg(CYAN)),
-        Span::from(format!("{label}")).style(Style::default().fg(FOREGROUND)),
-        Span::from(format!(")")).style(Style::default().fg(CYAN)),
+        Span::from("\u{03c1}(".to_string()).style(Style::default().fg(CYAN)),
+        Span::from(label.to_string()).style(Style::default().fg(FOREGROUND)),
+        Span::from(")".to_string()).style(Style::default().fg(CYAN)),
     ]
 }
 
 /// Creates formatted spans for a index memory cell with type `imcit`.
 fn index_memory_cell_spanns(imcit: &IndexMemoryCellIndexType) -> Vec<Span<'static>> {
-    let mut spans = vec![Span::from(format!("\u{03c1}(")).style(Style::default().fg(CYAN))];
+    let mut spans = vec![Span::from("\u{03c1}(".to_string()).style(Style::default().fg(CYAN))];
     spans.append(&mut imcit.to_spans());
-    spans.push(Span::from(format!(")")).style(Style::default().fg(CYAN)));
+    spans.push(Span::from(")".to_string()).style(Style::default().fg(CYAN)));
     spans
 }
 
@@ -526,9 +526,9 @@ impl ToSpans for IndexMemoryCellIndexType {
             Self::MemoryCell(label) => memory_cell_spans(label),
             Self::Index(idx) => {
                 vec![
-                    Span::from(format!("\u{03c1}(")).style(Style::default().fg(GREEN)),
+                    Span::from("\u{03c1}(".to_string()).style(Style::default().fg(GREEN)),
                     Span::from(format!("{idx}")).style(Style::default().fg(PURPLE)),
-                    Span::from(format!(")")).style(Style::default().fg(GREEN)),
+                    Span::from(")".to_string()).style(Style::default().fg(GREEN)),
                 ]
             }
         }
@@ -615,10 +615,8 @@ pub fn input_to_lines(
             } else {
                 spans.push(fill_span(1));
             }
-        } else if parts.instruction.is_some() || parts.comment.is_some() {
-            if enable_alignment {
-                spans.push(fill_span(max_label_width + SPACING))
-            }
+        } else if (parts.instruction.is_some() || parts.comment.is_some()) && enable_alignment {
+            spans.push(fill_span(max_label_width + SPACING))
         }
 
         // handle instruction
@@ -636,10 +634,8 @@ pub fn input_to_lines(
             } else {
                 spans.push(fill_span(1));
             }
-        } else if parts.comment.is_some() {
-            if enable_alignment {
-                spans.push(fill_span(max_instruction_width + SPACING));
-            }
+        } else if parts.comment.is_some() && enable_alignment {
+            spans.push(fill_span(max_instruction_width + SPACING));
         }
 
         // handle comment
@@ -672,7 +668,7 @@ fn determine_alignment(instructions: &[String]) -> (usize, usize) {
         if parts.is_empty() {
             continue;
         }
-        if parts[0].ends_with(":") {
+        if parts[0].ends_with(':') {
             // label detected
             let len = parts[0].chars().count();
             if max_label_width < len {
@@ -738,8 +734,8 @@ fn input_parts(mut input: String) -> Option<InputParts> {
 
     // check for label
     let mut parts = input.split_whitespace().collect::<Vec<&str>>();
-    let label = if parts[0].ends_with(":") {
-        Some(parts.remove(0).to_string().replace(":", ""))
+    let label = if parts[0].ends_with(':') {
+        Some(parts.remove(0).to_string().replace(':', ""))
     } else {
         None
     };
