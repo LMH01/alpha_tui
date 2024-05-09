@@ -5,10 +5,10 @@ use std::{
 };
 
 use miette::{miette, IntoDiagnostic, NamedSource, Result, SourceOffset, SourceSpan};
-use ratatui::text::{Line, Span};
+use ratatui::{style::Style, text::{Line, Span}};
 
 use crate::{
-    app::ui::ToSpans,
+    app::{ui::ToSpans, GREEN, PINK},
     instructions::{
         error_handling::{BuildAllowedInstructionsError, InstructionParseError},
         Identifier, Instruction,
@@ -111,7 +111,7 @@ pub fn format_instructions(
     // apply spacing
     let mut pretty_instructions = Vec::new();
     for instruction in instructions {
-        let mut label: Option<String> = None;
+        let mut label: Option<Vec<Span<'static>>> = None;
 
         // Check if instruction is empty string
         if instruction.is_empty() {
@@ -123,7 +123,13 @@ pub fn format_instructions(
         let mut parts = instruction.split_whitespace().collect::<Vec<&str>>();
         if parts[0].ends_with(':') {
             // label detected
-            label = Some(parts.remove(0).trim().to_string());
+            let label_span = Span::from(parts.remove(0).replace(":", "").trim().to_string());
+            let colon_span = Span::from(":");
+            if enable_syntax_highlighting {
+                label = Some(vec![label_span.style(Style::default().fg(GREEN)), colon_span.style(Style::default().fg(PINK))]);
+            } else {
+                label = Some(vec![label_span, colon_span]);
+            }
         }
 
         // Detect comment
@@ -140,10 +146,10 @@ pub fn format_instructions(
         // Create pretty instruction from gathered parts
         let mut pretty_instruction = Vec::new();
         // label
-        match label.clone() {
-            Some(l) => {
-                let len = l.chars().count();
-                pretty_instruction.push(Span::from(l));
+        match label.take() {
+            Some(mut l) => {
+                let len = l.iter().map(|f| f.width()).sum::<usize>();
+                pretty_instruction.append(&mut l);
                 pretty_instruction.push(Span::from(" ".repeat(max_label_length - len + SPACING)));
             }
             None => pretty_instruction.push(Span::from(" ".repeat(max_label_length + SPACING))),

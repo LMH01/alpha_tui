@@ -57,10 +57,10 @@ const _COMMENT: Color = Color::Rgb(98, 114, 164);
 const _RED: Color = Color::Rgb(255, 85, 85);
 const _ORANGE: Color = Color::Rgb(255, 184, 108);
 const _YELLOW: Color = Color::Rgb(241, 250, 140);
-const GREEN: Color = Color::Rgb(80, 250, 123);
+pub const GREEN: Color = Color::Rgb(80, 250, 123);
 const PURPLE: Color = Color::Rgb(189, 147, 249);
-const CYAN: Color = Color::Rgb(139, 233, 253);
-const PINK: Color = Color::Rgb(255, 121, 198);
+const _CYAN: Color = Color::Rgb(139, 233, 253);
+pub const PINK: Color = Color::Rgb(255, 121, 198);
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum State {

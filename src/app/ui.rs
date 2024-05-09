@@ -8,7 +8,6 @@ use ratatui::{
 use text_align::TextAlign;
 
 use crate::{
-    app::CYAN,
     base::Operation,
     instructions::{IndexMemoryCellIndexType, Instruction, TargetType, Value},
 };
@@ -420,7 +419,7 @@ fn label_span(label: &str) -> Span<'static> {
 
 /// Span to use for build in functions.
 fn build_in_span<'a>(text: &'a str) -> Span<'a> {
-    Span::from(text).style(Style::default().fg(CYAN))
+    Span::from(text).style(Style::default().fg(PINK))
 }
 
 impl ToSpans for Instruction {
@@ -455,7 +454,7 @@ impl ToSpans for Instruction {
                 spans.push(Span::from(format!("{cmp}")).style(Style::default().fg(PINK)));
                 spans.push(Span::from(" "));
                 spans.append(&mut v2.to_spans());
-                spans.push(Span::from(" then goto ").style(Style::default().fg(CYAN)));
+                spans.push(Span::from(" then goto ").style(Style::default().fg(PINK)));
                 spans.push(label_span(label));
                 spans
             }
