@@ -54,7 +54,10 @@ const CUSTOM_INSTRUCTION_ACCENT_FG: Color = Color::Cyan;
 const MEMORY_BLOCK_BORDER_FG: Color = Color::LightBlue;
 const INTERNAL_MEMORY_BLOCK_BORDER_FG: Color = Color::Yellow;
 
-// TODO change rest of app styling to use dracula
+// It might be a good idea to change the rest of the app styling to use dracula
+// It would probably be a good idea to improve how styling is handled before
+// that is done
+
 // dracula theme
 const _BACKGROUND: Color = Color::Rgb(40, 42, 54);
 const FOREGROUND: Color = Color::Rgb(248, 248, 242);
