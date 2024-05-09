@@ -398,7 +398,7 @@ fn paragraph_with_line_wrap(text: String, width: u16) -> Paragraph<'static> {
 /// This trait is used be able to transform specific data into spans.
 ///
 /// In used to make syntax highlighting possible.
-trait ToSpans {
+pub trait ToSpans {
     /// Creates a span from this element,
     fn to_spans(&self) -> Vec<Span<'_>>;
 }

@@ -32,7 +32,7 @@ mod keybindings;
 /// Everything related to running a single instruction while a program is loaded.
 mod run_instruction;
 /// Drawing of the ui.
-mod ui;
+pub mod ui;
 
 // color config
 const BREAKPOINT_ACCENT_COLOR: Color = Color::Magenta;

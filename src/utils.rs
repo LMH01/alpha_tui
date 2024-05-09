@@ -7,9 +7,12 @@ use std::{
 use miette::{miette, IntoDiagnostic, NamedSource, Result, SourceOffset, SourceSpan};
 use ratatui::text::{Line, Span};
 
-use crate::instructions::{
-    error_handling::{BuildAllowedInstructionsError, InstructionParseError},
-    Identifier, Instruction,
+use crate::{
+    app::ui::ToSpans,
+    instructions::{
+        error_handling::{BuildAllowedInstructionsError, InstructionParseError},
+        Identifier, Instruction,
+    },
 };
 
 /// How many spaces should be between labels, instructions and comments when pretty formatting them
@@ -71,7 +74,7 @@ pub fn format_instructions(
     instructions: &[String],
     enable_formatting: bool,
     enable_syntax_highlighting: bool,
-) -> Vec<Line<'static>> {
+) -> Result<Vec<Line<'static>>> {
     // determine spacings
     let mut max_label_length = 0;
     let mut max_instruction_length = 0;
@@ -147,7 +150,13 @@ pub fn format_instructions(
         }
         // instruction
         let len = instruction_txt.chars().count();
-        pretty_instruction.push(Span::from(instruction_txt));
+        if enable_syntax_highlighting {
+            //let instruction =
+            //    Instruction::try_from(cleanup_instruction_line(instruction_txt).as_str())?;
+            //pretty_instruction.append(&mut instruction.to_spans());
+        } else {
+            pretty_instruction.push(Span::from(instruction_txt));
+        }
         pretty_instruction.push(Span::from(
             " ".repeat(max_instruction_length - len + SPACING),
         ));
@@ -172,9 +181,10 @@ pub fn format_instructions(
 
         pretty_instructions.push(Line::from(pretty_instruction_done));
     }
-    pretty_instructions
+    Ok(pretty_instructions)
 }
 
+// TODO change to take String (with ownership)
 /// Removes everything behind # or // from the string
 pub fn remove_comment(instruction: &str) -> String {
     instruction
@@ -213,6 +223,26 @@ pub fn get_comment(instruction: &str) -> Option<String> {
     } else {
         Some(comment)
     }
+}
+
+/// Removes comments and labels from the string.
+pub fn cleanup_instruction_line(mut line: String) -> String {
+    // Remove comments
+    line = remove_comment(&line);
+    // Check for labels
+    let splits = line.split_whitespace().collect::<Vec<&str>>();
+    if splits.is_empty() {
+        return String::new();
+    }
+    if splits[0].ends_with(':') {
+        return splits
+            .into_iter()
+            .skip(1)
+            .collect::<Vec<&str>>()
+            .join(" ")
+            .to_string();
+    }
+    line
 }
 
 /// Builds a hash set of allowed instruction identifiers, by parsing each line in the input instructions as instruction
@@ -380,7 +410,7 @@ mod tests {
             "         if p(b) > 0 then goto loop_b".to_string(),                              
             "         pop".to_string()
         ];
-        let pretty_instructions = format_instructions(&instructions, true, false);
+        let pretty_instructions = format_instructions(&instructions, true, false).unwrap();
         for (idx, _) in pretty_instructions.iter().enumerate() {
             assert_eq!(
                 pretty_instructions[idx].to_string(),
@@ -389,6 +419,7 @@ mod tests {
         }
         assert_eq!(
             format_instructions(&instructions, true, false)
+                .unwrap()
                 .iter()
                 .map(|f| f.to_string())
                 .collect::<Vec<String>>(),

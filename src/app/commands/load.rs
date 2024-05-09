@@ -5,7 +5,7 @@ use crate::{
     cli::{GlobalArgs, LoadArgs},
     instructions::instruction_config::InstructionConfig,
     runtime::builder,
-    utils::{format_instructions, write_file},
+    utils::format_instructions,
 };
 
 #[allow(clippy::match_wildcard_for_single_variants)]
@@ -32,7 +32,7 @@ pub fn load(
         &instructions,
         !load_args.disable_alignment,
         !load_args.load_playground_args.disable_syntax_highlighting,
-    );
+    )?;
 
     // TODO add in again
     //if load_args.write_alignment {
