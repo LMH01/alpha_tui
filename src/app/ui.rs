@@ -458,7 +458,7 @@ impl ToSpans for Instruction {
                 spans.push(Span::from(format!("{cmp}")).style(Style::default().fg(PINK)));
                 spans.push(Span::from(" "));
                 spans.append(&mut v2.to_spans());
-                spans.push(Span::from(" then goto ").style(Style::default().fg(PINK)));
+                spans.push(Span::from(" then goto").style(Style::default().fg(PINK)));
                 spans.push(label_span(label));
                 spans
             }
@@ -818,6 +818,7 @@ mod tests {
             "a := p(1)".to_string(),
             "label:".to_string(),
             "label2: // comment".to_string(),
+            "if p(h1) == p(h2) then goto hello".to_string(),
         ];
         let res = input_to_lines(&input, true, true).unwrap();
         assert_eq!(
@@ -825,13 +826,14 @@ mod tests {
             vec![
                 "main:        \u{03b1}0 := 20".to_string(),
                 "// full line comment".to_string(),
-                "long_label:  \u{03c1}(h1) := 20 * 30  // comment hey".to_string(),
+                "long_label:  \u{03c1}(h1) := 20 * 30                   // comment hey".to_string(),
                 "hello:       \u{03b1}0 := \u{03c1}(1)".to_string(),
-                "             goto main         // repeat".to_string(),
+                "             goto main                          // repeat".to_string(),
                 "".to_string(),
                 "             \u{03b1}0 := \u{03c1}(1)".to_string(),
                 "label:".to_string(),
-                "label2:                        // comment".to_string(),
+                "label2:                                         // comment".to_string(),
+                "             if \u{03c1}(h1) == \u{03c1}(h2) then goto hello".to_string()
             ]
         );
     }
