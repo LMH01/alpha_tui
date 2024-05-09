@@ -54,14 +54,14 @@ const INTERNAL_MEMORY_BLOCK_BORDER_FG: Color = Color::Yellow;
 const _BACKGROUND: Color = Color::Rgb(40, 42, 54);
 const FOREGROUND: Color = Color::Rgb(248, 248, 242);
 const SELECTION: Color = Color::Rgb(68, 71, 90);
-pub const COMMENT: Color = Color::Rgb(98, 114, 164);
+const COMMENT: Color = Color::Rgb(98, 114, 164);
 const _RED: Color = Color::Rgb(255, 85, 85);
 const _ORANGE: Color = Color::Rgb(255, 184, 108);
 const _YELLOW: Color = Color::Rgb(241, 250, 140);
-pub const GREEN: Color = Color::Rgb(80, 250, 123);
+const GREEN: Color = Color::Rgb(80, 250, 123);
 const PURPLE: Color = Color::Rgb(189, 147, 249);
 const _CYAN: Color = Color::Rgb(139, 233, 253);
-pub const PINK: Color = Color::Rgb(255, 121, 198);
+const PINK: Color = Color::Rgb(255, 121, 198);
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum State {

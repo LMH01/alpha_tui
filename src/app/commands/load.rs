@@ -1,11 +1,11 @@
 use miette::Result;
 
 use crate::{
-    app::{commands::load_instruction_history, App},
+    app::{commands::load_instruction_history, ui, App},
     cli::{GlobalArgs, LoadArgs},
     instructions::instruction_config::InstructionConfig,
     runtime::builder,
-    utils::{format_instructions, write_file},
+    utils::write_file,
 };
 
 #[allow(clippy::match_wildcard_for_single_variants)]
@@ -28,11 +28,10 @@ pub fn load(
     let rt = rb.build()?;
 
     // format instructions pretty if cli flag is set
-    let instructions = &format_instructions(
+    let instructions = ui::input_to_lines(
         &instructions,
         !load_args.disable_alignment,
         !load_args.load_playground_args.disable_syntax_highlighting,
-        true
     )?;
 
     if load_args.write_alignment {
