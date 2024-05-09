@@ -58,22 +58,22 @@ pub fn load(
     let mut terminal = super::setup_terminal()?;
 
     // create app
-    let mut app = App::from_runtime(
-        rt,
-        input,
-        &remove_special_commented_lines(instructions),
-        &load_args.breakpoints,
-        instruction_history,
-        allowed_instructions,
-        load_args.custom_instruction_history_file.clone(),
-        false,
-    );
-    let res = app.run(&mut terminal);
+    //let mut app = App::from_runtime(
+    //    rt,
+    //    input,
+    //    &remove_special_commented_lines(instructions),
+    //    &load_args.breakpoints,
+    //    instruction_history,
+    //    allowed_instructions,
+    //    load_args.custom_instruction_history_file.clone(),
+    //    false,
+    //);
+    //let res = app.run(&mut terminal);
 
     // restore terminal
     super::restore_terminal(&mut terminal)?;
 
-    res?;
+    //res?;
     Ok(())
 }
 

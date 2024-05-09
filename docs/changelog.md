@@ -2,6 +2,10 @@
 
 ## v1.5.0
 
+### Command line arguments
+
+- Added command line option `--disable-syntax-highlighting`
+
 ### Other
 
 - Full-line comments starting with `#` are now hidden from the tui (fr #73)

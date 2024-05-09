@@ -72,6 +72,9 @@ pub struct LoadArgs {
     #[command(flatten)]
     pub instruction_limiting_args: InstructionLimitingArgs,
 
+    #[command(flatten)]
+    pub load_playground_args: LoadPlaygroundArgs,
+
     #[arg(
         long_help = "Specify the input file that contains the program",
         required = true
@@ -137,6 +140,9 @@ pub struct CheckArgs {
 
 #[derive(Args, Clone, Debug)]
 pub struct PlaygroundArgs {
+    #[command(flatten)]
+    pub load_playground_args: LoadPlaygroundArgs,
+
     #[arg(
         short,
         long,
@@ -145,6 +151,19 @@ pub struct PlaygroundArgs {
         display_order = 31
     )]
     pub custom_instruction_history_file: Option<String>,
+}
+
+/// Args only allowed in playground and load.
+#[derive(Args, Clone, Debug)]
+pub struct LoadPlaygroundArgs {
+    #[arg(
+        long,
+        help = "Disable syntax highlighting.",
+        long_help = "Disable syntax highlighting. If this flag is set, the instructions in the main window are only colored white.",
+        global = true,
+        display_order = 32
+    )]
+    pub disable_syntax_highlighting: bool,
 }
 
 #[derive(Subcommand, Clone, Debug)]

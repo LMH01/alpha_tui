@@ -3,11 +3,7 @@ use std::{borrow::BorrowMut, ops::Deref};
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use miette::{miette, IntoDiagnostic, Result};
 use ratatui::{
-    backend::Backend,
-    layout::{Constraint, Layout, Rect},
-    style::Color,
-    widgets::ListState,
-    Terminal,
+    backend::Backend, layout::{Constraint, Layout, Rect}, style::Color, text::Line, widgets::ListState, Terminal
 };
 
 use crate::{
@@ -132,7 +128,7 @@ impl App {
     pub fn from_runtime(
         runtime: Runtime,
         filename: String,
-        instructions: &[String], // The content of this array is purely cosmetical, it is just used to print the instructions inside the ui
+        instructions: &[Line<'static>], // The content of this array is purely cosmetical, it is just used to print the instructions inside the ui
         set_breakpoints: &Option<Vec<usize>>,
         custom_instructions: Option<Vec<String>>,
         instruction_config: Option<InstructionConfig>,

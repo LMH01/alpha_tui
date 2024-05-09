@@ -15,7 +15,7 @@ use super::LIST_ITEM_HIGHLIGHT_COLOR;
 pub struct InstructionListStates {
     instruction_list_state: ListState,
     breakpoint_list_state: ListState,
-    instructions: Vec<(usize, String, bool)>, // index, line content, is a breakpoint present
+    instructions: Vec<(usize, Line<'static>, bool)>, // index, line content, is a breakpoint present
     last_index: i32,
     current_index: i32,
 }
@@ -23,7 +23,7 @@ pub struct InstructionListStates {
 #[allow(clippy::cast_sign_loss)]
 impl InstructionListStates {
     /// Creates new `InstructionListStates` which hold the current state of the instruction list.
-    pub fn new(instructions: &[String], set_breakpoints: Option<&Vec<usize>>) -> Self {
+    pub fn new(instructions: &[Line<'static>], set_breakpoints: Option<&Vec<usize>>) -> Self {
         let mut i = Vec::new();
         for (index, s) in instructions.iter().enumerate() {
             if let Some(v) = set_breakpoints {
@@ -51,11 +51,13 @@ impl InstructionListStates {
             .instructions()
             .iter()
             .map(|i| {
-                let content = vec![Line::from(Span::raw(if is_playground {
+                let content = if is_playground {
                     i.1.clone()
                 } else {
-                    format!("{:2}: {}", i.0 + 1, i.1)
-                }))];
+                    let mut content = vec![Span::from(format!("{:2}: ", i.0 + 1))];
+                    content.append(&mut i.1.clone().spans);
+                    Line::from(content)
+                };
                 ListItem::new(content).style(Style::default())
             })
             .collect();
@@ -150,7 +152,7 @@ impl InstructionListStates {
         self.instruction_list_state.selected()
     }
 
-    pub fn instructions(&self) -> &Vec<(usize, String, bool)> {
+    pub fn instructions(&self) -> &Vec<(usize, Line<'static>, bool)> {
         &self.instructions
     }
 
@@ -164,7 +166,9 @@ impl InstructionListStates {
 
     /// Adds a new instruction to the list (display only)
     pub fn add_instruction(&mut self, string: String) {
-        self.instructions.push((0, string, false))
+        // TODO implement again
+        todo!()
+        //self.instructions.push((0, string, false))
     }
 }
 
