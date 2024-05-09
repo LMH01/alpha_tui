@@ -2,16 +2,18 @@
 
 ## v1.5.0
 
+### New feature
+
+- Added syntax highlighting for instructions, this can be disabled using the new `--disable-syntax-highlighting` flag (fr #8)
+
 ### TUI
 
 - Changed color of list highlight to be in line with dracula color scheme
 
-### Command line arguments
-
-- Added command line option `--disable-syntax-highlighting`
-
 ### Other
 
+- `a`. `p` and `y` are now always converted to their greek alphabet equivalents in a loaded program. Using the `--write-alignment` flag these symbols can be written to the source file
+- All `a` and $\alpha$ are now displayed as $\alpha0$
 - Full-line comments starting with `#` are now hidden from the tui (fr #73)
 
 ## v1.4.1 (latest version)
