@@ -82,9 +82,9 @@ pub fn load(
 fn remove_special_commented_lines(mut instructions: Vec<String>) -> Vec<String> {
     instructions = instructions
         .into_iter()
-        .map(|f| f.trim().to_string())
+        .map(|f| f.to_string())
         .collect();
-    instructions.retain(|f| !f.starts_with('#'));
+    instructions.retain(|f| !f.trim().starts_with('#'));
     instructions
 }
 
@@ -109,7 +109,7 @@ mod tests {
             vec![
                 "a := 5",
                 "// a := 5",
-                "// a := 5",
+                "       // a := 5",
                 "a := 5 # comment",
                 "a := 5 // comment"
             ]
