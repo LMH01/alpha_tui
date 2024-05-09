@@ -611,7 +611,7 @@ pub fn input_to_lines(
             }
         } else if parts.instruction.is_some() || parts.comment.is_some() {
             if enable_alignment {
-                spans.push(fill_span(max_label_width + 1))
+                spans.push(fill_span(max_label_width + SPACING))
             }
         }
 
@@ -816,7 +816,7 @@ mod tests {
                 "// full line comment".to_string(),
                 "long_label:  \u{03c1}(h1) := 20 * 30  // comment hey".to_string(),
                 "hello:       \u{03b1}0 := \u{03c1}(1)".to_string(),
-                "            goto main         // repeat".to_string()
+                "             goto main         // repeat".to_string()
             ]
         );
     }
