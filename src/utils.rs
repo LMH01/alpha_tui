@@ -72,6 +72,7 @@ pub fn write_line_to_file(line: &str, path: &str) -> Result<()> {
 // if an issue comes that these features should be added back in
 // I will rewrite this function again to include these features
 // (mention in changelog)
+// Don't mention in changelog that syntax highlighting can be disabled, as this was never implemented
 /// Takes the input instructions and applies optional
 /// syntax highlighting and alignment (alignment means in this
 /// case that all labels, instructions and comments are aligned).
