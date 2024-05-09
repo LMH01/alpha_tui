@@ -72,11 +72,14 @@ pub fn write_line_to_file(line: &str, path: &str) -> Result<()> {
 /// parsed as instructions to be able to print them highlighted.
 /// As this can fail the function returns a result.
 ///
+/// If `remove_hashtag_lines` is set, all lines are removed that begin with `#`.
+///
 /// Returns a vector of formatted lines.
 pub fn format_instructions(
     instructions: &[String],
     enable_alignment: bool,
     enable_syntax_highlighting: bool,
+    remove_hashtag_lines: bool,
 ) -> Result<Vec<Line<'static>>> {
     // determine spacings
     let mut max_label_length = 0;
@@ -138,6 +141,8 @@ pub fn format_instructions(
             } else {
                 label = Some(vec![label_span, colon_span]);
             }
+        } else if parts[0].starts_with("#") && remove_hashtag_lines {
+            continue;
         }
 
         // Detect comment
@@ -203,7 +208,7 @@ pub fn format_instructions(
         // comment
         match comment.take() {
             Some(c) => pretty_instruction.push(c),
-            None => ()
+            None => (),
         }
         // remove trailing whitespaces
         pretty_instruction.reverse();
@@ -413,6 +418,8 @@ pub mod test_utils {
 
 #[cfg(test)]
 mod tests {
+    use ratatui::text::Line;
+
     use crate::utils::{get_comment, prepare_whitelist_file, remove_comment};
 
     use super::format_instructions;
@@ -449,7 +456,7 @@ mod tests {
             "         if p(b) > 0 then goto loop_b".to_string(),                              
             "         pop".to_string()
         ];
-        let pretty_instructions = format_instructions(&instructions, true, false).unwrap();
+        let pretty_instructions = format_instructions(&instructions, true, false, false).unwrap();
         for (idx, _) in pretty_instructions.iter().enumerate() {
             assert_eq!(
                 pretty_instructions[idx].to_string(),
@@ -457,7 +464,7 @@ mod tests {
             );
         }
         assert_eq!(
-            format_instructions(&instructions, true, false)
+            format_instructions(&instructions, true, false, false)
                 .unwrap()
                 .iter()
                 .map(|f| f.to_string())
@@ -518,5 +525,32 @@ mod tests {
             "call loop".to_string(),
         ];
         assert_eq!(*contents, after);
+    }
+
+    #[test]
+    fn test_remove_special_commented_lines() {
+        let input = vec![
+            "a := 5".to_string(),
+            "# a:= 5".to_string(),
+            "       # a:= 5".to_string(),
+            "// a := 5".to_string(),
+            "       // a := 5".to_string(),
+            "a := 5 # comment".to_string(),
+            "a := 5 // comment".to_string(),
+        ];
+        let res = format_instructions(&input, false, false, true).unwrap();
+        assert_eq!(
+            res.iter().map(|f| f.to_string()).collect::<Vec<String>>(),
+            vec![
+                "a := 5",
+                "// a := 5",
+                "       // a := 5",
+                "a := 5 # comment",
+                "a := 5 // comment"
+            ]
+            .iter()
+            .map(|f| f.to_string())
+            .collect::<Vec<String>>()
+        );
     }
 }
