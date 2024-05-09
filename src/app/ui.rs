@@ -7,10 +7,17 @@ use ratatui::{
 };
 use text_align::TextAlign;
 
+use crate::{
+    app::CYAN,
+    base::Operation,
+    instructions::{IndexMemoryCellIndexType, Instruction, TargetType, Value},
+};
+
 use super::{
     keybindings::KeySymbol, run_instruction::SingleInstruction, App, State,
     BREAKPOINT_ACCENT_COLOR, CODE_AREA_DEFAULT_COLOR, ERROR_COLOR, EXECUTION_FINISHED_POPUP_COLOR,
-    INTERNAL_MEMORY_BLOCK_BORDER_FG, LIST_ITEM_HIGHLIGHT_COLOR, MEMORY_BLOCK_BORDER_FG,
+    FOREGROUND, GREEN, INTERNAL_MEMORY_BLOCK_BORDER_FG, LIST_ITEM_HIGHLIGHT_COLOR,
+    MEMORY_BLOCK_BORDER_FG, PINK, PURPLE,
 };
 
 /// Draw the ui
@@ -386,4 +393,152 @@ fn paragraph_with_line_wrap(text: String, width: u16) -> Paragraph<'static> {
         }
     }
     Paragraph::new(styled_lines)
+}
+
+/// This trait is used be able to transform specific data into spans.
+///
+/// In used to make syntax highlighting possible.
+trait ToSpans {
+    /// Creates a span from this element,
+    fn to_spans(&self) -> Vec<Span<'_>>;
+}
+
+/// Creates a span containing ' := '.
+fn assignment_span() -> Span<'static> {
+    Span::from(" := ").style(Style::default().fg(PINK))
+}
+
+/// Creates a span containing the operation.
+fn op_span(op: &Operation) -> Span<'static> {
+    Span::from(format!("{op}")).style(Style::default().fg(PINK))
+}
+
+/// Create a span containing a label.
+fn label_span(label: &str) -> Span<'static> {
+    Span::from(format!(" {label}")).style(Style::default().fg(GREEN))
+}
+
+/// Span to use for build in functions.
+fn build_in_span<'a>(text: &'a str) -> Span<'a> {
+    Span::from(text).style(Style::default().fg(CYAN))
+}
+
+impl ToSpans for Instruction {
+    fn to_spans(&self) -> Vec<Span<'_>> {
+        match self {
+            Self::Assign(t, v) => {
+                let mut spans = t.to_spans();
+                spans.push(assignment_span());
+                spans.append(&mut v.to_spans());
+                spans
+            }
+            Self::Calc(t, v, op, v2) => {
+                let mut spans = t.to_spans();
+                spans.push(assignment_span());
+                spans.append(&mut v.to_spans());
+                spans.push(Span::from(" "));
+                spans.push(op_span(op));
+                spans.push(Span::from(" "));
+                spans.append(&mut v2.to_spans());
+                spans
+            }
+            Self::Call(label) => {
+                vec![build_in_span("call"), label_span(label)]
+            }
+            Self::Goto(label) => {
+                vec![build_in_span("goto"), label_span(label)]
+            }
+            Self::JumpIf(v, cmp, v2, label) => {
+                let mut spans = vec![Span::from("if ").style(Style::default().fg(PINK))];
+                spans.append(&mut v.to_spans());
+                spans.push(Span::from(" "));
+                spans.push(Span::from(format!("{cmp}")).style(Style::default().fg(PINK)));
+                spans.push(Span::from(" "));
+                spans.append(&mut v2.to_spans());
+                spans.push(Span::from(" then goto ").style(Style::default().fg(CYAN)));
+                spans.push(label_span(label));
+                spans
+            }
+            Self::Noop => vec![Span::from("")],
+            Self::Pop => vec![build_in_span("pop")],
+            Self::Push => vec![build_in_span("push")],
+            Self::Return => vec![build_in_span("return")],
+            Self::StackOp(op) => vec![build_in_span("stack"), op_span(op)],
+        }
+    }
+}
+
+/// Creates a span formatted for an accumulator with index `idx`.
+fn accumulator_span(idx: &usize) -> Span<'static> {
+    Span::from(format!("\u{03b1}{idx}")).style(Style::default().fg(FOREGROUND))
+}
+
+/// Creates a span formatted for gamma.
+fn gamma_span() -> Span<'static> {
+    Span::from("\u{03b3}").style(Style::default().fg(PURPLE))
+}
+
+/// Creates formatted spans for a memory cell with label `label`.
+fn memory_cell_spans(label: &str) -> Vec<Span<'static>> {
+    vec![
+        Span::from(format!("\u{03c1}(")).style(Style::default().fg(GREEN)),
+        Span::from(format!("{label}")).style(Style::default().fg(FOREGROUND)),
+        Span::from(format!(")")).style(Style::default().fg(GREEN)),
+    ]
+}
+
+/// Creates formatted spans for a index memory cell with type `imcit`.
+fn index_memory_cell_spanns<'a>(imcit: &'a IndexMemoryCellIndexType) -> Vec<Span<'a>> {
+    let mut spans = vec![Span::from(format!("\u{03c1}(")).style(Style::default().fg(GREEN))];
+    spans.append(&mut imcit.to_spans());
+    spans.push(Span::from(format!(")")).style(Style::default().fg(GREEN)));
+    spans
+}
+
+/// Span to be used when the value is constant.
+fn constant_span(value: &usize) -> Span<'static> {
+    Span::from(format!("{value}")).style(Style::default().fg(PURPLE))
+}
+
+impl ToSpans for TargetType {
+    /// Creates a span from this target type, with specific coloring.
+    fn to_spans(&self) -> Vec<Span<'_>> {
+        match self {
+            Self::Accumulator(idx) => vec![accumulator_span(idx)],
+            Self::Gamma => vec![gamma_span()],
+            Self::MemoryCell(label) => memory_cell_spans(label),
+            Self::IndexMemoryCell(imcit) => index_memory_cell_spanns(imcit),
+        }
+    }
+}
+
+impl ToSpans for IndexMemoryCellIndexType {
+    /// Creates a span from this target type, with specific coloring.
+    fn to_spans(&self) -> Vec<Span<'_>> {
+        match self {
+            Self::Accumulator(idx) => vec![accumulator_span(idx)],
+            Self::Direct(idx) => vec![constant_span(idx)],
+            Self::Gamma => vec![gamma_span()],
+            Self::MemoryCell(label) => memory_cell_spans(label),
+            Self::Index(idx) => {
+                vec![
+                    Span::from(format!("\u{03c1}(")).style(Style::default().fg(GREEN)),
+                    Span::from(format!("{idx}")).style(Style::default().fg(PURPLE)),
+                    Span::from(format!(")")).style(Style::default().fg(GREEN)),
+                ]
+            }
+        }
+    }
+}
+
+impl ToSpans for Value {
+    fn to_spans(&self) -> Vec<Span<'_>> {
+        match self {
+            Self::Accumulator(idx) => vec![accumulator_span(idx)],
+            Self::Constant(value) => vec![constant_span(value as &usize)],
+            Self::Gamma => vec![gamma_span()],
+            Self::MemoryCell(label) => memory_cell_spans(label),
+            Self::IndexMemoryCell(imcit) => index_memory_cell_spanns(imcit),
+        }
+    }
 }

@@ -583,7 +583,7 @@ pub enum Value {
     Accumulator(usize),
     Gamma,
     MemoryCell(String),
-    Constant(i32),
+    Constant(usize),
     IndexMemoryCell(IndexMemoryCellIndexType),
 }
 
@@ -595,7 +595,7 @@ impl Value {
                 Ok(runtime_args.accumulators.get(a).unwrap().data.unwrap())
             }
             Self::Gamma => assert_gamma_contains_value(runtime_args),
-            Self::Constant(a) => Ok(*a),
+            Self::Constant(a) => Ok(*a as i32),
             Self::MemoryCell(a) => {
                 assert_memory_cell_contains_value(runtime_args, a)?;
                 Ok(runtime_args.memory_cells.get(a).unwrap().data.unwrap())
@@ -647,7 +647,7 @@ impl TryFrom<(&String, (usize, usize))> for Value {
             return Ok(Self::MemoryCell(v));
         }
         if let Ok(v) = value.0.parse::<i32>() {
-            return Ok(Self::Constant(v));
+            return Ok(Self::Constant(v as usize));
         }
         if parse_gamma(value.0, value.1).is_ok() {
             return Ok(Self::Gamma);
