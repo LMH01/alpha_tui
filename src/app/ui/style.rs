@@ -26,7 +26,9 @@ pub struct Theme {
 
 impl Default for Theme {
     fn default() -> Self {
-        Theme::dracula()
+        // TODO change to dracula
+        //Theme::dracula()
+        Theme::default_old()
     }
 }
 
