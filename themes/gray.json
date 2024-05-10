@@ -1,0 +1,30 @@
+{
+    "sh_theme": {
+        "assignment": "White",
+        "op": "White",
+        "cmp": "White",
+        "label": "White",
+        "build_in": "White",
+        "accumulator": "White",
+        "gamma": "White",
+        "memory_cell_outer": "White",
+        "memory_cell_inner": "White",
+        "index_memory_cell_outer": "White",
+        "index_memory_cell_index_outer": "White",
+        "constant": "White",
+        "comment": "White"
+    },
+    "background": "Black",
+    "foreground": "White",
+    "breakpoint_accent": "DarkGray",
+    "error": "White",
+    "code_area_default": "White",
+    "list_item_highlight": "DarkGray",
+    "execution_finished_popup_border": "White",
+    "keybindings_fg": "White",
+    "keybindings_disabled_fg": "DarkGray",
+    "keybindings_bg": "DarkGray",
+    "custom_instruction_accent_fg": "White",
+    "memory_block_border": "White",
+    "internal_memory_block_border": "White"
+}
