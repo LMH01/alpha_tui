@@ -16,7 +16,8 @@ pub struct Theme {
     breakpoint_accent: Color,
     error: Color,
     code_area_default: Color,
-    list_item_highlight: Color,
+    list_item_highlight_fg: Color,
+    list_item_highlight_bg: Color,
     line_numbers: Color,
     execution_finished_popup_border: Color,
     keybindings_fg: Color,
@@ -52,7 +53,8 @@ impl Theme {
             breakpoint_accent: Color::Magenta,
             error: Color::Red,
             code_area_default: Color::Green,
-            list_item_highlight: Color::Rgb(98, 114, 164),
+            list_item_highlight_fg: Color::White,
+            list_item_highlight_bg: Color::Rgb(98, 114, 164),
             line_numbers: Color::White,
             execution_finished_popup_border: Color::Green,
             keybindings_fg: Color::White,
@@ -73,7 +75,8 @@ impl Theme {
             breakpoint_accent: PURPLE,
             error: RED,
             code_area_default: GREEN,
-            list_item_highlight: SELECTION,
+            list_item_highlight_fg: FOREGROUND,
+            list_item_highlight_bg: SELECTION,
             line_numbers: FOREGROUND,
             execution_finished_popup_border: GREEN,
             keybindings_fg: FOREGROUND,
@@ -96,9 +99,13 @@ impl Theme {
     pub fn list_item_highlight(&self, breakpoint_mode: bool) -> Style {
         let style = Style::default();
         if breakpoint_mode {
-            style.bg(self.breakpoint_accent)
+            style
+                .bg(self.breakpoint_accent)
+                .fg(self.list_item_highlight_fg)
         } else {
-            style.bg(self.list_item_highlight)
+            style
+                .bg(self.list_item_highlight_bg)
+                .fg(self.list_item_highlight_fg)
         }
     }
 
