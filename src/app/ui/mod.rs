@@ -264,7 +264,8 @@ impl App {
             let block = Block::default()
                 .title("Execution finished!")
                 .borders(Borders::ALL)
-                .border_style(self.theme.execution_finished_popup_border());
+                .border_style(self.theme.execution_finished_popup_border())
+                .style(self.theme.execution_finished_block());
             let area = super::centered_rect_abs(5, 36, f.size());
             let text = paragraph_with_line_wrap(
             format!("Press [t] to reset to start.\nPress [d] to dismiss this message.\nPress [q] or [{}] to exit.", KeySymbol::Escape.to_string()),

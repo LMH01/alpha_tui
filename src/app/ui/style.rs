@@ -12,6 +12,7 @@ pub type SharedSyntaxHighlightingTheme = Rc<SyntaxHighlightingTheme>;
 pub struct Theme {
     sh_theme: SyntaxHighlightingTheme,
     background: Color,
+    foreground: Color,
     breakpoint_accent: Color,
     error: Color,
     code_area_default: Color,
@@ -46,6 +47,7 @@ impl Theme {
         Self {
             sh_theme: SyntaxHighlightingTheme::default(),
             background: Color::default(),
+            foreground: Color::White,
             breakpoint_accent: Color::Magenta,
             error: Color::Red,
             code_area_default: Color::Green,
@@ -65,17 +67,18 @@ impl Theme {
         Self {
             sh_theme: SyntaxHighlightingTheme::default(),
             background: BACKGROUND,
-            breakpoint_accent: Color::Magenta,
-            error: Color::Red,
-            code_area_default: Color::Green,
-            list_item_highlight: Color::Rgb(98, 114, 164),
-            execution_finished_popup_border: Color::Green,
-            keybindings_fg: Color::White,
-            keybindings_disabled_fg: Color::DarkGray,
-            keybindings_bg: Color::Rgb(98, 114, 164),
-            custom_instruction_accent_fg: Color::Cyan,
-            memory_block_border: Color::LightBlue,
-            internal_memory_block_border: Color::Yellow,
+            foreground: FOREGROUND,
+            breakpoint_accent: PURPLE,
+            error: RED,
+            code_area_default: GREEN,
+            list_item_highlight: SELECTION,
+            execution_finished_popup_border: GREEN,
+            keybindings_fg: FOREGROUND,
+            keybindings_disabled_fg: COMMENT,
+            keybindings_bg: COMMENT,
+            custom_instruction_accent_fg: CYAN,
+            memory_block_border: YELLOW,
+            internal_memory_block_border: ORANGE,
         }
     }
 
@@ -88,7 +91,8 @@ impl Theme {
     }
 
     pub fn list_item_highlight(&self, breakpoint_mode: bool) -> Style {
-        let style = Style::default().add_modifier(Modifier::BOLD);
+        let style = Style::default();
+            //.add_modifier(Modifier::BOLD);
         if breakpoint_mode {
             style.bg(self.breakpoint_accent)
         } else {
@@ -101,14 +105,12 @@ impl Theme {
         if enabled {
             style.fg(self.keybindings_fg).bg(self.keybindings_bg)
         } else {
-            style
-                .fg(self.keybindings_disabled_fg)
-                .bg(self.background)
+            style.fg(self.keybindings_disabled_fg).bg(self.background)
         }
     }
 
     pub fn error_block(&self) -> Style {
-        Style::default().bg(self.background)
+        Style::default().bg(self.background).fg(self.foreground)
     }
 
     pub fn error_block_border(&self) -> Style {
@@ -166,7 +168,11 @@ impl Theme {
     }
 
     pub fn single_instruction_block(&self) -> Style {
-        Style::default().bg(self.background)
+        Style::default().bg(self.background).fg(self.foreground)
+    }
+
+    pub fn execution_finished_block(&self) -> Style {
+        Style::default().bg(self.background).fg(self.foreground)
     }
 
     // code syntax highlighting styles start here
@@ -285,11 +291,11 @@ impl SyntaxHighlightingTheme {
 // is used for the default application theme
 const BACKGROUND: Color = Color::Rgb(40, 42, 54);
 const FOREGROUND: Color = Color::Rgb(248, 248, 242);
-const _SELECTION: Color = Color::Rgb(68, 71, 90);
+const SELECTION: Color = Color::Rgb(68, 71, 90);
 const COMMENT: Color = Color::Rgb(98, 114, 164);
-const _RED: Color = Color::Rgb(255, 85, 85);
-const _ORANGE: Color = Color::Rgb(255, 184, 108);
-const _YELLOW: Color = Color::Rgb(241, 250, 140);
+const RED: Color = Color::Rgb(255, 85, 85);
+const ORANGE: Color = Color::Rgb(255, 184, 108);
+const YELLOW: Color = Color::Rgb(241, 250, 140);
 const GREEN: Color = Color::Rgb(80, 250, 123);
 const PURPLE: Color = Color::Rgb(189, 147, 249);
 const CYAN: Color = Color::Rgb(139, 233, 253);
