@@ -26,7 +26,7 @@ use self::{
     run_instruction::SingleInstruction,
     ui::{
         style::{SharedTheme, Theme},
-        syntax_highlighting::ToSpans,
+        syntax_highlighting::{SyntaxHighlighter, ToSpans},
     },
 };
 
@@ -615,7 +615,9 @@ impl App {
             }
         }
 
-        let instruction_line = Line::from(instruction.to_spans());
+        let instruction_line = Line::from(instruction.to_spans(&SyntaxHighlighter::new(
+            &self.theme.syntax_highlighting_theme(),
+        )));
         if let Err(e) = self.runtime.run_foreign_instruction(instruction) {
             self.state = State::RuntimeError(e, is_playground);
             return Ok(());

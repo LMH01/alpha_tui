@@ -4,10 +4,12 @@ use ratatui::style::{Color, Modifier, Style};
 use serde::{Deserialize, Serialize};
 
 pub type SharedTheme = Rc<Theme>;
+pub type SharedSyntaxHighlightingTheme = Rc<SyntaxHighlightingTheme>;
 
 /// The theme of the application.
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Theme {
+    sh_theme: SyntaxHighlightingTheme,
     breakpoint_accent: Color,
     error: Color,
     code_area_default: Color,
@@ -20,7 +22,6 @@ pub struct Theme {
     custom_instruction_accent_fg: Color,
     memory_block_border: Color,
     internal_memory_block_border: Color,
-    sh_assignment_span: Color,
 }
 
 impl Default for Theme {
@@ -33,6 +34,7 @@ impl Theme {
     /// The default theme of the app before `v1.5.0``.
     pub fn default_old() -> Self {
         Self {
+            sh_theme: SyntaxHighlightingTheme::default(),
             breakpoint_accent: Color::Magenta,
             error: Color::Red,
             code_area_default: Color::Green,
@@ -45,13 +47,16 @@ impl Theme {
             custom_instruction_accent_fg: Color::Cyan,
             memory_block_border: Color::LightBlue,
             internal_memory_block_border: Color::Yellow,
-            sh_assignment_span: PINK,
         }
     }
 
     /// The dracula theme.
     pub fn dracula() -> Self {
         todo!()
+    }
+
+    pub fn syntax_highlighting_theme(&self) -> SharedSyntaxHighlightingTheme {
+        Rc::new(self.sh_theme.clone())
     }
 
     pub fn custom_instruction(&self) -> Style {
@@ -107,10 +112,35 @@ impl Theme {
     }
 
     // code syntax highlighting styles start here
+}
 
-    pub fn assignment_span(&self) -> Style {
-        Style::default().fg(self.sh_assignment_span)
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+pub struct SyntaxHighlightingTheme {
+    assignment: Color,
+    op: Color,
+    label: Color,
+    build_in: Color,
+}
+
+impl Default for SyntaxHighlightingTheme {
+    fn default() -> Self {
+        Self {
+            assignment: PINK,
+            op: Default::default(),
+            label: Default::default(),
+            build_in: Default::default(),
+        }
     }
+}
+
+impl SyntaxHighlightingTheme {
+    pub fn assignment_span(&self) -> Style {
+        Style::default().fg(self.assignment)
+    }
+
+    //pub fn op_span(&self) -> Style {
+    //
+    //}
 }
 
 // dracula theme color palette

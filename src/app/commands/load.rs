@@ -1,7 +1,13 @@
+use std::rc::Rc;
+
 use miette::Result;
 
 use crate::{
-    app::{commands::load_instruction_history, ui::{style::Theme, syntax_highlighting}, App},
+    app::{
+        commands::load_instruction_history,
+        ui::{style::Theme, syntax_highlighting::SyntaxHighlighter},
+        App,
+    },
     cli::{GlobalArgs, LoadArgs},
     instructions::instruction_config::InstructionConfig,
     runtime::builder,
@@ -27,8 +33,10 @@ pub fn load(
     println!("Building runtime");
     let rt = rb.build()?;
 
+    let theme = Rc::new(Theme::default_old());
+
     // format instructions pretty if cli flag is set
-    let instructions = syntax_highlighting::input_to_lines(
+    let instructions = SyntaxHighlighter::new(&theme.syntax_highlighting_theme()).input_to_lines(
         &instructions,
         !load_args.disable_alignment,
         !load_args.load_playground_args.disable_syntax_highlighting,

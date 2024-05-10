@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use ratatui::{
     style::{Color, Style},
     text::{Line, Span},
@@ -10,19 +12,22 @@ use crate::{
     utils::{self, remove_comment},
 };
 
-use super::{style::SharedTheme, COMMENT, FOREGROUND, GREEN, PINK, PURPLE};
+use super::{
+    style::{SharedSyntaxHighlightingTheme, SharedTheme, SyntaxHighlightingTheme},
+    COMMENT, FOREGROUND, GREEN, PINK, PURPLE,
+};
 
 /// How many spaces should be between labels, instructions and comments when alignment is enabled
 const SPACING: usize = 2;
 
 /// Syntax highlighter used to pretty format instructions with syntax highlighting.
-struct SyntaxHighlighter {
-    theme: SharedTheme,
+pub struct SyntaxHighlighter {
+    theme: SharedSyntaxHighlightingTheme,
 }
 
 impl SyntaxHighlighter {
     /// Creates a new syntax highlighter with the input theme.
-    fn new(theme: &SharedTheme) -> Self {
+    pub fn new(theme: &SharedSyntaxHighlightingTheme) -> Self {
         Self {
             theme: theme.clone(),
         }
@@ -30,7 +35,7 @@ impl SyntaxHighlighter {
 
     /// Creates a span containing ' := '.
     fn assignment_span(&self) -> Span<'static> {
-        Span::from(" := ").style(Style::default().fg(PINK))
+        Span::from(" := ").style(self.theme.assignment_span())
     }
 
     /// Creates a span containing the operation.
@@ -44,8 +49,8 @@ impl SyntaxHighlighter {
     }
 
     /// Span to use for build in functions.
-    fn build_in_span(&self, text: &str) -> Span<'_> {
-        Span::from(text).style(Style::default().fg(PINK))
+    fn build_in_span(&self, text: &str) -> Span<'static> {
+        Span::from(text.to_string()).style(Style::default().fg(PINK))
     }
 
     /// Creates a span formatted for an accumulator with index `idx`.
@@ -450,7 +455,7 @@ mod tests {
             "label2: // comment".to_string(),
             "if p(h1) == p(h2) then goto hello".to_string(),
         ];
-        let res = SyntaxHighlighter::new(&SharedTheme::default())
+        let res = SyntaxHighlighter::new(&SharedTheme::default().syntax_highlighting_theme())
             .input_to_lines(&input, true, true)
             .unwrap();
         assert_eq!(
@@ -484,7 +489,7 @@ mod tests {
             "label:".to_string(),
             "label2: // comment".to_string(),
         ];
-        let res = SyntaxHighlighter::new(&SharedTheme::default())
+        let res = SyntaxHighlighter::new(&SharedTheme::default().syntax_highlighting_theme())
             .input_to_lines(&input, false, true)
             .unwrap();
         assert_eq!(
