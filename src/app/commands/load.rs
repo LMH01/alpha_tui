@@ -1,7 +1,7 @@
 use miette::Result;
 
 use crate::{
-    app::{commands::load_instruction_history, ui, App},
+    app::{commands::load_instruction_history, ui::syntax_highlighting, App},
     cli::{GlobalArgs, LoadArgs},
     instructions::instruction_config::InstructionConfig,
     runtime::builder,
@@ -28,7 +28,7 @@ pub fn load(
     let rt = rb.build()?;
 
     // format instructions pretty if cli flag is set
-    let instructions = ui::input_to_lines(
+    let instructions = syntax_highlighting::input_to_lines(
         &instructions,
         !load_args.disable_alignment,
         !load_args.load_playground_args.disable_syntax_highlighting,

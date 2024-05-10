@@ -25,7 +25,7 @@ use self::{
     content::{InstructionListStates, MemoryListsManager},
     keybindings::KeybindingHints,
     run_instruction::SingleInstruction,
-    ui::{draw, ToSpans},
+    ui::{draw, syntax_highlighting::ToSpans},
 };
 
 /// Contains all commands that this app can run
