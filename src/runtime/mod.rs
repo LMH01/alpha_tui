@@ -261,7 +261,6 @@ impl RuntimeMemory {
         }
         false
     }
-
 }
 
 impl From<MemoryConfig> for RuntimeMemory {

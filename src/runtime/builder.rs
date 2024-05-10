@@ -278,7 +278,7 @@ impl RuntimeBuilder {
 /// Builds the provided instructions.
 ///
 /// Updates the provided control flow with labels.
-/// 
+///
 /// If a line starts with `#` it is skipped and no noop operation is created.
 fn build_instructions(
     instructions_input: &[String],
