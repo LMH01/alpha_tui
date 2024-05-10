@@ -125,9 +125,7 @@ fn load_theme(load_playground_args: &LoadPlaygroundArgs) -> miette::Result<Theme
             let path = Path::new(&file);
             // check if file exists
             if path.exists() && path.is_file() {
-                return load_theme_file(
-                    path.to_str().expect(" path should be valid unicode"),
-                );
+                return load_theme_file(path.to_str().expect(" path should be valid unicode"));
             }
         }
     }
