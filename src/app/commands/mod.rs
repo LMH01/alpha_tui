@@ -116,7 +116,7 @@ fn load_theme(load_playground_args: &LoadPlaygroundArgs) -> miette::Result<Theme
         return Ok(Theme::from(theme));
     }
     if let Some(theme_file) = &load_playground_args.theme_file {
-        return Ok(load_theme_file(&theme_file)?);
+        return load_theme_file(theme_file);
     }
     // check if theme file exists
     if let Some(user_dirs) = UserDirs::new() {
@@ -125,9 +125,9 @@ fn load_theme(load_playground_args: &LoadPlaygroundArgs) -> miette::Result<Theme
             let path = Path::new(&file);
             // check if file exists
             if path.exists() && path.is_file() {
-                return Ok(load_theme_file(
+                return load_theme_file(
                     path.to_str().expect(" path should be valid unicode"),
-                )?);
+                );
             }
         }
     }
