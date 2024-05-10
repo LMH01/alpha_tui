@@ -4,139 +4,262 @@ use ratatui::{
 };
 
 use crate::{
-    app::ui::CYAN, base::Operation, instructions::{IndexMemoryCellIndexType, Instruction, TargetType, Value}, utils::{self, remove_comment}
+    app::ui::CYAN,
+    base::Operation,
+    instructions::{IndexMemoryCellIndexType, Instruction, TargetType, Value},
+    utils::{self, remove_comment},
 };
 
-use super::{COMMENT, FOREGROUND, GREEN, PINK, PURPLE};
+use super::{style::SharedTheme, COMMENT, FOREGROUND, GREEN, PINK, PURPLE};
 
 /// How many spaces should be between labels, instructions and comments when alignment is enabled
 const SPACING: usize = 2;
+
+/// Syntax highlighter used to pretty format instructions with syntax highlighting.
+struct SyntaxHighlighter {
+    theme: SharedTheme,
+}
+
+impl SyntaxHighlighter {
+    /// Creates a new syntax highlighter with the input theme.
+    fn new(theme: &SharedTheme) -> Self {
+        Self {
+            theme: theme.clone(),
+        }
+    }
+
+    /// Creates a span containing ' := '.
+    fn assignment_span(&self) -> Span<'static> {
+        Span::from(" := ").style(Style::default().fg(PINK))
+    }
+
+    /// Creates a span containing the operation.
+    fn op_span(&self, op: &Operation) -> Span<'static> {
+        Span::from(format!("{op}")).style(Style::default().fg(PINK))
+    }
+
+    /// Create a span containing a label.
+    fn label_span(&self, label: &str) -> Span<'static> {
+        Span::from(format!(" {label}")).style(Style::default().fg(GREEN))
+    }
+
+    /// Span to use for build in functions.
+    fn build_in_span(&self, text: &str) -> Span<'_> {
+        Span::from(text).style(Style::default().fg(PINK))
+    }
+
+    /// Creates a span formatted for an accumulator with index `idx`.
+    fn accumulator_span(&self, idx: &usize) -> Span<'static> {
+        Span::from(format!("\u{03b1}{idx}")).style(Style::default().fg(FOREGROUND))
+    }
+
+    /// Creates a span formatted for gamma.
+    fn gamma_span(&self) -> Span<'static> {
+        Span::from("\u{03b3}").style(Style::default().fg(PURPLE))
+    }
+
+    /// Creates formatted spans for a memory cell with label `label`.
+    fn memory_cell_spans(&self, label: &str) -> Vec<Span<'static>> {
+        vec![
+            Span::from("\u{03c1}(".to_string()).style(Style::default().fg(CYAN)),
+            Span::from(label.to_string()).style(Style::default().fg(FOREGROUND)),
+            Span::from(")".to_string()).style(Style::default().fg(CYAN)),
+        ]
+    }
+
+    /// Creates formatted spans for a index memory cell with type `imcit`.
+    fn index_memory_cell_spanns(&self, imcit: &IndexMemoryCellIndexType) -> Vec<Span<'static>> {
+        let mut spans = vec![Span::from("\u{03c1}(".to_string()).style(Style::default().fg(CYAN))];
+        spans.append(&mut imcit.to_spans(self));
+        spans.push(Span::from(")".to_string()).style(Style::default().fg(CYAN)));
+        spans
+    }
+
+    /// Span to be used when the value is constant.
+    fn constant_span(&self, value: &i32) -> Span<'static> {
+        Span::from(format!("{value}")).style(Style::default().fg(PURPLE))
+    }
+
+    /// This function turns the input strings into a
+    /// vector of lines, ready to be printed in the tui.
+    ///
+    /// An input line can contain a label, instruction and comment.
+    ///
+    /// If an input line does not contain anything an empty line is inserted.
+    ///
+    /// Lines that start with `#` are not included in the resulting vector.
+    ///
+    /// If `enable_alignment` is true, all labels, instructions and comments are aligned below each other
+    /// (excluding full line comments that start with //, they always start at the beginning of the line).
+    ///
+    /// If `enable_syntax_highlighting` is true, all labels, instructions and comments will be colored.
+    pub fn input_to_lines(
+        &self,
+        input: &[String],
+        enable_alignment: bool,
+        enable_syntax_highlighting: bool,
+    ) -> miette::Result<Vec<Line<'static>>> {
+        // determine max width of each block
+        let (max_label_width, max_instruction_width) = if enable_alignment {
+            determine_alignment(input)
+        } else {
+            (0, 0)
+        };
+
+        let mut lines = Vec::new();
+        for line in input {
+            let parts = match input_parts(line.clone()) {
+                Some(parts) => parts,
+                None => {
+                    lines.push(Line::default());
+                    continue;
+                }
+            };
+
+            let mut spans = Vec::new();
+
+            // if only comment is set, write comment at beginning of line
+            if parts.label.is_none() && parts.instruction.is_none() && parts.comment.is_some() {
+                let comment = parts.comment.unwrap();
+                // if comment starts with '#' it will not be printed
+                if comment.starts_with('#') {
+                    continue;
+                }
+                spans.push(string_into_span(
+                    comment,
+                    enable_syntax_highlighting,
+                    COMMENT,
+                ));
+                lines.push(Line::from(spans));
+                continue;
+            }
+
+            // handle label
+            if let Some(label) = parts.label {
+                let len = label.chars().count() + 1; // add plus one because `:` is not included in label
+                spans.push(string_into_span(label, enable_syntax_highlighting, GREEN));
+                spans.push(string_into_span(
+                    ":".to_string(),
+                    enable_syntax_highlighting,
+                    PINK,
+                ));
+                // fill spaces if enabled until next part is reached
+                if enable_alignment {
+                    spans.push(fill_span(max_label_width - len + SPACING))
+                } else {
+                    spans.push(fill_span(1));
+                }
+            } else if (parts.instruction.is_some() || parts.comment.is_some()) && enable_alignment {
+                spans.push(fill_span(max_label_width + SPACING))
+            }
+
+            // handle instruction
+            if let Some(instruction) = parts.instruction {
+                let len = instruction.chars().count();
+                if enable_syntax_highlighting {
+                    let instruction = Instruction::try_from(instruction.as_str())?;
+                    spans.append(&mut instruction.to_spans(self));
+                } else {
+                    spans.push(Span::from(instruction));
+                }
+                // fill spaces if enabled until next part is reached
+                if enable_alignment {
+                    spans.push(fill_span(max_instruction_width - len + SPACING));
+                } else {
+                    spans.push(fill_span(1));
+                }
+            } else if parts.comment.is_some() && enable_alignment {
+                spans.push(fill_span(max_instruction_width + SPACING));
+            }
+
+            // handle comment
+            if let Some(comment) = parts.comment {
+                spans.push(string_into_span(
+                    comment,
+                    enable_syntax_highlighting,
+                    COMMENT,
+                ));
+            }
+            lines.push(Line::from(remove_trailing_whitespaces(spans)));
+        }
+
+        Ok(lines)
+    }
+}
 
 /// This trait is used be able to transform specific data into spans.
 ///
 /// In used to make syntax highlighting possible.
 pub trait ToSpans {
     /// Creates a span from this element,
-    fn to_spans(&self) -> Vec<Span<'static>>;
-}
-
-/// Creates a span containing ' := '.
-fn assignment_span() -> Span<'static> {
-    Span::from(" := ").style(Style::default().fg(PINK))
-}
-
-/// Creates a span containing the operation.
-fn op_span(op: &Operation) -> Span<'static> {
-    Span::from(format!("{op}")).style(Style::default().fg(PINK))
-}
-
-/// Create a span containing a label.
-fn label_span(label: &str) -> Span<'static> {
-    Span::from(format!(" {label}")).style(Style::default().fg(GREEN))
-}
-
-/// Span to use for build in functions.
-fn build_in_span(text: &str) -> Span<'_> {
-    Span::from(text).style(Style::default().fg(PINK))
+    fn to_spans(&self, sh: &SyntaxHighlighter) -> Vec<Span<'static>>;
 }
 
 impl ToSpans for Instruction {
-    fn to_spans(&self) -> Vec<Span<'static>> {
+    fn to_spans(&self, sh: &SyntaxHighlighter) -> Vec<Span<'static>> {
         match self {
             Self::Assign(t, v) => {
-                let mut spans = t.to_spans();
-                spans.push(assignment_span());
-                spans.append(&mut v.to_spans());
+                let mut spans = t.to_spans(sh);
+                spans.push(sh.assignment_span());
+                spans.append(&mut v.to_spans(sh));
                 spans
             }
             Self::Calc(t, v, op, v2) => {
-                let mut spans = t.to_spans();
-                spans.push(assignment_span());
-                spans.append(&mut v.to_spans());
+                let mut spans = t.to_spans(sh);
+                spans.push(sh.assignment_span());
+                spans.append(&mut v.to_spans(sh));
                 spans.push(Span::from(" "));
-                spans.push(op_span(op));
+                spans.push(sh.op_span(op));
                 spans.push(Span::from(" "));
-                spans.append(&mut v2.to_spans());
+                spans.append(&mut v2.to_spans(sh));
                 spans
             }
             Self::Call(label) => {
-                vec![build_in_span("call"), label_span(label)]
+                vec![sh.build_in_span("call"), sh.label_span(label)]
             }
             Self::Goto(label) => {
-                vec![build_in_span("goto"), label_span(label)]
+                vec![sh.build_in_span("goto"), sh.label_span(label)]
             }
             Self::JumpIf(v, cmp, v2, label) => {
                 let mut spans = vec![Span::from("if ").style(Style::default().fg(PINK))];
-                spans.append(&mut v.to_spans());
+                spans.append(&mut v.to_spans(sh));
                 spans.push(Span::from(" "));
                 spans.push(Span::from(format!("{cmp}")).style(Style::default().fg(PINK)));
                 spans.push(Span::from(" "));
-                spans.append(&mut v2.to_spans());
+                spans.append(&mut v2.to_spans(sh));
                 spans.push(Span::from(" then goto").style(Style::default().fg(PINK)));
-                spans.push(label_span(label));
+                spans.push(sh.label_span(label));
                 spans
             }
             Self::Noop => vec![Span::from("")],
-            Self::Pop => vec![build_in_span("pop")],
-            Self::Push => vec![build_in_span("push")],
-            Self::Return => vec![build_in_span("return")],
-            Self::StackOp(op) => vec![build_in_span("stack"), op_span(op)],
+            Self::Pop => vec![sh.build_in_span("pop")],
+            Self::Push => vec![sh.build_in_span("push")],
+            Self::Return => vec![sh.build_in_span("return")],
+            Self::StackOp(op) => vec![sh.build_in_span("stack"), sh.op_span(op)],
         }
     }
 }
 
-/// Creates a span formatted for an accumulator with index `idx`.
-fn accumulator_span(idx: &usize) -> Span<'static> {
-    Span::from(format!("\u{03b1}{idx}")).style(Style::default().fg(FOREGROUND))
-}
-
-/// Creates a span formatted for gamma.
-fn gamma_span() -> Span<'static> {
-    Span::from("\u{03b3}").style(Style::default().fg(PURPLE))
-}
-
-/// Creates formatted spans for a memory cell with label `label`.
-fn memory_cell_spans(label: &str) -> Vec<Span<'static>> {
-    vec![
-        Span::from("\u{03c1}(".to_string()).style(Style::default().fg(CYAN)),
-        Span::from(label.to_string()).style(Style::default().fg(FOREGROUND)),
-        Span::from(")".to_string()).style(Style::default().fg(CYAN)),
-    ]
-}
-
-/// Creates formatted spans for a index memory cell with type `imcit`.
-fn index_memory_cell_spanns(imcit: &IndexMemoryCellIndexType) -> Vec<Span<'static>> {
-    let mut spans = vec![Span::from("\u{03c1}(".to_string()).style(Style::default().fg(CYAN))];
-    spans.append(&mut imcit.to_spans());
-    spans.push(Span::from(")".to_string()).style(Style::default().fg(CYAN)));
-    spans
-}
-
-/// Span to be used when the value is constant.
-fn constant_span(value: &i32) -> Span<'static> {
-    Span::from(format!("{value}")).style(Style::default().fg(PURPLE))
-}
-
 impl ToSpans for TargetType {
     /// Creates a span from this target type, with specific coloring.
-    fn to_spans(&self) -> Vec<Span<'static>> {
+    fn to_spans(&self, sh: &SyntaxHighlighter) -> Vec<Span<'static>> {
         match self {
-            Self::Accumulator(idx) => vec![accumulator_span(idx)],
-            Self::Gamma => vec![gamma_span()],
-            Self::MemoryCell(label) => memory_cell_spans(label),
-            Self::IndexMemoryCell(imcit) => index_memory_cell_spanns(imcit),
+            Self::Accumulator(idx) => vec![sh.accumulator_span(idx)],
+            Self::Gamma => vec![sh.gamma_span()],
+            Self::MemoryCell(label) => sh.memory_cell_spans(label),
+            Self::IndexMemoryCell(imcit) => sh.index_memory_cell_spanns(imcit),
         }
     }
 }
 
 impl ToSpans for IndexMemoryCellIndexType {
     /// Creates a span from this target type, with specific coloring.
-    fn to_spans(&self) -> Vec<Span<'static>> {
+    fn to_spans(&self, sh: &SyntaxHighlighter) -> Vec<Span<'static>> {
         match self {
-            Self::Accumulator(idx) => vec![accumulator_span(idx)],
-            Self::Direct(idx) => vec![constant_span(&usize::try_into(*idx).unwrap_or_default())],
-            Self::Gamma => vec![gamma_span()],
-            Self::MemoryCell(label) => memory_cell_spans(label),
+            Self::Accumulator(idx) => vec![sh.accumulator_span(idx)],
+            Self::Direct(idx) => vec![sh.constant_span(&usize::try_into(*idx).unwrap_or_default())],
+            Self::Gamma => vec![sh.gamma_span()],
+            Self::MemoryCell(label) => sh.memory_cell_spans(label),
             Self::Index(idx) => {
                 vec![
                     Span::from("\u{03c1}(".to_string()).style(Style::default().fg(GREEN)),
@@ -149,120 +272,15 @@ impl ToSpans for IndexMemoryCellIndexType {
 }
 
 impl ToSpans for Value {
-    fn to_spans(&self) -> Vec<Span<'static>> {
+    fn to_spans(&self, sh: &SyntaxHighlighter) -> Vec<Span<'static>> {
         match self {
-            Self::Accumulator(idx) => vec![accumulator_span(idx)],
-            Self::Constant(value) => vec![constant_span(value)],
-            Self::Gamma => vec![gamma_span()],
-            Self::MemoryCell(label) => memory_cell_spans(label),
-            Self::IndexMemoryCell(imcit) => index_memory_cell_spanns(imcit),
+            Self::Accumulator(idx) => vec![sh.accumulator_span(idx)],
+            Self::Constant(value) => vec![sh.constant_span(value)],
+            Self::Gamma => vec![sh.gamma_span()],
+            Self::MemoryCell(label) => sh.memory_cell_spans(label),
+            Self::IndexMemoryCell(imcit) => sh.index_memory_cell_spanns(imcit),
         }
     }
-}
-
-/// This function turns the input strings into a
-/// vector of lines, ready to be printed in the tui.
-///
-/// An input line can contain a label, instruction and comment.
-///
-/// If an input line does not contain anything an empty line is inserted.
-///
-/// Lines that start with `#` are not included in the resulting vector.
-///
-/// If `enable_alignment` is true, all labels, instructions and comments are aligned below each other
-/// (excluding full line comments that start with //, they always start at the beginning of the line).
-///
-/// If `enable_syntax_highlighting` is true, all labels, instructions and comments will be colored.
-pub fn input_to_lines(
-    input: &[String],
-    enable_alignment: bool,
-    enable_syntax_highlighting: bool,
-) -> miette::Result<Vec<Line<'static>>> {
-    // determine max width of each block
-    let (max_label_width, max_instruction_width) = if enable_alignment {
-        determine_alignment(input)
-    } else {
-        (0, 0)
-    };
-
-    let mut lines = Vec::new();
-    for line in input {
-        let parts = match input_parts(line.clone()) {
-            Some(parts) => parts,
-            None => {
-                lines.push(Line::default());
-                continue;
-            }
-        };
-
-        let mut spans = Vec::new();
-
-        // if only comment is set, write comment at beginning of line
-        if parts.label.is_none() && parts.instruction.is_none() && parts.comment.is_some() {
-            let comment = parts.comment.unwrap();
-            // if comment starts with '#' it will not be printed
-            if comment.starts_with('#') {
-                continue;
-            }
-            spans.push(string_into_span(
-                comment,
-                enable_syntax_highlighting,
-                COMMENT,
-            ));
-            lines.push(Line::from(spans));
-            continue;
-        }
-
-        // handle label
-        if let Some(label) = parts.label {
-            let len = label.chars().count() + 1; // add plus one because `:` is not included in label
-            spans.push(string_into_span(label, enable_syntax_highlighting, GREEN));
-            spans.push(string_into_span(
-                ":".to_string(),
-                enable_syntax_highlighting,
-                PINK,
-            ));
-            // fill spaces if enabled until next part is reached
-            if enable_alignment {
-                spans.push(fill_span(max_label_width - len + SPACING))
-            } else {
-                spans.push(fill_span(1));
-            }
-        } else if (parts.instruction.is_some() || parts.comment.is_some()) && enable_alignment {
-            spans.push(fill_span(max_label_width + SPACING))
-        }
-
-        // handle instruction
-        if let Some(instruction) = parts.instruction {
-            let len = instruction.chars().count();
-            if enable_syntax_highlighting {
-                let instruction = Instruction::try_from(instruction.as_str())?;
-                spans.append(&mut instruction.to_spans());
-            } else {
-                spans.push(Span::from(instruction));
-            }
-            // fill spaces if enabled until next part is reached
-            if enable_alignment {
-                spans.push(fill_span(max_instruction_width - len + SPACING));
-            } else {
-                spans.push(fill_span(1));
-            }
-        } else if parts.comment.is_some() && enable_alignment {
-            spans.push(fill_span(max_instruction_width + SPACING));
-        }
-
-        // handle comment
-        if let Some(comment) = parts.comment {
-            spans.push(string_into_span(
-                comment,
-                enable_syntax_highlighting,
-                COMMENT,
-            ));
-        }
-        lines.push(Line::from(remove_trailing_whitespaces(spans)));
-    }
-
-    Ok(lines)
 }
 
 /// Reads in the instructions vector and determines what the maximum width for
@@ -412,9 +430,10 @@ fn remove_trailing_whitespaces(mut spans: Vec<Span<'static>>) -> Vec<Span<'stati
 #[cfg(test)]
 mod tests {
 
-    use crate::app::ui::syntax_highlighting::{determine_alignment, input_parts, InputParts};
-
-    use super::input_to_lines;
+    use crate::app::ui::{
+        style::SharedTheme,
+        syntax_highlighting::{determine_alignment, input_parts, InputParts, SyntaxHighlighter},
+    };
 
     #[test]
     fn test_input_to_lines_alignment_enabled_syntax_highlighting_enabled() {
@@ -431,7 +450,9 @@ mod tests {
             "label2: // comment".to_string(),
             "if p(h1) == p(h2) then goto hello".to_string(),
         ];
-        let res = input_to_lines(&input, true, true).unwrap();
+        let res = SyntaxHighlighter::new(&SharedTheme::default())
+            .input_to_lines(&input, true, true)
+            .unwrap();
         assert_eq!(
             res.iter().map(|f| f.to_string()).collect::<Vec<String>>(),
             vec![
@@ -463,7 +484,9 @@ mod tests {
             "label:".to_string(),
             "label2: // comment".to_string(),
         ];
-        let res = input_to_lines(&input, false, true).unwrap();
+        let res = SyntaxHighlighter::new(&SharedTheme::default())
+            .input_to_lines(&input, false, true)
+            .unwrap();
         assert_eq!(
             res.iter().map(|f| f.to_string()).collect::<Vec<String>>(),
             vec![
