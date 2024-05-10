@@ -2,22 +2,24 @@ use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
 use ratatui::{
-    style::{Color, Style, Stylize},
+    style::{Color, Stylize},
     text::{Line, Span},
     widgets::Paragraph,
 };
 
-use super::{ui::{KEYBINDS_BG, KEYBINDS_DISABLED_BG, KEYBINDS_DISABLED_FG, KEYBINDS_FG}, State};
+use super::{ui::style::SharedTheme, State};
 
 /// Manages all keybinding hints.
 pub struct KeybindingHints {
     hints: HashMap<String, KeybindingHint>,
+    theme: SharedTheme,
 }
 
 impl KeybindingHints {
-    pub fn new() -> Result<Self> {
+    pub fn new(theme: SharedTheme) -> Result<Self> {
         Ok(Self {
             hints: default_keybindings()?,
+            theme,
         })
     }
 
@@ -48,16 +50,8 @@ impl KeybindingHints {
                 styled_keybinds_row = Vec::new();
             }
             line_length += text.len();
-            let style = if hint.enabled {
-                Style::default()
-                    .fg(KEYBINDS_FG)
-                    .bg(KEYBINDS_BG)
-            } else {
-                Style::default()
-                    .fg(KEYBINDS_DISABLED_FG)
-                    .bg(KEYBINDS_DISABLED_BG)
-            };
-            styled_keybinds_row.push(Span::from(text).style(style));
+            styled_keybinds_row
+                .push(Span::from(text).style(self.theme.keybinding_hints(hint.enabled)));
         }
         styled_keybinds.push(Line::from(styled_keybinds_row));
 
@@ -501,6 +495,8 @@ impl ToString for KeySymbol {
 mod tests {
     use std::collections::HashMap;
 
+    use crate::app::ui::style::{SharedTheme, Theme};
+
     use super::{KeybindingHint, KeybindingHints};
 
     fn test_keybinding_hints() -> KeybindingHints {
@@ -521,7 +517,10 @@ mod tests {
             "d".to_string(),
             KeybindingHint::new(0, "d", "test_label_4", false, true),
         );
-        let hints = KeybindingHints { hints };
+        let hints = KeybindingHints {
+            hints,
+            theme: SharedTheme::new(Theme::default()),
+        };
         hints
     }
 

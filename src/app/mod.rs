@@ -24,7 +24,10 @@ use self::{
     content::{InstructionListStates, MemoryListsManager},
     keybindings::KeybindingHints,
     run_instruction::SingleInstruction,
-    ui::{draw, syntax_highlighting::ToSpans},
+    ui::{
+        style::{SharedTheme, Theme},
+        syntax_highlighting::ToSpans,
+    },
 };
 
 /// Contains all commands that this app can run
@@ -91,6 +94,8 @@ pub struct App {
     instruction_config: Option<InstructionConfig>,
     /// Determines if syntax highlighting should be used.
     enable_syntax_highlighting: bool,
+    /// Theme of the application.
+    theme: SharedTheme,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -113,12 +118,17 @@ impl App {
         command_history_file: Option<String>,
         playground: bool,
         enable_syntax_highlighting: bool,
+        theme: Theme,
     ) -> App {
-        let mlm = MemoryListsManager::new(runtime.runtime_memory());
+        let theme = SharedTheme::new(theme);
+        let mlm = MemoryListsManager::new(runtime.runtime_memory(), &theme);
         let show_call_stack = runtime.contains_call_instruction();
         let executed_custom_instructions = custom_instructions.unwrap_or_default();
         let state = if playground {
-            State::Playground(SingleInstruction::new(&executed_custom_instructions))
+            State::Playground(SingleInstruction::new(
+                &executed_custom_instructions,
+                &theme,
+            ))
         } else {
             State::Default
         };
@@ -129,7 +139,7 @@ impl App {
                 instructions,
                 set_breakpoints.as_ref(),
             ),
-            keybinding_hints: KeybindingHints::new()
+            keybinding_hints: KeybindingHints::new(theme.clone())
                 .expect("Keybinding hints should be properly initialized"),
             memory_lists_manager: mlm,
             state,
@@ -138,6 +148,7 @@ impl App {
             show_call_stack,
             instruction_config,
             enable_syntax_highlighting,
+            theme,
         }
     }
 
@@ -148,7 +159,7 @@ impl App {
             return Err(miette!("Error while updating keybinding hints:\n{e}"));
         }
         loop {
-            terminal.draw(|f| draw(f, self)).into_diagnostic()?;
+            terminal.draw(|f| self.draw(f)).into_diagnostic()?;
             if let Event::Key(key) = event::read().into_diagnostic()? {
                 if key.kind == KeyEventKind::Release {
                     // ignore when key is released, to prevent dual input
@@ -195,6 +206,7 @@ impl App {
                                 State::Running(_) => {
                                     self.state = State::CustomInstruction(SingleInstruction::new(
                                         &self.executed_custom_instructions,
+                                        &self.theme,
                                     ))
                                 }
                                 _ => (),
@@ -547,6 +559,7 @@ impl App {
                 if *is_playground {
                     self.state = State::Playground(SingleInstruction::new(
                         &self.executed_custom_instructions,
+                        &self.theme,
                     ))
                 } else {
                     self.state = State::Running(self.instruction_list_states.breakpoints_set());
@@ -556,8 +569,10 @@ impl App {
                 self.state = State::Running(self.instruction_list_states.breakpoints_set());
             }
             State::RuntimeError(_, true) => {
-                self.state =
-                    State::Playground(SingleInstruction::new(&self.executed_custom_instructions));
+                self.state = State::Playground(SingleInstruction::new(
+                    &self.executed_custom_instructions,
+                    &self.theme,
+                ));
             }
             _ => (),
         }
@@ -627,8 +642,10 @@ impl App {
                 self.instruction_list_states
                     .add_instruction(Line::from(instruction_str));
             }
-            self.state =
-                State::Playground(SingleInstruction::new(&self.executed_custom_instructions));
+            self.state = State::Playground(SingleInstruction::new(
+                &self.executed_custom_instructions,
+                &self.theme,
+            ));
         } else {
             self.state = State::Running(self.instruction_list_states.breakpoints_set());
         }

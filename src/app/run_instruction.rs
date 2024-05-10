@@ -5,7 +5,7 @@ use ratatui::{
 };
 use trie_rs::TrieBuilder;
 
-use super::ui::{CUSTOM_INSTRUCTION_ACCENT_FG, LIST_ITEM_HIGHLIGHT_COLOR};
+use super::ui::style::SharedTheme;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct SingleInstruction {
@@ -20,16 +20,18 @@ pub struct SingleInstruction {
     ///
     /// Used to populate the list.
     pub executed_instructions: Vec<String>,
+    theme: SharedTheme,
 }
 
 impl SingleInstruction {
     /// Create a new single instruction.
-    pub fn new(executed_instructions: &[String]) -> Self {
+    pub fn new(executed_instructions: &[String], theme: &SharedTheme) -> Self {
         Self {
             input: String::new(),
             cursor_position: 0,
             allowed_values_state: ListState::default(),
             executed_instructions: executed_instructions.to_owned(),
+            theme: theme.clone(),
         }
     }
 
@@ -72,7 +74,7 @@ impl SingleInstruction {
             .title(outer_block_title)
             .title_alignment(Alignment::Center)
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(CUSTOM_INSTRUCTION_ACCENT_FG));
+            .border_style(self.theme.custom_instruction());
         f.render_widget(outer_block, area);
         f.render_widget(input, chunks[0]);
         f.set_cursor(
@@ -90,7 +92,7 @@ impl SingleInstruction {
                     .style(Style::default()),
             )
             .style(Style::default())
-            .highlight_style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
+            .highlight_style(self.theme.list_item_highlight(false));
         // render list
         f.render_stateful_widget(possible_items, chunks[1], &mut self.allowed_values_state)
     }

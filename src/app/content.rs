@@ -8,7 +8,7 @@ use ratatui::{
 
 use crate::runtime::{Runtime, RuntimeMemory};
 
-use super::ui::LIST_ITEM_HIGHLIGHT_COLOR;
+use super::ui::style::SharedTheme;
 
 /// Used to store the instructions and to remember what instruction should currently be highlighted.
 #[derive(Debug, Clone)]
@@ -214,11 +214,12 @@ pub struct MemoryListsManager {
     index_memory_cells: HashMap<usize, (String, bool)>,
     stack: Vec<ListItem<'static>>,
     call_stack: Vec<ListItem<'static>>,
+    theme: SharedTheme,
 }
 
 impl MemoryListsManager {
     /// Creates a new `MemoryListsManager` with the current values of the runtime arguments.
-    pub fn new(runtime_args: &RuntimeMemory) -> Self {
+    pub fn new(runtime_args: &RuntimeMemory, theme: &SharedTheme) -> Self {
         let mut accumulators = HashMap::new();
         for acc in &runtime_args.accumulators {
             accumulators.insert(*acc.0, (format!("{}", acc.1), false));
@@ -244,6 +245,7 @@ impl MemoryListsManager {
             index_memory_cells,
             stack: Vec::new(),
             call_stack: Vec::new(),
+            theme: theme.clone(),
         }
     }
 
@@ -333,7 +335,7 @@ impl MemoryListsManager {
             let last_stack = new_stack
                 .pop()
                 .unwrap()
-                .style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
+                .style(self.theme.list_item_highlight(false));
             new_stack.push(last_stack);
         }
         self.stack = new_stack;
@@ -349,7 +351,7 @@ impl MemoryListsManager {
             let last_stack = new_call_stack
                 .pop()
                 .unwrap()
-                .style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
+                .style(self.theme.list_item_highlight(false));
             new_call_stack.push(last_stack);
         }
         self.call_stack = new_call_stack;
@@ -361,7 +363,7 @@ impl MemoryListsManager {
         for acc in &self.accumulators {
             let mut item = ListItem::new(acc.1 .0.clone());
             if acc.1 .1 {
-                item = item.style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
+                item = item.style(self.theme.list_item_highlight(false));
             }
             list.push((item, acc.0));
         }
@@ -372,13 +374,13 @@ impl MemoryListsManager {
             if let Some(inner_value) = value.0 {
                 let mut item = ListItem::new(format!("  γ: {inner_value}"));
                 if value.1 {
-                    item = item.style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
+                    item = item.style(self.theme.list_item_highlight(false));
                 }
                 list.push((item, &0));
             } else {
                 let mut item = ListItem::new("  γ: None".to_string());
                 if value.1 {
-                    item = item.style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
+                    item = item.style(self.theme.list_item_highlight(false));
                 }
                 list.push((item, &0));
             }
@@ -393,7 +395,7 @@ impl MemoryListsManager {
         for cell in &self.memory_cells {
             let mut item = ListItem::new(cell.1 .0.clone());
             if cell.1 .1 {
-                item = item.style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
+                item = item.style(self.theme.list_item_highlight(false));
             }
             list.push((item, cell.0.clone()));
         }
@@ -407,7 +409,7 @@ impl MemoryListsManager {
         for cell in imc {
             let mut item = ListItem::new(cell.2.clone());
             if cell.1 {
-                item = item.style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
+                item = item.style(self.theme.list_item_highlight(false));
             }
             list.push((item, format!("{}", cell.0)));
         }

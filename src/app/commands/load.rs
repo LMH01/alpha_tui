@@ -1,7 +1,7 @@
 use miette::Result;
 
 use crate::{
-    app::{commands::load_instruction_history, ui::syntax_highlighting, App},
+    app::{commands::load_instruction_history, ui::{style::Theme, syntax_highlighting}, App},
     cli::{GlobalArgs, LoadArgs},
     instructions::instruction_config::InstructionConfig,
     runtime::builder,
@@ -72,6 +72,7 @@ pub fn load(
         load_args.custom_instruction_history_file.clone(),
         false,
         !load_args.load_playground_args.disable_syntax_highlighting,
+        Theme::default_old(),
     );
     let res = app.run(&mut terminal);
 

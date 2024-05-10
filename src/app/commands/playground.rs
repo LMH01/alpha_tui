@@ -1,7 +1,7 @@
 use miette::Result;
 
 use crate::{
-    app::App,
+    app::{ui::style::Theme, App},
     cli::{GlobalArgs, PlaygroundArgs},
     runtime::builder::RuntimeBuilder,
 };
@@ -36,6 +36,7 @@ pub fn playground(global_args: &GlobalArgs, playground_args: &PlaygroundArgs) ->
         !playground_args
             .load_playground_args
             .disable_syntax_highlighting,
+        Theme::default_old(),
     );
     let res = app.run(&mut terminal);
 

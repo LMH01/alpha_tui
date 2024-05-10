@@ -6,7 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ratatui = { version = "=0.26.1", features = ["all-widgets"]} # pinned to v0.26.1 because panic see https://github.com/ratatui-org/ratatui/issues/1032
+ratatui = { version = "=0.26.1", features = [
+    "all-widgets",
+    "serde",
+] } # pinned to v0.26.1 because panic see https://github.com/ratatui-org/ratatui/issues/1032
 crossterm = { version = "0.27", features = ["events"] }
 clap = { version = "4.3", features = ["derive", "color"] }
 thiserror = "1"
