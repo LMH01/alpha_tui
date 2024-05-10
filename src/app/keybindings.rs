@@ -7,7 +7,7 @@ use ratatui::{
     widgets::Paragraph,
 };
 
-use super::State;
+use super::{ui::{KEYBINDS_BG, KEYBINDS_DISABLED_BG, KEYBINDS_DISABLED_FG, KEYBINDS_FG}, State};
 
 /// Manages all keybinding hints.
 pub struct KeybindingHints {
@@ -50,12 +50,12 @@ impl KeybindingHints {
             line_length += text.len();
             let style = if hint.enabled {
                 Style::default()
-                    .fg(super::KEYBINDS_FG)
-                    .bg(super::KEYBINDS_BG)
+                    .fg(KEYBINDS_FG)
+                    .bg(KEYBINDS_BG)
             } else {
                 Style::default()
-                    .fg(super::KEYBINDS_DISABLED_FG)
-                    .bg(super::KEYBINDS_DISABLED_BG)
+                    .fg(KEYBINDS_DISABLED_FG)
+                    .bg(KEYBINDS_DISABLED_BG)
             };
             styled_keybinds_row.push(Span::from(text).style(style));
         }

@@ -5,6 +5,8 @@ use ratatui::{
 };
 use trie_rs::TrieBuilder;
 
+use super::ui::{CUSTOM_INSTRUCTION_ACCENT_FG, LIST_ITEM_HIGHLIGHT_COLOR};
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct SingleInstruction {
     // Input currently entered by the user
@@ -70,7 +72,7 @@ impl SingleInstruction {
             .title(outer_block_title)
             .title_alignment(Alignment::Center)
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(super::CUSTOM_INSTRUCTION_ACCENT_FG));
+            .border_style(Style::default().fg(CUSTOM_INSTRUCTION_ACCENT_FG));
         f.render_widget(outer_block, area);
         f.render_widget(input, chunks[0]);
         f.set_cursor(
@@ -88,7 +90,7 @@ impl SingleInstruction {
                     .style(Style::default()),
             )
             .style(Style::default())
-            .highlight_style(Style::default().bg(super::LIST_ITEM_HIGHLIGHT_COLOR));
+            .highlight_style(Style::default().bg(LIST_ITEM_HIGHLIGHT_COLOR));
         // render list
         f.render_stateful_widget(possible_items, chunks[1], &mut self.allowed_values_state)
     }

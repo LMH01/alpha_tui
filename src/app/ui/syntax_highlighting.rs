@@ -4,11 +4,10 @@ use ratatui::{
 };
 
 use crate::{
-    app::{COMMENT, CYAN, FOREGROUND, GREEN, PINK, PURPLE},
-    base::Operation,
-    instructions::{IndexMemoryCellIndexType, Instruction, TargetType, Value},
-    utils::{self, remove_comment},
+    app::ui::CYAN, base::Operation, instructions::{IndexMemoryCellIndexType, Instruction, TargetType, Value}, utils::{self, remove_comment}
 };
+
+use super::{COMMENT, FOREGROUND, GREEN, PINK, PURPLE};
 
 /// How many spaces should be between labels, instructions and comments when alignment is enabled
 const SPACING: usize = 2;

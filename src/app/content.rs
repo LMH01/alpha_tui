@@ -8,7 +8,7 @@ use ratatui::{
 
 use crate::runtime::{Runtime, RuntimeMemory};
 
-use super::LIST_ITEM_HIGHLIGHT_COLOR;
+use super::ui::LIST_ITEM_HIGHLIGHT_COLOR;
 
 /// Used to store the instructions and to remember what instruction should currently be highlighted.
 #[derive(Debug, Clone)]

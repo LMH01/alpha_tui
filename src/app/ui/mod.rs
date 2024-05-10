@@ -1,6 +1,6 @@
 use ratatui::{
     prelude::{Alignment, Constraint, Direction, Layout},
-    style::{Modifier, Style},
+    style::{Color, Modifier, Style},
     text::{Line, Span, Text},
     widgets::{Block, BorderType, Borders, Clear, List, ListDirection, ListItem, Paragraph},
     Frame,
@@ -9,11 +9,41 @@ use text_align::TextAlign;
 
 use super::{
     keybindings::KeySymbol, run_instruction::SingleInstruction, App, State,
-    BREAKPOINT_ACCENT_COLOR, CODE_AREA_DEFAULT_COLOR, ERROR_COLOR, EXECUTION_FINISHED_POPUP_COLOR,
-    INTERNAL_MEMORY_BLOCK_BORDER_FG, LIST_ITEM_HIGHLIGHT_COLOR, MEMORY_BLOCK_BORDER_FG,
 };
 
 pub mod syntax_highlighting;
+
+// color config
+const BREAKPOINT_ACCENT_COLOR: Color = Color::Magenta;
+const ERROR_COLOR: Color = Color::Red;
+const CODE_AREA_DEFAULT_COLOR: Color = Color::Green;
+//const LIST_ITEM_HIGHLIGHT_COLOR: Color = Color::Rgb(98, 114, 164);
+pub const LIST_ITEM_HIGHLIGHT_COLOR: Color = SELECTION;
+const EXECUTION_FINISHED_POPUP_COLOR: Color = Color::Green;
+pub const KEYBINDS_FG: Color = Color::White;
+pub const KEYBINDS_DISABLED_FG: Color = Color::DarkGray;
+pub const KEYBINDS_BG: Color = Color::Rgb(98, 114, 164);
+pub const KEYBINDS_DISABLED_BG: Color = Color::Black;
+pub const CUSTOM_INSTRUCTION_ACCENT_FG: Color = Color::Cyan;
+const MEMORY_BLOCK_BORDER_FG: Color = Color::LightBlue;
+const INTERNAL_MEMORY_BLOCK_BORDER_FG: Color = Color::Yellow;
+
+// It might be a good idea to change the rest of the app styling to use dracula
+// It would probably be a good idea to improve how styling is handled before
+// that is done
+
+// dracula theme
+const _BACKGROUND: Color = Color::Rgb(40, 42, 54);
+const FOREGROUND: Color = Color::Rgb(248, 248, 242);
+const SELECTION: Color = Color::Rgb(68, 71, 90);
+const COMMENT: Color = Color::Rgb(98, 114, 164);
+const _RED: Color = Color::Rgb(255, 85, 85);
+const _ORANGE: Color = Color::Rgb(255, 184, 108);
+const _YELLOW: Color = Color::Rgb(241, 250, 140);
+const GREEN: Color = Color::Rgb(80, 250, 123);
+const PURPLE: Color = Color::Rgb(189, 147, 249);
+const CYAN: Color = Color::Rgb(139, 233, 253);
+const PINK: Color = Color::Rgb(255, 121, 198);
 
 /// Draw the ui
 #[allow(clippy::too_many_lines)]
