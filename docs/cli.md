@@ -271,3 +271,18 @@ alpha_tui load program.alpha
 (The different options have been written each in a new line for better understanding, in the correct command you would write them in one line.)
 
 If run, all programs that don't fulfill these requirements will fail to build.
+
+## Themes
+
+Using the command line arguments `--theme` and `--theme-file` the theming of the tui can be changed.
+
+`-t` or `--theme` can be used to load a build in theme, these are:
+- dracula (default)
+- default-old (this was the color scheme before v1.5.0)
+- gray
+
+With `--theme-file` a path to a theme file can be provided from which the theme should be loaded.
+
+Furthermore it is possible to place a file called `theme.json` in `$HOME/.config/alpha_tui/` which will be loaded when alpha tui starts, to make it possible to always load a custom theme. See [themes.md](../themes/themes.md) on how this file is structured.
+
+`--theme` and `--theme-file` will take precedence over the theme placed in `$HOME/.config/alpha_tui/`.

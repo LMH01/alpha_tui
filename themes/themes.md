@@ -1,0 +1,9 @@
+# Themes
+
+This folder contains the theme `json` files for all build in themes. You can use them to create your custom theme.
+
+The section `sh_theme` contains all colors used in the syntax highlighting. 
+
+You can specify colors either by using their hex code or by using their names. The names that are supported can be found here: https://docs.rs/ratatui/latest/ratatui/style/enum.Color.html
+
+See [cli#themes](../docs/cli.md#themes) for information on how to start the program with a specific theme.

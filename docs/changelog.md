@@ -5,6 +5,14 @@
 ### New feature
 
 - Added syntax highlighting for instructions, this can be disabled using the new `--disable-syntax-highlighting` flag (fr #8)
+- The theming of the app can now be customized (fr #77)
+    - For now there are 3 themes build in, use `-t` to set the theme that should be loaded:
+        - dracula (default)
+        - default-old (this was the color scheme before this update)
+        - gray
+    - Dracula is now the default color scheme
+    - Custom themes can be written as a `JSON` file that can be loaded with `--theme-file`
+    - A `theme.json` file can be placed in `$HOME/.config/alpha_tui` to load it automatically when the program starts
 
 ### TUI
 

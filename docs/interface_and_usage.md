@@ -123,3 +123,7 @@ or this:
 If a program can not be build, because certain instructions are not allowed, the following error could be displayeD:
 
 ![Instruction forbidden error](../media/miette_error_instruction_not_allowed.png)
+
+## Themes
+
+alpha_tui supports custom themes see [themes.md](../themes/themes.md) and [themes](cli.md#themes).
