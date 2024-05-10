@@ -1,28 +1,22 @@
-use std::rc::Rc;
-
 use ratatui::{
-    style::{Color, Style},
+    style::Style,
     text::{Line, Span},
 };
 
 use crate::{
-    app::ui::CYAN,
     base::Operation,
     instructions::{IndexMemoryCellIndexType, Instruction, TargetType, Value},
     utils::{self, remove_comment},
 };
 
-use super::{
-    style::{SharedSyntaxHighlightingTheme, SharedTheme, SyntaxHighlightingTheme},
-    COMMENT, FOREGROUND, GREEN, PINK, PURPLE,
-};
+use super::style::SharedSyntaxHighlightingTheme;
 
 /// How many spaces should be between labels, instructions and comments when alignment is enabled
 const SPACING: usize = 2;
 
 /// Syntax highlighter used to pretty format instructions with syntax highlighting.
 pub struct SyntaxHighlighter {
-    theme: SharedSyntaxHighlightingTheme,
+    pub theme: SharedSyntaxHighlightingTheme,
 }
 
 impl SyntaxHighlighter {
@@ -35,54 +29,55 @@ impl SyntaxHighlighter {
 
     /// Creates a span containing ' := '.
     fn assignment_span(&self) -> Span<'static> {
-        Span::from(" := ").style(self.theme.assignment_span())
+        Span::from(" := ").style(self.theme.assignment())
     }
 
     /// Creates a span containing the operation.
     fn op_span(&self, op: &Operation) -> Span<'static> {
-        Span::from(format!("{op}")).style(Style::default().fg(PINK))
+        Span::from(format!("{op}")).style(self.theme.op())
     }
 
     /// Create a span containing a label.
     fn label_span(&self, label: &str) -> Span<'static> {
-        Span::from(format!(" {label}")).style(Style::default().fg(GREEN))
+        Span::from(format!(" {label}")).style(self.theme.label(true))
     }
 
     /// Span to use for build in functions.
     fn build_in_span(&self, text: &str) -> Span<'static> {
-        Span::from(text.to_string()).style(Style::default().fg(PINK))
+        Span::from(text.to_string()).style(self.theme.build_in(true))
     }
 
     /// Creates a span formatted for an accumulator with index `idx`.
     fn accumulator_span(&self, idx: &usize) -> Span<'static> {
-        Span::from(format!("\u{03b1}{idx}")).style(Style::default().fg(FOREGROUND))
+        Span::from(format!("\u{03b1}{idx}")).style(self.theme.accumulator())
     }
 
     /// Creates a span formatted for gamma.
     fn gamma_span(&self) -> Span<'static> {
-        Span::from("\u{03b3}").style(Style::default().fg(PURPLE))
+        Span::from("\u{03b3}").style(self.theme.gamma())
     }
 
     /// Creates formatted spans for a memory cell with label `label`.
     fn memory_cell_spans(&self, label: &str) -> Vec<Span<'static>> {
         vec![
-            Span::from("\u{03c1}(".to_string()).style(Style::default().fg(CYAN)),
-            Span::from(label.to_string()).style(Style::default().fg(FOREGROUND)),
-            Span::from(")".to_string()).style(Style::default().fg(CYAN)),
+            Span::from("\u{03c1}(".to_string()).style(self.theme.memory_cell_outer()),
+            Span::from(label.to_string()).style(self.theme.memory_cell_inner()),
+            Span::from(")".to_string()).style(self.theme.memory_cell_outer()),
         ]
     }
 
     /// Creates formatted spans for a index memory cell with type `imcit`.
     fn index_memory_cell_spanns(&self, imcit: &IndexMemoryCellIndexType) -> Vec<Span<'static>> {
-        let mut spans = vec![Span::from("\u{03c1}(".to_string()).style(Style::default().fg(CYAN))];
+        let mut spans =
+            vec![Span::from("\u{03c1}(".to_string()).style(self.theme.index_memory_cell_outer())];
         spans.append(&mut imcit.to_spans(self));
-        spans.push(Span::from(")".to_string()).style(Style::default().fg(CYAN)));
+        spans.push(Span::from(")".to_string()).style(self.theme.index_memory_cell_outer()));
         spans
     }
 
     /// Span to be used when the value is constant.
     fn constant_span(&self, value: &i32) -> Span<'static> {
-        Span::from(format!("{value}")).style(Style::default().fg(PURPLE))
+        Span::from(format!("{value}")).style(self.theme.constant())
     }
 
     /// This function turns the input strings into a
@@ -130,11 +125,9 @@ impl SyntaxHighlighter {
                 if comment.starts_with('#') {
                     continue;
                 }
-                spans.push(string_into_span(
-                    comment,
-                    enable_syntax_highlighting,
-                    COMMENT,
-                ));
+                spans.push(
+                    Span::from(comment).style(self.theme.comment(enable_syntax_highlighting)),
+                );
                 lines.push(Line::from(spans));
                 continue;
             }
@@ -142,11 +135,13 @@ impl SyntaxHighlighter {
             // handle label
             if let Some(label) = parts.label {
                 let len = label.chars().count() + 1; // add plus one because `:` is not included in label
-                spans.push(string_into_span(label, enable_syntax_highlighting, GREEN));
+                spans.push(string_into_span(
+                    label,
+                    self.theme.label(enable_syntax_highlighting),
+                ));
                 spans.push(string_into_span(
                     ":".to_string(),
-                    enable_syntax_highlighting,
-                    PINK,
+                    self.theme.build_in(enable_syntax_highlighting),
                 ));
                 // fill spaces if enabled until next part is reached
                 if enable_alignment {
@@ -181,8 +176,7 @@ impl SyntaxHighlighter {
             if let Some(comment) = parts.comment {
                 spans.push(string_into_span(
                     comment,
-                    enable_syntax_highlighting,
-                    COMMENT,
+                    self.theme.comment(enable_syntax_highlighting),
                 ));
             }
             lines.push(Line::from(remove_trailing_whitespaces(spans)));
@@ -226,13 +220,13 @@ impl ToSpans for Instruction {
                 vec![sh.build_in_span("goto"), sh.label_span(label)]
             }
             Self::JumpIf(v, cmp, v2, label) => {
-                let mut spans = vec![Span::from("if ").style(Style::default().fg(PINK))];
+                let mut spans = vec![Span::from("if ").style(sh.theme.build_in(true))];
                 spans.append(&mut v.to_spans(sh));
                 spans.push(Span::from(" "));
-                spans.push(Span::from(format!("{cmp}")).style(Style::default().fg(PINK)));
+                spans.push(Span::from(format!("{cmp}")).style(sh.theme.cmp()));
                 spans.push(Span::from(" "));
                 spans.append(&mut v2.to_spans(sh));
-                spans.push(Span::from(" then goto").style(Style::default().fg(PINK)));
+                spans.push(Span::from(" then goto").style(sh.theme.build_in(true)));
                 spans.push(sh.label_span(label));
                 spans
             }
@@ -267,9 +261,10 @@ impl ToSpans for IndexMemoryCellIndexType {
             Self::MemoryCell(label) => sh.memory_cell_spans(label),
             Self::Index(idx) => {
                 vec![
-                    Span::from("\u{03c1}(".to_string()).style(Style::default().fg(GREEN)),
-                    Span::from(format!("{idx}")).style(Style::default().fg(PURPLE)),
-                    Span::from(")".to_string()).style(Style::default().fg(GREEN)),
+                    Span::from("\u{03c1}(".to_string())
+                        .style(sh.theme.index_memory_cell_index_outer()),
+                    Span::from(format!("{idx}")).style(sh.theme.constant()),
+                    Span::from(")".to_string()).style(sh.theme.index_memory_cell_index_outer()),
                 ]
             }
         }
@@ -395,21 +390,6 @@ fn input_parts(mut input: String) -> Option<InputParts> {
     }
 }
 
-/// Creates a new span with `str` as content and `color` as foreground color if
-/// `enable_syntax_highlighting` is true. If false, the style is set to default.
-fn string_into_span(
-    string: String,
-    enable_syntax_highlighting: bool,
-    color: Color,
-) -> Span<'static> {
-    let span = Span::from(string);
-    if enable_syntax_highlighting {
-        span.style(Style::default().fg(color))
-    } else {
-        span
-    }
-}
-
 /// Creates a span that contains `amount` number of spaces.
 fn fill_span(amount: usize) -> Span<'static> {
     Span::from(" ".repeat(amount))
@@ -430,6 +410,13 @@ fn remove_trailing_whitespaces(mut spans: Vec<Span<'static>>) -> Vec<Span<'stati
     }
     spans_done.reverse();
     spans_done
+}
+
+/// Creates a new span with `str` as content and `color` as foreground color if
+/// `enable_syntax_highlighting` is true. If false, the style is set to default.
+fn string_into_span(string: String, style: Style) -> Span<'static> {
+    let span = Span::from(string);
+    span.style(style)
 }
 
 #[cfg(test)]

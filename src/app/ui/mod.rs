@@ -1,6 +1,5 @@
 use ratatui::{
     prelude::{Alignment, Constraint, Direction, Layout},
-    style::Color,
     text::{Line, Span, Text},
     widgets::{Block, BorderType, Borders, Clear, List, ListDirection, ListItem, Paragraph},
     Frame,
@@ -11,32 +10,6 @@ use super::{keybindings::KeySymbol, run_instruction::SingleInstruction, App, Sta
 
 pub mod style;
 pub mod syntax_highlighting;
-
-// It might be a good idea to change the rest of the app styling to use dracula
-// It would probably be a good idea to improve how styling is handled before
-// that is done
-
-// dracula theme
-#[deprecated]
-const _BACKGROUND: Color = Color::Rgb(40, 42, 54);
-#[deprecated]
-const FOREGROUND: Color = Color::Rgb(248, 248, 242);
-#[deprecated]
-const COMMENT: Color = Color::Rgb(98, 114, 164);
-#[deprecated]
-const _RED: Color = Color::Rgb(255, 85, 85);
-#[deprecated]
-const _ORANGE: Color = Color::Rgb(255, 184, 108);
-#[deprecated]
-const _YELLOW: Color = Color::Rgb(241, 250, 140);
-#[deprecated]
-const GREEN: Color = Color::Rgb(80, 250, 123);
-#[deprecated]
-const PURPLE: Color = Color::Rgb(189, 147, 249);
-#[deprecated]
-const CYAN: Color = Color::Rgb(139, 233, 253);
-#[deprecated]
-const PINK: Color = Color::Rgb(255, 121, 198);
 
 impl App {
     /// Draw the ui

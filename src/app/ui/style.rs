@@ -118,40 +118,120 @@ impl Theme {
 pub struct SyntaxHighlightingTheme {
     assignment: Color,
     op: Color,
+    cmp: Color,
     label: Color,
     build_in: Color,
+    accumulator: Color,
+    gamma: Color,
+    /// `p( )` part of the memory cell.
+    memory_cell_outer: Color,
+    /// The part in the center of the brackets.
+    memory_cell_inner: Color,
+    /// `p( )` part of the index memory cell.
+    index_memory_cell_outer: Color,
+    index_memory_cell_index_outer: Color,
+    constant: Color,
+    comment: Color,
 }
 
 impl Default for SyntaxHighlightingTheme {
     fn default() -> Self {
         Self {
             assignment: PINK,
-            op: Default::default(),
-            label: Default::default(),
-            build_in: Default::default(),
+            op: PINK,
+            cmp: PINK,
+            label: GREEN,
+            build_in: PINK,
+            accumulator: FOREGROUND,
+            gamma: PURPLE,
+            memory_cell_outer: CYAN,
+            memory_cell_inner: FOREGROUND,
+            index_memory_cell_outer: CYAN,
+            index_memory_cell_index_outer: GREEN,
+            constant: PURPLE,
+            comment: COMMENT,
         }
     }
 }
 
 impl SyntaxHighlightingTheme {
-    pub fn assignment_span(&self) -> Style {
+    pub fn assignment(&self) -> Style {
         Style::default().fg(self.assignment)
     }
 
-    //pub fn op_span(&self) -> Style {
-    //
-    //}
+    pub fn op(&self) -> Style {
+        Style::default().fg(self.op)
+    }
+
+    pub fn cmp(&self) -> Style {
+        Style::default().fg(self.cmp)
+    }
+
+    pub fn label(&self, enable_syntax_highlighting: bool) -> Style {
+        let style = Style::default();
+        if enable_syntax_highlighting {
+            style.fg(self.label)
+        } else {
+            style
+        }
+    }
+
+    pub fn build_in(&self, enable_syntax_highlighting: bool) -> Style {
+        let style = Style::default();
+        if enable_syntax_highlighting {
+            style.fg(self.build_in)
+        } else {
+            style
+        }
+    }
+
+    pub fn accumulator(&self) -> Style {
+        Style::default().fg(self.accumulator)
+    }
+
+    pub fn gamma(&self) -> Style {
+        Style::default().fg(self.gamma)
+    }
+
+    pub fn memory_cell_outer(&self) -> Style {
+        Style::default().fg(self.memory_cell_outer)
+    }
+
+    pub fn memory_cell_inner(&self) -> Style {
+        Style::default().fg(self.memory_cell_inner)
+    }
+
+    pub fn index_memory_cell_outer(&self) -> Style {
+        Style::default().fg(self.index_memory_cell_outer)
+    }
+
+    pub fn index_memory_cell_index_outer(&self) -> Style {
+        Style::default().fg(self.index_memory_cell_index_outer)
+    }
+
+    pub fn constant(&self) -> Style {
+        Style::default().fg(self.constant)
+    }
+
+    pub fn comment(&self, enable_syntax_highlighting: bool) -> Style {
+        let style = Style::default();
+        if enable_syntax_highlighting {
+            style.fg(self.comment)
+        } else {
+            style
+        }
+    }
 }
 
 // dracula theme color palette
 // is used for the default application theme
-const BACKGROUND: Color = Color::Rgb(40, 42, 54);
+const _BACKGROUND: Color = Color::Rgb(40, 42, 54);
 const FOREGROUND: Color = Color::Rgb(248, 248, 242);
-const SELECTION: Color = Color::Rgb(68, 71, 90);
+const _SELECTION: Color = Color::Rgb(68, 71, 90);
 const COMMENT: Color = Color::Rgb(98, 114, 164);
-const RED: Color = Color::Rgb(255, 85, 85);
-const ORANGE: Color = Color::Rgb(255, 184, 108);
-const YELLOW: Color = Color::Rgb(241, 250, 140);
+const _RED: Color = Color::Rgb(255, 85, 85);
+const _ORANGE: Color = Color::Rgb(255, 184, 108);
+const _YELLOW: Color = Color::Rgb(241, 250, 140);
 const GREEN: Color = Color::Rgb(80, 250, 123);
 const PURPLE: Color = Color::Rgb(189, 147, 249);
 const CYAN: Color = Color::Rgb(139, 233, 253);
