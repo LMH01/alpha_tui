@@ -46,7 +46,6 @@ impl SingleInstruction {
         is_playground: bool,
     ) {
         let input = Paragraph::new(self.input.as_str())
-            .style(Style::default())
             .block(
                 Block::default()
                     .borders(Borders::ALL)
@@ -74,7 +73,8 @@ impl SingleInstruction {
             .title(outer_block_title)
             .title_alignment(Alignment::Center)
             .borders(Borders::ALL)
-            .border_style(self.theme.custom_instruction());
+            .border_style(self.theme.custom_instruction())
+            .style(self.theme.single_instruction_block());
         f.render_widget(outer_block, area);
         f.render_widget(input, chunks[0]);
         f.set_cursor(

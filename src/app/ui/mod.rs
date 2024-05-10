@@ -94,22 +94,21 @@ impl App {
                 Alignment::Left
             })
             .border_type(BorderType::Rounded)
-            .style(self.theme.code_area());
+            .style(self.theme.code_block());
         if let State::RuntimeError(_, false) = self.state {
-            code_area = code_area.border_style(self.theme.error_border());
+            code_area = code_area.border_style(self.theme.error_block_border());
         } else if let State::DebugSelect(_, _) = self.state {
             code_area = code_area
                 .border_style(self.theme.breakpoint_border())
                 .title("Debug select mode");
         } else {
-            code_area =
-                code_area
-                    .border_style(self.theme.code_area_border())
-                    .title(if is_playground {
-                        "Executed instructions".to_string()
-                    } else {
-                        format!("File: {}", self.filename.clone())
-                    });
+            code_area = code_area
+                .border_style(self.theme.code_block_border())
+                .title(if is_playground {
+                    "Executed instructions".to_string()
+                } else {
+                    format!("File: {}", self.filename.clone())
+                });
         }
 
         // Create a List from all instructions and highlight current instruction
@@ -142,7 +141,8 @@ impl App {
                 .title("BPs")
                 .border_style(self.theme.breakpoint_border())
                 .title_alignment(Alignment::Center)
-                .border_type(BorderType::Rounded);
+                .border_type(BorderType::Rounded)
+                .style(self.theme.breakpoint_block());
 
             // Create the items for the list
             let breakpoint_list_items: Vec<ListItem> = self
@@ -182,7 +182,8 @@ impl App {
             .title(accumulator_title)
             .title_alignment(Alignment::Center)
             .border_type(BorderType::Rounded)
-            .border_style(self.theme.memory_block_border());
+            .border_style(self.theme.memory_block_border())
+            .style(self.theme.memory_block());
         let accumulator_list =
             List::new(self.memory_lists_manager.accumulator_list()).block(accumulator);
         f.render_widget(accumulator_list, right_chunks[0]);
@@ -198,14 +199,15 @@ impl App {
             .title(memory_cells_title)
             .title_alignment(Alignment::Center)
             .border_type(BorderType::Rounded)
-            .border_style(self.theme.memory_block_border());
+            .border_style(self.theme.memory_block_border())
+            .style(self.theme.memory_block());
         let memory_cell_list =
             List::new(self.memory_lists_manager.memory_cell_list()).block(memory_cells);
         f.render_widget(memory_cell_list, right_chunks[1]);
 
         // Next instruction block
         if !is_playground {
-            // draw next instruction block only, if no in playground mode
+            // draw next instruction block only, if not in playground mode
             let next_instruction_title = match right_chunks[2].width {
                 0..=17 => "Next instr.",
                 18..=u16::MAX => "Next instruction",
@@ -215,7 +217,8 @@ impl App {
                 .title(next_instruction_title)
                 .title_alignment(Alignment::Center)
                 .border_type(BorderType::Rounded)
-                .border_style(self.theme.internal_memory_block_border());
+                .border_style(self.theme.internal_memory_block_border())
+                .style(self.theme.internal_memory_block());
             let next_instruction =
                 Paragraph::new(format!("{}", self.runtime.next_instruction_index() + 1))
                     .block(next_instruction_block);
@@ -232,7 +235,8 @@ impl App {
             .title(stack_title)
             .title_alignment(Alignment::Center)
             .border_type(BorderType::Rounded)
-            .border_style(self.theme.memory_block_border());
+            .border_style(self.theme.memory_block_border())
+            .style(self.theme.memory_block());
         let stack_list = List::new(self.memory_lists_manager.stack_list()).block(stack);
         f.render_widget(stack_list, stack_chunks[0]);
 
@@ -248,7 +252,8 @@ impl App {
                 .title(call_stack_title)
                 .title_alignment(Alignment::Center)
                 .border_type(BorderType::Rounded)
-                .border_style(self.theme.internal_memory_block_border());
+                .border_style(self.theme.internal_memory_block_border())
+                .style(self.theme.internal_memory_block());
             let call_stack =
                 List::new(self.memory_lists_manager.call_stack_list()).block(call_stack_block);
             f.render_widget(call_stack, stack_chunks[1]);
@@ -293,7 +298,8 @@ impl App {
             let block = Block::default()
                 .title("Runtime error!")
                 .borders(Borders::ALL)
-                .border_style(self.theme.error_border());
+                .border_style(self.theme.error_block_border())
+                .style(self.theme.error_block());
             let area = super::centered_rect(60, 30, None, f.size());
             let text = paragraph_with_line_wrap(if is_playground {format!("This instruction could not be executed due to the following problem:\n{}\n\nPress [q] to exit and to view further information regarding this error.\nPress [ENTER] to close.", e.reason)} else {format!(
                 "Execution can not continue due to the following problem:\n{}\n\nPress [q] or [{}] to exit and to view further information regarding this error.\nPress [t] to reset to start.",
@@ -307,7 +313,8 @@ impl App {
             let block = Block::default()
                 .title("Error: unable to parse instruction".to_string())
                 .borders(Borders::ALL)
-                .border_style(self.theme.error_border());
+                .border_style(self.theme.error_block_border())
+                .style(self.theme.error_block());
             let area = super::centered_rect(
                 60,
                 30,
@@ -333,7 +340,8 @@ impl App {
             let block = Block::default()
                 .title("Error: instruction forbidden".to_string())
                 .borders(Borders::ALL)
-                .border_style(self.theme.error_border());
+                .border_style(self.theme.error_block_border())
+                .style(self.theme.error_block());
             let area = super::centered_rect(
                 60,
                 30,

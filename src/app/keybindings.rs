@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
 use ratatui::{
-    style::{Color, Stylize},
     text::{Line, Span},
     widgets::Paragraph,
 };
@@ -39,7 +38,8 @@ impl KeybindingHints {
             if first_hint {
                 first_hint = false;
             } else {
-                styled_keybinds_row.push(Span::from(" ").bg(Color::default()));
+                styled_keybinds_row
+                    .push(Span::from(" ").style(self.theme.keybinding_hint_paragraph()));
                 line_length += 1;
             }
             let text = format!("{} [{}]", hint.label(), hint.key);
@@ -56,7 +56,8 @@ impl KeybindingHints {
         styled_keybinds.push(Line::from(styled_keybinds_row));
 
         let hight = styled_keybinds.len() as u16;
-        let keybinding_hints = Paragraph::new(styled_keybinds);
+        let keybinding_hints =
+            Paragraph::new(styled_keybinds).style(self.theme.keybinding_hint_paragraph());
         (keybinding_hints, hight)
     }
 

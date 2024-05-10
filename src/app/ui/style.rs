@@ -20,7 +20,6 @@ pub struct Theme {
     keybindings_fg: Color,
     keybindings_disabled_fg: Color,
     keybindings_bg: Color,
-    keybindings_disabled_bg: Color,
     custom_instruction_accent_fg: Color,
     memory_block_border: Color,
     internal_memory_block_border: Color,
@@ -55,7 +54,6 @@ impl Theme {
             keybindings_fg: Color::White,
             keybindings_disabled_fg: Color::DarkGray,
             keybindings_bg: Color::Rgb(98, 114, 164),
-            keybindings_disabled_bg: Color::Black,
             custom_instruction_accent_fg: Color::Cyan,
             memory_block_border: Color::LightBlue,
             internal_memory_block_border: Color::Yellow,
@@ -75,7 +73,6 @@ impl Theme {
             keybindings_fg: Color::White,
             keybindings_disabled_fg: Color::DarkGray,
             keybindings_bg: Color::Rgb(98, 114, 164),
-            keybindings_disabled_bg: Color::Black,
             custom_instruction_accent_fg: Color::Cyan,
             memory_block_border: Color::LightBlue,
             internal_memory_block_border: Color::Yellow,
@@ -88,10 +85,6 @@ impl Theme {
 
     pub fn custom_instruction(&self) -> Style {
         Style::default().fg(self.custom_instruction_accent_fg)
-    }
-
-    pub fn code_area(&self) -> Style {
-        Style::default().bg(self.background)
     }
 
     pub fn list_item_highlight(&self, breakpoint_mode: bool) -> Style {
@@ -110,12 +103,24 @@ impl Theme {
         } else {
             style
                 .fg(self.keybindings_disabled_fg)
-                .bg(self.keybindings_disabled_bg)
+                .bg(self.background)
         }
     }
 
-    pub fn error_border(&self) -> Style {
+    pub fn error_block(&self) -> Style {
+        Style::default().bg(self.background)
+    }
+
+    pub fn error_block_border(&self) -> Style {
         Style::default().fg(self.error)
+    }
+
+    pub fn code_block(&self) -> Style {
+        Style::default().bg(self.background)
+    }
+
+    pub fn code_block_border(&self) -> Style {
+        Style::default().fg(self.code_area_default)
     }
 
     pub fn breakpoint_border(&self) -> Style {
@@ -126,12 +131,26 @@ impl Theme {
         Style::default().fg(self.breakpoint_accent)
     }
 
-    pub fn code_area_border(&self) -> Style {
-        Style::default().fg(self.code_area_default)
+    pub fn breakpoint_block(&self) -> Style {
+        Style::default()
+            .bg(self.background)
+            .fg(self.breakpoint_accent)
+    }
+
+    pub fn memory_block(&self) -> Style {
+        Style::default()
+            .fg(self.memory_block_border)
+            .bg(self.background)
     }
 
     pub fn memory_block_border(&self) -> Style {
         Style::default().fg(self.memory_block_border)
+    }
+
+    pub fn internal_memory_block(&self) -> Style {
+        Style::default()
+            .fg(self.internal_memory_block_border)
+            .bg(self.background)
     }
 
     pub fn internal_memory_block_border(&self) -> Style {
@@ -140,6 +159,14 @@ impl Theme {
 
     pub fn execution_finished_popup_border(&self) -> Style {
         Style::default().fg(self.execution_finished_popup_border)
+    }
+
+    pub fn keybinding_hint_paragraph(&self) -> Style {
+        Style::default().bg(self.background)
+    }
+
+    pub fn single_instruction_block(&self) -> Style {
+        Style::default().bg(self.background)
     }
 
     // code syntax highlighting styles start here
