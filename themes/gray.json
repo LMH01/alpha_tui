@@ -20,6 +20,7 @@
     "error": "White",
     "code_area_default": "White",
     "list_item_highlight": "DarkGray",
+    "line_numbers": "White",
     "execution_finished_popup_border": "White",
     "keybindings_fg": "White",
     "keybindings_disabled_fg": "DarkGray",

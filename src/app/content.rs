@@ -46,7 +46,11 @@ impl InstructionListStates {
     }
 
     /// Returns the instruction states as a vector of list items to be printed in the ui.
-    pub fn as_list_items(&self, is_playground: bool) -> Vec<ListItem<'static>> {
+    pub fn as_list_items(
+        &self,
+        is_playground: bool,
+        theme: &SharedTheme,
+    ) -> Vec<ListItem<'static>> {
         let mut items: Vec<ListItem<'static>> = self
             .instructions()
             .iter()
@@ -54,7 +58,8 @@ impl InstructionListStates {
                 let content = if is_playground {
                     i.1.clone()
                 } else {
-                    let mut content = vec![Span::from(format!("{:2}: ", i.0 + 1))];
+                    let mut content =
+                        vec![Span::from(format!("{:2}: ", i.0 + 1)).style(theme.line_numbers())];
                     content.append(&mut i.1.clone().spans);
                     Line::from(content)
                 };

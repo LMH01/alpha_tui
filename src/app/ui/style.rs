@@ -17,6 +17,7 @@ pub struct Theme {
     error: Color,
     code_area_default: Color,
     list_item_highlight: Color,
+    line_numbers: Color,
     execution_finished_popup_border: Color,
     keybindings_fg: Color,
     keybindings_disabled_fg: Color,
@@ -52,6 +53,7 @@ impl Theme {
             error: Color::Red,
             code_area_default: Color::Green,
             list_item_highlight: Color::Rgb(98, 114, 164),
+            line_numbers: Color::White,
             execution_finished_popup_border: Color::Green,
             keybindings_fg: Color::White,
             keybindings_disabled_fg: Color::DarkGray,
@@ -72,6 +74,7 @@ impl Theme {
             error: RED,
             code_area_default: GREEN,
             list_item_highlight: SELECTION,
+            line_numbers: FOREGROUND,
             execution_finished_popup_border: GREEN,
             keybindings_fg: FOREGROUND,
             keybindings_disabled_fg: COMMENT,
@@ -172,6 +175,10 @@ impl Theme {
 
     pub fn execution_finished_block(&self) -> Style {
         Style::default().bg(self.background).fg(self.foreground)
+    }
+
+    pub fn line_numbers(&self) -> Style {
+        Style::default().bg(self.background).fg(self.line_numbers)
     }
 
     // code syntax highlighting styles start here
