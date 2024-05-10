@@ -2,7 +2,10 @@ use clap::{Args, Parser, Subcommand};
 use miette::{Diagnostic, Result};
 use thiserror::Error;
 
-use crate::base::{Comparison, Operation};
+use crate::{
+    app::ui::style::BuildInTheme,
+    base::{Comparison, Operation},
+};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -164,6 +167,26 @@ pub struct LoadPlaygroundArgs {
         display_order = 32
     )]
     pub disable_syntax_highlighting: bool,
+
+    #[arg(
+        short,
+        long,
+        help = "What build-in theme to use.",
+        long_help = "What build-in theme to use. Overwrites theme set in config file.",
+        global = true,
+        display_order = 1
+    )]
+    pub theme: Option<BuildInTheme>,
+
+    #[arg(
+        long,
+        help = "Json file to load the theme from.",
+        long_help = "Json file to load the theme from. Overwrites theme set in config file.",
+        global = true,
+        conflicts_with = "theme",
+        display_order = 2
+    )]
+    pub theme_file: Option<String>,
 }
 
 #[derive(Subcommand, Clone, Debug)]

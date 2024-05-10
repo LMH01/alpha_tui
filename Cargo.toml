@@ -22,5 +22,8 @@ trie-rs = "0.3"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+# used to load theme file from correct location
+directories = "5"
+
 [dev-dependencies]
 assert_cmd = "2"

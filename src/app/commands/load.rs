@@ -33,7 +33,7 @@ pub fn load(
     println!("Building runtime");
     let rt = rb.build()?;
 
-    let theme = Rc::new(Theme::default_old());
+    let theme = Rc::new(super::load_theme(&load_args.load_playground_args)?);
 
     // format instructions pretty if cli flag is set
     let instructions = SyntaxHighlighter::new(&theme.syntax_highlighting_theme()).input_to_lines(

@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use clap::ValueEnum;
 use ratatui::style::{Color, Modifier, Style};
 use serde::{Deserialize, Serialize};
 
@@ -29,6 +30,15 @@ impl Default for Theme {
         // TODO change to dracula
         //Theme::dracula()
         Theme::default_old()
+    }
+}
+
+impl From<&BuildInTheme> for Theme {
+    fn from(value: &BuildInTheme) -> Self {
+        match value {
+            BuildInTheme::DefaultOld => Theme::default_old(),
+            BuildInTheme::Dracula => Theme::dracula(),
+        }
     }
 }
 
@@ -238,3 +248,10 @@ const GREEN: Color = Color::Rgb(80, 250, 123);
 const PURPLE: Color = Color::Rgb(189, 147, 249);
 const CYAN: Color = Color::Rgb(139, 233, 253);
 const PINK: Color = Color::Rgb(255, 121, 198);
+
+#[derive(Serialize, Deserialize, Clone, Debug, ValueEnum)]
+#[serde(rename_all = "snake_case")]
+pub enum BuildInTheme {
+    Dracula,
+    DefaultOld,
+}
