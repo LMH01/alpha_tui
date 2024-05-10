@@ -39,6 +39,7 @@ impl From<&BuildInTheme> for Theme {
         match value {
             BuildInTheme::DefaultOld => Theme::default_old(),
             BuildInTheme::Dracula => Theme::dracula(),
+            BuildInTheme::Gray => serde_json::from_str(r#"{"sh_theme":{"assignment":"White","op":"White","cmp":"White","label":"White","build_in":"White","accumulator":"White","gamma":"White","memory_cell_outer":"White","memory_cell_inner":"White","index_memory_cell_outer":"White","index_memory_cell_index_outer":"White","constant":"White","comment":"White"},"background":"Black","foreground":"White","breakpoint_accent":"DarkGray","error":"White","code_area_default":"White","list_item_highlight_fg":"White","list_item_highlight_bg":"DarkGray","line_numbers":"White","execution_finished_popup_border":"White","keybindings_fg":"White","keybindings_disabled_fg":"DarkGray","keybindings_bg":"DarkGray","custom_instruction_accent_fg":"White","memory_block_border":"White","internal_memory_block_border":"White"}"#).unwrap(),
         }
     }
 }
@@ -319,4 +320,5 @@ const PINK: Color = Color::Rgb(255, 121, 198);
 pub enum BuildInTheme {
     Dracula,
     DefaultOld,
+    Gray,
 }
