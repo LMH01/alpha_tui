@@ -1,0 +1,30 @@
+{
+    "sh_theme": {
+        "assignment": "#FF79C6",
+        "op": "#FF79C6",
+        "cmp": "#FF79C6",
+        "label": "#50FA7B",
+        "build_in": "#FF79C6",
+        "accumulator": "#50FA7B",
+        "gamma": "#BD93F9",
+        "memory_cell_outer": "#8BE9FD",
+        "memory_cell_inner": "#50FA7B",
+        "index_memory_cell_outer": "#8BE9FD",
+        "index_memory_cell_index_outer": "#50FA7B",
+        "constant": "#BD93F9",
+        "comment": "#6272A4"
+    },
+    "background": "Reset",
+    "foreground": "White",
+    "breakpoint_accent": "Magenta",
+    "error": "Red",
+    "code_area_default": "Green",
+    "list_item_highlight": "#6272A4",
+    "execution_finished_popup_border": "Green",
+    "keybindings_fg": "White",
+    "keybindings_disabled_fg": "DarkGray",
+    "keybindings_bg": "#6272A4",
+    "custom_instruction_accent_fg": "Cyan",
+    "memory_block_border": "LightBlue",
+    "internal_memory_block_border": "Yellow"
+}
