@@ -45,12 +45,11 @@ impl SingleInstruction {
         r: ratatui::prelude::Rect,
         is_playground: bool,
     ) {
-        let input = Paragraph::new(self.input.as_str())
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("Enter instruction:"),
-            );
+        let input = Paragraph::new(self.input.as_str()).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("Enter instruction:"),
+        );
         let area = if is_playground {
             r
         } else {
