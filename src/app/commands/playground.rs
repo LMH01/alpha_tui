@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use miette::Result;
 
 use crate::{
@@ -36,7 +38,7 @@ pub fn playground(global_args: &GlobalArgs, playground_args: &PlaygroundArgs) ->
         !playground_args
             .load_playground_args
             .disable_syntax_highlighting,
-        super::load_theme(&playground_args.load_playground_args)?,
+        Rc::new(super::load_theme(&playground_args.load_playground_args)?),
     );
     let res = app.run(&mut terminal);
 

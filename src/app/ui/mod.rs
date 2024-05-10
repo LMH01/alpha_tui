@@ -93,7 +93,8 @@ impl App {
             } else {
                 Alignment::Left
             })
-            .border_type(BorderType::Rounded);
+            .border_type(BorderType::Rounded)
+            .style(self.theme.code_area());
         if let State::RuntimeError(_, false) = self.state {
             code_area = code_area.border_style(self.theme.error_border());
         } else if let State::DebugSelect(_, _) = self.state {

@@ -11,6 +11,7 @@ pub type SharedSyntaxHighlightingTheme = Rc<SyntaxHighlightingTheme>;
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Theme {
     sh_theme: SyntaxHighlightingTheme,
+    background: Color,
     breakpoint_accent: Color,
     error: Color,
     code_area_default: Color,
@@ -27,9 +28,7 @@ pub struct Theme {
 
 impl Default for Theme {
     fn default() -> Self {
-        // TODO change to dracula
-        //Theme::dracula()
-        Theme::default_old()
+        Theme::dracula()
     }
 }
 
@@ -47,6 +46,7 @@ impl Theme {
     pub fn default_old() -> Self {
         Self {
             sh_theme: SyntaxHighlightingTheme::default(),
+            background: Color::default(),
             breakpoint_accent: Color::Magenta,
             error: Color::Red,
             code_area_default: Color::Green,
@@ -64,7 +64,22 @@ impl Theme {
 
     /// The dracula theme.
     pub fn dracula() -> Self {
-        todo!()
+        Self {
+            sh_theme: SyntaxHighlightingTheme::default(),
+            background: BACKGROUND,
+            breakpoint_accent: Color::Magenta,
+            error: Color::Red,
+            code_area_default: Color::Green,
+            list_item_highlight: Color::Rgb(98, 114, 164),
+            execution_finished_popup_border: Color::Green,
+            keybindings_fg: Color::White,
+            keybindings_disabled_fg: Color::DarkGray,
+            keybindings_bg: Color::Rgb(98, 114, 164),
+            keybindings_disabled_bg: Color::Black,
+            custom_instruction_accent_fg: Color::Cyan,
+            memory_block_border: Color::LightBlue,
+            internal_memory_block_border: Color::Yellow,
+        }
     }
 
     pub fn syntax_highlighting_theme(&self) -> SharedSyntaxHighlightingTheme {
@@ -73,6 +88,10 @@ impl Theme {
 
     pub fn custom_instruction(&self) -> Style {
         Style::default().fg(self.custom_instruction_accent_fg)
+    }
+
+    pub fn code_area(&self) -> Style {
+        Style::default().bg(self.background)
     }
 
     pub fn list_item_highlight(&self, breakpoint_mode: bool) -> Style {
@@ -237,7 +256,7 @@ impl SyntaxHighlightingTheme {
 
 // dracula theme color palette
 // is used for the default application theme
-const _BACKGROUND: Color = Color::Rgb(40, 42, 54);
+const BACKGROUND: Color = Color::Rgb(40, 42, 54);
 const FOREGROUND: Color = Color::Rgb(248, 248, 242);
 const _SELECTION: Color = Color::Rgb(68, 71, 90);
 const COMMENT: Color = Color::Rgb(98, 114, 164);

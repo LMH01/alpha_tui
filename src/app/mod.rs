@@ -25,7 +25,7 @@ use self::{
     keybindings::KeybindingHints,
     run_instruction::SingleInstruction,
     ui::{
-        style::{SharedTheme, Theme},
+        style::SharedTheme,
         syntax_highlighting::{SyntaxHighlighter, ToSpans},
     },
 };
@@ -118,9 +118,8 @@ impl App {
         command_history_file: Option<String>,
         playground: bool,
         enable_syntax_highlighting: bool,
-        theme: Theme,
+        theme: SharedTheme,
     ) -> App {
-        let theme = SharedTheme::new(theme);
         let mlm = MemoryListsManager::new(runtime.runtime_memory(), &theme);
         let show_call_stack = runtime.contains_call_instruction();
         let executed_custom_instructions = custom_instructions.unwrap_or_default();
