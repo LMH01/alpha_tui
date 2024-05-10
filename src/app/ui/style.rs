@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use clap::ValueEnum;
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Color, Style};
 use serde::{Deserialize, Serialize};
 
 pub type SharedTheme = Rc<Theme>;
@@ -92,7 +92,6 @@ impl Theme {
 
     pub fn list_item_highlight(&self, breakpoint_mode: bool) -> Style {
         let style = Style::default();
-            //.add_modifier(Modifier::BOLD);
         if breakpoint_mode {
             style.bg(self.breakpoint_accent)
         } else {

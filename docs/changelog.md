@@ -9,6 +9,7 @@
 ### TUI
 
 - Changed color of list highlight to be in line with dracula color scheme
+- Currently run instruction is no longer highlighted in bold
 
 ### Other
 
