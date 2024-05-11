@@ -45,6 +45,13 @@ pub fn check(
         );
         exit(1);
     }
+    if let Err(e) = rb.apply_check_load_args(&check_args.check_load_args) {
+        println!(
+            "Check unsuccessful: {:?}",
+            miette!("Unable to create RuntimeBuilder:\n{:?}", e)
+        );
+        exit(1);
+    }
     // build runtime
     let mut rt = match rb.build() {
         Ok(rt) => rt,

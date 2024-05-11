@@ -24,6 +24,7 @@ pub fn load(
     println!("Building instructions");
     let mut rb = builder::RuntimeBuilder::new(&instructions, &input)?;
     rb.apply_global_cli_args(global_args)?
+        .apply_check_load_args(&load_args.check_load_args)?
         .apply_instruction_limiting_args(&load_args.check_load_args.instruction_limiting_args)?;
     // build runtime
     println!("Building runtime");

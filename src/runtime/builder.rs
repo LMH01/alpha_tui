@@ -1,6 +1,6 @@
 use crate::{
     base::{Accumulator, MemoryCell},
-    cli::{CliHint, GlobalArgs, InstructionLimitingArgs},
+    cli::{CheckLoadArgs, CliHint, GlobalArgs, InstructionLimitingArgs},
     instructions::{
         error_handling::{BuildProgramError, BuildProgramErrorTypes},
         instruction_config::InstructionConfig,
@@ -68,7 +68,7 @@ impl RuntimeBuilder {
         settings.disable_instruction_limit = global_args.disable_instruction_limit;
         self.runtime_settings = Some(settings);
 
-        let mut memory_config = match self.memory_config.take() {
+        let memory_config = match self.memory_config.take() {
             Some(memory_config) => memory_config,
             None => {
                 // check if memory config file is provided, from which the memory config can be build
@@ -87,31 +87,6 @@ impl RuntimeBuilder {
                 }
             }
         };
-        // set/overwrite memory config values
-        // set accumulator config
-        if let Some(accumulators) = global_args.accumulators {
-            for value in 0..=accumulators - 1 {
-                memory_config
-                    .accumulators
-                    .values
-                    .insert(value as usize, None);
-            }
-        }
-        // set memory_cell config
-        if let Some(memory_cells) = &global_args.memory_cells {
-            for memory_cell in memory_cells {
-                memory_config
-                    .memory_cells
-                    .values
-                    .insert(memory_cell.clone(), None);
-            }
-        }
-        // set index_memory_cell config
-        if let Some(index_memory_cells) = &global_args.index_memory_cells {
-            for imc in index_memory_cells {
-                memory_config.index_memory_cells.values.insert(*imc, None);
-            }
-        }
         // update runtime settings
         let mut runtime_settings = match self.runtime_settings.take() {
             Some(settings) => settings,
@@ -130,6 +105,45 @@ impl RuntimeBuilder {
             runtime_settings.autodetect_index_memory_cells = value;
         }
         self.runtime_settings = Some(runtime_settings);
+        self.memory_config = Some(memory_config);
+        Ok(self)
+    }
+
+    /// Applies the parameters in check load args to this runtime builder.
+    /// 
+    /// In essence this means that the amount of accumulators, memory_cells and index_memory_cells 
+    /// is set/updated.
+    /// If a memory config already exists, the values supplemented.
+    pub fn apply_check_load_args(&mut self, args: &CheckLoadArgs) -> miette::Result<&mut Self> {
+        let mut memory_config = match self.memory_config.take() {
+            Some(memory_config) => memory_config,
+            None => MemoryConfig::default(),
+        };
+        // set/overwrite memory config values
+        // set accumulator config
+        if let Some(accumulators) = args.accumulators {
+            for value in 0..=accumulators - 1 {
+                memory_config
+                    .accumulators
+                    .values
+                    .insert(value as usize, None);
+            }
+        }
+        // set memory_cell config
+        if let Some(memory_cells) = &args.memory_cells {
+            for memory_cell in memory_cells {
+                memory_config
+                    .memory_cells
+                    .values
+                    .insert(memory_cell.clone(), None);
+            }
+        }
+        // set index_memory_cell config
+        if let Some(index_memory_cells) = &args.index_memory_cells {
+            for imc in index_memory_cells {
+                memory_config.index_memory_cells.values.insert(*imc, None);
+            }
+        }
         self.memory_config = Some(memory_config);
         Ok(self)
     }

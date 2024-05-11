@@ -25,42 +25,10 @@ pub struct Cli {
 #[derive(Args, Debug, Clone, Default)]
 pub struct GlobalArgs {
     #[arg(
-        short,
-        long,
-        help = "Number of available accumulators",
-        long_help = "Number of available accumulators.\nIf the value is too large it can happen that accumulators are not displayed in the tui.\n\nCan be used to visualize how accumulators are filled with values or to explicitly enable accumulators when automatic detection has been disabled by the \"--disable-memory-detection\" flag.",
-        global = true,
-        display_order = 20
-    )]
-    pub accumulators: Option<u8>,
-
-    #[arg(
-        short,
-        long,
-        help = "List of available index memory cells",
-        long_help = "List of available index memory cells.\nExample: 0,1,2,3\n\nCan be used to visualize how index memory cells are filled with values or to explicitly enable index memory cells when automatic detection has been disabled by the \"--disable-memory-detection\" flag.",
-        value_delimiter = ',',
-        global = true,
-        display_order = 23
-    )]
-    pub index_memory_cells: Option<Vec<usize>>,
-
-    #[arg(
-        short,
-        long,
-        help = "List of available memory cells",
-        long_help = "List of available memory cells.\nIf a large number of memory cells is specified, it can happen that some are not displayed in the tui.\nExample: -a a,b,c,d\n\nCan be used to visualize how memory cells are filled with values or to explicitly enable memory cells when automatic detection has been disabled by the \"--disable-memory-detection\" flag.\n\nNote that memory cells named with numbers only are not allowed, as those would conflict with index memory cells.",
-        value_delimiter = ',',
-        global = true,
-        display_order = 22
-    )]
-    pub memory_cells: Option<Vec<String>>,
-
-    #[arg(
         long,
         help = "Load memory config from a json file",
         long_help = "Load accumulators, gamma accumulator, memory cells and index memory cells from a json file.\nThe memory config file might may include initial values alongside definitions.\n\nFurther help can be found here: https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md.",
-        conflicts_with_all = [ "memory_cells", "index_memory_cells", "accumulators" ],
+        //conflicts_with_all = [ "memory_cells", "index_memory_cells", "accumulators" ],
         global = true,
         display_order = 24
     )]
@@ -192,10 +160,43 @@ pub struct LoadPlaygroundArgs {
 /// Args only allowed in check and load
 #[derive(Args, Clone, Debug)]
 pub struct CheckLoadArgs {
-
     #[command(flatten)]
     pub instruction_limiting_args: InstructionLimitingArgs,
 
+    #[arg(
+        short,
+        long,
+        help = "Number of available accumulators",
+        long_help = "Number of available accumulators.\nIf the value is too large it can happen that accumulators are not displayed in the tui.\n\nCan be used to visualize how accumulators are filled with values or to explicitly enable accumulators when automatic detection has been disabled by the \"--disable-memory-detection\" flag.",
+        global = true,
+        conflicts_with = "memory_config_file",
+        display_order = 20
+    )]
+    pub accumulators: Option<u8>,
+
+    #[arg(
+        short,
+        long,
+        help = "List of available index memory cells",
+        long_help = "List of available index memory cells.\nExample: 0,1,2,3\n\nCan be used to visualize how index memory cells are filled with values or to explicitly enable index memory cells when automatic detection has been disabled by the \"--disable-memory-detection\" flag.",
+        value_delimiter = ',',
+        global = true,
+        conflicts_with = "memory_config_file",
+        display_order = 23
+    )]
+    pub index_memory_cells: Option<Vec<usize>>,
+
+    #[arg(
+        short,
+        long,
+        help = "List of available memory cells",
+        long_help = "List of available memory cells.\nIf a large number of memory cells is specified, it can happen that some are not displayed in the tui.\nExample: -a a,b,c,d\n\nCan be used to visualize how memory cells are filled with values or to explicitly enable memory cells when automatic detection has been disabled by the \"--disable-memory-detection\" flag.\n\nNote that memory cells named with numbers only are not allowed, as those would conflict with index memory cells.",
+        value_delimiter = ',',
+        global = true,
+        conflicts_with = "memory_config_file",
+        display_order = 22
+    )]
+    pub memory_cells: Option<Vec<String>>,
 }
 
 #[derive(Subcommand, Clone, Debug)]
@@ -285,7 +286,12 @@ pub trait CliHint {
 ///
 /// This function is used to test some additional requirements, that can't be programmed into clap.
 pub fn validate_arguments(cli: &Cli) -> Result<()> {
-    if let Some(memory_cells) = &cli.global_args.memory_cells {
+    let memory_cells = match &cli.command {
+        Command::Check(check_args) => &check_args.check_load_args.memory_cells,
+        Command::Load(load_args) => &load_args.check_load_args.memory_cells,
+        Command::Playground(_) => return Ok(()),
+    };
+    if let Some(memory_cells) = &memory_cells {
         for cell in memory_cells {
             if cell.chars().any(|c| c.is_ascii_digit()) && !cell.chars().any(|c| c.is_alphabetic())
             {
