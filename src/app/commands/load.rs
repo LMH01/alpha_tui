@@ -24,7 +24,7 @@ pub fn load(
     println!("Building instructions");
     let mut rb = builder::RuntimeBuilder::new(&instructions, &input)?;
     rb.apply_global_cli_args(global_args)?
-        .apply_instruction_limiting_args(&load_args.instruction_limiting_args)?;
+        .apply_instruction_limiting_args(&load_args.check_load_args.instruction_limiting_args)?;
     // build runtime
     println!("Building runtime");
     let rt = rb.build()?;
@@ -49,6 +49,7 @@ pub fn load(
 
     // check if allowed instructions are restricted
     let allowed_instructions = match &load_args
+        .check_load_args
         .instruction_limiting_args
         .allowed_instructions_file
     {

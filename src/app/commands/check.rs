@@ -36,7 +36,9 @@ pub fn check(
         );
         exit(10);
     }
-    if let Err(e) = rb.apply_instruction_limiting_args(&check_args.instruction_limiting_args) {
+    if let Err(e) =
+        rb.apply_instruction_limiting_args(&check_args.check_load_args.instruction_limiting_args)
+    {
         println!(
             "Check unsuccessful: {:?}",
             miette!("Unable to create RuntimeBuilder:\n{:?}", e)

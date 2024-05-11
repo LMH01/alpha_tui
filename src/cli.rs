@@ -73,7 +73,7 @@ pub struct GlobalArgs {
 #[derive(Args, Clone, Debug)]
 pub struct LoadArgs {
     #[command(flatten)]
-    pub instruction_limiting_args: InstructionLimitingArgs,
+    pub check_load_args: CheckLoadArgs,
 
     #[command(flatten)]
     pub load_playground_args: LoadPlaygroundArgs,
@@ -129,7 +129,7 @@ pub struct LoadArgs {
 #[derive(Args, Clone, Debug)]
 pub struct CheckArgs {
     #[command(flatten)]
-    pub instruction_limiting_args: InstructionLimitingArgs,
+    pub check_load_args: CheckLoadArgs,
 
     #[arg(
         long_help = "Specify the input file that contains the program",
@@ -187,6 +187,15 @@ pub struct LoadPlaygroundArgs {
         display_order = 2
     )]
     pub theme_file: Option<String>,
+}
+
+/// Args only allowed in check and load
+#[derive(Args, Clone, Debug)]
+pub struct CheckLoadArgs {
+
+    #[command(flatten)]
+    pub instruction_limiting_args: InstructionLimitingArgs,
+
 }
 
 #[derive(Subcommand, Clone, Debug)]
