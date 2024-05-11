@@ -28,6 +28,10 @@
 - All `a` and $\alpha$ are now displayed as $\alpha0$
 - Resetting the runtime will now restore the memory values that where set when the tui was launched, this means that memory values configured using a memory config file are now restored when the runtime is reset (#74)
 
+### Bug fixes
+
+- It was possible to create memory cells with a label that consisted only of numbers when the memory cell was defined in the memory config file
+
 ## v1.4.1 (latest version)
 
 ### Bug fixes

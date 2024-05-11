@@ -5,6 +5,7 @@ use thiserror::Error;
 use crate::{
     app::ui::style::BuildInTheme,
     base::{Comparison, Operation},
+    runtime::memory_config::MemoryConfig,
 };
 
 #[derive(Parser, Debug)]
@@ -286,10 +287,20 @@ pub trait CliHint {
 ///
 /// This function is used to test some additional requirements, that can't be programmed into clap.
 pub fn validate_arguments(cli: &Cli) -> Result<()> {
-    let memory_cells = match &cli.command {
-        Command::Check(check_args) => &check_args.check_load_args.memory_cells,
-        Command::Load(load_args) => &load_args.check_load_args.memory_cells,
-        Command::Playground(_) => return Ok(()),
+    let memory_cells = match cli.global_args.memory_config_file.clone() {
+        Some(path) => Some(
+            MemoryConfig::try_from_file(&path)?
+                .memory_cells
+                .values
+                .iter()
+                .map(|f| f.0.to_owned())
+                .collect::<Vec<String>>(),
+        ),
+        None => match &cli.command {
+            Command::Check(check_args) => check_args.check_load_args.memory_cells.to_owned(),
+            Command::Load(load_args) => load_args.check_load_args.memory_cells.to_owned(),
+            Command::Playground(_) => return Ok(()),
+        },
     };
     if let Some(memory_cells) = &memory_cells {
         for cell in memory_cells {
