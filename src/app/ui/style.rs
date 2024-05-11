@@ -9,6 +9,7 @@ pub type SharedSyntaxHighlightingTheme = Rc<SyntaxHighlightingTheme>;
 
 /// The theme of the application.
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[serde(default)]
 pub struct Theme {
     sh_theme: SyntaxHighlightingTheme,
     background: Color,
@@ -102,11 +103,9 @@ impl Theme {
         if breakpoint_mode {
             style
                 .bg(self.breakpoint_accent)
-                .fg(self.list_item_highlight_fg)
         } else {
             style
                 .bg(self.list_item_highlight_bg)
-                .fg(self.list_item_highlight_fg)
         }
     }
 
