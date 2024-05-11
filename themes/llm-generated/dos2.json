@@ -1,0 +1,32 @@
+{
+    "sh_theme": {
+        "assignment": "#FF5555",
+        "op": "#55FF55",
+        "cmp": "#5555FF",
+        "label": "#FF55FF",
+        "build_in": "#55FFFF",
+        "accumulator": "#FFFF55",
+        "gamma": "#FFAA55",
+        "memory_cell_outer": "#AA55FF",
+        "memory_cell_inner": "#55FFAA",
+        "index_memory_cell_outer": "#FF5555",
+        "index_memory_cell_index_outer": "#55FF55",
+        "constant": "#5555FF",
+        "comment": "#FF55FF"
+    },
+    "background": "#000000",
+    "foreground": "#FFFFFF",
+    "breakpoint_accent": "#AAAAAA",
+    "error": "#FF5555",
+    "code_area_default": "#FFFFFF",
+    "list_item_highlight_fg": "#FFFFFF",
+    "list_item_highlight_bg": "#AAAAAA",
+    "line_numbers": "#AAAAAA",
+    "execution_finished_popup_border": "#FFFFFF",
+    "keybindings_fg": "#FFFFFF",
+    "keybindings_disabled_fg": "#AAAAAA",
+    "keybindings_bg": "#AAAAAA",
+    "custom_instruction_accent_fg": "#FFFFFF",
+    "memory_block_border": "#FFFFFF",
+    "internal_memory_block_border": "#FFFFFF"
+}
