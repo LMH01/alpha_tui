@@ -20,6 +20,7 @@
 - Currently run instruction is no longer highlighted in bold
 - Full-line comments starting with `#` are now hidden (fr #73)
 - Lines only containing comments starting with `//` will no longer be formatted to be in line with other comments, they now always start at the beginning of the line
+- Args `--accumulators`, `--memory-cells` and `--index-memory-cells` are no longer valid for playground mode (fr #70)
 
 ### Other
 
