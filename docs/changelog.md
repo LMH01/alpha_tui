@@ -18,12 +18,13 @@
 
 - Changed color of list highlight to be in line with dracula color scheme
 - Currently run instruction is no longer highlighted in bold
+- Full-line comments starting with `#` are now hidden (fr #73)
+- Lines only containing comments starting with `//` will no longer be formatted to be in line with other comments, they now always start at the beginning of the line
 
 ### Other
 
 - `a`. `p` and `y` are now always converted to their greek alphabet equivalents in a loaded program. Using the `--write-alignment` flag these symbols can be written to the source file
 - All `a` and $\alpha$ are now displayed as $\alpha0$
-- Full-line comments starting with `#` are now hidden from the tui (fr #73)
 - Resetting the runtime will now restore the memory values that where set when the tui was launched, this means that memory values configured using a memory config file are now restored when the runtime is reset (#74)
 
 ## v1.4.1 (latest version)
