@@ -1,4 +1,4 @@
-use std::{borrow::BorrowMut, ops::Deref};
+use std::borrow::BorrowMut;
 
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use miette::{miette, IntoDiagnostic, Result};
@@ -274,9 +274,11 @@ impl App {
                                 }
                             }
                             KeyCode::Char('d') => match &self.state {
-                                State::DebugSelect(s, i) => {
+                                State::DebugSelect(_, i) => {
                                     self.instruction_list_states.set_instruction_list_state(*i);
-                                    self.state = s.deref().clone();
+                                    self.state = State::Running(
+                                        self.instruction_list_states.breakpoints_set(),
+                                    );
                                 }
                                 State::Default | State::Running(_) => {
                                     self.start_debug_select_mode()
