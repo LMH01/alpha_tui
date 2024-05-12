@@ -112,19 +112,22 @@ impl App {
         }
 
         // Create a List from all instructions and highlight current instruction
-        let items = List::new(self.instruction_list_states.as_list_items(is_playground, &self.theme))
-            .block(code_area)
-            .highlight_style(if let State::DebugSelect(_, _) = self.state {
-                self.theme.list_item_highlight(true)
-            } else {
-                self.theme.list_item_highlight(false)
-            })
-            .highlight_symbol(">> ")
-            .direction(if is_playground {
-                ListDirection::BottomToTop
-            } else {
-                ListDirection::TopToBottom
-            });
+        let items = List::new(
+            self.instruction_list_states
+                .as_list_items(is_playground, &self.theme),
+        )
+        .block(code_area)
+        .highlight_style(if let State::DebugSelect(_, _) = self.state {
+            self.theme.list_item_highlight(true)
+        } else {
+            self.theme.list_item_highlight(false)
+        })
+        .highlight_symbol(">> ")
+        .direction(if is_playground {
+            ListDirection::BottomToTop
+        } else {
+            ListDirection::TopToBottom
+        });
 
         // We can now render the item list
         f.render_stateful_widget(

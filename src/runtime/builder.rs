@@ -110,8 +110,8 @@ impl RuntimeBuilder {
     }
 
     /// Applies the parameters in check load args to this runtime builder.
-    /// 
-    /// In essence this means that the amount of accumulators, memory_cells and index_memory_cells 
+    ///
+    /// In essence this means that the amount of accumulators, memory_cells and index_memory_cells
     /// is set/updated.
     /// If a memory config already exists, the values supplemented.
     pub fn apply_check_load_args(&mut self, args: &CheckLoadArgs) -> miette::Result<&mut Self> {

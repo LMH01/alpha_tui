@@ -101,11 +101,9 @@ impl Theme {
     pub fn list_item_highlight(&self, breakpoint_mode: bool) -> Style {
         let style = Style::default();
         if breakpoint_mode {
-            style
-                .bg(self.breakpoint_accent)
+            style.bg(self.breakpoint_accent)
         } else {
-            style
-                .bg(self.list_item_highlight_bg)
+            style.bg(self.list_item_highlight_bg)
         }
     }
 
