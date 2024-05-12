@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.5.0
+## v1.5.0 (latest version)
 
 ### New feature
 
@@ -33,7 +33,7 @@
 - It was possible to create memory cells with a label that consisted only of numbers when the memory cell was defined in the memory config file
 - Fixed `r` keybinding hint not updating to `Run to next breakpoint` if breakpoint was set
 
-## v1.4.1 (latest version)
+## v1.4.1
 
 ### Bug fixes
 
