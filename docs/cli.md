@@ -27,7 +27,12 @@ All instructions that are understood by the program can be used to specify what 
 | Shortcut | Explanation |
 | - | - |
 | A | any accumulator |
-| M | any memory cell |
+| M | any "normal" memory cell |
+| M(A) | index memory cell indexed by any accumulator |
+| M(C) | index memory cell indexed by any constant value |
+| M(Y) | index memory cell indexed by gamma accumulator |
+| M(M(C)) | index memory cell indexed by index memory cell with constant value |
+| M(M) | index memory cell indexed by any "normal" memory cell |
 | C | any constant value |
 | Y | gamma accumulator |
 | OP | any operation |

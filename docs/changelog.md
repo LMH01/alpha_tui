@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.0
+
+### Other
+
+- Allowed instructions file: memory cell accesses can now be specified more exactly. This means that it can now for example be differentiated between allowing p(h1) and allowing p(p(h1)).
+
 ## v1.5.0 (latest version)
 
 ### New feature
