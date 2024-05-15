@@ -5,8 +5,8 @@ use crate::{
     instructions::{
         assign_index_memory_cell, assign_index_memory_cell_from_value, Identifier,
         IndexMemoryCellIndexType, Instruction, TargetType, Value, ACCUMULATOR_IDENTIFIER,
-        COMPARISON_IDENTIFIER, CONSTANT_IDENTIFIER, GAMMA_IDENTIFIER, MEMORY_CELL_IDENTIFIER,
-        OPERATOR_IDENTIFIER,
+        COMPARISON_IDENTIFIER, CONSTANT_IDENTIFIER, GAMMA_IDENTIFIER, INDEX_MEMORY_CELL_IDENTIFIER,
+        MEMORY_CELL_IDENTIFIER, OPERATOR_IDENTIFIER,
     },
     runtime::{error_handling::RuntimeErrorType, ControlFlow, RuntimeMemory, RuntimeSettings},
     utils::test_utils,
@@ -1390,12 +1390,42 @@ fn test_target_type_identifier() {
     );
     assert_eq!(TargetType::Gamma.identifier(), GAMMA_IDENTIFIER.to_string());
     assert_eq!(
-        TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0)).identifier(),
-        MEMORY_CELL_IDENTIFIER.to_string()
-    );
-    assert_eq!(
         TargetType::MemoryCell("h1".to_string()).identifier(),
         MEMORY_CELL_IDENTIFIER.to_string()
+    );
+}
+
+#[test]
+fn test_target_type_identifier_imc() {
+    assert_eq!(
+        TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(1)).identifier(),
+        format!(
+            "{}({})",
+            INDEX_MEMORY_CELL_IDENTIFIER, ACCUMULATOR_IDENTIFIER
+        )
+    );
+    assert_eq!(
+        TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Direct(1)).identifier(),
+        format!("{}({})", INDEX_MEMORY_CELL_IDENTIFIER, CONSTANT_IDENTIFIER)
+    );
+    assert_eq!(
+        TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Gamma).identifier(),
+        format!("{}({})", INDEX_MEMORY_CELL_IDENTIFIER, GAMMA_IDENTIFIER)
+    );
+    assert_eq!(
+        TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Index(1)).identifier(),
+        format!(
+            "{}({}({}))",
+            INDEX_MEMORY_CELL_IDENTIFIER, INDEX_MEMORY_CELL_IDENTIFIER, CONSTANT_IDENTIFIER
+        )
+    );
+    assert_eq!(
+        TargetType::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string()))
+            .identifier(),
+        format!(
+            "{}({})",
+            INDEX_MEMORY_CELL_IDENTIFIER, MEMORY_CELL_IDENTIFIER
+        )
     );
 }
 
@@ -1450,5 +1480,49 @@ fn test_instruction_identifier() {
     assert_eq!(
         Instruction::StackOp(Operation::Add).identifier(),
         "stackOP".to_string()
+    );
+}
+
+#[test]
+fn test_instruction_identifier_imc() {
+    assert_eq!(
+        Instruction::Assign(
+            TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Accumulator(0)),
+            Value::Accumulator(0)
+        )
+        .identifier(),
+        "M(A) := A".to_string()
+    );
+    assert_eq!(
+        Instruction::Assign(
+            TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Direct(0)),
+            Value::Accumulator(0)
+        )
+        .identifier(),
+        "M(C) := A".to_string()
+    );
+    assert_eq!(
+        Instruction::Assign(
+            TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Gamma),
+            Value::Accumulator(0)
+        )
+        .identifier(),
+        "M(Y) := A".to_string()
+    );
+    assert_eq!(
+        Instruction::Assign(
+            TargetType::IndexMemoryCell(IndexMemoryCellIndexType::Index(1)),
+            Value::Accumulator(0)
+        )
+        .identifier(),
+        "M(M(C)) := A".to_string()
+    );
+    assert_eq!(
+        Instruction::Assign(
+            TargetType::IndexMemoryCell(IndexMemoryCellIndexType::MemoryCell("h1".to_string())),
+            Value::Accumulator(0)
+        )
+        .identifier(),
+        "M(M) := A".to_string()
     );
 }

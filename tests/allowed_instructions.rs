@@ -31,6 +31,19 @@ fn test_allowed_instructions_file_full() {
 }
 
 #[test]
+fn test_allowed_instructions_file_imc() {
+    let mut cmd = Command::cargo_bin("alpha_tui").unwrap();
+    let assert = cmd
+        .arg("check")
+        .arg("tests/input/test_allowed_instructions_file_imc/program.alpha")
+        .arg("compile")
+        .arg("--allowed-instructions-file")
+        .arg("tests/input/test_allowed_instructions_file_imc/instructions.json")
+        .assert();
+    assert.success();
+}
+
+#[test]
 fn test_allowed_instructions_only_instructions() {
     let mut cmd = Command::cargo_bin("alpha_tui").unwrap();
     let assert = cmd
