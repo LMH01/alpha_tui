@@ -300,6 +300,12 @@ fn build_instructions(
     control_flow: &mut ControlFlow,
 ) -> Result<Vec<Instruction>, Box<BuildProgramError>> {
     let mut instructions = Vec::new();
+    // remove lines starting with # to not make them count towards jump addresses, as they are not displayed in the program
+    let instructions_input = instructions_input
+        .iter()
+        .filter(|f| !f.trim().starts_with('#'))
+        .map(|f| f.to_string())
+        .collect::<Vec<String>>();
     for (index, instruction) in instructions_input.iter().enumerate() {
         if instruction.trim().starts_with('#') {
             continue;

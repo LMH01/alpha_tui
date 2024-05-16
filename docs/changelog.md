@@ -6,6 +6,10 @@
 
 - Allowed instructions file: memory cell accesses can now be specified more exactly. This means that it can now for example be differentiated between allowing p(h1) and allowing p(p(h1)).
 
+### Bug fixes
+
+- Lines starting with `#` where included in calculating jump label addresses which could lead to wrong jumps
+
 ## v1.5.0 (latest version)
 
 ### New feature
