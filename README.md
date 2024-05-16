@@ -18,7 +18,7 @@ Pull requests and bug reports are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md
 
 1. [Getting started](#getting-started)
     - [Compile from source](#compile-from-source)
-    - [NixOS (using flakes)](#nixos-using-flakes)
+    - [Using nix](#nixos-using-flakes)
 2. [Interface and usage](docs/interface_and_usage.md)
     - [Load command](docs/interface_and_usage.md#load-command)
     - [Playground command](docs/interface_and_usage.md#playground-command)
@@ -44,15 +44,9 @@ Pull requests and bug reports are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md
 
 To compile the program from source the rust toolchain is needed (install via [rustup](https://rustup.rs/)). Once installed you can run the program by typing `cargo run`. To submit arguments you can use `--`, for example `cargo run -- -h` will print help.
 
-### NixOS (using flakes)
+### Using nix
 
 This Repository provides a flake. If you have flakes enabled you can use
-
-```
-nix run github:lmh01/alpha_tui <COMMAND> <PARAMS>
-```
-
-to build and run the program once, or 
 
 ```
 nix shell github:lmh01/alpha_tui
