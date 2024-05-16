@@ -9,6 +9,7 @@
 ### Bug fixes
 
 - Lines starting with `#` where included in calculating jump label addresses which could lead to wrong jumps
+- Index memory cells displayed in tui where not reset when program was reset
 
 ## v1.5.0 (latest version)
 
