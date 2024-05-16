@@ -21,6 +21,7 @@ mod tests;
 // This is used to get the instruction whitelist to work.
 const ACCUMULATOR_IDENTIFIER: &str = "A";
 const MEMORY_CELL_IDENTIFIER: &str = "M";
+const INDEX_MEMORY_CELL_IDENTIFIER: &str = "M";
 const GAMMA_IDENTIFIER: &str = "Y";
 const CONSTANT_IDENTIFIER: &str = "C";
 pub const OPERATOR_IDENTIFIER: &str = "OP";
@@ -522,6 +523,18 @@ impl Display for IndexMemoryCellIndexType {
     }
 }
 
+impl Identifier for IndexMemoryCellIndexType {
+    fn identifier(&self) -> String {
+        match self {
+            Self::Accumulator(_) => ACCUMULATOR_IDENTIFIER.to_string(),
+            Self::Direct(_) => CONSTANT_IDENTIFIER.to_string(),
+            Self::Gamma => GAMMA_IDENTIFIER.to_string(),
+            Self::Index(_) => format!("{}({})", INDEX_MEMORY_CELL_IDENTIFIER, CONSTANT_IDENTIFIER),
+            Self::MemoryCell(_) => MEMORY_CELL_IDENTIFIER.to_string(),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum TargetType {
     Accumulator(usize),
@@ -573,7 +586,10 @@ impl Identifier for TargetType {
         match self {
             Self::Accumulator(_) => ACCUMULATOR_IDENTIFIER.to_string(),
             Self::Gamma => GAMMA_IDENTIFIER.to_string(),
-            Self::IndexMemoryCell(_) | Self::MemoryCell(_) => MEMORY_CELL_IDENTIFIER.to_string(),
+            Self::MemoryCell(_) => MEMORY_CELL_IDENTIFIER.to_string(),
+            Self::IndexMemoryCell(imcit) => {
+                format!("{}({})", INDEX_MEMORY_CELL_IDENTIFIER, imcit.identifier())
+            }
         }
     }
 }

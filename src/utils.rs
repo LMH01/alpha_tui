@@ -171,6 +171,11 @@ pub fn prepare_whitelist_file(content: Vec<String>) -> Vec<String> {
             match chunk {
                 "A" => new_chunks.push("a0"),
                 "M" => new_chunks.push("p(h1)"),
+                "M(A)" => new_chunks.push("p(a0)"),
+                "M(C)" => new_chunks.push("p(1)"),
+                "M(Y)" => new_chunks.push("p(y)"),
+                "M(M(C))" => new_chunks.push("p(p(1))"),
+                "M(M)" => new_chunks.push("p(p(h1))"),
                 "C" => new_chunks.push("0"),
                 "Y" => new_chunks.push("y"),
                 "OP" => new_chunks.push("+"),

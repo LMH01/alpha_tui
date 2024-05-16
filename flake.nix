@@ -72,6 +72,17 @@
               LLVM_PROFDATA = "${pkgs.rustc.llvmPackages.llvm}/bin/llvm-profdata";
             };
 
+            # this shell contains required programs to be able to build the release artifacts
+            # using package_release.sh
+            # activate with: 'nix develop .#buildArtifact'
+            devShells.buildArtifact = pkgs.mkShell {
+              buildInputs = with pkgs; [
+                cargo-cross
+                rustup
+                zip
+              ];
+            };
+
             packages = {
 
               default = alpha_tui;

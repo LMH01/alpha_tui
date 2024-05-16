@@ -374,6 +374,9 @@ impl App {
         self.instruction_list_states.set(-1);
         self.instruction_list_states.deselect();
         self.state = State::Default;
+        // recreate memory lists manager to remove set index memory cells from tui
+        self.memory_lists_manager =
+            MemoryListsManager::new(self.runtime.runtime_memory(), &self.theme);
     }
 
     /// Performs an action. Action depends on current app state.
