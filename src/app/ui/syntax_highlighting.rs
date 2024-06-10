@@ -350,8 +350,8 @@ fn input_parts(mut input: String) -> Option<InputParts> {
         input = input.replace(comment, "").trim().to_string();
     }
 
-    // check if line only contained comment and is now empty
-    if input.is_empty() {
+    // check if line only contained comment or only whitespaces and is now empty
+    if input.is_empty() || input.trim().is_empty() {
         if let Some(comment) = comment {
             return Some(InputParts {
                 label: None,

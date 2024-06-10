@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.1
+
+### Bug fixes
+
+- fix panic when program is loaded that contains lines consisting of only whitespaces (fr #81)
+
 ## v1.6.0 (latest version)
 
 ### Other
