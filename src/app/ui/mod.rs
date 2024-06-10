@@ -127,7 +127,8 @@ impl App {
             ListDirection::BottomToTop
         } else {
             ListDirection::TopToBottom
-        });
+        })
+        .scroll_padding(2);
 
         // We can now render the item list
         f.render_stateful_widget(

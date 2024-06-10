@@ -1,6 +1,10 @@
 # Changelog
 
-## v1.6.1
+## v1.7.0
+
+### Other
+
+- Added scroll padding to instructions list, to make two lines above and below current line be displayed, when list is scrolled up/down (fr #75)
 
 ### Bug fixes
 
