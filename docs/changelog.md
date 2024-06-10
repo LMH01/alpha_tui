@@ -5,6 +5,7 @@
 ### Bug fixes
 
 - fix panic when program is loaded that contains lines consisting of only whitespaces (fr #81)
+- fix panic when resizing window below certain size (fr #65)
 
 ## v1.6.0 (latest version)
 
