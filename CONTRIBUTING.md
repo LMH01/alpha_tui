@@ -9,4 +9,4 @@ Hello, thank you for showing interest in contributing to this project. Help is a
 
 ## Issues
 
-A good place to start contributing is by searching for open issues. If you find an issue that you would like to work on, feel free to write a commend and ask for ideas on how the issue can be implemented.
+A good place to start contributing is by searching for open issues. If you find an issue that you would like to work on, feel free to write a comment and ask for ideas on how the issue can be implemented.
