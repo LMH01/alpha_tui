@@ -9,6 +9,7 @@
 ### Bug fixes
 
 - fixed `up` keybinding hint shown as enabled in `run custom instruction` when it should not be enabled
+- fixed breakpoint list sometimes not aligned with instruction list (fr #79)
 
 ## v1.7.0 (latest version)
 
