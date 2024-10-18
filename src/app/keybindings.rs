@@ -141,16 +141,16 @@ impl KeybindingHints {
         match state {
             State::Running(breakpoint_set) => {
                 self.hide("s");
-                self.show("r");
                 self.show("t");
                 self.show("n");
-                self.show("i");
                 if *breakpoint_set {
                     self.set_state("r", 1)?;
                 }
             }
             State::DebugSelect(_, _) => {
                 self.hide("s");
+                self.hide("i");
+                self.hide("r");
                 self.show("b");
                 self.show("j");
                 self.show(&KeySymbol::ArrowUp.to_string());
@@ -160,6 +160,8 @@ impl KeybindingHints {
             State::Finished(message_shown) => {
                 self.hide("s");
                 self.hide("c");
+                self.hide("i");
+                self.hide("r");
                 self.show("t");
                 if !*message_shown {
                     self.hide("d");
@@ -170,6 +172,8 @@ impl KeybindingHints {
                 self.hide("c");
                 self.hide("s");
                 self.hide("d");
+                self.hide("i");
+                self.hide("r");
                 if *is_playground {
                     self.set_state(&KeySymbol::Enter.to_string(), 2)?;
                     self.show(&KeySymbol::Enter.to_string());
@@ -181,6 +185,8 @@ impl KeybindingHints {
                 self.hide("s");
                 self.hide("d");
                 self.hide("c");
+                self.hide("i");
+                self.hide("r");
                 self.show(&KeySymbol::Enter.to_string());
                 self.set_state(&KeySymbol::Enter.to_string(), 2)?;
                 self.show(&KeySymbol::Enter.to_string());
@@ -190,6 +196,8 @@ impl KeybindingHints {
                 self.hide("s");
                 self.hide("d");
                 self.hide("q");
+                self.hide("i");
+                self.hide("r");
                 self.show(&KeySymbol::Enter.to_string());
                 self.show(&KeySymbol::Escape.to_string());
                 self.show(&KeySymbol::ArrowUp.to_string());
@@ -222,6 +230,8 @@ impl KeybindingHints {
                 self.hide("s");
                 self.hide("d");
                 self.hide("q");
+                self.hide("i");
+                self.hide("r");
                 self.show(&KeySymbol::Enter.to_string());
                 self.show(&KeySymbol::Escape.to_string());
                 self.show(&KeySymbol::ArrowUp.to_string());
@@ -273,7 +283,7 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     );
     hints.insert(
         "s".to_string(),
-        KeybindingHint::new(4, "s", "Start", true, true),
+        KeybindingHint::new(2, "s", "Start", true, true),
     );
     hints.insert(
         "n".to_string(),
@@ -282,11 +292,11 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     hints.insert(
         "r".to_string(),
         KeybindingHint::new_many(
-            vec![2, 2],
+            vec![3, 3],
             "r",
             vec!["Run to end", "Run to next breakpoint"],
             true,
-            false,
+            true,
         )?,
     );
     hints.insert(
@@ -325,7 +335,7 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     );
     hints.insert(
         "i".to_string(),
-        KeybindingHint::new(9, "i", "Run custom instruction", true, false),
+        KeybindingHint::new(9, "i", "Run custom instruction", true, true),
     );
     hints.insert(
         "c".to_string(),

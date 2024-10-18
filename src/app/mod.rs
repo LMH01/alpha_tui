@@ -202,7 +202,7 @@ impl App {
                                 }
                             }
                             KeyCode::Char('i') => match self.state {
-                                State::Running(_) => {
+                                State::Default | State::Running(_) => {
                                     self.state = State::CustomInstruction(SingleInstruction::new(
                                         &self.executed_custom_instructions,
                                         &self.theme,
@@ -259,6 +259,7 @@ impl App {
                                 // run to the next breakpoint
                                 if self.state == State::Running(true)
                                     || self.state == State::Running(false)
+                                    || self.state == State::Default
                                 {
                                     _ = self.step();
                                     while !self.instruction_list_states.is_breakpoint() {
