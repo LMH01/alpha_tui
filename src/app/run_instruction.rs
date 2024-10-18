@@ -76,10 +76,10 @@ impl SingleInstruction {
             .style(self.theme.single_instruction_block());
         f.render_widget(outer_block, area);
         f.render_widget(input, chunks[0]);
-        f.set_cursor(
+        f.set_cursor_position((
             chunks[0].x + self.cursor_position as u16 + 1,
             chunks[0].y + 1,
-        );
+        ));
         // setup list
         let items_to_display = self.items_to_display();
         let possible_items = List::new(items_to_display)
