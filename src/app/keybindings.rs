@@ -134,79 +134,118 @@ impl KeybindingHints {
     /// Sets all keybinding hints depending on the current state of the application.
     pub fn update(&mut self, state: &State) -> Result<()> {
         // reset keybindings back to default (I know that this is not that optimal for the performance)
-        self.hints =
-            default_keybindings().expect("Keybinding hints should be properly initialized");
+        //self.hints =
+        //    default_keybindings().expect("Keybinding hints should be properly initialized");
+
+        for hint in self.hints.values_mut() {
+            hint.shown = false;
+            hint.enabled = false;
+        }
 
         // set more specific keybinding hints
         match state {
+            State::Default => {
+                self.show("q");
+                self.enable("q");
+                self.show("s");
+                self.enable("s");
+                self.show("r");
+                self.enable("r");
+                self.show("d");
+                self.enable("d");
+                self.show("i");
+                self.enable("i");
+                self.show("c");
+                self.enable("c");
+            }
             State::Running(breakpoint_set) => {
-                self.hide("s");
-                self.show("t");
+                self.show("q");
+                self.enable("q");
                 self.show("n");
+                self.enable("n");
+                self.show("d");
+                self.enable("d");
+                self.show("t");
+                self.enable("t");
+                self.show("i");
+                self.enable("i");
+                self.show("c");
+                self.enable("c");
+                self.show("r");
+                self.enable("r");
                 if *breakpoint_set {
                     self.set_state("r", 1)?;
                 }
             }
             State::DebugSelect(_, _) => {
-                self.hide("s");
-                self.hide("i");
-                self.hide("r");
+                self.show("q");
+                self.enable("q");
+                self.show("d");
+                self.enable("d");
+                self.show("c");
+                self.enable("c");
                 self.show("b");
+                self.enable("b");
                 self.show("j");
+                self.enable("j");
                 self.show(&KeySymbol::ArrowUp.to_string());
+                self.enable(&KeySymbol::ArrowUp.to_string());
                 self.show(&KeySymbol::ArrowDown.to_string());
+                self.enable(&KeySymbol::ArrowDown.to_string());
                 self.set_state("d", 1)?;
             }
             State::Finished(message_shown) => {
-                self.hide("s");
-                self.hide("c");
-                self.hide("i");
-                self.hide("r");
+                self.show("q");
+                self.enable("q");
                 self.show("t");
-                if !*message_shown {
+                self.enable("t");
+                if *message_shown {
+                    self.show("d");
+                    self.enable("d");
+                } else {
                     self.hide("d");
                 }
                 self.set_state("d", 2)?;
             }
             State::RuntimeError(_, is_playground) => {
-                self.hide("c");
-                self.hide("s");
-                self.hide("d");
-                self.hide("i");
-                self.hide("r");
+                self.show("q");
+                self.enable("q");
+
                 if *is_playground {
                     self.set_state(&KeySymbol::Enter.to_string(), 2)?;
                     self.show(&KeySymbol::Enter.to_string());
                 } else {
                     self.show("t");
+                    self.enable("t");
                 }
             }
             State::CustomInstructionError(_, _) | State::BuildProgramError(_) => {
-                self.hide("s");
-                self.hide("d");
-                self.hide("c");
-                self.hide("i");
-                self.hide("r");
+                self.show("q");
+                self.enable("q");
+
                 self.show(&KeySymbol::Enter.to_string());
+                self.enable(&KeySymbol::Enter.to_string());
                 self.set_state(&KeySymbol::Enter.to_string(), 2)?;
                 self.show(&KeySymbol::Enter.to_string());
             }
             State::CustomInstruction(state) => {
-                self.hide("c");
-                self.hide("s");
-                self.hide("d");
-                self.hide("q");
-                self.hide("i");
-                self.hide("r");
                 self.show(&KeySymbol::Enter.to_string());
+                self.enable(&KeySymbol::Enter.to_string());
                 self.show(&KeySymbol::Escape.to_string());
+                self.enable(&KeySymbol::Escape.to_string());
                 self.show(&KeySymbol::ArrowUp.to_string());
                 self.show(&KeySymbol::ArrowDown.to_string());
+                self.enable(&KeySymbol::ArrowDown.to_string());
                 self.show(&KeySymbol::ArrowLeft.to_string());
+                self.enable(&KeySymbol::ArrowLeft.to_string());
                 self.show(&KeySymbol::ArrowRight.to_string());
+                self.enable(&KeySymbol::ArrowRight.to_string());
                 self.show(&KeySymbol::Tab.to_string());
                 if state.input.is_empty() && state.allowed_values_state.selected().is_none() {
                     self.disable(&KeySymbol::Enter.to_string());
+                }
+                if let Some(_) = state.allowed_values_state.selected() {
+                    self.enable(&KeySymbol::ArrowUp.to_string());
                 }
                 if state.input.is_empty() {
                     self.disable(&KeySymbol::ArrowLeft.to_string());
@@ -226,18 +265,18 @@ impl KeybindingHints {
                 }
             }
             State::Playground(state) => {
-                self.hide("c");
-                self.hide("s");
-                self.hide("d");
-                self.hide("q");
-                self.hide("i");
-                self.hide("r");
                 self.show(&KeySymbol::Enter.to_string());
+                self.enable(&KeySymbol::Enter.to_string());
                 self.show(&KeySymbol::Escape.to_string());
+                self.enable(&KeySymbol::Escape.to_string());
                 self.show(&KeySymbol::ArrowUp.to_string());
+                self.enable(&KeySymbol::ArrowUp.to_string());
                 self.show(&KeySymbol::ArrowDown.to_string());
+                self.enable(&KeySymbol::ArrowDown.to_string());
                 self.show(&KeySymbol::ArrowLeft.to_string());
+                self.enable(&KeySymbol::ArrowLeft.to_string());
                 self.show(&KeySymbol::ArrowRight.to_string());
+                self.enable(&KeySymbol::ArrowRight.to_string());
                 self.show(&KeySymbol::Tab.to_string());
                 self.set_state(&KeySymbol::Escape.to_string(), 1)?;
                 if state.input.is_empty() && state.allowed_values_state.selected().is_none() {
@@ -262,7 +301,6 @@ impl KeybindingHints {
                     self.disable(&KeySymbol::ArrowUp.to_string());
                 }
             }
-            _ => (),
         }
         Ok(())
     }
@@ -277,17 +315,17 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
             0,
             &format!("q|{}", KeySymbol::Escape.to_string()),
             "Quit",
-            true,
-            true,
+            false,
+            false,
         ),
     );
     hints.insert(
         "s".to_string(),
-        KeybindingHint::new(2, "s", "Start", true, true),
+        KeybindingHint::new(2, "s", "Start", false, false),
     );
     hints.insert(
         "n".to_string(),
-        KeybindingHint::new_many(vec![4], "n", vec!["Run next instruction"], true, false)?,
+        KeybindingHint::new_many(vec![4], "n", vec!["Run next instruction"], false, false)?,
     );
     hints.insert(
         "r".to_string(),
@@ -295,8 +333,8 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
             vec![3, 3],
             "r",
             vec!["Run to end", "Run to next breakpoint"],
-            true,
-            true,
+            false,
+            false,
         )?,
     );
     hints.insert(
@@ -309,37 +347,37 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
                 "Exit debug select mode",
                 "Dismiss message",
             ],
-            true,
-            true,
+            false,
+            false,
         )?,
     );
     hints.insert(
         "t".to_string(),
-        KeybindingHint::new(1, "t", "Reset", true, false),
+        KeybindingHint::new(1, "t", "Reset", false, false),
     );
     hints.insert(
         "b".to_string(),
-        KeybindingHint::new(8, "b", "Toggle breakpoint", true, false),
+        KeybindingHint::new(8, "b", "Toggle breakpoint", false, false),
     );
     hints.insert(
         "j".to_string(),
-        KeybindingHint::new(11, "j", "Jump to line", true, false),
+        KeybindingHint::new(11, "j", "Jump to line", false, false),
     );
     hints.insert(
         KeySymbol::ArrowUp.to_string(),
-        KeybindingHint::new(12, &KeySymbol::ArrowUp.to_string(), "Up", true, false),
+        KeybindingHint::new(12, &KeySymbol::ArrowUp.to_string(), "Up", false, false),
     );
     hints.insert(
         KeySymbol::ArrowDown.to_string(),
-        KeybindingHint::new(13, &KeySymbol::ArrowDown.to_string(), "Down", true, false),
+        KeybindingHint::new(13, &KeySymbol::ArrowDown.to_string(), "Down", false, false),
     );
     hints.insert(
         "i".to_string(),
-        KeybindingHint::new(9, "i", "Run custom instruction", true, true),
+        KeybindingHint::new(9, "i", "Run custom instruction", false, false),
     );
     hints.insert(
         "c".to_string(),
-        KeybindingHint::new(10, "c", "Toggle call stack", true, true),
+        KeybindingHint::new(10, "c", "Toggle call stack", false, false),
     );
     hints.insert(
         KeySymbol::ArrowLeft.to_string(),
@@ -347,7 +385,7 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
             10,
             &KeySymbol::ArrowLeft.to_string(),
             "Cursor left",
-            true,
+            false,
             false,
         ),
     );
@@ -357,7 +395,7 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
             11,
             &KeySymbol::ArrowRight.to_string(),
             "Cursor right",
-            true,
+            false,
             false,
         ),
     );
@@ -371,7 +409,7 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
                 "Run selected instruction",
                 "Close",
             ],
-            true,
+            false,
             false,
         )?,
     );
@@ -381,7 +419,7 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
             vec![1, 1],
             &KeySymbol::Escape.to_string(),
             vec!["Cancel", "Exit"],
-            true,
+            false,
             false,
         )?,
     );

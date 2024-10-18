@@ -6,6 +6,10 @@
 
 - actions `run to end` and `run custom instruction` can now be performed when a program is loaded but not started (fr #45)
 
+### Bug fixes
+
+- fixed `up` keybinding hint shown as enabled in `run custom instruction` when it should not be enabled
+
 ## v1.7.0 (latest version)
 
 ### Other
