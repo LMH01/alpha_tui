@@ -1,11 +1,5 @@
 # Changelog
 
-## v1.8.0
-
-### Other
-
-- actions `run to end` and `run custom instruction` can now be performed when a program is loaded but not started (fr #45)
-
 ## v1.7.0 (latest version)
 
 ### Other

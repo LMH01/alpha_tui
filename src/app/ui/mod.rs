@@ -25,7 +25,7 @@ impl App {
 
         let (keybinding_hints, keybinding_hints_height) = self
             .keybinding_hints
-            .keybinding_hint_paragraph(f.area().width);
+            .keybinding_hint_paragraph(f.size().width);
 
         let global_chunks = Layout::default()
             .direction(Direction::Vertical)
@@ -33,7 +33,7 @@ impl App {
                 Constraint::Fill(1),
                 Constraint::Length(keybinding_hints_height),
             ])
-            .split(f.area());
+            .split(f.size());
 
         let mut chunk_constraints = if is_playground {
             // don't add chunk for breakpoints, when in playground mode
@@ -270,7 +270,7 @@ impl App {
                 .borders(Borders::ALL)
                 .border_style(self.theme.execution_finished_popup_border())
                 .style(self.theme.execution_finished_block());
-            let area = super::centered_rect_abs(5, 36, f.area());
+            let area = super::centered_rect_abs(5, 36, f.size());
             let text = paragraph_with_line_wrap(
             format!("Press [t] to reset to start.\nPress [d] to dismiss this message.\nPress [q] or [{}] to exit.", KeySymbol::Escape.to_string()),
             area.width,
@@ -305,7 +305,7 @@ impl App {
                 .borders(Borders::ALL)
                 .border_style(self.theme.error_block_border())
                 .style(self.theme.error_block());
-            let area = super::centered_rect(60, 30, None, f.area());
+            let area = super::centered_rect(60, 30, None, f.size());
             let text = paragraph_with_line_wrap(if is_playground {format!("This instruction could not be executed due to the following problem:\n{}\n\nPress [q] to exit and to view further information regarding this error.\nPress [ENTER] to close.", e.reason)} else {format!(
                 "Execution can not continue due to the following problem:\n{}\n\nPress [q] or [{}] to exit and to view further information regarding this error.\nPress [t] to reset to start.",
                 e.reason, KeySymbol::Escape.to_string())}, area.width - 2).block(block);
@@ -323,12 +323,12 @@ impl App {
             let area = super::centered_rect(
                 60,
                 30,
-                if f.area().width <= 124 {
+                if f.size().width <= 124 {
                     Some(7)
                 } else {
                     Some(6)
                 },
-                f.area(),
+                f.size(),
             );
             let text = paragraph_with_line_wrap(format!(
             "{}\n\nPress [q] or [{}] to exit and to view further information regarding this error.\nPress [ENTER] to close.",
@@ -350,12 +350,12 @@ impl App {
             let area = super::centered_rect(
                 60,
                 30,
-                if f.area().width <= 124 {
+                if f.size().width <= 124 {
                     Some(7)
                 } else {
                     Some(6)
                 },
-                f.area(),
+                f.size(),
             );
             let text = paragraph_with_line_wrap(format!(
             "The entered instruction is forbidden.\n\nPress [q] or [{}] to exit and to view further information regarding this error.\nPress [ENTER] to close.",
