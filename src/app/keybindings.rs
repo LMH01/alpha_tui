@@ -96,7 +96,7 @@ impl KeybindingHints {
     ///
     /// Does nothing if the key is not associated to a binding.
     fn show(&mut self, key: &str) {
-        if let Some(bind) = self.hints.get_mut(key) {
+        if let Some(bind) = self.hints.get_mut(key.into()) {
             bind.shown = true;
         }
     }
@@ -111,7 +111,7 @@ impl KeybindingHints {
     }
 
     /// Use to enable and show a keybinding hint.
-    fn enable_and_show(&mut self, key: &str) {
+    fn show_and_enable(&mut self, key: &str) {
         if let Some(bind) = self.hints.get_mut(key) {
             bind.shown = true;
             bind.enabled = true;
@@ -141,113 +141,75 @@ impl KeybindingHints {
 
     /// Sets all keybinding hints depending on the current state of the application.
     pub fn update(&mut self, state: &State) -> Result<()> {
-        // reset keybindings back to default (I know that this is not that optimal for the performance)
-        //self.hints =
-        //    default_keybindings().expect("Keybinding hints should be properly initialized");
-
-        for hint in self.hints.values_mut() {
-            hint.shown = false;
-            hint.enabled = false;
-        }
+        // reset keybinding hints to be able to configure them properly for current app state
+        self.hints.values_mut().for_each(|x| x.reset());
 
         // set more specific keybinding hints
         match state {
             State::Default => {
-                self.show("q");
-                self.enable("q");
-                self.show("s");
-                self.enable("s");
-                self.show("r");
-                self.enable("r");
-                self.show("d");
-                self.enable("d");
-                self.show("i");
-                self.enable("i");
-                self.show("c");
-                self.enable("c");
+                self.show_and_enable("q");
+                self.show_and_enable("s");
+                self.show_and_enable("r");
+                self.show_and_enable("d");
+                self.show_and_enable("i");
+                self.show_and_enable("c");
             }
             State::Running(breakpoint_set) => {
-                self.show("q");
-                self.enable("q");
-                self.show("n");
-                self.enable("n");
-                self.show("d");
-                self.enable("d");
-                self.show("t");
-                self.enable("t");
-                self.show("i");
-                self.enable("i");
-                self.show("c");
-                self.enable("c");
-                self.show("r");
-                self.enable("r");
+                self.show_and_enable("q");
+                self.show_and_enable("n");
+                self.show_and_enable("d");
+                self.show_and_enable("t");
+                self.show_and_enable("i");
+                self.show_and_enable("c");
+                self.show_and_enable("r");
                 if *breakpoint_set {
                     self.set_state("r", 1)?;
                 }
             }
             State::DebugSelect(_, _) => {
-                self.show("q");
-                self.enable("q");
-                self.show("d");
-                self.enable("d");
-                self.show("c");
-                self.enable("c");
-                self.show("b");
-                self.enable("b");
-                self.show("j");
-                self.enable("j");
-                self.show(&KeySymbol::ArrowUp.to_string());
-                self.enable(&KeySymbol::ArrowUp.to_string());
-                self.show(&KeySymbol::ArrowDown.to_string());
-                self.enable(&KeySymbol::ArrowDown.to_string());
+                self.show_and_enable("q");
+                self.show_and_enable("d");
+                self.show_and_enable("c");
+                self.show_and_enable("b");
+                self.show_and_enable("j");
+                self.show_and_enable(&KeySymbol::ArrowUp.to_string());
+                self.show_and_enable(&KeySymbol::ArrowDown.to_string());
                 self.set_state("d", 1)?;
             }
             State::Finished(message_shown) => {
-                self.show("q");
-                self.enable("q");
-                self.show("t");
-                self.enable("t");
+                self.show_and_enable("q");
+                self.show_and_enable("t");
                 if *message_shown {
-                    self.show("d");
-                    self.enable("d");
+                    self.show_and_enable("d");
                 } else {
                     self.hide("d");
                 }
                 self.set_state("d", 2)?;
             }
             State::RuntimeError(_, is_playground) => {
-                self.show("q");
-                self.enable("q");
+                self.show_and_enable("q");
 
                 if *is_playground {
                     self.set_state(&KeySymbol::Enter.to_string(), 2)?;
                     self.show(&KeySymbol::Enter.to_string());
                 } else {
-                    self.show("t");
-                    self.enable("t");
+                    self.show_and_enable("t");
                 }
             }
             State::CustomInstructionError(_, _) | State::BuildProgramError(_) => {
-                self.show("q");
-                self.enable("q");
+                self.show_and_enable("q");
 
-                self.show(&KeySymbol::Enter.to_string());
-                self.enable(&KeySymbol::Enter.to_string());
+                self.show_and_enable(&KeySymbol::Enter.to_string());
                 self.set_state(&KeySymbol::Enter.to_string(), 2)?;
                 self.show(&KeySymbol::Enter.to_string());
             }
             State::CustomInstruction(state) => {
-                self.show(&KeySymbol::Enter.to_string());
-                self.enable(&KeySymbol::Enter.to_string());
-                self.show(&KeySymbol::Escape.to_string());
-                self.enable(&KeySymbol::Escape.to_string());
+                self.show_and_enable(&KeySymbol::Enter.to_string());
+                self.show_and_enable(&KeySymbol::Escape.to_string());
                 self.show(&KeySymbol::ArrowUp.to_string());
-                self.show(&KeySymbol::ArrowDown.to_string());
-                self.enable(&KeySymbol::ArrowDown.to_string());
-                self.show(&KeySymbol::ArrowLeft.to_string());
-                self.enable(&KeySymbol::ArrowLeft.to_string());
-                self.show(&KeySymbol::ArrowRight.to_string());
-                self.enable(&KeySymbol::ArrowRight.to_string());
+                self.show_and_enable(&KeySymbol::ArrowDown.to_string());
+                self.show_and_enable(&KeySymbol::ArrowLeft.to_string());
+                self.show_and_enable(&KeySymbol::ArrowRight.to_string());
                 self.show(&KeySymbol::Tab.to_string());
                 if state.input.is_empty() && state.allowed_values_state.selected().is_none() {
                     self.disable(&KeySymbol::Enter.to_string());
@@ -273,18 +235,12 @@ impl KeybindingHints {
                 }
             }
             State::Playground(state) => {
-                self.show(&KeySymbol::Enter.to_string());
-                self.enable(&KeySymbol::Enter.to_string());
-                self.show(&KeySymbol::Escape.to_string());
-                self.enable(&KeySymbol::Escape.to_string());
-                self.show(&KeySymbol::ArrowUp.to_string());
-                self.enable(&KeySymbol::ArrowUp.to_string());
-                self.show(&KeySymbol::ArrowDown.to_string());
-                self.enable(&KeySymbol::ArrowDown.to_string());
-                self.show(&KeySymbol::ArrowLeft.to_string());
-                self.enable(&KeySymbol::ArrowLeft.to_string());
-                self.show(&KeySymbol::ArrowRight.to_string());
-                self.enable(&KeySymbol::ArrowRight.to_string());
+                self.show_and_enable(&KeySymbol::Enter.to_string());
+                self.show_and_enable(&KeySymbol::Escape.to_string());
+                self.show_and_enable(&KeySymbol::ArrowUp.to_string());
+                self.show_and_enable(&KeySymbol::ArrowDown.to_string());
+                self.show_and_enable(&KeySymbol::ArrowLeft.to_string());
+                self.show_and_enable(&KeySymbol::ArrowRight.to_string());
                 self.show(&KeySymbol::Tab.to_string());
                 self.set_state(&KeySymbol::Escape.to_string(), 1)?;
                 if state.input.is_empty() && state.allowed_values_state.selected().is_none() {
@@ -547,7 +503,7 @@ mod tests {
             hints,
             theme: SharedTheme::new(Theme::default()),
         };
-        hints.enable_and_show("a");
+        hints.show_and_enable("a");
         hints.enable("c");
         hints.show("d");
         hints
@@ -559,10 +515,22 @@ mod tests {
 
         assert!(hints
             .active_keybinds()
-            .contains(&KeybindingHint::new_with_state(0, "a", "test_label_1", true, true)));
+            .contains(&KeybindingHint::new_with_state(
+                0,
+                "a",
+                "test_label_1",
+                true,
+                true
+            )));
         assert!(hints
             .active_keybinds()
-            .contains(&KeybindingHint::new_with_state(0, "d", "test_label_4", false, true)));
+            .contains(&KeybindingHint::new_with_state(
+                0,
+                "d",
+                "test_label_4",
+                false,
+                true
+            )));
     }
 
     #[test]
@@ -649,7 +617,13 @@ mod tests {
         let mut hints = test_keybinding_hints();
         assert!(hints
             .active_keybinds()
-            .contains(&KeybindingHint::new_with_state(0, "d", "test_label_4", false, true)));
+            .contains(&KeybindingHint::new_with_state(
+                0,
+                "d",
+                "test_label_4",
+                false,
+                true
+            )));
         hints.hide("d");
         assert!(!hints
             .active_keybinds()
