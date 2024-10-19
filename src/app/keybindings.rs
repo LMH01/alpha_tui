@@ -96,7 +96,7 @@ impl KeybindingHints {
     ///
     /// Does nothing if the key is not associated to a binding.
     fn show(&mut self, key: &str) {
-        if let Some(bind) = self.hints.get_mut(key.into()) {
+        if let Some(bind) = self.hints.get_mut(key) {
             bind.shown = true;
         }
     }
