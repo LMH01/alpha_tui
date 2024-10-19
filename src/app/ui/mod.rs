@@ -274,7 +274,7 @@ impl App {
                 .style(self.theme.execution_finished_block());
             let area = super::centered_rect_abs(5, 36, f.size());
             let text = paragraph_with_line_wrap(
-            format!("Press [t] to reset to start.\nPress [d] to dismiss this message.\nPress [q] or [{}] to exit.", KeySymbol::Escape.to_string()),
+            format!("Press [t] to reset to start.\nPress [d] to dismiss this message.\nPress [q] or [{}] to exit.", KeySymbol::Escape),
             area.width,
         )
         .block(block);
@@ -310,7 +310,7 @@ impl App {
             let area = super::centered_rect(60, 30, None, f.size());
             let text = paragraph_with_line_wrap(if is_playground {format!("This instruction could not be executed due to the following problem:\n{}\n\nPress [q] to exit and to view further information regarding this error.\nPress [ENTER] to close.", e.reason)} else {format!(
                 "Execution can not continue due to the following problem:\n{}\n\nPress [q] or [{}] to exit and to view further information regarding this error.\nPress [t] to reset to start.",
-                e.reason, KeySymbol::Escape.to_string())}, area.width - 2).block(block);
+                e.reason, KeySymbol::Escape)}, area.width - 2).block(block);
             f.render_widget(Clear, area); //this clears out the background
             f.render_widget(text, area);
         }
@@ -335,7 +335,7 @@ impl App {
             let text = paragraph_with_line_wrap(format!(
             "{}\n\nPress [q] or [{}] to exit and to view further information regarding this error.\nPress [ENTER] to close.",
             reason,
-            KeySymbol::Escape.to_string()
+            KeySymbol::Escape
         ), area.width)
         .block(block);
             f.render_widget(Clear, area); //this clears out the background
@@ -361,7 +361,7 @@ impl App {
             );
             let text = paragraph_with_line_wrap(format!(
             "The entered instruction is forbidden.\n\nPress [q] or [{}] to exit and to view further information regarding this error.\nPress [ENTER] to close.",
-            KeySymbol::Escape.to_string()
+            KeySymbol::Escape
         ), area.width)
         .block(block);
             f.render_widget(Clear, area); //this clears out the background
