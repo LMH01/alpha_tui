@@ -405,7 +405,10 @@ mod tests {
     fn test_parse_memory_cell() {
         assert_eq!(parse_memory_cell("p(h1)", (0, 4)), Ok("h1".to_string()));
         assert_eq!(parse_memory_cell("ρ(h1)", (0, 4)), Ok("h1".to_string()));
-        assert_eq!(parse_memory_cell("ρ(test_cell)", (0, 4)), Ok("test_cell".to_string()));
+        assert_eq!(
+            parse_memory_cell("ρ(test_cell)", (0, 4)),
+            Ok("test_cell".to_string())
+        );
         assert_eq!(
             parse_memory_cell("p(1)", (0, 3)),
             Err(InstructionParseError::InvalidExpression(
