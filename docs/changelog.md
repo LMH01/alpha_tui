@@ -10,6 +10,7 @@
 
 - fixed `up` keybinding hint shown as enabled in `run custom instruction` when it should not be enabled
 - fixed breakpoint list sometimes not aligned with instruction list (fr #79)
+- fixed comment alignment incorrect under specific circumstances when syntax highlighting is enabled and source contains alpha 0 accumulator (fr #82)
 
 ## v1.7.0 (latest version)
 

@@ -1,15 +1,17 @@
+use std::rc::Rc;
+
 use ratatui::{
     style::Style,
-    text::{Line, Span},
+    text::{Line, Span, ToLine, ToSpan},
 };
 
 use crate::{
     base::Operation,
-    instructions::{IndexMemoryCellIndexType, Instruction, TargetType, Value},
+    instructions::{Identifier, IndexMemoryCellIndexType, Instruction, TargetType, Value},
     utils::{self, remove_comment},
 };
 
-use super::style::SharedSyntaxHighlightingTheme;
+use super::style::{SharedSyntaxHighlightingTheme, SyntaxHighlightingTheme};
 
 /// How many spaces should be between labels, instructions and comments when alignment is enabled
 const SPACING: usize = 2;
@@ -155,13 +157,14 @@ impl SyntaxHighlighter {
 
             // handle instruction
             if let Some(instruction) = parts.instruction {
-                let len = instruction.chars().count();
+                let mut len = instruction.chars().count();
                 if enable_syntax_highlighting {
                     let instruction = Instruction::try_from(instruction.as_str())?;
                     spans.append(&mut instruction.to_spans(self));
+                    len = Line::from(instruction.to_spans(self)).width();
                 } else {
                     spans.push(Span::from(instruction));
-                }
+                };
                 // fill spaces if enabled until next part is reached
                 if enable_alignment {
                     spans.push(fill_span(max_instruction_width - len + SPACING));
@@ -286,6 +289,8 @@ impl ToSpans for Value {
 /// Reads in the instructions vector and determines what the maximum width for
 /// labels and instructions is.
 ///
+/// If accumulator 0 is written as `a` its length will be 2 because it is replaced with `a0`.
+///
 /// Returns max width of labels in first variant and max width of instructions
 /// in second variant. Label width includes the `:`.
 fn determine_alignment(instructions: &[String]) -> (usize, usize) {
@@ -312,10 +317,12 @@ fn determine_alignment(instructions: &[String]) -> (usize, usize) {
             continue;
         }
 
-        // count width of instruction
-        let mut instruction_width = parts.len() - 1; // used to add in the spaces between the parts
-        for part in parts {
-            instruction_width += part.chars().count();
+        let mut instruction_width = 0;
+        if let Ok(instruction) = Instruction::try_from(parts.join(" ").as_str()) {
+            let line = Line::from(instruction.to_spans(&SyntaxHighlighter::new(&Rc::new(
+                SyntaxHighlightingTheme::default(),
+            ))));
+            instruction_width = line.width();
         }
         if max_instruction_width < instruction_width {
             max_instruction_width = instruction_width;
@@ -428,7 +435,7 @@ mod tests {
     };
 
     #[test]
-    fn test_input_to_lines_alignment_enabled_syntax_highlighting_enabled() {
+    fn test_input_to_lines_alignment_enabled_syntax_highlighting_enabled_input_single_alpha() {
         let input = vec![
             "main: a := 20".to_string(),
             "// full line comment".to_string(),
@@ -458,6 +465,30 @@ mod tests {
                 "label:".to_string(),
                 "label2:                                         // comment".to_string(),
                 "             if \u{03c1}(h1) == \u{03c1}(h2) then goto hello".to_string()
+            ]
+        );
+    }
+
+    #[test]
+    fn test_input_to_lines_alignment_enabled_syntax_highlighting_enabled_input_single_alpha_2() {
+        let input = vec![
+            "label: a := a + 1 // Increment the current number".to_string(),
+            "label2: a := 5 + a1 // comment".to_string(),
+            "label22: goto label2 // Check the next number".to_string(),
+            "label33: a := 10 // Check the next number".to_string(),
+            "p(h1) := 5 // comment".to_string(),
+        ];
+        let res = SyntaxHighlighter::new(&SharedTheme::default().syntax_highlighting_theme())
+            .input_to_lines(&input, true, true)
+            .unwrap();
+        assert_eq!(
+            res.iter().map(|f| f.to_string()).collect::<Vec<String>>(),
+            vec![
+                "label:    \u{03b1}0 := \u{03b1}0 + 1  // Increment the current number".to_string(),
+                "label2:   \u{03b1}0 := 5 + \u{03b1}1  // comment".to_string(),
+                "label22:  goto label2   // Check the next number".to_string(),
+                "label33:  \u{03b1}0 := 10      // Check the next number".to_string(),
+                "          \u{03c1}(h1) := 5    // comment".to_string(),
             ]
         );
     }
@@ -499,14 +530,14 @@ mod tests {
     fn test_determine_alignment() {
         assert_eq!(
             determine_alignment(&vec!["test_label: a := 20 // comment".to_string()]),
-            (11, 7)
+            (11, 8)
         );
         assert_eq!(
             determine_alignment(&vec![
                 "test_label: a := 20 // comment".to_string(),
                 "main: if a == p(h2) then goto test_label // comment".to_string()
             ]),
-            (11, 34)
+            (11, 35)
         );
     }
 
