@@ -6,9 +6,12 @@
 
     crane.url = "github:ipetkov/crane";
 
-    flake-utils.url = "github:numtide/flake-utils";
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
-    fenix.url = "github:nix-community/fenix";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs = { self, nixpkgs, crane, flake-utils, fenix, ... }:
@@ -41,6 +44,37 @@
             # here *without* rebuilding all dependency crates
             # MY_CUSTOM_VAR = "some value";
           });
+
+          # cross compilation to windows
+          toolchainWin = with fenix.packages.${system};
+            combine [
+              minimal.rustc
+              minimal.cargo
+              targets.x86_64-pc-windows-gnu.latest.rust-std
+            ];
+          craneLibWin = (crane.mkLib pkgs).overrideToolchain toolchainWin;
+
+          alpha_tui-win = craneLibWin.buildPackage {
+            src = craneLibWin.cleanCargoSource ./.;
+
+            strictDeps = true;
+            doCheck = false;
+
+            CARGO_BUILD_TARGET = "x86_64-pc-windows-gnu";
+
+            # fixes issues related to libring
+            TARGET_CC = "${pkgs.pkgsCross.mingwW64.stdenv.cc}/bin/${pkgs.pkgsCross.mingwW64.stdenv.cc.targetPrefix}cc";
+
+            #fixes issues related to openssl
+            OPENSSL_DIR = "${pkgs.openssl.dev}";
+            OPENSSL_LIB_DIR = "${pkgs.openssl.out}/lib";
+            OPENSSL_INCLUDE_DIR = "${pkgs.openssl.dev}/include/";
+
+            depsBuildBuild = with pkgs; [
+              pkgsCross.mingwW64.stdenv.cc
+              pkgsCross.mingwW64.windows.pthreads
+            ];
+          };
 
         in
         {
@@ -79,6 +113,8 @@
 
           packages = {
             default = alpha_tui;
+
+            alpha_tui-win = alpha_tui-win;
           };
 
         });
