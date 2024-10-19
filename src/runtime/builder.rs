@@ -171,12 +171,20 @@ impl RuntimeBuilder {
         }
         if let Some(ac) = &instruction_limiting_args.allowed_comparisons {
             // if allowed_comparisons are already set, merge with additional allowed comparisons
-            let mut allowed_comparisons = self.instruction_config.allowed_comparisons.take().unwrap_or_default();
+            let mut allowed_comparisons = self
+                .instruction_config
+                .allowed_comparisons
+                .take()
+                .unwrap_or_default();
             allowed_comparisons.append(&mut ac.clone());
             self.instruction_config.allowed_comparisons = Some(allowed_comparisons);
         }
         if let Some(ao) = &instruction_limiting_args.allowed_operations {
-            let mut allowed_operations = self.instruction_config.allowed_operations.take().unwrap_or_default();
+            let mut allowed_operations = self
+                .instruction_config
+                .allowed_operations
+                .take()
+                .unwrap_or_default();
             allowed_operations.append(&mut ao.clone());
             self.instruction_config.allowed_operations = Some(allowed_operations);
         }
