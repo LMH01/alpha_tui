@@ -288,7 +288,7 @@ pub fn parse_memory_cell(
     if name.chars().any(|c| c.is_ascii_alphabetic()) {
         if !name
             .chars()
-            .all(|c| matches!(c, 'a'..='z' | 'A'..='Z' | '0'..='9'))
+            .all(|c| matches!(c, 'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '-' ))
         {
             return Err(InstructionParseError::InvalidExpression(
                 (part_range.0 + 2, part_range.1 - 1),
@@ -405,6 +405,10 @@ mod tests {
     fn test_parse_memory_cell() {
         assert_eq!(parse_memory_cell("p(h1)", (0, 4)), Ok("h1".to_string()));
         assert_eq!(parse_memory_cell("ρ(h1)", (0, 4)), Ok("h1".to_string()));
+        assert_eq!(
+            parse_memory_cell("ρ(test_cell)", (0, 4)),
+            Ok("test_cell".to_string())
+        );
         assert_eq!(
             parse_memory_cell("p(1)", (0, 3)),
             Err(InstructionParseError::InvalidExpression(

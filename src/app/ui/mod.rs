@@ -167,7 +167,9 @@ impl App {
                 .collect();
 
             // Create the list itself
-            let breakpoints = List::new(breakpoint_list_items).block(breakpoint_area);
+            let breakpoints = List::new(breakpoint_list_items)
+                .block(breakpoint_area)
+                .scroll_padding(2);
 
             f.render_stateful_widget(
                 breakpoints,

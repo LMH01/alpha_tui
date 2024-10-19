@@ -1,5 +1,21 @@
 # Changelog
 
+<<<<<<< HEAD
+=======
+## v1.8.0
+
+### Other
+
+- actions `run to end` and `run custom instruction` can now be performed when a program is loaded but not started (fr #45)
+
+### Bug fixes
+
+- fixed `up` keybinding hint shown as enabled in `run custom instruction` when it should not be enabled
+- fixed breakpoint list sometimes not aligned with instruction list (fr #79)
+- fixed comment alignment incorrect under specific circumstances when syntax highlighting is enabled and source contains alpha 0 accumulator (fr #82)
+- fixed `a`, `p` and `y` not converting to their greek alphabet equivalents when syntax highlighting is disabled
+
+>>>>>>> dev
 ## v1.7.0 (latest version)
 
 ### Other
@@ -46,7 +62,7 @@
 
 ### Other
 
-- `a`. `p` and `y` are now always converted to their greek alphabet equivalents in a loaded program. Using the `--write-alignment` flag these symbols can be written to the source file
+- `a`, `p` and `y` are now always converted to their greek alphabet equivalents in a loaded program. Using the `--write-alignment` flag these symbols can be written to the source file
 - All `a` and $\alpha$ are now displayed as $\alpha0$
 - Resetting the runtime will now restore the memory values that where set when the tui was launched, this means that memory values configured using a memory config file are now restored when the runtime is reset (#74)
 

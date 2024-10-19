@@ -1,6 +1,11 @@
 use assert_cmd::Command;
 
 #[test]
+fn test_example_program_compile_calculate_primes() {
+    test_example_program_compile("calculate_primes.alpha")
+}
+
+#[test]
 fn test_example_program_compile_faculty() {
     test_example_program_compile("faculty.alpha")
 }

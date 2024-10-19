@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use ratatui::{
     style::Style,
     text::{Line, Span},
@@ -9,7 +11,7 @@ use crate::{
     utils::{self, remove_comment},
 };
 
-use super::style::SharedSyntaxHighlightingTheme;
+use super::style::{SharedSyntaxHighlightingTheme, SyntaxHighlightingTheme};
 
 /// How many spaces should be between labels, instructions and comments when alignment is enabled
 const SPACING: usize = 2;
@@ -39,12 +41,12 @@ impl SyntaxHighlighter {
 
     /// Create a span containing a label.
     fn label_span(&self, label: &str) -> Span<'static> {
-        Span::from(format!(" {label}")).style(self.theme.label(true))
+        Span::from(format!(" {label}")).style(self.theme.label())
     }
 
     /// Span to use for build in functions.
     fn build_in_span(&self, text: &str) -> Span<'static> {
-        Span::from(text.to_string()).style(self.theme.build_in(true))
+        Span::from(text.to_string()).style(self.theme.build_in())
     }
 
     /// Creates a span formatted for an accumulator with index `idx`.
@@ -91,13 +93,10 @@ impl SyntaxHighlighter {
     ///
     /// If `enable_alignment` is true, all labels, instructions and comments are aligned below each other
     /// (excluding full line comments that start with //, they always start at the beginning of the line).
-    ///
-    /// If `enable_syntax_highlighting` is true, all labels, instructions and comments will be colored.
     pub fn input_to_lines(
         &self,
         input: &[String],
         enable_alignment: bool,
-        enable_syntax_highlighting: bool,
     ) -> miette::Result<Vec<Line<'static>>> {
         // determine max width of each block
         let (max_label_width, max_instruction_width) = if enable_alignment {
@@ -125,9 +124,7 @@ impl SyntaxHighlighter {
                 if comment.starts_with('#') {
                     continue;
                 }
-                spans.push(
-                    Span::from(comment).style(self.theme.comment(enable_syntax_highlighting)),
-                );
+                spans.push(Span::from(comment).style(self.theme.comment()));
                 lines.push(Line::from(spans));
                 continue;
             }
@@ -135,14 +132,8 @@ impl SyntaxHighlighter {
             // handle label
             if let Some(label) = parts.label {
                 let len = label.chars().count() + 1; // add plus one because `:` is not included in label
-                spans.push(string_into_span(
-                    label,
-                    self.theme.label(enable_syntax_highlighting),
-                ));
-                spans.push(string_into_span(
-                    ":".to_string(),
-                    self.theme.build_in(enable_syntax_highlighting),
-                ));
+                spans.push(string_into_span(label, self.theme.label()));
+                spans.push(string_into_span(":".to_string(), self.theme.build_in()));
                 // fill spaces if enabled until next part is reached
                 if enable_alignment {
                     spans.push(fill_span(max_label_width - len + SPACING))
@@ -155,13 +146,9 @@ impl SyntaxHighlighter {
 
             // handle instruction
             if let Some(instruction) = parts.instruction {
-                let len = instruction.chars().count();
-                if enable_syntax_highlighting {
-                    let instruction = Instruction::try_from(instruction.as_str())?;
-                    spans.append(&mut instruction.to_spans(self));
-                } else {
-                    spans.push(Span::from(instruction));
-                }
+                let instruction = Instruction::try_from(instruction.as_str())?;
+                spans.append(&mut instruction.to_spans(self));
+                let len = Line::from(instruction.to_spans(self)).width();
                 // fill spaces if enabled until next part is reached
                 if enable_alignment {
                     spans.push(fill_span(max_instruction_width - len + SPACING));
@@ -174,10 +161,7 @@ impl SyntaxHighlighter {
 
             // handle comment
             if let Some(comment) = parts.comment {
-                spans.push(string_into_span(
-                    comment,
-                    self.theme.comment(enable_syntax_highlighting),
-                ));
+                spans.push(string_into_span(comment, self.theme.comment()));
             }
             lines.push(Line::from(remove_trailing_whitespaces(spans)));
         }
@@ -220,13 +204,13 @@ impl ToSpans for Instruction {
                 vec![sh.build_in_span("goto"), sh.label_span(label)]
             }
             Self::JumpIf(v, cmp, v2, label) => {
-                let mut spans = vec![Span::from("if ").style(sh.theme.build_in(true))];
+                let mut spans = vec![Span::from("if ").style(sh.theme.build_in())];
                 spans.append(&mut v.to_spans(sh));
                 spans.push(Span::from(" "));
                 spans.push(Span::from(format!("{cmp}")).style(sh.theme.cmp()));
                 spans.push(Span::from(" "));
                 spans.append(&mut v2.to_spans(sh));
-                spans.push(Span::from(" then goto").style(sh.theme.build_in(true)));
+                spans.push(Span::from(" then goto").style(sh.theme.build_in()));
                 spans.push(sh.label_span(label));
                 spans
             }
@@ -286,6 +270,8 @@ impl ToSpans for Value {
 /// Reads in the instructions vector and determines what the maximum width for
 /// labels and instructions is.
 ///
+/// If accumulator 0 is written as `a` its length will be 2 because it is replaced with `a0`.
+///
 /// Returns max width of labels in first variant and max width of instructions
 /// in second variant. Label width includes the `:`.
 fn determine_alignment(instructions: &[String]) -> (usize, usize) {
@@ -312,10 +298,12 @@ fn determine_alignment(instructions: &[String]) -> (usize, usize) {
             continue;
         }
 
-        // count width of instruction
-        let mut instruction_width = parts.len() - 1; // used to add in the spaces between the parts
-        for part in parts {
-            instruction_width += part.chars().count();
+        let mut instruction_width = 0;
+        if let Ok(instruction) = Instruction::try_from(parts.join(" ").as_str()) {
+            let line = Line::from(instruction.to_spans(&SyntaxHighlighter::new(&Rc::new(
+                SyntaxHighlightingTheme::default(),
+            ))));
+            instruction_width = line.width();
         }
         if max_instruction_width < instruction_width {
             max_instruction_width = instruction_width;
@@ -428,7 +416,7 @@ mod tests {
     };
 
     #[test]
-    fn test_input_to_lines_alignment_enabled_syntax_highlighting_enabled() {
+    fn test_input_to_lines_alignment_enabled_input_single_alpha() {
         let input = vec![
             "main: a := 20".to_string(),
             "// full line comment".to_string(),
@@ -443,7 +431,7 @@ mod tests {
             "if p(h1) == p(h2) then goto hello".to_string(),
         ];
         let res = SyntaxHighlighter::new(&SharedTheme::default().syntax_highlighting_theme())
-            .input_to_lines(&input, true, true)
+            .input_to_lines(&input, true)
             .unwrap();
         assert_eq!(
             res.iter().map(|f| f.to_string()).collect::<Vec<String>>(),
@@ -463,7 +451,31 @@ mod tests {
     }
 
     #[test]
-    fn test_input_to_lines_alignment_disabled_syntax_highlighting_enabled() {
+    fn test_input_to_lines_alignment_enabled_input_single_alpha_2() {
+        let input = vec![
+            "label: a := a + 1 // Increment the current number".to_string(),
+            "label2: a := 5 + a1 // comment".to_string(),
+            "label22: goto label2 // Check the next number".to_string(),
+            "label33: a := 10 // Check the next number".to_string(),
+            "p(h1) := 5 // comment".to_string(),
+        ];
+        let res = SyntaxHighlighter::new(&SharedTheme::default().syntax_highlighting_theme())
+            .input_to_lines(&input, true)
+            .unwrap();
+        assert_eq!(
+            res.iter().map(|f| f.to_string()).collect::<Vec<String>>(),
+            vec![
+                "label:    \u{03b1}0 := \u{03b1}0 + 1  // Increment the current number".to_string(),
+                "label2:   \u{03b1}0 := 5 + \u{03b1}1  // comment".to_string(),
+                "label22:  goto label2   // Check the next number".to_string(),
+                "label33:  \u{03b1}0 := 10      // Check the next number".to_string(),
+                "          \u{03c1}(h1) := 5    // comment".to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_input_to_lines_alignment_disabled() {
         let input = vec![
             "main: a := 20".to_string(),
             "// full line comment".to_string(),
@@ -477,7 +489,7 @@ mod tests {
             "label2: // comment".to_string(),
         ];
         let res = SyntaxHighlighter::new(&SharedTheme::default().syntax_highlighting_theme())
-            .input_to_lines(&input, false, true)
+            .input_to_lines(&input, false)
             .unwrap();
         assert_eq!(
             res.iter().map(|f| f.to_string()).collect::<Vec<String>>(),
@@ -499,14 +511,14 @@ mod tests {
     fn test_determine_alignment() {
         assert_eq!(
             determine_alignment(&vec!["test_label: a := 20 // comment".to_string()]),
-            (11, 7)
+            (11, 8)
         );
         assert_eq!(
             determine_alignment(&vec![
                 "test_label: a := 20 // comment".to_string(),
                 "main: if a == p(h2) then goto test_label // comment".to_string()
             ]),
-            (11, 34)
+            (11, 35)
         );
     }
 

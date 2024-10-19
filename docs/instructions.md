@@ -38,7 +38,7 @@ $\textbf{cmp}\in\lbrace <,\leq,=, \ne,\geq,>\rbrace;$
 
 ## Memory cells
 
-Memory cells are accessed using `p(NAME)`, `NAME` can contain the letters a-z, A-Z and the numbers 0-9, if at least one letter is used.
+Memory cells are accessed using `p(NAME)`, `NAME` can contain the letters a-z, A-Z and the following symbols: `_` and `-`. If at least one letter is used, the numbers 0-9 may also be used as well.
 
 Example on how to assign value: `p(h1) := 5`
 

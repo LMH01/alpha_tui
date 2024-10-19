@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use clap::ValueEnum;
-use ratatui::style::{Color, Style};
+use ratatui::style::{palette::material::WHITE, Color, Style};
 use serde::{Deserialize, Serialize};
 
 pub type SharedTheme = Rc<Theme>;
@@ -230,6 +230,24 @@ impl Default for SyntaxHighlightingTheme {
 }
 
 impl SyntaxHighlightingTheme {
+    pub fn new_disabled() -> Self {
+        Self {
+            assignment: WHITE,
+            op: WHITE,
+            cmp: WHITE,
+            label: WHITE,
+            build_in: WHITE,
+            accumulator: WHITE,
+            gamma: WHITE,
+            memory_cell_outer: WHITE,
+            memory_cell_inner: WHITE,
+            index_memory_cell_outer: WHITE,
+            index_memory_cell_index_outer: WHITE,
+            constant: WHITE,
+            comment: WHITE,
+        }
+    }
+
     pub fn assignment(&self) -> Style {
         Style::default().fg(self.assignment)
     }
@@ -242,22 +260,12 @@ impl SyntaxHighlightingTheme {
         Style::default().fg(self.cmp)
     }
 
-    pub fn label(&self, enable_syntax_highlighting: bool) -> Style {
-        let style = Style::default();
-        if enable_syntax_highlighting {
-            style.fg(self.label)
-        } else {
-            style
-        }
+    pub fn label(&self) -> Style {
+        Style::default().fg(self.label)
     }
 
-    pub fn build_in(&self, enable_syntax_highlighting: bool) -> Style {
-        let style = Style::default();
-        if enable_syntax_highlighting {
-            style.fg(self.build_in)
-        } else {
-            style
-        }
+    pub fn build_in(&self) -> Style {
+        Style::default().fg(self.build_in)
     }
 
     pub fn accumulator(&self) -> Style {
@@ -288,13 +296,8 @@ impl SyntaxHighlightingTheme {
         Style::default().fg(self.constant)
     }
 
-    pub fn comment(&self, enable_syntax_highlighting: bool) -> Style {
-        let style = Style::default();
-        if enable_syntax_highlighting {
-            style.fg(self.comment)
-        } else {
-            style
-        }
+    pub fn comment(&self) -> Style {
+        Style::default().fg(self.comment)
     }
 }
 

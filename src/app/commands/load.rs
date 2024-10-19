@@ -3,7 +3,11 @@ use std::rc::Rc;
 use miette::Result;
 
 use crate::{
-    app::{commands::load_instruction_history, ui::syntax_highlighting::SyntaxHighlighter, App},
+    app::{
+        commands::load_instruction_history,
+        ui::{style::SyntaxHighlightingTheme, syntax_highlighting::SyntaxHighlighter},
+        App,
+    },
     cli::{GlobalArgs, LoadArgs},
     instructions::instruction_config::InstructionConfig,
     runtime::builder,
@@ -33,11 +37,13 @@ pub fn load(
     let theme = Rc::new(super::load_theme(&load_args.load_playground_args)?);
 
     // format instructions pretty if cli flag is set
-    let instructions = SyntaxHighlighter::new(&theme.syntax_highlighting_theme()).input_to_lines(
-        &instructions,
-        !load_args.disable_alignment,
-        !load_args.load_playground_args.disable_syntax_highlighting,
-    )?;
+    let syntax_highlighting_theme = if load_args.load_playground_args.disable_syntax_highlighting {
+        Rc::new(SyntaxHighlightingTheme::new_disabled())
+    } else {
+        theme.syntax_highlighting_theme()
+    };
+    let instructions = SyntaxHighlighter::new(&syntax_highlighting_theme)
+        .input_to_lines(&instructions, !load_args.disable_alignment)?;
 
     if load_args.write_alignment {
         // write new formatting to file if enabled

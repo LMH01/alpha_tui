@@ -1,0 +1,32 @@
+main:  a := 2                                           // Start checking for prime numbers from 2
+        p(counter) := 0                                 // Initialize a counter for the number of primes found
+        goto check_prime
+
+check_prime:
+        p(divisor) := 2                                 // Start divisor from 2
+        p(is_prime) := 1                                 // Assume the number is prime initially
+
+check_divisor:
+	p(divisor_result) = p(divisor) * p(divisor)
+        if p(divisor_result) > a then goto found_prime    // If divisor^2 > current number, it's prime
+	p(is_dividable) = a % p(divisor)
+        if p(is_dividable) == 0 then goto set_not_prime    // If divisible, it's not a prime
+cont:	p(divisor) := p(divisor) + 1                    // Increment the divisor
+        if p(is_prime) == 1 then goto check_divisor       // Check next divisor if still assumed prime
+
+found_prime:
+        if p(is_prime) == 1 then goto store_prime         // If is_prime flag is still set, store the number
+        a := a + 1                                      // Increment the current number
+        goto check_prime                                 // Check the next number
+
+store_prime:
+        push                                            // Push the current number (prime) onto the stack
+        p(counter) := p(counter) + 1                    // Increment the prime counter
+        a := a + 1                                      // Increment the current number
+        goto check_prime                                 // Check the next number
+
+end:    goto end                                        // End the program
+
+set_not_prime:
+	p(is_prime) := 0
+	goto cont
