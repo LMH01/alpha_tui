@@ -1,8 +1,6 @@
 # Changelog
 
-<<<<<<< HEAD
-=======
-## v1.8.0
+## v1.8.0 (latest version)
 
 ### Other
 
@@ -15,8 +13,7 @@
 - fixed comment alignment incorrect under specific circumstances when syntax highlighting is enabled and source contains alpha 0 accumulator (fr #82)
 - fixed `a`, `p` and `y` not converting to their greek alphabet equivalents when syntax highlighting is disabled
 
->>>>>>> dev
-## v1.7.0 (latest version)
+## v1.7.0
 
 ### Other
 
