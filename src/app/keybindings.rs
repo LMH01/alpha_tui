@@ -29,7 +29,7 @@ impl KeybindingHints {
     /// Return value `u16` is the amount of lines that this paragraph contains.
     pub fn keybinding_hint_paragraph(&self, width: u16) -> (Paragraph, u16) {
         let mut active_hints = self.active_keybinds();
-        active_hints.sort_by_key(|f| f.order());
+        active_hints.sort_by_key(KeybindingHint::order);
         let mut styled_keybinds_row = Vec::new();
         let mut styled_keybinds = Vec::new();
         let mut first_hint = true;
@@ -142,7 +142,7 @@ impl KeybindingHints {
     /// Sets all keybinding hints depending on the current state of the application.
     pub fn update(&mut self, state: &State) -> Result<()> {
         // reset keybinding hints to be able to configure them properly for current app state
-        self.hints.values_mut().for_each(|x| x.reset());
+        self.hints.values_mut().for_each(KeybindingHint::reset);
 
         // set more specific keybinding hints
         match state {
@@ -231,7 +231,7 @@ impl KeybindingHints {
                 }
                 if state.allowed_values_state.selected().is_some() {
                     self.set_state(&KeySymbol::Enter.to_string(), 1)?;
-                    self.enable(&KeySymbol::Tab.to_string())
+                    self.enable(&KeySymbol::Tab.to_string());
                 }
             }
             State::Playground(state) => {
@@ -423,7 +423,7 @@ impl KeybindingHint {
         Ok(Self {
             orders,
             key: key.to_string(),
-            labels: labels.iter().map(|f| f.to_string()).collect(),
+            labels: labels.iter().map(|f| (*f).to_string()).collect(),
             enabled: false,
             shown: false,
             state: 0,

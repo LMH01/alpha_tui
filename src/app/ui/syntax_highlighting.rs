@@ -107,12 +107,11 @@ impl SyntaxHighlighter {
 
         let mut lines = Vec::new();
         for line in input {
-            let parts = match input_parts(line.clone()) {
-                Some(parts) => parts,
-                None => {
-                    lines.push(Line::default());
-                    continue;
-                }
+            let parts = if let Some(parts) = input_parts(line.clone()) {
+                parts
+            } else {
+                lines.push(Line::default());
+                continue;
             };
 
             let mut spans = Vec::new();
@@ -136,12 +135,12 @@ impl SyntaxHighlighter {
                 spans.push(string_into_span(":".to_string(), self.theme.build_in()));
                 // fill spaces if enabled until next part is reached
                 if enable_alignment {
-                    spans.push(fill_span(max_label_width - len + SPACING))
+                    spans.push(fill_span(max_label_width - len + SPACING));
                 } else {
                     spans.push(fill_span(1));
                 }
             } else if (parts.instruction.is_some() || parts.comment.is_some()) && enable_alignment {
-                spans.push(fill_span(max_label_width + SPACING))
+                spans.push(fill_span(max_label_width + SPACING));
             }
 
             // handle instruction

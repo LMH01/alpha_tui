@@ -49,7 +49,10 @@ pub fn load(
         // write new formatting to file if enabled
         println!("Writing alignment to source file");
         write_file(
-            &instructions.iter().map(|f| f.to_string()).collect(),
+            &instructions
+                .iter()
+                .map(std::string::ToString::to_string)
+                .collect(),
             &input,
         )?;
     }

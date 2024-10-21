@@ -93,7 +93,7 @@ impl SingleInstruction {
             .style(Style::default())
             .highlight_style(self.theme.list_item_highlight(false));
         // render list
-        f.render_stateful_widget(possible_items, chunks[1], &mut self.allowed_values_state)
+        f.render_stateful_widget(possible_items, chunks[1], &mut self.allowed_values_state);
     }
 
     pub fn items_to_display(&self) -> Vec<String> {

@@ -297,15 +297,14 @@ pub fn validate_arguments(cli: &Cli) -> Result<()> {
                 .collect::<Vec<String>>(),
         ),
         None => match &cli.command {
-            Command::Check(check_args) => check_args.check_load_args.memory_cells.to_owned(),
-            Command::Load(load_args) => load_args.check_load_args.memory_cells.to_owned(),
+            Command::Check(check_args) => check_args.check_load_args.memory_cells.clone(),
+            Command::Load(load_args) => load_args.check_load_args.memory_cells.clone(),
             Command::Playground(_) => return Ok(()),
         },
     };
     if let Some(memory_cells) = &memory_cells {
         for cell in memory_cells {
-            if cell.chars().any(|c| c.is_ascii_digit()) && !cell.chars().any(|c| c.is_alphabetic())
-            {
+            if cell.chars().any(|c| c.is_ascii_digit()) && !cell.chars().any(char::is_alphabetic) {
                 return Err(CliError::new(CliErrorType::MemoryCellsInvalid(cell.clone())).into());
             }
         }

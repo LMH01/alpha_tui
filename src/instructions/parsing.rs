@@ -254,7 +254,7 @@ pub fn parse_comparison(
 }
 
 /// Parses the name of a memory cell.
-/// For that the content inside p() is taken.
+/// For that the content inside `p()` is taken.
 /// The name of the memory cell is only allowed to contain the letters A-Z and a-z.
 /// The numbers 0-9 are also allowed, if at least one letter is included.
 ///
@@ -388,7 +388,7 @@ fn check_expression_missing(
         Err(InstructionParseError::MissingExpression {
             range: (pos, pos),
             help,
-        })?
+        })?;
     }
     Ok(())
 }

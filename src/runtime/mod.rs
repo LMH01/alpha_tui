@@ -149,7 +149,7 @@ impl Runtime {
         let mut res = false;
         for instruction in &self.instructions {
             if let Instruction::Call(_) = instruction {
-                res = true
+                res = true;
             };
         }
         res

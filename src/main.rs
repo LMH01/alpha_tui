@@ -50,7 +50,7 @@ fn main() -> Result<()> {
             input_file.unwrap(),
         )?,
         Command::Playground(playground_args) => {
-            commands::playground::playground(&cli.global_args, playground_args)?
+            commands::playground::playground(&cli.global_args, playground_args)?;
         }
     }
     Ok(())

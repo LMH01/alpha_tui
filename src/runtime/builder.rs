@@ -111,7 +111,7 @@ impl RuntimeBuilder {
 
     /// Applies the parameters in check load args to this runtime builder.
     ///
-    /// In essence this means that the amount of accumulators, memory_cells and index_memory_cells
+    /// In essence this means that the amount of accumulators, `memory_cells` and `index_memory_cells`
     /// is set/updated.
     /// If a memory config already exists, the values supplemented.
     pub fn apply_check_load_args(&mut self, args: &CheckLoadArgs) -> miette::Result<&mut Self> {
@@ -122,7 +122,7 @@ impl RuntimeBuilder {
         // set/overwrite memory config values
         // set accumulator config
         if let Some(accumulators) = args.accumulators {
-            for value in 0..=accumulators - 1 {
+            for value in 0..accumulators {
                 memory_config
                     .accumulators
                     .values
@@ -304,7 +304,7 @@ fn build_instructions(
     let instructions_input = instructions_input
         .iter()
         .filter(|f| !f.trim().starts_with('#'))
-        .map(|f| f.to_string())
+        .map(std::string::ToString::to_string)
         .collect::<Vec<String>>();
     for (index, instruction) in instructions_input.iter().enumerate() {
         if instruction.trim().starts_with('#') {
@@ -646,7 +646,7 @@ pub fn check_gamma(
 impl TargetType {
     /// Checks if this type is missing in `runtime_args`.
     ///
-    /// If autodetection in memory_config is enabled, the type is added to runtime args instead of returning an error.
+    /// If autodetection in `memory_config` is enabled, the type is added to runtime args instead of returning an error.
     pub fn check_new(
         &self,
         runtime_args: &mut RuntimeMemory,
@@ -686,7 +686,7 @@ impl TargetType {
 impl Value {
     /// Checks if this type is missing in `runtime_args`.
     ///
-    /// If autodetection in memory_config is enabled, the type is added to runtime args instead of returning an error.
+    /// If autodetection in `memory_config` is enabled, the type is added to runtime args instead of returning an error.
     pub fn check_new(
         &self,
         runtime_args: &mut RuntimeMemory,

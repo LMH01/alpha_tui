@@ -80,7 +80,7 @@ pub struct App {
     instruction_list_states: InstructionListStates,
     /// List of keybinding hints displayed at the bottom of the terminal
     keybinding_hints: KeybindingHints,
-    /// Manages accumulators, memory_cells and stack in the ui.
+    /// Manages accumulators, `memory_cells` and stack in the ui.
     memory_lists_manager: MemoryListsManager,
     state: State,
     /// Contains instructions that where already executed using the custom instructions feature.
@@ -167,7 +167,7 @@ impl App {
                 match &self.state {
                     State::CustomInstruction(_) | State::Playground(_) => {
                         if let KeyCode::Char(to_insert) = key.code {
-                            self.any_char(to_insert)
+                            self.any_char(to_insert);
                         }
                     }
                     _ => {
@@ -206,7 +206,7 @@ impl App {
                                     self.state = State::CustomInstruction(SingleInstruction::new(
                                         &self.executed_custom_instructions,
                                         &self.theme,
-                                    ))
+                                    ));
                                 }
                                 _ => (),
                             },
@@ -269,7 +269,7 @@ impl App {
                                                     break;
                                                 }
                                             }
-                                            Err(_) => break,
+                                            Err(()) => break,
                                         }
                                     }
                                 }
@@ -282,7 +282,7 @@ impl App {
                                     );
                                 }
                                 State::Default | State::Running(_) => {
-                                    self.start_debug_select_mode()
+                                    self.start_debug_select_mode();
                                 }
                                 State::Finished(b) => {
                                     if *b {
@@ -382,14 +382,14 @@ impl App {
 
     /// Performs an action. Action depends on current app state.
     ///
-    /// CustomInstruction: exit custom instruction popup and resume running state
+    /// `CustomInstruction`: exit custom instruction popup and resume running state
     /// Playground: exit the program
     ///
     /// Return value indicates if the program should be closed.
     fn escape_key(&mut self) -> Result<bool> {
         match &self.state {
             State::CustomInstruction(_) => {
-                self.state = State::Running(self.instruction_list_states.breakpoints_set())
+                self.state = State::Running(self.instruction_list_states.breakpoints_set());
             }
             State::RuntimeError(e, _) => return Err(e.clone())?,
             State::CustomInstructionError(e, _) => return Err(e.clone())?,
@@ -401,7 +401,7 @@ impl App {
 
     /// Performs an action. Action depends on current app state.
     ///
-    /// CustomInstruction: Enter a char
+    /// `CustomInstruction`: Enter a char
     fn any_char(&mut self, to_insert: char) {
         match self.state.borrow_mut() {
             State::CustomInstruction(state) | State::Playground(state) => {
@@ -429,7 +429,7 @@ impl App {
 
     /// Performs an action. Action depends on current app state.
     ///
-    /// CustomInstruction: Deletes a char
+    /// `CustomInstruction`: Deletes a char
     fn backspace_key(&mut self) {
         match self.state.borrow_mut() {
             State::CustomInstruction(state) | State::Playground(state) => {
@@ -451,7 +451,7 @@ impl App {
                     // Put all characters together except for the selected one.
                     // By leaving the selected one out, it is forgotten and therefore deleted.
                     state.input = before_char_to_delete.chain(after_char_to_delete).collect();
-                    self.left_key()
+                    self.left_key();
                 }
             }
             _ => (),
@@ -460,7 +460,7 @@ impl App {
 
     /// Performs an action. Action depends on current app state.
     ///
-    /// CustomInstruction: Deletes the char behind the cursor.
+    /// `CustomInstruction`: Deletes the char behind the cursor.
     fn delete_key(&mut self) {
         match self.state.borrow_mut() {
             State::CustomInstruction(state) | State::Playground(state) => {
@@ -486,7 +486,7 @@ impl App {
 
     /// Performs an action. Action depends on current app state.
     ///
-    /// CustomInstruction: Move the cursor to the left.
+    /// `CustomInstruction`: Move the cursor to the left.
     fn left_key(&mut self) {
         match self.state.borrow_mut() {
             State::CustomInstruction(state) | State::Playground(state) => {
@@ -499,7 +499,7 @@ impl App {
 
     /// Performs an action. Action depends on current app state.
     ///
-    /// CustomInstruction: Move the cursor to the right.
+    /// `CustomInstruction`: Move the cursor to the right.
     fn right_key(&mut self) {
         match self.state.borrow_mut() {
             State::CustomInstruction(state) | State::Playground(state) => {
@@ -512,7 +512,7 @@ impl App {
 
     /// Performs an action. Action depends on current app state.
     ///
-    /// CustomInstruction: If not item is selected: Select first item, otherwise move down one item
+    /// `CustomInstruction`: If not item is selected: Select first item, otherwise move down one item
     fn down_key(&mut self) {
         match self.state.borrow_mut() {
             State::CustomInstruction(state) | State::Playground(state) => {
@@ -525,7 +525,7 @@ impl App {
 
     /// Performs an action. Action depends on current app state.
     ///
-    /// CustomInstruction: Moves the list up one item.
+    /// `CustomInstruction`: Moves the list up one item.
     fn up_key(&mut self) {
         match self.state.borrow_mut() {
             State::CustomInstruction(state) | State::Playground(state) => {
@@ -537,7 +537,7 @@ impl App {
 
     /// Performs an action. Action depends on current app state.
     ///
-    /// CustomInstruction | Playground: If an element is selected in the list, it is filled in to the text area
+    /// `CustomInstruction` | Playground: If an element is selected in the list, it is filled in to the text area
     fn tab_key(&mut self) {
         match self.state.borrow_mut() {
             State::CustomInstruction(state) | State::Playground(state) => {
@@ -554,8 +554,8 @@ impl App {
 
     /// Performs an action. Action depends on current app state.
     ///
-    /// CustomInstruction: Try to parse the text currently stored in the input field as instruction and run it
-    /// CustomInstructionError: App state is set to running
+    /// `CustomInstruction`: Try to parse the text currently stored in the input field as instruction and run it
+    /// `CustomInstructionError`: App state is set to running
     fn enter_key(&mut self) -> Result<()> {
         match &self.state.clone() {
             State::CustomInstruction(state) => self.custom_instruction_enter(state, false)?,
@@ -565,7 +565,7 @@ impl App {
                     self.state = State::Playground(SingleInstruction::new(
                         &self.executed_custom_instructions,
                         &self.theme,
-                    ))
+                    ));
                 } else {
                     self.state = State::Running(self.instruction_list_states.breakpoints_set());
                 }
@@ -719,7 +719,7 @@ pub fn list_up(state: &mut ListState, deselect: bool) {
         if idx > 0 {
             state.select(Some(idx - 1));
         } else if deselect {
-            state.select(None)
+            state.select(None);
         }
     }
 }
@@ -727,5 +727,5 @@ pub fn list_up(state: &mut ListState, deselect: bool) {
 pub fn insert_char_at_index(s: &mut String, idx: usize, to_insert: char) {
     let mut chars = s.chars().collect::<Vec<char>>();
     chars.insert(idx, to_insert);
-    *s = chars.into_iter().collect()
+    *s = chars.into_iter().collect();
 }

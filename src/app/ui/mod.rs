@@ -58,7 +58,7 @@ impl App {
 
         let mut right_chunk_constraints = vec![Constraint::Percentage(30), Constraint::Fill(1)];
         if !is_playground {
-            right_chunk_constraints.push(Constraint::Length(3))
+            right_chunk_constraints.push(Constraint::Length(3));
         }
         let right_chunks = Layout::default()
             .direction(Direction::Vertical)
@@ -284,7 +284,7 @@ impl App {
 
         // Draw custom instruction popup/window
         if let State::CustomInstruction(single_instruction) = &mut self.state {
-            single_instruction.draw(f, global_chunks[0], false)
+            single_instruction.draw(f, global_chunks[0], false);
         }
         match &mut self.state {
             State::Playground(single_instruction) => {
@@ -375,14 +375,14 @@ impl App {
 fn paragraph_with_line_wrap(text: String, width: u16) -> Paragraph<'static> {
     let lines = text
         .split('\n')
-        .map(|f| f.to_string())
+        .map(std::string::ToString::to_string)
         .collect::<Vec<String>>();
     let mut styled_lines = Vec::new();
     for line in lines {
         let mut styled_line = Vec::new();
         let words = line
             .split(' ')
-            .map(|f| f.to_string())
+            .map(std::string::ToString::to_string)
             .collect::<Vec<String>>();
         let mut width_used = 0;
         for word in words {
@@ -392,7 +392,7 @@ fn paragraph_with_line_wrap(text: String, width: u16) -> Paragraph<'static> {
                 width_used = 0;
             }
             width_used += word.len() + 1;
-            styled_line.push(Span::from(format!("{} ", word)));
+            styled_line.push(Span::from(format!("{word} ")));
         }
         if !styled_line.is_empty() {
             styled_lines.push(Line::from(styled_line));

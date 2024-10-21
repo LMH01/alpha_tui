@@ -52,7 +52,7 @@ impl Instruction {
     ) -> Result<(), RuntimeErrorType> {
         match self {
             Self::Assign(target, source) => {
-                run_assign(runtime_memory, runtime_settings, target, source)?
+                run_assign(runtime_memory, runtime_settings, target, source)?;
             }
             Self::Calc(target, source_a, op, source_b) => {
                 run_calc(
@@ -529,7 +529,7 @@ impl Identifier for IndexMemoryCellIndexType {
             Self::Accumulator(_) => ACCUMULATOR_IDENTIFIER.to_string(),
             Self::Direct(_) => CONSTANT_IDENTIFIER.to_string(),
             Self::Gamma => GAMMA_IDENTIFIER.to_string(),
-            Self::Index(_) => format!("{}({})", INDEX_MEMORY_CELL_IDENTIFIER, CONSTANT_IDENTIFIER),
+            Self::Index(_) => format!("{INDEX_MEMORY_CELL_IDENTIFIER}({CONSTANT_IDENTIFIER})"),
             Self::MemoryCell(_) => MEMORY_CELL_IDENTIFIER.to_string(),
         }
     }

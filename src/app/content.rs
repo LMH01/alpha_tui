@@ -171,7 +171,7 @@ impl InstructionListStates {
 
     /// Adds a new instruction to the list (display only)
     pub fn add_instruction(&mut self, line: Line<'static>) {
-        self.instructions.push((0, line, false))
+        self.instructions.push((0, line, false));
     }
 }
 
@@ -262,12 +262,11 @@ impl MemoryListsManager {
     pub fn update(&mut self, runtime: &Runtime) {
         // Update accumulators
         for acc in &runtime.runtime_memory().accumulators {
-            let a = match self.accumulators.get_mut(acc.0) {
-                Some(value) => value,
-                None => {
-                    self.accumulators.insert(*acc.0, ("0".to_string(), true));
-                    self.accumulators.get_mut(acc.0).unwrap()
-                }
+            let a = if let Some(value) = self.accumulators.get_mut(acc.0) {
+                value
+            } else {
+                self.accumulators.insert(*acc.0, ("0".to_string(), true));
+                self.accumulators.get_mut(acc.0).unwrap()
             };
             let update = format!("{}", acc.1);
             if update == *a.0 {
@@ -278,13 +277,12 @@ impl MemoryListsManager {
         }
         // Update memory_cells
         for cell in &runtime.runtime_memory().memory_cells {
-            let a = match self.memory_cells.get_mut(&cell.1.label) {
-                Some(value) => value,
-                None => {
-                    self.memory_cells
-                        .insert(cell.1.label.clone(), ("0".to_string(), true));
-                    self.memory_cells.get_mut(&cell.1.label).unwrap()
-                }
+            let a = if let Some(value) = self.memory_cells.get_mut(&cell.1.label) {
+                value
+            } else {
+                self.memory_cells
+                    .insert(cell.1.label.clone(), ("0".to_string(), true));
+                self.memory_cells.get_mut(&cell.1.label).unwrap()
             };
             let update = format!("{}", cell.1);
             if update == *a.0 {
