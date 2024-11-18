@@ -2,7 +2,7 @@
 # requires programs defined in dev shell 'buildArtifact', enable with 'nix develop .#buildArtifact'
 
 # set version for artifact zip names
-VERSION=v1.7.0
+VERSION=v1.8.0
 
 # create directory
 rm -r artifacts

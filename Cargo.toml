@@ -1,22 +1,22 @@
 [package]
 name = "alpha_tui"
-version = "1.7.0"
+version = "1.8.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ratatui = { version = "0.28.1", features = [
+ratatui = { version = "0.26.3", features = [
     "all-widgets",
     "serde",
 ] }
-crossterm = { version = "0.28", features = ["events"] }
-clap = { version = "4.5", features = ["derive", "color"] }
+crossterm = { version = "0.27", features = ["events"] }
+clap = { version = "4.3", features = ["derive", "color"] }
 thiserror = "1"
 miette = { version = "7.2", features = ["fancy"] }
 text_align = "0.3"
 anyhow = "1"
-trie-rs = "0.4"
+trie-rs = "0.3"
 
 # serialization, used for memory config file
 serde = { version = "1", features = ["derive"] }

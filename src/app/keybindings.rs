@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 use anyhow::{anyhow, Result};
 use ratatui::{
@@ -214,7 +214,7 @@ impl KeybindingHints {
                 if state.input.is_empty() && state.allowed_values_state.selected().is_none() {
                     self.disable(&KeySymbol::Enter.to_string());
                 }
-                if let Some(_) = state.allowed_values_state.selected() {
+                if state.allowed_values_state.selected().is_some() {
                     self.enable(&KeySymbol::ArrowUp.to_string());
                 }
                 if state.input.is_empty() {
@@ -275,7 +275,7 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     let mut hints = HashMap::new();
     hints.insert(
         "q".to_string(),
-        KeybindingHint::new(0, &format!("q|{}", KeySymbol::Escape.to_string()), "Quit"),
+        KeybindingHint::new(0, &format!("q|{}", KeySymbol::Escape), "Quit"),
     );
     hints.insert("s".to_string(), KeybindingHint::new(2, "s", "Start"));
     hints.insert(
@@ -285,7 +285,7 @@ fn default_keybindings() -> Result<HashMap<String, KeybindingHint>> {
     hints.insert(
         "r".to_string(),
         KeybindingHint::new_many(
-            vec![3, 3],
+            vec![2, 2],
             "r",
             vec!["Run to end", "Run to next breakpoint"],
         )?,
@@ -471,16 +471,16 @@ pub enum KeySymbol {
     Tab,
 }
 
-impl ToString for KeySymbol {
-    fn to_string(&self) -> String {
+impl Display for KeySymbol {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            KeySymbol::ArrowUp => "\u{2191}".to_string(),
-            KeySymbol::ArrowDown => "\u{2193}".to_string(),
-            KeySymbol::ArrowLeft => "\u{2190}".to_string(),
-            KeySymbol::ArrowRight => "\u{2192}".to_string(),
-            KeySymbol::Enter => "\u{23ce}".to_string(),
-            KeySymbol::Escape => "\u{238b}".to_string(),
-            KeySymbol::Tab => "\u{21e5}".to_string(),
+            KeySymbol::ArrowUp => write!(f, "\u{2191}"),
+            KeySymbol::ArrowDown => write!(f, "\u{2193}"),
+            KeySymbol::ArrowLeft => write!(f, "\u{2190}"),
+            KeySymbol::ArrowRight => write!(f, "\u{2192}"),
+            KeySymbol::Enter => write!(f, "\u{23ce}"),
+            KeySymbol::Escape => write!(f, "\u{238b}"),
+            KeySymbol::Tab => write!(f, "\u{21e5}"),
         }
     }
 }

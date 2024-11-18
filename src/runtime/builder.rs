@@ -61,10 +61,7 @@ impl RuntimeBuilder {
         global_args: &GlobalArgs,
     ) -> miette::Result<&mut Self, RuntimeBuildError> {
         // set disable instruction limit value
-        let mut settings = match self.runtime_settings.take() {
-            Some(settings) => settings,
-            None => RuntimeSettings::default(),
-        };
+        let mut settings = self.runtime_settings.take().unwrap_or_default();
         settings.disable_instruction_limit = global_args.disable_instruction_limit;
         self.runtime_settings = Some(settings);
 
@@ -88,10 +85,7 @@ impl RuntimeBuilder {
             }
         };
         // update runtime settings
-        let mut runtime_settings = match self.runtime_settings.take() {
-            Some(settings) => settings,
-            None => RuntimeSettings::default(),
-        };
+        let mut runtime_settings = self.runtime_settings.take().unwrap_or_default();
         if let Some(value) = memory_config.accumulators.autodetection {
             runtime_settings.autodetect_accumulators = value;
         }
@@ -115,10 +109,7 @@ impl RuntimeBuilder {
     /// is set/updated.
     /// If a memory config already exists, the values supplemented.
     pub fn apply_check_load_args(&mut self, args: &CheckLoadArgs) -> miette::Result<&mut Self> {
-        let mut memory_config = match self.memory_config.take() {
-            Some(memory_config) => memory_config,
-            None => MemoryConfig::default(),
-        };
+        let mut memory_config = self.memory_config.take().unwrap_or_default();
         // set/overwrite memory config values
         // set accumulator config
         if let Some(accumulators) = args.accumulators {
@@ -180,27 +171,26 @@ impl RuntimeBuilder {
         }
         if let Some(ac) = &instruction_limiting_args.allowed_comparisons {
             // if allowed_comparisons are already set, merge with additional allowed comparisons
-            let mut allowed_comparisons = match self.instruction_config.allowed_comparisons.take() {
-                Some(value) => value,
-                None => Vec::new(),
-            };
+            let mut allowed_comparisons = self
+                .instruction_config
+                .allowed_comparisons
+                .take()
+                .unwrap_or_default();
             allowed_comparisons.append(&mut ac.clone());
             self.instruction_config.allowed_comparisons = Some(allowed_comparisons);
         }
         if let Some(ao) = &instruction_limiting_args.allowed_operations {
-            let mut allowed_operations = match self.instruction_config.allowed_operations.take() {
-                Some(value) => value,
-                None => Vec::new(),
-            };
+            let mut allowed_operations = self
+                .instruction_config
+                .allowed_operations
+                .take()
+                .unwrap_or_default();
             allowed_operations.append(&mut ao.clone());
             self.instruction_config.allowed_operations = Some(allowed_operations);
         }
         // set/override memory autodetection values to false, if `--disable-memory-detection` is set
         if instruction_limiting_args.disable_memory_detection {
-            let mut memory_config = match self.memory_config.take() {
-                Some(memory_config) => memory_config,
-                None => MemoryConfig::default(),
-            };
+            let mut memory_config = self.memory_config.take().unwrap_or_default();
             memory_config.accumulators.autodetection = Some(false);
             memory_config.gamma_accumulator.autodetection = Some(false);
             memory_config.memory_cells.autodetection = Some(false);
@@ -211,10 +201,7 @@ impl RuntimeBuilder {
             }
             self.memory_config = Some(memory_config);
             // update runtime settings
-            let mut runtime_settings = match self.runtime_settings.take() {
-                Some(runtime_settings) => runtime_settings,
-                None => RuntimeSettings::default(),
-            };
+            let mut runtime_settings = self.runtime_settings.take().unwrap_or_default();
             runtime_settings.autodetect_accumulators = false;
             runtime_settings.autodetect_gamma_accumulator = false;
             runtime_settings.autodetect_memory_cells = false;
