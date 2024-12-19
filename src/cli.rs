@@ -179,11 +179,11 @@ pub struct CheckLoadArgs {
         short,
         long,
         help = "List of available index memory cells",
-        long_help = "List of available index memory cells.\nExample: 0,1,2,3\n\nCan be used to visualize how index memory cells are filled with values or to explicitly enable index memory cells when automatic detection has been disabled by the \"--disable-memory-detection\" flag.",
-        value_delimiter = ',',
+        long_help = "List of available index memory cells.\nExample: 0,1,2,3\n\nCan be used to visualize how index memory cells are filled with values or to explicitly enable index memory cells when automatic detection has been disabled by the \"--disable-memory-detection\" flag.\nSupports parsing number ranges.\nExample: 1,2,3-5",
         global = true,
         conflicts_with = "memory_config_file",
-        display_order = 23
+        display_order = 23,
+        value_parser = parse_range
     )]
     pub index_memory_cells: Option<Vec<usize>>,
 
@@ -278,6 +278,27 @@ pub enum CheckCommand {
     Run,
 }
 
+/// Parses a string that contains number ranges into a vector.
+/// 
+/// Returns a string containing the reason why parsing failed on error.
+fn parse_range(input: &str) -> Result<Vec<usize>, String> {
+    let mut numbers = Vec::new();
+    for part in input.split(",") {
+        if let Some((start, end)) = part.split_once('-') {
+            let start = start.trim().parse::<usize>().map_err(|_| format!("Invalid number: {}", start))?;
+            let end= end.trim().parse::<usize>().map_err(|_| format!("Invalid number: {}", end))?;
+            if start > end {
+                return Err(format!("Invalid range: {}", part));
+            }
+            numbers.extend(start..=end);
+        } else {
+            let num= part.trim().parse().map_err(|_| format!("Invalid number: {}", part))?;
+            numbers.push(num);
+        }
+    }
+    Ok(numbers)
+}
+
 #[allow(clippy::module_name_repetitions)]
 pub trait CliHint {
     fn cli_hint(&self) -> String;
@@ -332,4 +353,33 @@ pub enum CliErrorType {
     #[error("memory cell found that has a name consisting of only numbers: {0}")]
     #[diagnostic(code("cli::memory_cells_invalid"), help("Try adding a char: a{0}"))]
     MemoryCellsInvalid(String),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_range;
+
+    #[test]
+    fn test_parse_range() {
+        let range = parse_range("1,2,3,10-13,5").unwrap();
+        assert_eq!(vec!(1, 2, 3, 10, 11, 12, 13, 5), range);
+        let range = parse_range("1, 2, 3, 10-13, 5").unwrap();
+        assert_eq!(vec!(1, 2, 3, 10, 11, 12, 13, 5), range);
+        let range = parse_range("1,2,3,4").unwrap();
+        assert_eq!(vec!(1, 2, 3, 4), range);
+        let range = parse_range("1, 2, 3, 4").unwrap();
+        assert_eq!(vec!(1, 2, 3, 4), range);
+    }
+
+    #[test]
+    fn test_parse_range_errors() {
+        let err = parse_range("10-5").unwrap_err();
+        assert_eq!(String::from("Invalid range: 10-5"), err);
+        let err = parse_range("10x").unwrap_err();
+        assert_eq!(String::from("Invalid number: 10x"), err);
+        let err = parse_range("10x-20x").unwrap_err();
+        assert_eq!(String::from("Invalid number: 10x"), err);
+        let err = parse_range("10-20x").unwrap_err();
+        assert_eq!(String::from("Invalid number: 20x"), err);
+    }
 }

@@ -25,3 +25,16 @@ fn test_cmd_check_compile_with_allowed_instructions_2() {
         .assert();
     assert.success();
 }
+
+#[test]
+fn test_cmd_check_compile_with_index_memory_cells() {
+    let mut cmd = Command::cargo_bin("alpha_tui").unwrap();
+    let assert = cmd
+        .arg("check")
+        .arg("tests/input/test_cmd_check_compile_with_allowed_instructions_2/program.alpha")
+        .arg("compile")
+        .arg("--index-memory-cells")
+        .arg("5-10")
+        .assert();
+    assert.success();
+}
