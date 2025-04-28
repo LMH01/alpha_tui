@@ -283,7 +283,7 @@ impl App {
         }
 
         // Draw custom instruction popup/window
-        if let State::CustomInstruction(single_instruction) = &mut self.state {
+        if let State::CustomInstruction(_, single_instruction) = &mut self.state {
             single_instruction.draw(f, global_chunks[0], false)
         }
         match &mut self.state {

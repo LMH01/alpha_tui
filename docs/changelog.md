@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.8.1
+
+### Bug fixes
+
+- fixed `run custom instruction` not working when program was loaded but not started
+
 ## v1.8.0 (latest version)
 
 ### Other
