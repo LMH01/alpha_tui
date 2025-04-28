@@ -203,7 +203,7 @@ impl KeybindingHints {
                 self.set_state(&KeySymbol::Enter.to_string(), 2)?;
                 self.show(&KeySymbol::Enter.to_string());
             }
-            State::CustomInstruction(_, single_instruction) => {
+            State::CustomInstruction(_, state) => {
                 self.show_and_enable(&KeySymbol::Enter.to_string());
                 self.show_and_enable(&KeySymbol::Escape.to_string());
                 self.show(&KeySymbol::ArrowUp.to_string());
@@ -211,25 +211,25 @@ impl KeybindingHints {
                 self.show_and_enable(&KeySymbol::ArrowLeft.to_string());
                 self.show_and_enable(&KeySymbol::ArrowRight.to_string());
                 self.show(&KeySymbol::Tab.to_string());
-                if single_instruction.input.is_empty() && single_instruction.allowed_values_state.selected().is_none() {
+                if state.input.is_empty() && state.allowed_values_state.selected().is_none() {
                     self.disable(&KeySymbol::Enter.to_string());
                 }
-                if single_instruction.allowed_values_state.selected().is_some() {
+                if state.allowed_values_state.selected().is_some() {
                     self.enable(&KeySymbol::ArrowUp.to_string());
                 }
-                if single_instruction.input.is_empty() {
+                if state.input.is_empty() {
                     self.disable(&KeySymbol::ArrowLeft.to_string());
                     self.disable(&KeySymbol::ArrowRight.to_string());
                 }
-                if single_instruction.items_to_display().is_empty() {
+                if state.items_to_display().is_empty() {
                     self.disable(&KeySymbol::ArrowDown.to_string());
                 }
-                if let Some(idx) = single_instruction.allowed_values_state.selected() {
-                    if single_instruction.items_to_display().len() == idx + 1 {
+                if let Some(idx) = state.allowed_values_state.selected() {
+                    if state.items_to_display().len() == idx + 1 {
                         self.disable(&KeySymbol::ArrowDown.to_string());
                     }
                 }
-                if single_instruction.allowed_values_state.selected().is_some() {
+                if state.allowed_values_state.selected().is_some() {
                     self.set_state(&KeySymbol::Enter.to_string(), 1)?;
                     self.enable(&KeySymbol::Tab.to_string())
                 }
@@ -431,9 +431,11 @@ impl KeybindingHint {
     }
 
     /// Reset the keybinding hint, meaning that the fields enabled and shown are set to false.
+    /// Also sets tha state back to 0.
     fn reset(&mut self) {
         self.enabled = false;
         self.shown = false;
+        self.state = 0;
     }
 
     /// Updates the state of this keybinding.

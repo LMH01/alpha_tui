@@ -279,11 +279,15 @@ impl App {
                                 }
                             }
                             KeyCode::Char('d') => match &self.state {
-                                State::DebugSelect(_, i) => {
+                                State::DebugSelect(previous_state, i) => {
                                     self.instruction_list_states.set_instruction_list_state(*i);
-                                    self.state = State::Running(
-                                        self.instruction_list_states.breakpoints_set(),
-                                    );
+                                    let state = match *previous_state.clone() {
+                                        State::Default => State::Default,
+                                        _ => State::Running(
+                                            self.instruction_list_states.breakpoints_set(),
+                                        ),
+                                    };
+                                    self.state = state;
                                 }
                                 State::Default | State::Running(_) => {
                                     self.start_debug_select_mode()
