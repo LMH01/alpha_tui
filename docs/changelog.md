@@ -1,14 +1,14 @@
 # Changelog
 
-## v1.8.1
+## v1.8.1 (latest version)
 
 ### Bug fixes
 
 - fixed `run custom instruction` not working when program was loaded but not started
 - fixed exiting `debug select` mode not returning to default program state when started when the program was loaded but not started
-- fixed `debug select` keybinding hit not updating when `debug select` mode was exited when it was started when the program was loaded but not started 
+- fixed `debug select` keybinding hint not updating when `debug select` mode was exited when it was started when the program was loaded but not started 
 
-## v1.8.0 (latest version)
+## v1.8.0
 
 ### Other
 
