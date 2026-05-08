@@ -27,7 +27,7 @@ impl KeybindingHints {
     /// `width` is used to determine how many keybinding hints can be printed in one line.
     ///
     /// Return value `u16` is the amount of lines that this paragraph contains.
-    pub fn keybinding_hint_paragraph(&self, width: u16) -> (Paragraph, u16) {
+    pub fn keybinding_hint_paragraph(&self, width: u16) -> (Paragraph<'_>, u16) {
         let mut active_hints = self.active_keybinds();
         active_hints.sort_by_key(KeybindingHint::order);
         let mut styled_keybinds_row = Vec::new();

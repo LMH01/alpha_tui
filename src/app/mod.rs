@@ -1,4 +1,4 @@
-use std::borrow::BorrowMut;
+use std::{borrow::BorrowMut, slice};
 
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use miette::{miette, IntoDiagnostic, Result};
@@ -627,7 +627,7 @@ impl App {
 
     fn custom_instruction_enter(
         &mut self,
-        previous_state: &Box<State>,
+        previous_state: &State,
         single_instruction: &SingleInstruction,
     ) -> Result<()> {
         let instruction_str = match single_instruction.allowed_values_state.selected() {
@@ -638,10 +638,7 @@ impl App {
         if instruction_str.is_empty() {
             return Ok(());
         }
-        let is_playground = match *previous_state.clone() {
-            State::Playground(_) => true,
-            _ => false,
-        };
+        let is_playground = matches!(previous_state.clone(), State::Playground(_));
         let instruction = match Instruction::try_from(instruction_str.as_str()) {
             Ok(instruction) => instruction,
             Err(e) => {
@@ -658,7 +655,7 @@ impl App {
         };
         // check if instruction is allowed
         if let Some(ic) = &self.instruction_config {
-            if let Err(e) = runtime::builder::check_instructions(&[instruction.clone()], ic) {
+            if let Err(e) = runtime::builder::check_instructions(slice::from_ref(&instruction), ic) {
                 // instruction could not be build, because instruction is forbidden
                 self.state = State::BuildProgramError(*e);
                 return Ok(());
@@ -699,7 +696,7 @@ impl App {
                 &self.theme,
             ));
         } else {
-            self.state = match *previous_state.clone() {
+            self.state = match previous_state.clone() {
                 State::Default => State::Default,
                 _ => State::Running(self.instruction_list_states.breakpoints_set()),
             };

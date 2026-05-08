@@ -63,12 +63,6 @@ impl Display for MemoryCell {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct IndexMemoryCell {
-    pub index: usize,
-    pub data: i32,
-}
-
 /// Different ways of paring two values
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
