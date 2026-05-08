@@ -16,9 +16,8 @@ fn test_bai_error() {
   ╰─▶ build_program::instruction_not_allowed_error
       
         × instruction 'pop' in line '2' is not allowed
-        help: Make sure that you include this type ('pop') of instruction
-      in the
-              whitelist or use a different instruction.
+        help: Make sure that you include this type ('pop') of instruction in
+              the whitelist or use a different instruction.
               These types of instructions are allowed:
       
               push
@@ -47,8 +46,7 @@ fn test_bpe_operation_not_allowed() {
         help: Make sure that you include this operation ('-') in the allowed
               operations or use a different instruction.
               To mark this operation as allowed you can use: '--allowed-
-      operations
-              "sub"'
+              operations "sub"'
       
 
 "#,
