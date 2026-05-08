@@ -1,12 +1,12 @@
 # Changelog
 
-## v1.8.2
+## v1.8.2 (latest version)
 
 ### Bug fixes
 
 - fixed some error messages sometimes incorrectly wrapping in the console output
 
-## v1.8.1 (latest version)
+## v1.8.1
 
 ### Bug fixes
 
