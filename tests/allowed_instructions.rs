@@ -77,8 +77,7 @@ Error: build_program_error
       
         × instruction 'p(h1) := 20' in line '2' is not allowed
         help: Make sure that you include this type ('M := C') of instruction
-      in
-              the whitelist or use a different instruction.
+              in the whitelist or use a different instruction.
               These types of instructions are allowed:
       
               A := C
@@ -197,8 +196,7 @@ Error: build_program_error
         help: Make sure that you include this operation ('-') in the allowed
               operations or use a different instruction.
               To mark this operation as allowed you can use: '--allowed-
-      operations
-              "sub"'
+              operations "sub"'
       
 
 "#,
@@ -228,8 +226,7 @@ Error: build_program_error
         help: Make sure that you include this operation ('+') in the allowed
               operations or use a different instruction.
               To mark this operation as allowed you can use: '--allowed-
-      operations
-              "add"'
+              operations "add"'
       
 
 "#,
