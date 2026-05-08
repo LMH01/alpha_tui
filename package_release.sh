@@ -1,11 +1,13 @@
 # this script builds release artifact zip files for linux, linux-nixos and windows
 # requires programs defined in dev shell 'buildArtifact', enable with 'nix develop .#buildArtifact'
 
+set -euo pipefail
+
 # set version for artifact zip names
 VERSION=v1.8.2
 
 # create directory
-rm -r artifacts
+if [ -d "artifacts" ]; then rm -Rf artifacts; fi
 mkdir artifacts
 
 # build linux nixos zip
@@ -19,17 +21,16 @@ zip -r artifacts/alpha_tui-$VERSION-linux-nixos.zip themes/
 # cleanup binary
 rm alpha_tui
 
-# build linux zip
+## build linux zip
 echo "building linux artifact"
-# if this failes first install default toolchain with 'rustup toolchain add stable'
-cross build --target x86_64-unknown-linux-gnu --release
-cp target/x86_64-unknown-linux-gnu/release/alpha_tui .
+nix build .#alpha_tui-linux
+cp result/bin/alpha_tui .
 zip -r artifacts/alpha_tui-$VERSION-linux.zip alpha_tui
 zip -r artifacts/alpha_tui-$VERSION-linux.zip LICENSE
 zip -r artifacts/alpha_tui-$VERSION-linux.zip examples/
 zip -r artifacts/alpha_tui-$VERSION-linux.zip themes/
 # cleanup binary
-rm alpha_tui
+rm -f alpha_tui
 
 # build windows zip
 echo "building windows artifact"

@@ -18,7 +18,12 @@
     flake-utils.lib.eachDefaultSystem
       (system:
         let
-          pkgs = nixpkgs.legacyPackages.${system};
+          pkgs = import nixpkgs {
+            inherit system;
+            config = {
+              allowUnsupportedSystem = true;
+            };
+          };
 
           craneLib = crane.mkLib pkgs;
 
@@ -44,6 +49,31 @@
             # here *without* rebuilding all dependency crates
             # MY_CUSTOM_VAR = "some value";
           });
+
+          alpha_tui-linux =
+            let
+              # Use the musl-indexed pkgs for a static build
+              pkgsMusl = pkgs.pkgsCross.musl64;
+              craneLibMusl = (crane.mkLib pkgs).overrideToolchain (with fenix.packages.${system};
+                combine [
+                  minimal.rustc
+                  minimal.cargo
+                  targets.x86_64-unknown-linux-musl.latest.rust-std
+                ]);
+            in
+            craneLibMusl.buildPackage (commonArgs // {
+              cargoArtifacts = craneLibMusl.buildDepsOnly commonArgs;
+              doCheck = false;
+              CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
+
+              # Force static linking for OPENSSL
+              OPENSSL_STATIC = "1";
+
+              # Ensure we use the musl versions of libraries
+              buildInputs = commonArgs.buildInputs ++ [
+                pkgsMusl.openssl
+              ];
+            });
 
           # cross compilation to windows
           toolchainWin = with fenix.packages.${system};
@@ -102,10 +132,8 @@
               LLVM_PROFDATA = "${pkgs.rustc.llvmPackages.llvm}/bin/llvm-profdata";
             };
 
-            buildArtifact = pkgs.mkShell {
-              buildInputs = with pkgs; [
-                cargo-cross
-                rustup
+            buildArtifact = craneLib.devShell {
+              packages = with pkgs; [
                 zip
               ];
             };
@@ -114,6 +142,7 @@
           packages = {
             default = alpha_tui;
 
+            alpha_tui-linux = alpha_tui-linux;
             alpha_tui-win = alpha_tui-win;
           };
 
