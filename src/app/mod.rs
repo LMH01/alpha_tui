@@ -154,7 +154,11 @@ impl App {
     }
 
     #[allow(clippy::single_match)]
-    pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<()> {
+    pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<()>
+    where
+        B::Error: Send + Sync,
+        <B as Backend>::Error: 'static,
+    {
         // update keybinding hints one to make sure that start keybinding hints are displayed properly
         if let Err(e) = self.keybinding_hints.update(&self.state) {
             return Err(miette!("Error while updating keybinding hints:\n{e}"));
