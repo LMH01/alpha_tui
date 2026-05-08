@@ -117,8 +117,10 @@ impl SyntaxHighlighter {
             let mut spans = Vec::new();
 
             // if only comment is set, write comment at beginning of line
-            if parts.label.is_none() && parts.instruction.is_none() && parts.comment.is_some() {
-                let comment = parts.comment.unwrap();
+            if parts.label.is_none()
+                && parts.instruction.is_none()
+                && let Some(comment) = parts.comment
+            {
                 // if comment starts with '#' it will not be printed
                 if comment.starts_with('#') {
                     continue;
