@@ -3,12 +3,12 @@ use std::collections::HashMap;
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
     instructions::{
-        assign_index_memory_cell, assign_index_memory_cell_from_value, Identifier,
-        IndexMemoryCellIndexType, Instruction, TargetType, Value, ACCUMULATOR_IDENTIFIER,
-        COMPARISON_IDENTIFIER, CONSTANT_IDENTIFIER, GAMMA_IDENTIFIER, INDEX_MEMORY_CELL_IDENTIFIER,
-        MEMORY_CELL_IDENTIFIER, OPERATOR_IDENTIFIER,
+        ACCUMULATOR_IDENTIFIER, COMPARISON_IDENTIFIER, CONSTANT_IDENTIFIER, GAMMA_IDENTIFIER,
+        INDEX_MEMORY_CELL_IDENTIFIER, Identifier, IndexMemoryCellIndexType, Instruction,
+        MEMORY_CELL_IDENTIFIER, OPERATOR_IDENTIFIER, TargetType, Value, assign_index_memory_cell,
+        assign_index_memory_cell_from_value,
     },
-    runtime::{error_handling::RuntimeErrorType, ControlFlow, RuntimeMemory, RuntimeSettings},
+    runtime::{ControlFlow, RuntimeMemory, RuntimeSettings, error_handling::RuntimeErrorType},
     utils::test_utils,
 };
 
@@ -685,22 +685,26 @@ fn test_run_cmp() {
     .run(&mut runtime_memory, &mut control_flow, &runtime_settings)
     .unwrap();
     assert_eq!(control_flow.next_instruction_index, 0);
-    assert!(Instruction::JumpIf(
-        Value::Accumulator(0),
-        Comparison::Lt,
-        Value::Constant(40),
-        "none".to_string()
-    )
-    .run(&mut runtime_memory, &mut control_flow, &runtime_settings)
-    .is_err());
-    assert!(Instruction::JumpIf(
-        Value::Accumulator(0),
-        Comparison::Eq,
-        Value::Constant(40),
-        "none".to_string()
-    )
-    .run(&mut runtime_memory, &mut control_flow, &runtime_settings)
-    .is_ok());
+    assert!(
+        Instruction::JumpIf(
+            Value::Accumulator(0),
+            Comparison::Lt,
+            Value::Constant(40),
+            "none".to_string()
+        )
+        .run(&mut runtime_memory, &mut control_flow, &runtime_settings)
+        .is_err()
+    );
+    assert!(
+        Instruction::JumpIf(
+            Value::Accumulator(0),
+            Comparison::Eq,
+            Value::Constant(40),
+            "none".to_string()
+        )
+        .run(&mut runtime_memory, &mut control_flow, &runtime_settings)
+        .is_ok()
+    );
 }
 
 #[test]

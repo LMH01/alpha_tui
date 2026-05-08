@@ -171,21 +171,27 @@ pub enum BuildProgramErrorTypes {
     #[error("instruction '{1}' in line '{0}' is not allowed")]
     #[diagnostic(
         code("build_program::instruction_not_allowed_error"),
-        help("Make sure that you include this type ('{2}') of instruction in the whitelist or use a different instruction.\nThese types of instructions are allowed:\n\n{3}")
+        help(
+            "Make sure that you include this type ('{2}') of instruction in the whitelist or use a different instruction.\nThese types of instructions are allowed:\n\n{3}"
+        )
     )]
     InstructionNotAllowed(usize, String, String, String),
 
     #[error("comparison '{1}' in line '{0}' is not allowed")]
     #[diagnostic(
         code("build_program::comparison_not_allowed_error"),
-        help("Make sure that you include this comparison ('{1}') in the allowed comparisons or use a different instruction.\nTo mark this comparison as allowed you can use: '--allowed-comparisons \"{2}\"'"),
+        help(
+            "Make sure that you include this comparison ('{1}') in the allowed comparisons or use a different instruction.\nTo mark this comparison as allowed you can use: '--allowed-comparisons \"{2}\"'"
+        )
     )]
     ComparisonNotAllowed(usize, String, String),
 
     #[error("operation '{1}' in line '{0}' is not allowed")]
     #[diagnostic(
         code("build_program::operation_not_allowed_error"),
-        help("Make sure that you include this operation ('{1}') in the allowed operations or use a different instruction.\nTo mark this operation as allowed you can use: '--allowed-operations \"{2}\"'"),
+        help(
+            "Make sure that you include this operation ('{1}') in the allowed operations or use a different instruction.\nTo mark this operation as allowed you can use: '--allowed-operations \"{2}\"'"
+        )
     )]
     OperationNotAllowed(usize, String, String),
 }
@@ -224,7 +230,9 @@ pub struct BuildProgramError {
 #[error("when building allowed instructions")]
 #[diagnostic(
     code("build_allowed_instructions_error"),
-    help("Maybe you wanted to use a token, make sure to use one of these: A, M, C, Y, OP, CMP\nFor more help take a look at the documentation: https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md")
+    help(
+        "Maybe you wanted to use a token, make sure to use one of these: A, M, C, Y, OP, CMP\nFor more help take a look at the documentation: https://github.com/LMH01/alpha_tui/blob/master/docs/cli.md"
+    )
 )]
 pub struct BuildAllowedInstructionsError {
     #[source_code]
@@ -252,7 +260,7 @@ pub struct ParseSingleInstructionError {
 #[cfg(test)]
 mod tests {
 
-    use crate::instructions::{error_handling::InstructionParseError, Instruction};
+    use crate::instructions::{Instruction, error_handling::InstructionParseError};
 
     #[test]
     fn test_ipe_unknown_operation() {

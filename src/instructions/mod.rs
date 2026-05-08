@@ -5,7 +5,7 @@ use miette::Result;
 use crate::{
     base::{Accumulator, Comparison, MemoryCell, Operation},
     instructions::error_handling::InstructionParseError,
-    runtime::{error_handling::RuntimeErrorType, ControlFlow, RuntimeMemory, RuntimeSettings},
+    runtime::{ControlFlow, RuntimeMemory, RuntimeSettings, error_handling::RuntimeErrorType},
 };
 
 use self::parsing::{parse_alpha, parse_gamma, parse_index_memory_cell, parse_memory_cell};

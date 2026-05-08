@@ -1,12 +1,12 @@
 use ratatui::{
+    Frame,
     prelude::{Alignment, Constraint, Direction, Layout},
     text::{Line, Span, Text},
     widgets::{Block, BorderType, Borders, Clear, List, ListDirection, ListItem, Paragraph},
-    Frame,
 };
 use text_align::TextAlign;
 
-use super::{keybindings::KeySymbol, run_instruction::SingleInstruction, App, State};
+use super::{App, State, keybindings::KeySymbol, run_instruction::SingleInstruction};
 
 pub mod style;
 pub mod syntax_highlighting;

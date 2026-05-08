@@ -9,11 +9,21 @@ pub enum RuntimeBuildError {
     /// Indicates that a label is used in an instruction that does not exist in the control flow.
     /// This would lead to a runtime error.
     #[error("Label '{0}' should be used but is not defined")]
-    #[diagnostic(code("runtime_build_error::label_undefined"), help("Make sure that you include the label somewhere before an instruction.\nExample: '{0}: a0 := 5'"))]
+    #[diagnostic(
+        code("runtime_build_error::label_undefined"),
+        help(
+            "Make sure that you include the label somewhere before an instruction.\nExample: '{0}: a0 := 5'"
+        )
+    )]
     LabelUndefined(String),
 
     #[error("Memory cell '{0}' should be used but is missing")]
-    #[diagnostic(code("runtime_build_error::memory_cell_missing"), help("Make sure to include the memory cell '{0}' in the available memory cells.\nExample: alpha_tui -i FILE -m {0}"))]
+    #[diagnostic(
+        code("runtime_build_error::memory_cell_missing"),
+        help(
+            "Make sure to include the memory cell '{0}' in the available memory cells.\nExample: alpha_tui -i FILE -m {0}"
+        )
+    )]
     MemoryCellMissing(String),
 
     #[error("Accumulator with id '{0}' should be used but is missing")]
@@ -26,7 +36,9 @@ pub enum RuntimeBuildError {
     #[error("Gamma accumulator is used in the program but is disabled")]
     #[diagnostic(
         code("runtime_build_error::gamma_disabled"),
-        help("You can't use the gamma accumulator when it is disabled, to enable it you can either enable automatic memory detection\nby removing the \"--disable-memory-detection\" flag or you can explicitly enable it by using the \"--enable-gamma-accumulator\" flag.")
+        help(
+            "You can't use the gamma accumulator when it is disabled, to enable it you can either enable automatic memory detection\nby removing the \"--disable-memory-detection\" flag or you can explicitly enable it by using the \"--enable-gamma-accumulator\" flag."
+        )
     )]
     GammaDisabled,
 
@@ -34,7 +46,9 @@ pub enum RuntimeBuildError {
     #[error("Memory config file '{0}' is invalid: {1}")]
     #[diagnostic(
         code("runtime_build_error::memory_config_file_invalid"),
-        help("Make sure that the provided file is formatted correctly.\nSee https://github.com/LMH01/alpha_tui/blob/master/examples/memory_config.json for an example.")
+        help(
+            "Make sure that the provided file is formatted correctly.\nSee https://github.com/LMH01/alpha_tui/blob/master/examples/memory_config.json for an example."
+        )
     )]
     MemoryConfigFileInvalid(String, String),
 }
@@ -59,7 +73,9 @@ pub enum RuntimeErrorType {
     #[error("Attempt to use accumulator with index '{0}' while it does not exist")]
     #[diagnostic(
         code("runtime_error::accumulator_does_not_exist"),
-        help("Make sure to tell the program to use enough accumulators by using the '-a' flag or by specifying the value using a memory config file")
+        help(
+            "Make sure to tell the program to use enough accumulators by using the '-a' flag or by specifying the value using a memory config file"
+        )
     )]
     AccumulatorDoesNotExist(usize),
 
@@ -73,7 +89,9 @@ pub enum RuntimeErrorType {
     #[error("Attempt to use accumulator gamma while it does not exist")]
     #[diagnostic(
         code("runtime_error::gamma_does_not_exist"),
-        help("Make sure to tell the program to use the gamma accumulator by using the '--enable-gamma-accumulator' flag or by enabling it using a memory config file")
+        help(
+            "Make sure to tell the program to use the gamma accumulator by using the '--enable-gamma-accumulator' flag or by enabling it using a memory config file"
+        )
     )]
     GammaDoesNotExist,
 
@@ -87,7 +105,9 @@ pub enum RuntimeErrorType {
     #[error("Attempt to use value of memory cell named '{0}' that does not exist")]
     #[diagnostic(
         code("runtime_error::memory_cell_uninitialized"),
-        help("Make sure to tell the progrmm to use this memory cell by using the '-m' flag or by enabling it using a memory config file")
+        help(
+            "Make sure to tell the progrmm to use this memory cell by using the '-m' flag or by enabling it using a memory config file"
+        )
     )]
     MemoryCellDoesNotExist(String),
 
@@ -105,14 +125,18 @@ pub enum RuntimeErrorType {
     )]
     #[diagnostic(
         code("runtime_error::index_memory_cell_does_not_exist"),
-        help("Make sure to tell the progrmm to use this memory cell by using the '--index-memory-cells' flag or by enabling it using a memory config file.\nExample: --index-memory-cells {0}")
+        help(
+            "Make sure to tell the progrmm to use this memory cell by using the '--index-memory-cells' flag or by enabling it using a memory config file.\nExample: --index-memory-cells {0}"
+        )
     )]
     IndexMemoryCellDoesNotExist(usize),
 
     #[error("Attempt to access index memory cell with negative index, '{0}'")]
     #[diagnostic(
         code("runtime_error::index_memory_cell_negative_index"),
-        help("Make sure that the value with which you try to access the index memory cell is positive")
+        help(
+            "Make sure that the value with which you try to access the index memory cell is positive"
+        )
     )]
     IndexMemoryCellNegativeIndex(i32),
 
@@ -133,14 +157,18 @@ pub enum RuntimeErrorType {
     #[error("Attempt to perform Operation '{0}' on stack while stack does not contain two values")]
     #[diagnostic(
         code("runtime_error::stack_op_fail"),
-        help("Make sure to only use a stack Operation (stack{0}) when you know that the stack contains at least two values")
+        help(
+            "Make sure to only use a stack Operation (stack{0}) when you know that the stack contains at least two values"
+        )
     )]
     StackOpFail(Operation),
 
     #[error("Stack Overflow")]
     #[diagnostic(
         code("runtime_error::stack_overflow_error"),
-        help("This error is usually caused by an infinite recursion. Make sure that all of your recursive functions return properly.")
+        help(
+            "This error is usually caused by an infinite recursion. Make sure that all of your recursive functions return properly."
+        )
     )]
     StackOverflowError,
 
@@ -167,7 +195,9 @@ pub enum RuntimeErrorType {
     #[error("Design limit reached")]
     #[diagnostic(
         code("runtime_error::design_limit_reached"),
-        help("You have run over {0} instructions, this tool is not build for that.\nIf you know exactly what you are doing and would like to circumvent this limit use the '--disable-instruction-limit' option\nWarning: This can cause the progrmm to freeze!")
+        help(
+            "You have run over {0} instructions, this tool is not build for that.\nIf you know exactly what you are doing and would like to circumvent this limit use the '--disable-instruction-limit' option\nWarning: This can cause the progrmm to freeze!"
+        )
     )]
     DesignLimitReached(usize),
 }
@@ -184,7 +214,11 @@ pub enum CalcError {
     #[error("Attempt to {0} with overflow")]
     #[diagnostic(
         code("calc_error::attempt_to_overflow"),
-        help("{1} would have resulted in an overflow leading to a wrong value.\nMake sure the integer never leaves the following rmnge: [{},{}]", i32::MIN, i32::MAX)
+        help(
+            "{1} would have resulted in an overflow leading to a wrong value.\nMake sure the integer never leaves the following rmnge: [{},{}]",
+            i32::MIN,
+            i32::MAX
+        )
     )]
     AttemptToOverflow(String, String),
 }
@@ -195,8 +229,8 @@ mod tests {
         base::{MemoryCell, Operation},
         instructions::{IndexMemoryCellIndexType, Instruction, TargetType, Value},
         runtime::{
+            ControlFlow, MAX_INSTRUCTION_RUNS, RuntimeMemory, RuntimeSettings,
             error_handling::{CalcError, RuntimeBuildError, RuntimeErrorType},
-            ControlFlow, RuntimeMemory, RuntimeSettings, MAX_INSTRUCTION_RUNS,
         },
         utils::test_utils,
     };

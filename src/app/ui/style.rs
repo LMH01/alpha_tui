@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use clap::ValueEnum;
-use ratatui::style::{palette::material::WHITE, Color, Style};
+use ratatui::style::{Color, Style, palette::material::WHITE};
 use serde::{Deserialize, Serialize};
 
 pub type SharedTheme = Rc<Theme>;

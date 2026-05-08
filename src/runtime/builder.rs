@@ -2,15 +2,15 @@ use crate::{
     base::{Accumulator, MemoryCell},
     cli::{CheckLoadArgs, CliHint, GlobalArgs, InstructionLimitingArgs},
     instructions::{
+        Identifier, IndexMemoryCellIndexType, Instruction, TargetType, Value,
         error_handling::{BuildProgramError, BuildProgramErrorTypes},
         instruction_config::InstructionConfig,
-        Identifier, IndexMemoryCellIndexType, Instruction, TargetType, Value,
     },
 };
 
 use super::{
-    error_handling::RuntimeBuildError, memory_config::MemoryConfig, ControlFlow, Runtime,
-    RuntimeMemory, RuntimeSettings,
+    ControlFlow, Runtime, RuntimeMemory, RuntimeSettings, error_handling::RuntimeBuildError,
+    memory_config::MemoryConfig,
 };
 
 pub struct RuntimeBuilder {
@@ -76,7 +76,7 @@ impl RuntimeBuilder {
                             return Err(RuntimeBuildError::MemoryConfigFileInvalid(
                                 path.to_string(),
                                 e.to_string(),
-                            ))
+                            ));
                         }
                     }
                 } else {
@@ -717,15 +717,15 @@ mod tests {
 
     use crate::{
         instructions::{
-            error_handling::{BuildProgramError, BuildProgramErrorTypes},
             IndexMemoryCellIndexType, Instruction,
+            error_handling::{BuildProgramError, BuildProgramErrorTypes},
         },
         runtime::{
+            ControlFlow, RuntimeMemory,
             builder::{
-                build_instructions, check_index_memory_cell, check_instructions, InstructionConfig,
+                InstructionConfig, build_instructions, check_index_memory_cell, check_instructions,
             },
             error_handling::RuntimeBuildError,
-            ControlFlow, RuntimeMemory,
         },
         utils::test_utils,
     };

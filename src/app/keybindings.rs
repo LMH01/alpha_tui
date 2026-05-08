@@ -1,12 +1,12 @@
 use std::{collections::HashMap, fmt::Display};
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use ratatui::{
     text::{Line, Span},
     widgets::Paragraph,
 };
 
-use super::{ui::style::SharedTheme, State};
+use super::{State, ui::style::SharedTheme};
 
 /// Manages all keybinding hints.
 pub struct KeybindingHints {
@@ -515,24 +515,28 @@ mod tests {
     fn test_keybinding_hints_active_keybinds() {
         let hints = test_keybinding_hints();
 
-        assert!(hints
-            .active_keybinds()
-            .contains(&KeybindingHint::new_with_state(
-                0,
-                "a",
-                "test_label_1",
-                true,
-                true
-            )));
-        assert!(hints
-            .active_keybinds()
-            .contains(&KeybindingHint::new_with_state(
-                0,
-                "d",
-                "test_label_4",
-                false,
-                true
-            )));
+        assert!(
+            hints
+                .active_keybinds()
+                .contains(&KeybindingHint::new_with_state(
+                    0,
+                    "a",
+                    "test_label_1",
+                    true,
+                    true
+                ))
+        );
+        assert!(
+            hints
+                .active_keybinds()
+                .contains(&KeybindingHint::new_with_state(
+                    0,
+                    "d",
+                    "test_label_4",
+                    false,
+                    true
+                ))
+        );
     }
 
     #[test]
@@ -546,9 +550,11 @@ mod tests {
     fn test_keybinding_hints_disable() {
         let mut hints = test_keybinding_hints();
         hints.disable("a");
-        assert!(!hints
-            .active_keybinds()
-            .contains(&KeybindingHint::new(0, "a", "test_label_1",)))
+        assert!(
+            !hints
+                .active_keybinds()
+                .contains(&KeybindingHint::new(0, "a", "test_label_1",))
+        )
     }
 
     #[test]
@@ -599,42 +605,50 @@ mod tests {
     #[test]
     fn test_keybinding_hint_show() {
         let mut hints = test_keybinding_hints();
-        assert!(!hints
-            .active_keybinds()
-            .contains(&KeybindingHint::new(0, "c", "test_label_3",)));
+        assert!(
+            !hints
+                .active_keybinds()
+                .contains(&KeybindingHint::new(0, "c", "test_label_3",))
+        );
         hints.show("c");
-        assert!(hints
-            .active_keybinds()
-            .contains(&KeybindingHint::new_with_state(
-                0,
-                "c",
-                "test_label_3",
-                true,
-                true
-            )));
+        assert!(
+            hints
+                .active_keybinds()
+                .contains(&KeybindingHint::new_with_state(
+                    0,
+                    "c",
+                    "test_label_3",
+                    true,
+                    true
+                ))
+        );
     }
 
     #[test]
     fn test_keybinding_hint_hide() {
         let mut hints = test_keybinding_hints();
-        assert!(hints
-            .active_keybinds()
-            .contains(&KeybindingHint::new_with_state(
-                0,
-                "d",
-                "test_label_4",
-                false,
-                true
-            )));
+        assert!(
+            hints
+                .active_keybinds()
+                .contains(&KeybindingHint::new_with_state(
+                    0,
+                    "d",
+                    "test_label_4",
+                    false,
+                    true
+                ))
+        );
         hints.hide("d");
-        assert!(!hints
-            .active_keybinds()
-            .contains(&KeybindingHint::new_with_state(
-                0,
-                "d",
-                "test_label_4",
-                false,
-                true
-            )));
+        assert!(
+            !hints
+                .active_keybinds()
+                .contains(&KeybindingHint::new_with_state(
+                    0,
+                    "d",
+                    "test_label_4",
+                    false,
+                    true
+                ))
+        );
     }
 }

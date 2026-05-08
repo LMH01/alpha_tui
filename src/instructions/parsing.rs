@@ -102,7 +102,7 @@ impl TryFrom<&Vec<&str>> for Instruction {
                     return Err(InstructionParseError::UnknownInstruction(
                         whole_range(&parts),
                         parts.join(" "),
-                    ))
+                    ));
                 }
             };
         }
@@ -396,9 +396,9 @@ fn check_expression_missing(
 #[cfg(test)]
 mod tests {
     use crate::instructions::{
+        IndexMemoryCellIndexType,
         error_handling::InstructionParseError,
         parsing::{parse_alpha, parse_gamma, parse_index_memory_cell, parse_memory_cell},
-        IndexMemoryCellIndexType,
     };
 
     #[test]

@@ -1,22 +1,22 @@
 use std::{borrow::BorrowMut, slice};
 
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
-use miette::{miette, IntoDiagnostic, Result};
+use miette::{IntoDiagnostic, Result, miette};
 use ratatui::{
+    Terminal,
     backend::Backend,
     layout::{Constraint, Layout, Rect},
     text::Line,
     widgets::ListState,
-    Terminal,
 };
 
 use crate::{
     instructions::{
+        Instruction,
         error_handling::{BuildProgramError, ParseSingleInstructionError},
         instruction_config::InstructionConfig,
-        Instruction,
     },
-    runtime::{self, error_handling::RuntimeError, Runtime},
+    runtime::{self, Runtime, error_handling::RuntimeError},
     utils,
 };
 
@@ -655,7 +655,8 @@ impl App {
         };
         // check if instruction is allowed
         if let Some(ic) = &self.instruction_config {
-            if let Err(e) = runtime::builder::check_instructions(slice::from_ref(&instruction), ic) {
+            if let Err(e) = runtime::builder::check_instructions(slice::from_ref(&instruction), ic)
+            {
                 // instruction could not be build, because instruction is forbidden
                 self.state = State::BuildProgramError(*e);
                 return Ok(());

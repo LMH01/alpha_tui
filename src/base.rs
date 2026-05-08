@@ -1,11 +1,11 @@
 use std::fmt::Display;
 
-use clap::{builder::PossibleValue, ValueEnum};
+use clap::{ValueEnum, builder::PossibleValue};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     cli::CliHint,
-    instructions::{Identifier, COMPARISON_IDENTIFIER, OPERATOR_IDENTIFIER},
+    instructions::{COMPARISON_IDENTIFIER, Identifier, OPERATOR_IDENTIFIER},
     runtime::error_handling::{CalcError, RuntimeErrorType},
 };
 

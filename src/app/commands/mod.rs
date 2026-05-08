@@ -9,8 +9,8 @@ use crossterm::{
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use directories::UserDirs;
-use miette::{miette, IntoDiagnostic, Result};
-use ratatui::{backend::CrosstermBackend, Terminal};
+use miette::{IntoDiagnostic, Result, miette};
+use ratatui::{Terminal, backend::CrosstermBackend};
 
 use crate::{
     cli::LoadPlaygroundArgs,
@@ -44,7 +44,7 @@ fn load_instruction_history(
             Err(e) => {
                 return Err(miette!(
                     "Unable to read custom instruction history file:\n{e}"
-                ))
+                ));
             }
         };
         println!("Instruction history provided, checking validity of provided instructions");

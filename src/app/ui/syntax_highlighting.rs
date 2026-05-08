@@ -411,7 +411,7 @@ mod tests {
 
     use crate::app::ui::{
         style::SharedTheme,
-        syntax_highlighting::{determine_alignment, input_parts, InputParts, SyntaxHighlighter},
+        syntax_highlighting::{InputParts, SyntaxHighlighter, determine_alignment, input_parts},
     };
 
     #[test]

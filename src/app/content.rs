@@ -364,8 +364,8 @@ impl MemoryListsManager {
     pub fn accumulator_list(&self) -> Vec<ListItem<'static>> {
         let mut list = Vec::new();
         for acc in &self.accumulators {
-            let mut item = ListItem::new(acc.1 .0.clone());
-            if acc.1 .1 {
+            let mut item = ListItem::new(acc.1.0.clone());
+            if acc.1.1 {
                 item = item.style(self.theme.list_item_highlight(false));
             }
             list.push((item, acc.0));
@@ -396,8 +396,8 @@ impl MemoryListsManager {
     pub fn memory_cell_list(&self) -> Vec<ListItem<'static>> {
         let mut list = Vec::new();
         for cell in &self.memory_cells {
-            let mut item = ListItem::new(cell.1 .0.clone());
-            if cell.1 .1 {
+            let mut item = ListItem::new(cell.1.0.clone());
+            if cell.1.1 {
                 item = item.style(self.theme.list_item_highlight(false));
             }
             list.push((item, cell.0.clone()));
@@ -406,7 +406,7 @@ impl MemoryListsManager {
         // Add index memory cells
         let mut imc: Vec<(usize, bool, String)> = Vec::new();
         for cell in &self.index_memory_cells {
-            imc.push((*cell.0, cell.1 .1, cell.1 .0.clone()));
+            imc.push((*cell.0, cell.1.1, cell.1.0.clone()));
         }
         imc.sort(); // Make sure that index memory cells are properly sorted by index
         for cell in imc {

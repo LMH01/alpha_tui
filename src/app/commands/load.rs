@@ -4,9 +4,9 @@ use miette::Result;
 
 use crate::{
     app::{
+        App,
         commands::load_instruction_history,
         ui::{style::SyntaxHighlightingTheme, syntax_highlighting::SyntaxHighlighter},
-        App,
     },
     cli::{GlobalArgs, LoadArgs},
     instructions::instruction_config::InstructionConfig,

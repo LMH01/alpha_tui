@@ -1,14 +1,14 @@
 use std::{
     collections::HashSet,
-    fs::{remove_file, File},
+    fs::{File, remove_file},
     io::{BufRead, BufReader, LineWriter, Write},
 };
 
-use miette::{miette, IntoDiagnostic, NamedSource, Result, SourceOffset, SourceSpan};
+use miette::{IntoDiagnostic, NamedSource, Result, SourceOffset, SourceSpan, miette};
 
 use crate::instructions::{
-    error_handling::{BuildAllowedInstructionsError, InstructionParseError},
     Identifier, Instruction,
+    error_handling::{BuildAllowedInstructionsError, InstructionParseError},
 };
 
 /// Reads a file into a string vector.
@@ -194,7 +194,7 @@ pub fn prepare_whitelist_file(content: Vec<String>) -> Vec<String> {
 pub mod test_utils {
     use crate::{
         cli::{GlobalArgs, InstructionLimitingArgs},
-        runtime::{builder::RuntimeBuilder, Runtime},
+        runtime::{Runtime, builder::RuntimeBuilder},
     };
 
     /// Creates a string vector from a &str.
