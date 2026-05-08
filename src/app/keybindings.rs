@@ -203,7 +203,7 @@ impl KeybindingHints {
                 self.set_state(&KeySymbol::Enter.to_string(), 2)?;
                 self.show(&KeySymbol::Enter.to_string());
             }
-            State::CustomInstruction(state) => {
+            State::CustomInstruction(_, state) => {
                 self.show_and_enable(&KeySymbol::Enter.to_string());
                 self.show_and_enable(&KeySymbol::Escape.to_string());
                 self.show(&KeySymbol::ArrowUp.to_string());
@@ -431,9 +431,11 @@ impl KeybindingHint {
     }
 
     /// Reset the keybinding hint, meaning that the fields enabled and shown are set to false.
+    /// Also sets tha state back to 0.
     fn reset(&mut self) {
         self.enabled = false;
         self.shown = false;
+        self.state = 0;
     }
 
     /// Updates the state of this keybinding.
