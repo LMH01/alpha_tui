@@ -382,46 +382,50 @@ pub fn check_instructions(
 ) -> Result<(), Box<BuildProgramError>> {
     for (idx, i) in instructions.iter().enumerate() {
         if let Some(whitelist) = &instruction_config.allowed_instruction_identifiers
-            && !whitelist.contains(&i.identifier()) && i.identifier() != "NOOP" {
-                // Instruction found, that is forbidden
-                let mut allowed_instructions = whitelist
-                    .iter()
-                    .map(String::to_string)
-                    .collect::<Vec<String>>();
-                allowed_instructions.sort();
-                return Err(Box::new(BuildProgramError {
-                    reason: BuildProgramErrorTypes::InstructionNotAllowed(
-                        idx + 1,
-                        format!("{i}"),
-                        i.identifier(),
-                        allowed_instructions.join("\n").to_string(),
-                    ),
-                }));
-            }
+            && !whitelist.contains(&i.identifier())
+            && i.identifier() != "NOOP"
+        {
+            // Instruction found, that is forbidden
+            let mut allowed_instructions = whitelist
+                .iter()
+                .map(String::to_string)
+                .collect::<Vec<String>>();
+            allowed_instructions.sort();
+            return Err(Box::new(BuildProgramError {
+                reason: BuildProgramErrorTypes::InstructionNotAllowed(
+                    idx + 1,
+                    format!("{i}"),
+                    i.identifier(),
+                    allowed_instructions.join("\n").to_string(),
+                ),
+            }));
+        }
         // Check if all comparisons are allowed
         if let Some(ac) = &instruction_config.allowed_comparisons
             && let Some(c) = i.comparison()
-                && !ac.contains(c) {
-                    return Err(Box::new(BuildProgramError {
-                        reason: BuildProgramErrorTypes::ComparisonNotAllowed(
-                            idx + 1,
-                            c.to_string(),
-                            c.cli_hint(),
-                        ),
-                    }));
-                }
+            && !ac.contains(c)
+        {
+            return Err(Box::new(BuildProgramError {
+                reason: BuildProgramErrorTypes::ComparisonNotAllowed(
+                    idx + 1,
+                    c.to_string(),
+                    c.cli_hint(),
+                ),
+            }));
+        }
         // Check if all operations are allowed
         if let Some(ao) = &instruction_config.allowed_operations
             && let Some(o) = i.operation()
-                && !ao.contains(o) {
-                    return Err(Box::new(BuildProgramError {
-                        reason: BuildProgramErrorTypes::OperationNotAllowed(
-                            idx + 1,
-                            o.to_string(),
-                            o.cli_hint(),
-                        ),
-                    }));
-                }
+            && !ao.contains(o)
+        {
+            return Err(Box::new(BuildProgramError {
+                reason: BuildProgramErrorTypes::OperationNotAllowed(
+                    idx + 1,
+                    o.to_string(),
+                    o.cli_hint(),
+                ),
+            }));
+        }
     }
     Ok(())
 }
