@@ -16,7 +16,7 @@ thiserror = "2"
 miette = { version = "7.2", features = ["fancy"] }
 text_align = "0.3"
 anyhow = "1"
-trie-rs = "0.3"
+trie-rs = "0.4"
 
 # serialization, used for memory config file
 serde = { version = "1", features = ["derive"] }
