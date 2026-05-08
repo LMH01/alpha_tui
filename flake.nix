@@ -82,29 +82,40 @@
               minimal.cargo
               targets.x86_64-pc-windows-gnu.latest.rust-std
             ];
-          craneLibWin = (crane.mkLib pkgs).overrideToolchain toolchainWin;
 
-          alpha_tui-win = craneLibWin.buildPackage {
-            src = craneLibWin.cleanCargoSource ./.;
+          alpha_tui-win =
+            let
+              pkgsWin = pkgs.pkgsCross.mingwW64;
+              craneLibWin = (crane.mkLib pkgs).overrideToolchain toolchainWin;
 
-            strictDeps = true;
-            doCheck = false;
+              target = "x86_64-pc-windows-gnu";
+            in
+            craneLibWin.buildPackage (commonArgs // {
+              cargoArtifacts = craneLibWin.buildDepsOnly commonArgs;
+              doCheck = false;
+              CARGO_BUILD_TARGET = target;
 
-            CARGO_BUILD_TARGET = "x86_64-pc-windows-gnu";
+              # Explicitly point Cargo to the MinGW linker provided by Nix
+              "CARGO_TARGET_${pkgs.lib.replaceStrings ["-"] ["_"] target}_LINKER" =
+                "${pkgsWin.stdenv.cc}/bin/${pkgsWin.stdenv.cc.targetPrefix}gcc";
 
-            # fixes issues related to libring
-            TARGET_CC = "${pkgs.pkgsCross.mingwW64.stdenv.cc}/bin/${pkgs.pkgsCross.mingwW64.stdenv.cc.targetPrefix}cc";
+              nativeBuildInputs = [
+                pkgs.pkg-config
+                pkgsWin.stdenv.cc # This provides the gcc linker
+                pkgsWin.stdenv.cc.bintools # This provides dlltool, ar, etc.
+              ];
 
-            #fixes issues related to openssl
-            OPENSSL_DIR = "${pkgs.openssl.dev}";
-            OPENSSL_LIB_DIR = "${pkgs.openssl.out}/lib";
-            OPENSSL_INCLUDE_DIR = "${pkgs.openssl.dev}/include/";
+              buildInputs = [
+                pkgsWin.windows.pthreads
+                pkgsWin.openssl
+              ];
 
-            depsBuildBuild = with pkgs; [
-              pkgsCross.mingwW64.stdenv.cc
-              pkgsCross.mingwW64.windows.pthreads
-            ];
-          };
+              depsBuildBuild = [
+                pkgs.pkgsCross.mingwW64.stdenv.cc
+              ];
+
+              OPENSSL_NO_VENDOR = 1;
+            });
 
         in
         {
