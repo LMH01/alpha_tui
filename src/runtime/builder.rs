@@ -381,8 +381,8 @@ pub fn check_instructions(
     instruction_config: &InstructionConfig,
 ) -> Result<(), Box<BuildProgramError>> {
     for (idx, i) in instructions.iter().enumerate() {
-        if let Some(whitelist) = &instruction_config.allowed_instruction_identifiers {
-            if !whitelist.contains(&i.identifier()) && i.identifier() != "NOOP" {
+        if let Some(whitelist) = &instruction_config.allowed_instruction_identifiers
+            && !whitelist.contains(&i.identifier()) && i.identifier() != "NOOP" {
                 // Instruction found, that is forbidden
                 let mut allowed_instructions = whitelist
                     .iter()
@@ -398,11 +398,10 @@ pub fn check_instructions(
                     ),
                 }));
             }
-        }
         // Check if all comparisons are allowed
-        if let Some(ac) = &instruction_config.allowed_comparisons {
-            if let Some(c) = i.comparison() {
-                if !ac.contains(c) {
+        if let Some(ac) = &instruction_config.allowed_comparisons
+            && let Some(c) = i.comparison()
+                && !ac.contains(c) {
                     return Err(Box::new(BuildProgramError {
                         reason: BuildProgramErrorTypes::ComparisonNotAllowed(
                             idx + 1,
@@ -411,12 +410,10 @@ pub fn check_instructions(
                         ),
                     }));
                 }
-            }
-        }
         // Check if all operations are allowed
-        if let Some(ao) = &instruction_config.allowed_operations {
-            if let Some(o) = i.operation() {
-                if !ao.contains(o) {
+        if let Some(ao) = &instruction_config.allowed_operations
+            && let Some(o) = i.operation()
+                && !ao.contains(o) {
                     return Err(Box::new(BuildProgramError {
                         reason: BuildProgramErrorTypes::OperationNotAllowed(
                             idx + 1,
@@ -425,8 +422,6 @@ pub fn check_instructions(
                         ),
                     }));
                 }
-            }
-        }
     }
     Ok(())
 }

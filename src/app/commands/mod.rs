@@ -119,8 +119,8 @@ fn load_theme(load_playground_args: &LoadPlaygroundArgs) -> miette::Result<Theme
         return load_theme_file(theme_file);
     }
     // check if theme file exists
-    if let Some(user_dirs) = UserDirs::new() {
-        if let Some(base_dir) = user_dirs.home_dir().to_str() {
+    if let Some(user_dirs) = UserDirs::new()
+        && let Some(base_dir) = user_dirs.home_dir().to_str() {
             let file = format!("{base_dir}/.config/alpha_tui/theme.json");
             let path = Path::new(&file);
             // check if file exists
@@ -128,7 +128,6 @@ fn load_theme(load_playground_args: &LoadPlaygroundArgs) -> miette::Result<Theme
                 return load_theme_file(path.to_str().expect(" path should be valid unicode"));
             }
         }
-    }
     // return default
     Ok(Theme::default())
 }

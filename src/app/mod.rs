@@ -654,14 +654,13 @@ impl App {
             }
         };
         // check if instruction is allowed
-        if let Some(ic) = &self.instruction_config {
-            if let Err(e) = runtime::builder::check_instructions(slice::from_ref(&instruction), ic)
+        if let Some(ic) = &self.instruction_config
+            && let Err(e) = runtime::builder::check_instructions(slice::from_ref(&instruction), ic)
             {
                 // instruction could not be build, because instruction is forbidden
                 self.state = State::BuildProgramError(*e);
                 return Ok(());
             }
-        }
 
         let instruction_line = Line::from(instruction.to_spans(&SyntaxHighlighter::new(
             &self.theme.syntax_highlighting_theme(),

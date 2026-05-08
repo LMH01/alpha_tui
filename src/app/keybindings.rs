@@ -224,11 +224,10 @@ impl KeybindingHints {
                 if state.items_to_display().is_empty() {
                     self.disable(&KeySymbol::ArrowDown.to_string());
                 }
-                if let Some(idx) = state.allowed_values_state.selected() {
-                    if state.items_to_display().len() == idx + 1 {
+                if let Some(idx) = state.allowed_values_state.selected()
+                    && state.items_to_display().len() == idx + 1 {
                         self.disable(&KeySymbol::ArrowDown.to_string());
                     }
-                }
                 if state.allowed_values_state.selected().is_some() {
                     self.set_state(&KeySymbol::Enter.to_string(), 1)?;
                     self.enable(&KeySymbol::Tab.to_string());
@@ -253,11 +252,10 @@ impl KeybindingHints {
                 if state.items_to_display().is_empty() {
                     self.disable(&KeySymbol::ArrowDown.to_string());
                 }
-                if let Some(idx) = state.allowed_values_state.selected() {
-                    if state.items_to_display().len() == idx + 1 {
+                if let Some(idx) = state.allowed_values_state.selected()
+                    && state.items_to_display().len() == idx + 1 {
                         self.disable(&KeySymbol::ArrowDown.to_string());
                     }
-                }
                 if state.allowed_values_state.selected().is_some() {
                     self.set_state(&KeySymbol::Enter.to_string(), 1)?;
                     self.enable(&KeySymbol::Tab.to_string());
